@@ -1,0 +1,20 @@
+# 语料/产物一律不入库（公开仓红线：机器人备份、二进制、产线数据）
+*.pc
+*.dec
+*.LS
+*.sv
+*.vr
+*.KL.gate.txt
+家族验收.txt
+__pycache__/
+*.pyc
+out_test.pc
+out*.pc
+
+# 本机生成的支持库名册/探针结果（含工具链指纹，本机 probe_stdlib.py 生成）
+stdlib_basic.txt
+regope_basic_sigs.json
+
+# 语料目录
+corpus/
+raw/

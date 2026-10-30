@@ -1,0 +1,38 @@
+PROGRAM PROBE
+%COMMENT = 'opcode probe v4 - jump semantics'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iA, iB, iC : INTEGER
+
+BEGIN
+  iA = 1
+  IF iA = 1 THEN
+    iB = 4101
+  ENDIF
+  IF iA = 2 THEN
+    iB = 4102
+    iC = 4103
+  ENDIF
+  IF iA = 3 THEN
+    IF iA = 4 THEN
+      iB = 4104
+    ENDIF
+    iC = 4105
+  ENDIF
+  IF iA = 5 THEN
+    iB = 4106
+  ELSE
+    iB = 4107
+  ENDIF
+  WHILE iA < 9 DO
+    iA = iA + 1
+  ENDWHILE
+  FOR iB = 1 TO 3 DO
+    iC = 4108
+  ENDFOR
+  iA = 4199
+  RETURN
+END PROBE

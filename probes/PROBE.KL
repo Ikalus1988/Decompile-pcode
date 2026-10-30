@@ -1,0 +1,120 @@
+PROGRAM PROBE
+%COMMENT = 'opcode probe v1'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+  Probe_Rec = STRUCTURE
+    r_num : INTEGER
+    r_txt : STRING[8]
+  ENDSTRUCTURE
+VAR
+  iA, iB, iC : INTEGER
+  iArr : ARRAY[4] OF INTEGER
+  rA, rB : REAL
+  blA : BOOLEAN
+  stA : STRING[16]
+  rec : Probe_Rec
+  iEnt, iStat : INTEGER
+
+ROUTINE SUB_OUT(pOut : INTEGER)
+BEGIN
+  pOut = 9999
+END SUB_OUT
+
+ROUTINE SUB_ADD(p1 : INTEGER; p2 : INTEGER)
+VAR
+  iL : INTEGER
+BEGIN
+  iL = p1 + p2
+  RETURN
+END SUB_ADD
+
+ROUTINE FN_ADD(p1 : INTEGER; p2 : INTEGER) : INTEGER
+BEGIN
+  RETURN(p1 + p2)
+END FN_ADD
+
+BEGIN
+  iA = 4242
+  iB = 777
+  iC = iA
+  iA = 0
+  iB = 1
+  iC = -5
+  blA = TRUE
+  blA = FALSE
+  stA = 'HELLO_PROBE'
+  stA = ''
+  iArr[1] = 111
+  iC = iArr[1]
+  iC = iA + iB
+  iC = iA - iB
+  iC = iA * iB
+  iC = iA DIV iB
+  iC = iA MOD iB
+  rA = iA / iB
+  rA = 3.5
+  rB = rA * 2.0
+  stA = 'AA' + 'BB'
+  rec.r_num = 555
+  iC = rec.r_num
+  rec.r_txt = 'REC'
+  IF iA = 4242 THEN
+    iC = 21
+  ENDIF
+  IF iA <> 777 THEN
+    iC = 22
+  ENDIF
+  IF iA < 9000 THEN
+    iC = 23
+  ENDIF
+  IF iA > 100 THEN
+    iC = 24
+  ENDIF
+  IF iA <= 4242 THEN
+    iC = 25
+  ENDIF
+  IF iA >= 4242 THEN
+    iC = 26
+  ENDIF
+  IF (iA = 4242) AND (iB = 777) THEN
+    iC = 27
+  ENDIF
+  IF (iA = 1) OR (iB = 2) THEN
+    iC = 28
+  ENDIF
+  IF NOT blA THEN
+    iC = 29
+  ENDIF
+  IF UNINIT(iC) THEN
+    iC = 30
+  ENDIF
+  IF iA = 1 THEN
+    iC = 31
+  ELSE
+    IF iA = 2 THEN
+      iC = 32
+    ELSE
+      iC = 33
+    ENDIF
+  ENDIF
+  FOR iA = 1 TO 4 DO
+    iArr[iA] = iA
+  ENDFOR
+  WHILE iB < 10 DO
+    iB = iB + 1
+  ENDWHILE
+  REPEAT
+    iC = iC + 1
+  UNTIL (iC > 100)
+  DELAY 250
+  CNV_INT_STR(iA, 6, 10, stA)
+  SET_VAR(iEnt, '*SYSTEM*', '$TP_REMOTE[1].$COMMENT', 'PROBE', iStat)
+  GET_VAR(iEnt, '*SYSTEM*', '$TP_REMOTE[1].$COMMENT', stA, iStat)
+  SUB_OUT(iC)
+  SUB_ADD(iA, iB)
+  iC = FN_ADD(iA, iB)
+  RETURN
+END PROBE

@@ -1,0 +1,34 @@
+PROGRAM PROBE5
+%COMMENT = 'probe5 local/param encoding'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  gi : INTEGER
+  gs : STRING[10]
+  garr : ARRAY[8] OF INTEGER
+
+ROUTINE SUBA(pa : INTEGER; ps : STRING; parr : ARRAY OF INTEGER) : INTEGER
+VAR
+  la : INTEGER
+  lb : INTEGER
+  ls : STRING[10]
+  larr : ARRAY[8] OF INTEGER
+BEGIN
+  la = 1
+  lb = 2
+  ls = 'LOCSTR'
+  larr[3] = 4
+  pa = 5
+  ps = 'PARSTR'
+  parr[6] = 7
+  RETURN(la + lb)
+END SUBA
+
+BEGIN
+  gi = 1
+  gs = 'GLOBALSTR'
+  garr[1] = 2
+  gi = SUBA(gi, gs, garr)
+END PROBE5

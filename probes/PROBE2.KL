@@ -1,0 +1,62 @@
+PROGRAM PROBE
+%COMMENT = 'opcode probe v2 - io/cond/select/str/real/shared'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iA, iB, iC : INTEGER
+  iArr : ARRAY[4] OF INTEGER
+  rA, rB : REAL
+  blA : BOOLEAN
+  stA : STRING[16]
+  iShared IN CMOS FROM PROBE_H : INTEGER
+
+BEGIN
+  blA = DIN[100]
+  blA = DIN[101]
+  DOUT[100] = ON
+  DOUT[101] = OFF
+  PULSE DOUT[102] FOR 500
+  WAIT FOR DIN[103]
+  SIGNAL EVENT[5]
+  CONDITION[1]:
+    WHEN DIN[105] = ON DO
+      iA = 6001
+    WHEN DIN[106] = ON DO
+      iA = 6002
+  ENDCONDITION
+  ENABLE CONDITION[1]
+  PURGE CONDITION[1]
+  iB = 2
+  SELECT iB OF
+  CASE(1):
+    iC = 7001
+  CASE(2, 3):
+    iC = 7002
+  ELSE:
+    iC = 7003
+  ENDSELECT
+  GO TO skip_a
+  iC = 8001
+skip_a::
+  iC = 8002
+  iA = STR_LEN(stA)
+  stA = SUB_STR(stA, 2, 3)
+  IF stA = 'AB' THEN
+    iC = 9001
+  ENDIF
+  IF rA < rB THEN
+    iC = 9002
+  ENDIF
+  IF rA >= 2.5 THEN
+    iC = 9003
+  ENDIF
+  rA = iA * 1.5
+  FOR iA = 4 DOWNTO 1 DO
+    iArr[iA] = 0
+  ENDFOR
+  iShared = 12345
+  iC = iShared
+  RETURN
+END PROBE

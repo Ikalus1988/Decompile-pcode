@@ -1,0 +1,63 @@
+PROGRAM PROBE
+%COMMENT = 'opcode probe v3 - param types & arg encodings'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+  P3_Rec = STRUCTURE
+    n : INTEGER
+    t : STRING[8]
+  ENDSTRUCTURE
+VAR
+  iA, iB : INTEGER
+  rA : REAL
+  blA : BOOLEAN
+  stA : STRING[16]
+  rec : P3_Rec
+  iArr : ARRAY[3] OF INTEGER
+  iShared IN CMOS FROM P3_H : INTEGER
+
+ROUTINE MIX(pI : INTEGER; pR : REAL; pS : STRING; pB : BOOLEAN)
+VAR
+  iL : INTEGER
+BEGIN
+  iL = pI
+  RETURN
+END MIX
+
+ROUTINE FN_FMT(p1 : INTEGER) : STRING
+VAR
+  stT : STRING[8]
+BEGIN
+  CNV_INT_STR(p1, 4, 10, stT)
+  RETURN(stT)
+END FN_FMT
+
+BEGIN
+  MIX(iA, rA, stA, blA)
+  MIX(iB, rA, stA, TRUE)
+  MIX(rec.n, rA, rec.t, blA)
+  MIX(iArr[2], rA, stA, blA)
+  MIX(iShared, rA, stA, blA)
+  MIX(iA + 7, rA, stA, blA)
+  stA = FN_FMT(iA)
+  stA = FN_FMT(rec.n)
+  stA = FN_FMT(iArr[1])
+  stA = FN_FMT(iShared)
+  stA = 'DI' + FN_FMT(iB)
+  stA = 'X' + FN_FMT(iA + 2) + 'Y'
+  iB = 0
+  CONNECT TIMER TO iB
+  DELAY 1
+  DISCONNECT TIMER iB
+  PULSE DOUT[104] FOR -800
+  RELEASE
+  PAUSE
+  RESUME
+  STOP
+  IF blA THEN
+    ABORT
+  ENDIF
+  RETURN
+END PROBE

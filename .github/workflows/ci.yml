@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 最小权限：CI 只读仓库。要自动提交/发版时按 README 权限表逐项提权，勿开全局 write。
+permissions:
+  contents: read
+
+jobs:
+  selfcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: python syntax
+        run: python -m py_compile scripts/*.py
+      - name: node syntax
+        run: node --check scripts/pc_decompress.mjs
+      - name: pure-function smoke (stdlib sigs parser)
+        run: |
+          python - <<'PY'
+          import re, glob, sys
+          sys.path.insert(0, 'scripts')
+          # 只验纯解析函数在合成数据上不崩
+          src = open('scripts/pc2kl3.py', encoding='utf-8').read()
+          ns = {'re': re}
+          fn = src[src.find('def _stdlib_sigs():'):src.find('STD_SIGS = _stdlib_sigs()')]
+          exec(fn, ns)
+          assert callable(ns['_stdlib_sigs'])
+          print('stdlib sigs parser OK')
+          PY
