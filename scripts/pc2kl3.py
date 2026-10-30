@@ -51,7 +51,12 @@ def scan(seg, base):
             n2 = 5 if seg[i:i+5] == b'\x12\x43\xab\x00\x03' else (3 if seg[i:i+3] == b'\x13\x05\x04' else 2)
             out.append((base + i, 'NOP', None, n2)); i += n2; continue
         if b in (0x40, 0x41) and i + 4 < len(seg) and seg[i+1:i+3] == b'\x00\x00':
-            out.append((base + i, 'SEL', None, 5)); i += 5; continue
+            out.append((base + i, 'SEL40' if b == 0x40 else 'SEL41',
+                        int.from_bytes(seg[i+1:i+5], 'big'), 5)); i += 5; continue
+        if b == 0x42:
+            out.append((base + i, 'SEL42', None, 1)); i += 1; continue
+        if b == 0x43:
+            out.append((base + i, 'SEL43', None, 1)); i += 1; continue
         if b in (0xaf, 0xb0) and i + 2 < len(seg):
             # PROBE T44-45 落锤：b0=SET_VAR、af=GET_VAR（`b0 1f 00` / `af 1f 10`）
             out.append((base + i, 'VSET' if b == 0xb0 else 'VGET', None, 3)); i += 3; continue
@@ -99,7 +104,7 @@ def scan(seg, base):
                0x6d: ('EQ', None), 0x6e: ('NE', None), 0x6f: ('LT', None), 0x70: ('LE', None),
                0x71: ('GT', None), 0x72: ('GE', None),
                0x34: ('LDFLD', None), 0x35: ('STFLD', None), 0x61: ('STFLD', None),
-               0x0d: ('ENABLE', None), 0x3c: ('PURGE', None), 0x42: ('NOP', None), 0x43: ('NOP', None),
+               0x0d: ('ENABLE', None), 0x3c: ('PURGE', None), 
                0x4d: ('SIGEVENT', None), 0x62: ('CONNTMR', None), 0x28: ('DISCTMR', None),
                0x10: ('PAUSE', None), 0x16: ('RELEASE', None), 0x3a: ('ABORT', None),
                0x4e: ('RESUME', None), 0x4f: ('STOP', None), 0x33: ('EADDR', None)}
@@ -188,6 +193,11 @@ for _nm, (_ac, _rt) in REGOPE_BASIC.items():
     _pt += ['i'] * (_ac - len(_pt))
     STD_SIGS[_nm] = (_rt, _pt, _ac)
 STD_SIGS['CNV_INT_STR'] = ('v', ['i', 'i', 'i', 's'], 4)  # TARGET=STRING（ev 走查断链兜底）
+STD_SIGS['SET_POS_REG'] = ('v', ['i', 'pos', 'i'], 3)
+STD_SIGS['SET_EPOS_REG'] = ('v', ['i', 'pos', 'i'], 3)
+STD_SIGS['SET_JPOS_REG'] = ('v', ['i', 'jpos', 'i'], 3)
+STD_SIGS['GET_POS_REG'] = ('pos', ['i', 'i'], 2)
+STD_SIGS['GET_JPOS_REG'] = ('jpos', ['i', 'i'], 2)
 
 # STDLIB 已由 STD_SIGS 提供
 
@@ -403,7 +413,7 @@ def arg_kind(x):
         return 'ai'
     if xs in real_vars:
         return 'r'
-    if any(nm2 in real_vars for nm2 in re.findall(r'\b(?:v|lc|p)\w*\b', xs)):
+    if any(nm2 in real_vars for nm2 in re.findall(r'\b[A-Za-z_]\w*\b', xs)):
         return 'r'
     return 's' if is_str(x) else 'i'
 
@@ -438,7 +448,7 @@ def looks_real(x):
     xs = str(x)
     if re.search(r'\d+\.\d', xs) or re.search(r'[^/<>] / ', xs):
         return True
-    return any(nm in real_vars for nm in re.findall(r'\b(?:v|lc|p)\w*\b', xs))
+    return any(nm in real_vars for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
 
 def vtype(name):
     for _slot, _nm in ():  # 符号表类型覆盖已禁用（连带类型错误 > 收益，仅保留真名）
@@ -739,6 +749,8 @@ def eval_expr(toks, collect=False, pad=None):
                 orig = arg
                 if k == 's' and not is_str(arg):
                     arg = "''"
+                elif k == 'i' and re.match(r'^[A-Za-z_]\w*$', str(arg)) and str(arg) in real_vars:
+                    dropped.append(orig); arg = '0'  # REAL 实参入 INTEGER 形参弃参留痕
                 elif k == 'i' and (str_rhs(arg) or re.search(r'[=<>]', arg)
                                    or (re.match(r'^[A-Za-z_]\w*$', str(arg))
                                        and (str(arg) in arr_vars or str(arg) in file_vars))):
@@ -770,6 +782,11 @@ def eval_expr(toks, collect=False, pad=None):
                     dropped.append(orig)
                 a2.append(arg)
             _std = STD_SIGS.get(nm.upper())
+            if nm.upper() == _prog_s:
+                lines.append('-- 重入调用(名字表歧义): ' + nm + '(' + ', '.join(a2) + ')')
+                dropped.append(nm + '(' + ', '.join(a2) + ')')
+                stack.append('sv_i')
+                continue
             _call = (nm + '(' + ', '.join(a2) + ')') if a2 else nm  # 0 参裸调用（r = Q 合法，Q() 非法）
             if nm in ('POST_ERR', 'SET_INT_REG', 'SET_REAL_REG') or (_std and _std[0] == 'v'):
                 lines.append(_call)
@@ -846,11 +863,10 @@ def eval_expr(toks, collect=False, pad=None):
         elif kind == 'OPENF':
             # OPEN FILE fileComm('RO', 'FR:Rivet.DT')：栈=文件变量 + 参数（0x3d 语句码）
             # 护栏：0x3d 亦是 ASCII '='，栈深 >6 视为乱流不吞（dcpclear/tucker 实证）
-            if 1 <= len(stack) <= 6:
-                items = [str(x) for x in stack]
+            items = [str(x) for x in stack]
+            if 1 <= len(items) <= 6 and re.match(r'^[A-Za-z_]\w*$', items[0]):
                 stack = []
-                if re.match(r'^(v|lc|p)\w*$', items[0]):
-                    file_vars.add(items[0])
+                file_vars.add(items[0])
                 lines.append('OPEN FILE ' + items[0] + '(' + ', '.join(items[1:]) + ')')
             else:
                 stack.append('0')
@@ -902,7 +918,7 @@ def block_struct(bis):
     for bi in bis:
         lid, off, toks, is_empty, is_data = bodies[bi]
         kinds = [t[1] for t in toks]
-        jmp_only = bool(kinds) and ('JMP' in kinds) and all(k in ('JMP', 'INT', 'VAR', 'ARG', 'NOP', 'UNK', 'PAR') for k in kinds)
+        jmp_only = bool(kinds) and ('JMP' in kinds) and all(k in ('JMP', 'INT', 'VAR', 'ARG', 'NOP', 'UNK', 'PAR', 'SEL40', 'SEL41', 'SEL42', 'SEL43') for k in kinds)
         if is_empty and open_stack:
             close_of[open_stack.pop()] = (bi, 'if')
         elif 'JZ' in kinds:
@@ -975,6 +991,13 @@ if _JT_BASE is not None:
                 _tgt = _jt_stmt(_JT[_t[2]] + _JT_BASE)
                 if _tgt is not None:
                     (JZ_TO if _t[1] == 'JZ' else JMP_TO)[_bi] = _tgt
+# SELECT 收口点：select 语句内 JMP 的跳转目标 = ENDSELECT 处（跳转表精确落点）
+SELECT_ENDS = set()
+for _bi2, (_l2, _o2, _tk2, _ie2, _id2) in enumerate(bodies):
+    if any(t[1] in ('SEL40', 'SEL41', 'SEL42', 'SEL43') for t in _tk2) and any(t[1] == 'JMP' for t in _tk2):
+        if _bi2 in JMP_TO:
+            SELECT_ENDS.add(JMP_TO[_bi2])
+
 # 回边：JZ 目标语句 ≤ 当前 → REPEAT 头/UNTIL 尾（护栏：头须为实语句且非跳转句）
 REPEAT_HEADS, UNTIL_AT = set(), {}
 for _bi, _t in JZ_TO.items():
@@ -1013,10 +1036,11 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         f.write('  %s : %s\n' % (vn('l', n), vtype(vn('l', n))))
     # 字段合成名/派生数组名（v<n>_f<off> 等）补声明
     def _covered(nm):
-        m = re.match(r'^v(\d+)$', nm)
+        nm2 = nm[2:] if nm.startswith('zz') else nm
+        m = re.match(r'^v(\d+)$', nm2)
         if m:
             return int(m.group(1)) < n_v
-        m = re.match(r'^lc(\d+)$', nm)
+        m = re.match(r'^lc(\d+)$', nm2)
         if m:
             return int(m.group(1)) < max_lc
         return False
@@ -1165,10 +1189,43 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 for d in declp2:
                     f.write('  %s : INTEGER\n' % d)
         f.write('BEGIN\n')
+        _sel_open = False
         open_blocks = []          # 段内块平衡栈: 'if'/'while'/'for'
         for bi in bis:
             lid, off, toks, is_empty, is_data = bodies[bi]
             kinds = [t[1] for t in toks]
+            if any(k in kinds for k in ('SEL40', 'SEL41', 'SEL42', 'SEL43')):
+                if bi in REPEAT_HEADS:
+                    f.write('  REPEAT\n')
+                if bi in UNTIL_AT:
+                    _uc = expr if False else None
+                _SELM = {'SEL40', 'SEL41', 'SEL42', 'SEL43'}
+                _idxs = [x for x, t in enumerate(toks) if t[1] in _SELM]
+                _bounds = [0] + _idxs + [len(toks)]
+                _last_expr = None
+                for _bi3 in range(len(_bounds) - 1):
+                    _seg = toks[_bounds[_bi3]:_bounds[_bi3 + 1]]
+                    if _seg and _seg[-1][1] == 'JMP':
+                        _seg = _seg[:-1]
+                    if _seg:
+                        _ls, _ex, _pp, _st = eval_expr(_seg)
+                        for _l in _ls:
+                            f.write('  ' + _l + '\n')
+                        if _ex and _ex != '0':
+                            _last_expr = _ex
+                    if _bounds[_bi3 + 1] < len(toks):
+                        _mk = toks[_bounds[_bi3 + 1]]
+                        if _mk[1] == 'SEL41':
+                            _prefix_has_jmp = any(t[1] == 'JMP' for t in toks[:_bounds[_bi3 + 1]])
+                            if not _sel_open and not _prefix_has_jmp:
+                                f.write('  -- SELECT %s OF\n' % (_last_expr or 'v1'))
+                                _sel_open = True
+                            f.write('  -- CASE(%d):\n' % _mk[2])
+                        elif _mk[1] == 'SEL43':
+                            f.write('  -- ELSE:\n')
+                if bi in UNTIL_AT and _last_expr:
+                    f.write('  UNTIL(' + _last_expr + ')\n')
+                continue
             expr_lines, expr, _p, stk = eval_expr(toks)
             forvar = None
             cleaned = []
@@ -1181,6 +1238,9 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             if bi in REPEAT_HEADS:
                 f.write('  REPEAT\n')
             if is_empty:
+                if _sel_open and (bi in SELECT_ENDS or (not SELECT_ENDS and n_close_if.get(bi, 0) == 0)):
+                    f.write('  -- ENDSELECT\n')
+                    _sel_open = False
                 for _ in range(n_close_if.get(bi, 0)):
                     if open_blocks and open_blocks[-1] == 'if':
                         open_blocks.pop()
