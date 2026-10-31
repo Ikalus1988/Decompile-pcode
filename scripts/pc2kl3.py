@@ -42,6 +42,12 @@ def scan(seg, base):
         if b == 0xa2 and i + 5 < len(seg) and seg[i + 1] == 0xff:
             out.append((base + i, 'PSTSTR', 'pp' + seg[i+2:i+6].hex()[-2:], 6)); i += 6; continue
         if b == 0x32 and i + 2 < len(seg) and seg[i + 1] == 0x00:
+            # 32 00 <偏移> [5E]：5E=串字段访问第4字节（串变长，寻址比整型字段多1字节）。
+            # 罗塞塔实证 dcpfault_mh: `DCPPLCText = RobotName + ',Tool-' + ToolID + ',' +
+            #   DCPText.DCPLine1 + DCPText.DCPLine2` → `REF v6 FLD 4 5E CAT`（DCPLine1=串字段）。
+            # 不吃掉 5E 会让它落 UNK→push '0'，串字段被当整数，整条拼接链垮掉。
+            if i + 3 < len(seg) and seg[i + 3] == 0x5E:
+                out.append((base + i, 'FLDSTR', seg[i+2], 4)); i += 4; continue
             out.append((base + i, 'FLD', seg[i+2], 3)); i += 3; continue
         # 0x33=EADDR 单字节（PROBE5 + dcpclear 实证）：33 32=元素+字段两操作码，勿复合吞偏移
         if b == 0x63 and i + 2 < len(seg):
@@ -257,7 +263,12 @@ def _parse_symtable(dec):
         flags, t0, t1 = dec[k], dec[k+1], dec[k+2]
         k += 3
         dim = None
-        if t0 in (0x20, 0x3f) and k + 2 <= gpos:
+        # 维度字节判定：t0 高半字节 >= 2 才带 u16 维度。
+        # 旧判据 `t0 in (0x20,0x3f)` 太窄——0x31(结构/复合) 也带维度，
+        # 漏掉就失步、提前 break，真名全丢（真实备份 dcp_hist 实证：
+        #   DCPTEXT 'fd 11 00' 无dim / DCPTEXTHIST 'fd 31 00' 有dim(20) /
+        #   FKEYS 'fd 3f 0c' 有dim(10)）。
+        if (t0 >> 4) >= 2 and k + 2 <= gpos:
             dim = int.from_bytes(dec[k:k+2], 'big')
             k += 2
         syms.append((nm, t0, t1, dim))
@@ -318,9 +329,14 @@ bodies = []
 for i, (off, lid) in enumerate(markers):
     end = markers[i + 1][0] if i + 1 < len(markers) else N
     body = dec[off + 5:end]
-    if len(body) > 800 or off < 0x30:
+    if len(body) > 800:
         bodies.append((lid, off, [], True, True)); continue
     toks = scan(body, off + 5)
+    # off<0x30 原本一刀切当"头部/数据区"，但有的模块第一条真语句就在偏移 35-47
+    # （dcp_form lid=44 SET_PORT_VAL(2,3099,1,…) 实证：整条被丢）。
+    # 判据改为"有无真实语句 token"——头部噪声扫出来全是 UNK/NOP。
+    if off < 0x30 and not any(t[1] not in ('UNK', 'NOP', 'ANCHOR') for t in toks):
+        bodies.append((lid, off, [], True, True)); continue
     subs, cur = [], []
     for t in toks:
         if t[1] == 'ANCHOR':
@@ -589,14 +605,16 @@ def eval_expr(toks, collect=False, pad=None):
             b2 = stack.pop() if stack else '0'
             b1 = stack.pop() if stack else '0'
             if kind == 'CAT':
-                if is_str(b1) and not is_str(b2):
+                # 串型判定用 str_rhs（携带串语义的表达式），不能用 is_str：
+                # 复合串表达式 `('a' + v) + 'b'` 的 is_str=False，旧判定会把整段抹成 ''
+                if str_rhs(b1) and not str_rhs(b2):
                     b2 = "''"
-                elif is_str(b2) and not is_str(b1):
+                elif str_rhs(b2) and not str_rhs(b1):
                     b1 = "''"
             elif kind in ('EQ', 'NE'):
-                if is_str(b1) and not is_str(b2):
+                if str_rhs(b1) and not str_rhs(b2):
                     b2 = "''"
-                elif is_str(b2) and not is_str(b1):
+                elif str_rhs(b2) and not str_rhs(b1):
                     b1 = "''"
                 if b2 in ('0', '1') and _is_bool_name(b1):
                     _pos = (kind == 'EQ') == (b2 == '1')
@@ -644,7 +662,7 @@ def eval_expr(toks, collect=False, pad=None):
         elif kind in ('ITOR', 'UNINIT'):
             if kind == 'UNINIT':
                 # UNINIT(x) 是 KAREL 布尔谓词（mifap mi04_td_pop `63 00 10` 实证）——不能吞成 0
-                a1 = stack.pop() if stack else 'v1'
+                a1 = stack.pop() if stack else vn('v', 1)
                 stack.append('UNINIT(%s)' % a1)
             # ITOR/64 = 类型转换标记，栈空转（禁 DUP！）
         elif kind == 'IORD':
@@ -658,8 +676,10 @@ def eval_expr(toks, collect=False, pad=None):
             nm = 'io_%02x' % val
             io_vars.add(nm)
             lines.append(nm + '[' + idx + '] = ' + v2)
-        elif kind == 'FLD':
+        elif kind in ('FLD', 'FLDSTR'):
             # REF基址 + 字段偏移 → 合成独立字段名（折叠到基变量会串型炸编译）
+            # FLDSTR（32 00 <off> 5E）=串字段：合成名必须进 str_vars，
+            # 否则 is_str/str_rhs 判不出串型，CAT 会把它抹成 ''（',Tool-' 残差根因）
             if not stack:
                 continue  # WRITE 设备选择符（ad 后 32 00 01），无基址可弹
             base = stack.pop()
@@ -667,9 +687,13 @@ def eval_expr(toks, collect=False, pad=None):
             if mb:
                 nm2 = '%s_f%02x[%s' % (mb.group(1), val, mb.group(2))
                 arr_vars.add('%s_f%02x' % (mb.group(1), val))
+                if kind == 'FLDSTR':
+                    str_arr_vars.add('%s_f%02x' % (mb.group(1), val))
             elif re.match(r'^[A-Za-z_]\w*$', str(base)):
                 nm2 = '%s_f%02x' % (base, val)
                 fld_vars.add(nm2)
+                if kind == 'FLDSTR':
+                    str_vars.add(nm2)
             else:
                 nm2 = base
             stack.append(nm2)
@@ -680,19 +704,19 @@ def eval_expr(toks, collect=False, pad=None):
         elif kind == 'EADDR':
             # 元素地址（'' REF SHV[18] #i EADDR ST.fld.s = FKEYS[i]=''）→ 合成元素引用
             idx = stack.pop() if stack else '1'
-            arr = stack.pop() if stack else 'v1'
+            arr = stack.pop() if stack else vn('v', 1)
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
                 arr_vars.add(arr)
             stack.append(str(arr) + '[' + idx + ']')
         elif kind == 'ELD':
             idx = stack.pop() if stack else '1'
-            arr = stack.pop() if stack else 'v1'
+            arr = stack.pop() if stack else vn('v', 1)
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
                 arr_vars.add(arr)
             stack.append(str(arr) + '[' + idx + ']')
         elif kind == 'EST':
             idx = stack.pop() if stack else '1'
-            arr = stack.pop() if stack else 'v1'
+            arr = stack.pop() if stack else vn('v', 1)
             rhs = stack.pop() if stack else '0'
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
                 arr_vars.add(arr)
@@ -700,11 +724,11 @@ def eval_expr(toks, collect=False, pad=None):
                     real_vars.add(str(arr))
             emit_assign(lines, str(arr) + '[' + idx + ']', rhs)
         elif kind == 'STFLD':
-            fld = stack.pop() if stack else 'v1'
+            fld = stack.pop() if stack else vn('v', 1)
             rhs = stack.pop() if stack else '0'
             fs = str(fld)
             if not re.match(r'^[A-Za-z_]\w*(\[[^\]]*\])?$', fs):
-                fs = 'v1'
+                fs = vn('v', 1)   # 兜底必须走 vn()：硬编码 'v1' 在槽位1已复原真名时不会被声明
             base_n = fs.split('[')[0]
             if str_rhs(rhs):
                 if '[' in fs:
@@ -769,8 +793,8 @@ def eval_expr(toks, collect=False, pad=None):
             for x, arg in enumerate(a):
                 k = kinds2[x] if x < len(kinds2) else 'i'
                 orig = arg
-                if k == 's' and not is_str(arg):
-                    arg = "''"
+                if k == 's' and not str_rhs(arg):
+                    arg = "''"   # 同上：复合串表达式不可抹（is_str 认不出 (a+'b') ）
                 elif k == 'i' and re.match(r'^[A-Za-z_]\w*$', str(arg)) and str(arg) in real_vars:
                     dropped.append(orig); arg = '0'  # REAL 实参入 INTEGER 形参弃参留痕
                 elif k == 'i' and (str_rhs(arg) or re.search(r'[=<>]', arg)
@@ -839,12 +863,14 @@ def eval_expr(toks, collect=False, pad=None):
             while len(a) < 5:
                 a.append('0')
             a = a[:5]
-            a[0] = '0' if is_str(a[0]) else a[0]
-            if not is_str(a[1]):
+            # 组名/变量名形参：串型判定用 str_rhs——`v13 + '.$COMMENT'` 是复合串表达式，
+            # is_str 认不出会把整个变量名抹成 ''（mm_module '.$STATE'/'.$COMMENT' 残差根因）
+            a[0] = '0' if str_rhs(a[0]) else a[0]
+            if not str_rhs(a[1]):
                 a[1] = "''"
-            if not is_str(a[2]):
+            if not str_rhs(a[2]):
                 a[2] = "''"
-            a[4] = '0' if is_str(a[4]) else a[4]
+            a[4] = '0' if str_rhs(a[4]) else a[4]
             lines.append(('SET_VAR(' if kind == 'VSET' else 'GET_VAR(') + ', '.join(a) + ')')
             stack.append('0')
         elif kind == 'DELAY':
@@ -1249,7 +1275,10 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                             f.write('  -- ELSE:\n')
                 if bi in UNTIL_AT and _last_expr:
                     f.write('  UNTIL(' + _last_expr + ')\n')
-                _emit_residue(f, toks, _seg_written, lid)
+                # ⚠️ _seg_written 是 list，而 _emit_residue 用 written.count(子串) 判在场：
+                #    list.count 是"元素全等"、str.count 才是"子串"——传 list 会让在场数恒为 0，
+                #    把已渲染的字面量全误报成残差（MM:VISION_*=1001 一族假阳性根因）。
+                _emit_residue(f, toks, ' '.join(_seg_written), lid)
                 continue
             expr_lines, expr, _p, stk = eval_expr(toks)
             forvar = None
