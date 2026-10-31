@@ -205,6 +205,8 @@ _NAME_ANCHOR = -1
 routines, imports, call_names = [], {}, {}
 # 名字表锚点：通用 = <单字母前缀><程序名>\0（'VMI0' 只是 V 前缀撞名特例，123/125 模块踩空）
 _prog = dec[4:20].split(b'\x00')[0]
+_m0 = re.search(rb'\x00([ -~]{2,})\x00', dec[4:80])
+_hdr_comment = _m0.group(1).decode() if _m0 else 'decompiled v3'
 i = -1  # VMI0 特例已废（=例程数低位+'MI0' 撞名，锚点差 1 字节）
 if _prog:
     for m in re.finditer(re.escape(_prog) + rb'\x00', dec):
@@ -483,6 +485,26 @@ def vtype(name):
 
 def _is_bool_name(nm):
     return False  # 纯名字模式：符号表类型不参与渲染判定（与 INTEGER 声明一致）
+
+
+def _emit_residue(f, toks, written, lid):
+    """语句字面量残差兜底：串/常量未进产物文本 → 留痕（静默丢失清零）"""
+    _lost = []
+    _budget = {}
+    for _t in toks:
+        if _t[1] == 'STR':
+            _key = repr(_t[2])
+        elif _t[1] == 'INT' and 1000 <= abs(_t[2]) <= 99999:
+            _key = str(_t[2])
+        else:
+            continue
+        _budget[_key] = _budget.get(_key, 0) + 1
+    for _key, _n in _budget.items():
+        _present = written.count(_key)
+        for _ in range(_n - _present):
+            _lost.append(_key)
+    if _lost:
+        f.write('  -- stmt%d residue %s' % (lid, ', '.join(_lost)) + chr(10))
 
 def emit_assign(lines, lhs, rhs):
     """布尔右值赋给整型目标 → IF/ELSE 1/0 包装（KAREL 不允许 bool 直接赋 int）"""
@@ -1025,7 +1047,7 @@ BUILTIN = {'POST_ERR', 'SET_INT_REG', 'SET_REAL_REG', 'GET_REG', 'DB_PROMPT', 'C
 with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     f.write('-- ' + os.path.basename(out_path) + ' (decompiled v3)\n')
     f.write('PROGRAM ' + name + '\n')
-    f.write("%COMMENT = 'decompiled v3'\n")
+    f.write("%%COMMENT = '%s'\n" % (_hdr_comment.replace("'", "''")))
     f.write('%NOBUSYLAMP\n%NOLOCKGROUP\n%NOPAUSE = COMMAND + TPENABLE + ERROR\n%NOABORT = ERROR + COMMAND\n')
     f.write('VAR\n')
     for nm in sorted(io_vars):
@@ -1203,6 +1225,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 _idxs = [x for x, t in enumerate(toks) if t[1] in _SELM]
                 _bounds = [0] + _idxs + [len(toks)]
                 _last_expr = None
+                _seg_written = []
                 for _bi3 in range(len(_bounds) - 1):
                     _seg = toks[_bounds[_bi3]:_bounds[_bi3 + 1]]
                     if _seg and _seg[-1][1] == 'JMP':
@@ -1211,6 +1234,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                         _ls, _ex, _pp, _st = eval_expr(_seg)
                         for _l in _ls:
                             f.write('  ' + _l + '\n')
+                            _seg_written.append(_l)
                         if _ex and _ex != '0':
                             _last_expr = _ex
                     if _bounds[_bi3 + 1] < len(toks):
@@ -1225,6 +1249,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                             f.write('  -- ELSE:\n')
                 if bi in UNTIL_AT and _last_expr:
                     f.write('  UNTIL(' + _last_expr + ')\n')
+                _emit_residue(f, toks, _seg_written, lid)
                 continue
             expr_lines, expr, _p, stk = eval_expr(toks)
             forvar = None
@@ -1251,6 +1276,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     if open_blocks and open_blocks[-1] == 'while':
                         open_blocks.pop()
                         f.write('  ENDWHILE\n')
+                _emit_residue(f, toks, '', lid)
                 continue
             if forvar:
                 init = '1'
@@ -1269,12 +1295,14 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             if bi in else_lines:
                 if open_blocks and open_blocks[-1] == 'if':
                     f.write('  ELSE\n')
+                _emit_residue(f, toks, '', lid)
                 continue
             if bi in UNTIL_AT:
                 cond = expr if expr and expr != '0' else 'TRUE'
                 if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT ('):
                     cond = '(' + cond + ' <> 0)'
                 f.write('  UNTIL(' + cond + ')\n')
+                _emit_residue(f, toks, '', lid)
                 continue
             if 'JZ' in kinds:
                 cond = expr if expr and expr != '0' else 'TRUE'
@@ -1297,8 +1325,10 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 continue
             for l in cleaned:
                 f.write('  ' + l + '\n')
-            if not cleaned and expr and expr != '0':
-                f.write('  -- L%d: %s\n' % (lid, expr))
+            _stray = [str(x) for x in stk if str(x) != '0']
+            if _stray:
+                f.write('  -- stmt%d stray %s' % (lid, ' | '.join(_stray)) + chr(10))
+            _emit_residue(f, toks, ' '.join(cleaned) + ' ' + ' '.join(_stray), lid)
         while open_blocks:
             k = open_blocks.pop()
             f.write('  %s\n' % {'if': 'ENDIF', 'while': 'ENDWHILE', 'for': 'ENDFOR'}[k])
@@ -1308,4 +1338,25 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     if not any(si >= len(routines) for si in sec_stmts):
         f.write('BEGIN\nEND %s\n' % name)
 
+# 模块级字面量残差兜底（分支出口遗漏清零）
+_budget = {}
+for _lid, _off, _toks, _ie, _idd in bodies:
+    if _idd:
+        continue
+    for _t in _toks:
+        if _t[1] == 'STR':
+            _k = repr(_t[2])
+        elif _t[1] == 'INT' and 1000 <= abs(_t[2]) <= 99999:
+            _k = str(_t[2])
+        else:
+            continue
+        _budget[_k] = _budget.get(_k, 0) + 1
+_txt = open(out_path, encoding='gbk', errors='replace').read()
+_missing = []
+for _k, _n in _budget.items():
+    for _ in range(_n - _txt.count(_k)):
+        _missing.append(_k)
+if _missing:
+    with open(out_path, 'a', encoding='gbk', errors='replace') as _f:
+        _f.write('-- module-residue ' + ', '.join(_missing) + chr(10))
 print('wrote', out_path, 'routines:', len(routines), 'sections:', len(sec_stmts))
