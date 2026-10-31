@@ -7,42 +7,81 @@ import os, re, sys, subprocess, collections, tempfile
 KTRANS = r'D:\program\roboguide\WinOLPC\bin\ktrans.exe'
 DECOMP = r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\scripts\pc_decompress.mjs'
 
-def dec_strings(dec):
+def dec_strings(dec, windowed=True, dedup=True):
+    """windowed=True：语句体窗口口径（dec→KL 覆盖，剔数据区）。
+    windowed=False：全文件多重集（RT 保真口径）。
+    ⚠️ 第4坑：'body>800B=数据区' 是布局相关的——重编译产物语句体更密，
+    真代码会被当数据区剔掉，把在场字面量误判成丢失（mm_module 实测 12/21 误剔）。
+    故 RT 对拍两侧必须同用 windowed=False。"""
     raw = collections.Counter()
     N = len(dec)
     offs = [m.start() for m in re.finditer(rb'\x3e[\x00-\x05](.)', dec) if m.start() + 5 <= N]
-    for i, off in enumerate(offs):
-        end = offs[i + 1] if i + 1 < len(offs) else N
-        body = dec[off + 5:end]
-        if len(body) > 800 or off < 0x30:
-            continue  # 数据区（表/名字堆）不计——与流水线覆盖契约一致
-        for m in re.finditer(rb'\x3f([\x00-\xff])', body):
-            ln = m.group(1)[0]
-            s = body[m.end():m.end() + ln]
-            if len(s) == ln and re.match(rb'^[ -~]*$', s) and re.search(rb'[A-Za-z]{3}', s):
-                raw[s.decode()] += 1
+    ranges = []
+    if windowed:
+        for i, off in enumerate(offs):
+            end = offs[i + 1] if i + 1 < len(offs) else N
+            body = dec[off + 5:end]
+            if len(body) > 800 or off < 0x30:
+                continue  # 数据区（表/名字堆）不计——与流水线覆盖契约一致
+            ranges.append((off + 5, end))
+    else:
+        ranges = [(0, N)]
+    for a, b in ranges:
+        # 第6坑：finditer 非重叠推进，遇到 `3f 3f <len>`（0x3f 既是 STR 标记又是
+        # 前邻 opcode/长度字节）会把真长度字节当长度吞掉 63 字节，串抽不出来。
+        # 改逐字节滑动 + 候选校验：不成立只前进 1 字节，永不吞掉下一个真标记。
+        i = a
+        while i + 2 <= b:
+            if dec[i] == 0x3F:
+                ln = dec[i + 1]
+                s = dec[i + 2:i + 2 + ln]
+                if ln and len(s) == ln and re.match(rb'^[ -~]*$', s) and re.search(rb'[A-Za-z]{3}', s):
+                    raw[s.decode()] += 1
+                    i += 2 + ln
+                    continue
+            i += 1
     keys = list(raw)
     out = collections.Counter()
-    for k in keys:
-        if any(k != o and (k in o or k[1:] in o or k[2:] in o) for o in keys):
-            continue  # 长串子串/'?'头假候选（0x3f 误读）剔除
-        out[k] = raw[k]
+    if dedup:
+        for k in keys:
+            if any(k != o and (k in o or k[1:] in o or k[2:] in o) for o in keys):
+                continue  # 长串子串/'?'头假候选（0x3f 误读）剔除
+            out[k] = raw[k]
+    else:
+        out = raw
     return out
 
-def dec_consts(dec):
+def sym_dedup(ca, cb):
+    """第5坑：子串去重逐文件算会不对称（两侧字面量环境不同→去重结果不同→假丢失）。
+    对拍两侧必须对【并集】对称去重，再比较。"""
+    keys = set(ca) | set(cb)
+    drop = set()
+    for k in keys:
+        if any(k != o and (k in o or k[1:] in o or k[2:] in o) for o in keys):
+            drop.add(k)
+    return ({k: v for k, v in ca.items() if k not in drop},
+            {k: v for k, v in cb.items() if k not in drop})
+
+def dec_consts(dec, windowed=True):
     out = collections.Counter()
     N = len(dec)
     offs = [m.start() for m in re.finditer(rb'\x3e[\x00-\x05](.)', dec) if m.start() + 5 <= N]
-    for i, off in enumerate(offs):
-        end = offs[i + 1] if i + 1 < len(offs) else N
-        body = dec[off + 5:end]
-        if len(body) > 800 or off < 0x30:
-            continue
-        for m in re.finditer(rb'\x2e\x00\x00(..)', body, re.S):
+    ranges = []
+    if windowed:
+        for i, off in enumerate(offs):
+            end = offs[i + 1] if i + 1 < len(offs) else N
+            body = dec[off + 5:end]
+            if len(body) > 800 or off < 0x30:
+                continue
+            ranges.append((off + 5, end))
+    else:
+        ranges = [(0, N)]
+    for a, b in ranges:
+        for m in re.finditer(rb'\x2e\x00\x00(..)', dec[a:b], re.S):
             v = int.from_bytes(m.group(1), 'big')
             if 1000 <= v <= 99999:
-                i0 = m.start()
-                up, un = body[i0-4:i0], body[i0+4:i0+8]
+                i0 = a + m.start()
+                up, un = dec[i0-4:i0], dec[i0+4:i0+8]
                 if len(up) == 4 and up[1:3] == b'\x00\x00' and len(un) == 4 and un[1:3] == b'\x00\x00':
                     continue  # 分派表步进伪影
                 out[str(v)] += 1
@@ -114,8 +153,21 @@ def main():
                 outs = [x for x in os.listdir(td) if x.endswith('.dec')]
                 if outs:
                     rt_dec = open(os.path.join(td, outs[0]), 'rb').read()
-                    rt_s = mset_missing(ds, dec_strings(rt_dec))
-                    rt_c = mset_missing(dc, dec_consts(rt_dec))
+                    # RT 保真口径 = 【原始字节计数】，不用扫描器抽串做判据：
+                    #   扫描器有 0x3f 标记歧义（finditer 非重叠吞标记 / 滑动贪心吃假候选
+                    #   吞真标记），两侧扫描不对称就会造出假丢失。字面量"在不在"
+                    #   唯一诚实的判据是字节计数。扫描器只用来【定哪些字面量要看】。
+                    # 串：变长 `3f<len>` 标记有歧义（见上），用字节计数判"在不在"
+                    rt_s = {}
+                    for k, v in dec_strings(dec, windowed=False).items():
+                        d = v - rt_dec.count(k.encode('latin-1', 'replace'))
+                        if d > 0:
+                            rt_s[k] = d
+                    # 常量：定宽 `2e <u32BE>`，无变长歧义 → 直接两侧对称扫（更准）
+                    #   ⚠️ 不要用 ASCII 数字计数（'1000' 数的是含这四位的串，非常量）
+                    #   也不要用 2e 00 00 <u32>（多拼一个 00，6 字节永远匹配不上）
+                    rt_c = mset_missing(dec_consts(dec, windowed=False),
+                                        dec_consts(rt_dec, windowed=False))
                     rt = 'RT丢串%d丢常%d' % (sum(rt_s.values()), sum(rt_c.values()))
                 else:
                     rt = 'RT解包失败'
