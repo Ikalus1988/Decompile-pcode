@@ -735,12 +735,17 @@ def vn(tbl, idx):
             # 真名有效性：标识符合法、不撞符号表真名（KAREL 不分大小写）
             if _rn and re.match(r'^[A-Za-z_]\w*$', _rn) and _rn.upper() not in _TAKEN_UP:
                 _MAPPED_UP.add(_rn.upper())
+                _SEC_LOCALS.setdefault(_CUR_SEC, set()).add(_rn)
                 return _rn
         base = 'r%d_lc%d' % (_CUR_SEC, idx)
     else:
         base = 'v' + str(idx)
     if base.upper() in _TAKEN_UP:  # KAREL 不分大小写：回退名让位于真名（V37/v37 实证）
+        if tbl != 'v':
+            _SEC_LOCALS.setdefault(_CUR_SEC, set()).add('zz' + base)
         return 'zz' + base
+    if tbl != 'v':
+        _SEC_LOCALS.setdefault(_CUR_SEC, set()).add(base)
     return base
 
 str_vars = set()
@@ -753,6 +758,36 @@ par_vars = set()       # 参数合成名 pp<槽号hex>（2d/2f/17/a1/a2 四形�
 file_vars = set()      # FILE 型变量（OPEN FILE 首项）
 bool_vars = set()      # BOOLEAN 变量（std 形参 0x12 实证）
 bool_arr_vars = set()  # BOOLEAN 数组（DISCTRL_FORM INACT_ARRAY 5B desc 实证）
+
+# ---- 类型证据作用域（续17：ISV_VG lc2 合成名教训的真名版）----
+# name_map 真名 = 例程局部：同名局部在不同例程类型可以不同，证据按 (段,名) 键控，
+# 不进全局集（xyz_bkgd state_ : INTEGER 被别段 ELD/EST 元素访问证据毒成
+# ARRAY[64] OF REAL 实证）。程序级名、合成 v<n>、主程序段局部仍走全局集。
+_SEC_LOCALS = {}   # si -> set(例程局部名)（vn() 解析时登记）
+_SEC_T = {}        # (si, name) -> set(kind)
+_TSETS = {'s': str_vars, 'r': real_vars, 'a': arr_vars, 'sa': str_arr_vars,
+          'ba': bool_arr_vars, 'f': file_vars, 'b': bool_vars, 'fl': fld_vars}
+
+
+def _is_local(x):
+    # 主程序段（si >= len(routines)）的 ff 槽也走全局：历史路径=extras 程序级声明
+    return _CUR_SEC < len(routines) and str(x) in _SEC_LOCALS.get(_CUR_SEC, ())
+
+
+def _tmark(name, kind):
+    name = str(name)
+    if _is_local(name):
+        _SEC_T.setdefault((_CUR_SEC, name), set()).add(kind)
+    else:
+        _TSETS[kind].add(name)
+
+
+def _thas(name, kind):
+    name = str(name)
+    if _is_local(name):
+        return kind in _SEC_T.get((_CUR_SEC, name), ())
+    return name in _TSETS[kind]
+
 for lid, off, toks, is_empty, is_data in bodies:
     seq = toks
     for x, t in enumerate(seq):
@@ -760,10 +795,10 @@ for lid, off, toks, is_empty, is_data in bodies:
             pass
     for t in toks:
         if t[1] == 'VAR' and t[2][0] in ('STs', 'LDs'):
-            str_vars.add(vn(t[2][1], t[2][2]))
+            _tmark(vn(t[2][1], t[2][2]), 's')
     for x in range(len(toks) - 1):
         if toks[x][1] == 'STR' and toks[x+1][1] == 'VAR' and toks[x+1][2][0] in ('STi', 'STs'):
-            str_vars.add(vn(toks[x+1][2][1], toks[x+1][2][2]))
+            _tmark(vn(toks[x+1][2][1], toks[x+1][2][2]), 's')
 
 call_args, imp_args = {}, {}
 ARITY = {}
@@ -773,11 +808,11 @@ BUILTIN_SIG = {'POST_ERR': 'isii', 'SET_INT_REG': 'iii', 'SET_REAL_REG': 'iii',
 
 def is_str(x):
     # 单字面量判定要严：'a' + '' 两端带引号但不是字面量（旧判定把它当纯串整个吞成 0）
-    if re.match(r"^'(?:[^']|'')*'$", str(x)) or (x in str_vars) \
+    if re.match(r"^'(?:[^']|'')*'$", str(x)) or (_thas(x, 's')) \
             or str(x) == 'sv_s' or ((_CUR_SEC, str(x)) in _par_str):   # sv_s=串累加器，类型内建
         return True
     mb = re.match(r'^([\w.]+)(?:\[[^\]]*\])+$', str(x))   # 基名可含点、可多维（v15[v1][v13]）
-    return bool(mb and (mb.group(1) in str_arr_vars
+    return bool(mb and (_thas(mb.group(1), 'sa')
                         or (_CUR_SEC, mb.group(1)) in _par_strarr))
 
 def str_rhs(x):
@@ -790,9 +825,9 @@ def arg_kind(x):
     mb = re.match(r'^([\w.]+)(?:\[[^\]]*\])+$', xs)   # 基名可含点、可多维
     if mb:
         base = mb.group(1)
-        if base in str_arr_vars or (_CUR_SEC, base) in _par_strarr:
+        if _thas(base, 'sa') or (_CUR_SEC, base) in _par_strarr:
             return 's'
-        return 'r' if base in real_vars else 'i'
+        return 'r' if _thas(base, 'r') else 'i'
     # 形参实参：类型码权威（名字表签名），不走使用点推断
     if (_CUR_SEC, xs) in _par_str:
         return 's'
@@ -804,19 +839,19 @@ def arg_kind(x):
         return 'b'
     if (_CUR_SEC, xs) in _par_real:
         return 'r'
-    if xs in str_vars:
+    if _thas(xs, 's'):
         return 's'
-    if xs in str_arr_vars:
+    if _thas(xs, 'sa'):
         return 'as'
-    if xs in file_vars:
+    if _thas(xs, 'f'):
         return 'f'
-    if xs in bool_vars:
+    if _thas(xs, 'b'):
         return 'b'
-    if xs in arr_vars:
+    if _thas(xs, 'a'):
         return 'ai'
-    if xs in real_vars:
+    if _thas(xs, 'r'):
         return 'r'
-    if any(nm2 in real_vars for nm2 in re.findall(r'\b[A-Za-z_]\w*\b', xs)):
+    if any(_thas(nm2, 'r') for nm2 in re.findall(r'\b[A-Za-z_]\w*\b', xs)):
         return 'r'
     return 's' if is_str(x) else 'i'
 
@@ -902,7 +937,7 @@ def looks_real(x):
     xs = str(x)
     if re.search(r'\d+\.\d', xs) or re.search(r'[^/<>] / ', xs):
         return True
-    return any(nm in real_vars or nm == 'sv_r' or (_CUR_SEC, nm) in _par_real   # sv_r=实累加器，类型内建
+    return any(_thas(nm, 'r') or nm == 'sv_r' or (_CUR_SEC, nm) in _par_real   # sv_r=实累加器，类型内建
                for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
 
 def vtype(name):
@@ -919,21 +954,21 @@ def vtype(name):
             if _t0 == 0x00:
                 return {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1d: 'FILE'}.get(_t1, 'INTEGER')
             break
-    if name in file_vars:
+    if _thas(name, 'f'):
         return 'FILE'
-    if name in bool_vars:
+    if _thas(name, 'b'):
         return 'BOOLEAN'
-    if name in arr_vars:
-        if name in str_arr_vars:
+    if _thas(name, 'a'):
+        if _thas(name, 'sa'):
             return 'ARRAY[64] OF STRING[64]'
-        if name in bool_arr_vars:
+        if _thas(name, 'ba'):
             return 'ARRAY[64] OF BOOLEAN'
-        if name in str_vars:
+        if _thas(name, 's'):
             return 'STRING[64]'  # 幽灵数组项（无元素使用证据，标量串才是真用法，MM_MODULE v1 实证）
-        return 'ARRAY[64] OF REAL' if name in real_vars else 'ARRAY[64] OF INTEGER'
-    if name in str_vars:
+        return 'ARRAY[64] OF REAL' if _thas(name, 'r') else 'ARRAY[64] OF INTEGER'
+    if _thas(name, 's'):
         return 'STRING[64]'
-    if name in real_vars:
+    if _thas(name, 'r'):
         return 'REAL'
     return 'INTEGER'
 
@@ -1039,7 +1074,7 @@ def emit_assign(lines, lhs, rhs):
         lines.append('%s = %s' % (lhs, 'TRUE' if str(rhs) in ('1', 'TRUE') else 'FALSE'))
         return
     if boolish(rhs):
-        _t, _f = ('TRUE', 'FALSE') if str(lhs).split('[')[0] in bool_vars else ('1', '0')
+        _t, _f = ('TRUE', 'FALSE') if _thas(str(lhs).split('[')[0], 'b') else ('1', '0')
         lines.append('IF ' + rhs + ' THEN')
         lines.append('  ' + lhs + ' = ' + _t)
         lines.append('ELSE')
@@ -1081,12 +1116,12 @@ def eval_expr(toks, collect=False, pad=None):
                     lines.append('  ' + nm + ' = 0')
                     lines.append('ENDIF')
                 else:
-                    if nm in str_vars and not str_rhs(rhs):
+                    if _thas(nm, 's') and not str_rhs(rhs):
                         rhs = "''"
-                    elif nm not in str_vars and str_rhs(rhs):
-                        str_vars.add(nm)  # 串写入 → 目标即串型（旧版吞成 0 丢串，G2 实证）
+                    elif not _thas(nm, 's') and str_rhs(rhs):
+                        _tmark(nm, 's')  # 串写入 → 目标即串型（旧版吞成 0 丢串，G2 实证）
                     if looks_real(rhs):
-                        real_vars.add(nm)
+                        _tmark(nm, 'r')
                     emit_assign(lines, nm, rhs)
             else:
                 stack.append(nm)
@@ -1099,7 +1134,7 @@ def eval_expr(toks, collect=False, pad=None):
             else:
                 par_vars.add(val)             # 兜底 pp<hex>：模块级声明（旧口径）
                 if kind == 'PLDSTR':
-                    str_vars.add(val)
+                    _tmark(val, 's')
             stack.append(val)
         elif kind in ('PST', 'PSTSTR'):
             val = _pnm(val)
@@ -1113,11 +1148,11 @@ def eval_expr(toks, collect=False, pad=None):
             else:
                 par_vars.add(val)
                 if kind == 'PSTSTR' or str_rhs(rhs):
-                    str_vars.add(val)
-                elif val in str_vars:
+                    _tmark(val, 's')
+                elif _thas(val, 's'):
                     rhs = "''"
                 if looks_real(rhs):
-                    real_vars.add(val)
+                    _tmark(val, 'r')
             params.add(val)
             emit_assign(lines, val, rhs)
         elif kind in ('ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'ADDR', 'SUBR', 'MULR', 'DIVR',
@@ -1164,7 +1199,7 @@ def eval_expr(toks, collect=False, pad=None):
                 res = '(' + res + ')'
             if re.search(r'\d+\.\d', b1 + b2):
                 for nm2 in re.findall(r'\b(?:v|lc|p)\w+\b', b1 + b2):
-                    real_vars.add(nm2)
+                    _tmark(nm2, 'r')
             elif kind in ('AND', 'OR'):
                 def boolify(x):
                     if re.search(r'[=<>]', x) or x in ('TRUE', 'FALSE') or str(x).startswith(('UNINIT(', 'NOT (')):
@@ -1180,7 +1215,7 @@ def eval_expr(toks, collect=False, pad=None):
                 stack.append('(0 - ' + x + ')')  # KAREL 表达式里一元负号非法，统一 (0 - N)
         elif kind == 'NOT':
             a1 = stack.pop() if stack else '0'
-            if re.search(r'[=<>]', a1) or str(a1).startswith('UNINIT(') or a1 in bool_vars:
+            if re.search(r'[=<>]', a1) or str(a1).startswith('UNINIT(') or _thas(a1, 'b'):
                 stack.append('NOT (' + a1 + ')')
             else:
                 stack.append('(' + a1 + ' = 0)')
@@ -1224,12 +1259,12 @@ def eval_expr(toks, collect=False, pad=None):
                     if _sub:
                         nm2 = '%s[%s].%s' % (_bname, _idx, _sub)   # 基[i].字段
                         if kind == 'FLDSTR':
-                            str_vars.add(nm2)
+                            _tmark(nm2, 's')
                     else:
                         nm2 = '%s_f%02x[%s]' % (_bname, val, _idx)
-                        arr_vars.add('%s_f%02x' % (_bname, val))
+                        _tmark('%s_f%02x' % (_bname, val), 'a')
                         if kind == 'FLDSTR':
-                            str_arr_vars.add('%s_f%02x' % (_bname, val))
+                            _tmark('%s_f%02x' % (_bname, val), 'sa')
             elif re.match(r'^[A-Za-z_][\w.\[\]]*$', str(base)):
                 # 结构体字段名还原：类型表有真名就用 点路径（VGCONFIG_f6c → VGCONFIG.OFFSET_PT）
                 # ⚠️ base 可能是 'CURRES[pp00].OFFSET' 这种带下标+点的形式，
@@ -1253,9 +1288,9 @@ def eval_expr(toks, collect=False, pad=None):
                         #    塞进去会把当 FOR 索引用的字段推成 STRING（JLR SCHEDULE_IDX 实证回归）
                     else:
                         nm2 = '%s_f%02x' % (base, val)
-                        fld_vars.add(nm2)
+                        _tmark(nm2, 'fl')
                         if kind == 'FLDSTR':
-                            str_vars.add(nm2)
+                            _tmark(nm2, 's')
             else:
                 nm2 = base
             stack.append(nm2)
@@ -1268,22 +1303,22 @@ def eval_expr(toks, collect=False, pad=None):
             idx = stack.pop() if stack else '1'
             arr = stack.pop() if stack else vn('v', 1)
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
-                arr_vars.add(arr)
+                _tmark(arr, 'a')
             stack.append(str(arr) + '[' + idx + ']')
         elif kind == 'ELD':
             idx = stack.pop() if stack else '1'
             arr = stack.pop() if stack else vn('v', 1)
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
-                arr_vars.add(arr)
+                _tmark(arr, 'a')
             stack.append(str(arr) + '[' + idx + ']')
         elif kind == 'EST':
             idx = stack.pop() if stack else '1'
             arr = stack.pop() if stack else vn('v', 1)
             rhs = stack.pop() if stack else '0'
             if re.match(r'^[A-Za-z_]\w*$', str(arr)):
-                arr_vars.add(arr)
+                _tmark(arr, 'a')
                 if looks_real(rhs):
-                    real_vars.add(str(arr))
+                    _tmark(str(arr), 'r')
             emit_assign(lines, str(arr) + '[' + idx + ']', rhs)
         elif kind == 'STFLD':
             fld = stack.pop() if stack else vn('v', 1)
@@ -1298,18 +1333,18 @@ def eval_expr(toks, collect=False, pad=None):
             base_n = fs.split('[')[0]
             if str_rhs(rhs):
                 if '[' in fs and '.' not in fs:
-                    arr_vars.add(base_n)
-                    str_arr_vars.add(base_n)
+                    _tmark(base_n, 'a')
+                    _tmark(base_n, 'sa')
                 elif '.' not in fs:
-                    str_vars.add(fs)
+                    _tmark(fs, 's')
                 # 基[i].字段 / 基.字段（含点）：基是结构体，串性由 TYPE 块/作用域表决定，
                 # 不能标基（否则整个结构体数组被推成串数组 → 全部字段赋值被抹成 ''
                 #  DCPFAULTNUM = '' 实证）
-            elif fs in str_vars or ((_CUR_SEC, fs) in _par_str) \
-                    or (base_n in str_arr_vars and '.' not in fs):
+            elif _thas(fs, 's') or ((_CUR_SEC, fs) in _par_str) \
+                    or (_thas(base_n, 'sa') and '.' not in fs):
                 rhs = "''"
             if looks_real(rhs):
-                real_vars.add(base_n if '[' in fs else fs)
+                _tmark(base_n if '[' in fs else fs, 'r')
             emit_assign(lines, fs, rhs)
         elif kind == 'ARG':
             stack.append('<ARG>')
@@ -1395,20 +1430,20 @@ def eval_expr(toks, collect=False, pad=None):
                 if k == 's' and not str_rhs(arg):
                     if re.match(r'^[A-Za-z_]\w*$', str(arg)) and not _is_par(arg) \
                             and str(arg) not in ('TRUE', 'FALSE') \
-                            and str(arg) not in arr_vars and str(arg) not in file_vars \
-                            and str(arg) not in real_vars:
+                            and not _thas(str(arg), 'a') and not _thas(str(arg), 'f') \
+                            and not _thas(str(arg), 'r'):
                         # 串形参反推实参类型（签名权威）：旧分支一刀切抹成 ''，真名还原后
                         # 错型实参无法自愈（YAMAZUMI SUB_STR(TimeDate,1,2) 实证：TIMEDATE 真型
                         # STRING[18] 被推成 INTEGER，旧代码被通配名 fn21 掩盖）。形参类型为准，
                         # 标串保留；已有强证据（数组/文件/REAL）不翻案（弱证据不盖强证据）。
-                        str_vars.add(str(arg))
+                        _tmark(str(arg), 's')
                     else:
                         arg = "''"   # 复合/未知表达式仍抹（保编译，is_str 认不出 (a+'b')）
-                elif k == 'i' and re.match(r'^[A-Za-z_]\w*$', str(arg)) and str(arg) in real_vars:
+                elif k == 'i' and re.match(r'^[A-Za-z_]\w*$', str(arg)) and _thas(str(arg), 'r'):
                     dropped.append(orig); arg = '0'  # REAL 实参入 INTEGER 形参弃参留痕
                 elif k == 'i' and (str_rhs(arg) or re.search(r'[=<>]', arg)
                                    or (re.match(r'^[A-Za-z_]\w*$', str(arg))
-                                       and (str(arg) in arr_vars or str(arg) in file_vars))):
+                                       and (_thas(str(arg), 'a') or _thas(str(arg), 'f')))):
                     arg = '0'
                 elif k == 'pos' and str(arg) != 'sv_p':
                     dropped.append(orig); arg = 'sv_p'
@@ -1419,30 +1454,30 @@ def eval_expr(toks, collect=False, pad=None):
                     # 整组实参（裸名）保留并反推 ARRAY OF REAL；元素/字面量/表达式替换 sv_a 留痕
                     _a = str(arg)
                     if re.match(r'^[A-Za-z_]\w*$', _a) and not _is_par(_a):
-                        arr_vars.add(_a); real_vars.add(_a)
+                        _tmark(_a, 'a'); _tmark(_a, 'r')
                     else:
                         dropped.append(orig); arg = 'sv_a'
-                elif k == 'r' and str(arg) in str_vars:
+                elif k == 'r' and _thas(str(arg), 's'):
                     dropped.append(orig); arg = '0.0'
                 elif k in ('r', 's', 'f') and re.match(r'^[A-Za-z_]\w*$', str(arg)) \
-                        and not _is_par(arg) and str(arg) not in arr_vars:
+                        and not _is_par(arg) and not _thas(str(arg), 'a'):
                     # std 形参类型反推实参变量类型（GET_REG 第4参 REAL 实证）
                     # 形参名跳过：类型码权威（_PAR_T），塞全局集会跨例程污染；
                     # 数组名跳过：整组传标量形参是错渲染，不该反向污染数组元素类型
                     # （MM_MODULE v80 被标 REAL → ARRAY OF REAL 撞 fn26 ARRAY OF INTEGER）
                     if k == 'r':
-                        real_vars.add(str(arg))
+                        _tmark(str(arg), 'r')
                     elif k == 's':
-                        str_vars.add(str(arg))
+                        _tmark(str(arg), 's')
                     else:
-                        file_vars.add(str(arg))
+                        _tmark(str(arg), 'f')
                 elif k in ('ai', 'as', 'ab') and re.match(r'^[A-Za-z_]\w*$', str(arg)) \
                         and not _is_par(arg):
-                    arr_vars.add(str(arg))
+                    _tmark(str(arg), 'a')
                     if k == 'as':
-                        str_arr_vars.add(str(arg))
+                        _tmark(str(arg), 'sa')
                     elif k == 'ab':
-                        bool_arr_vars.add(str(arg))
+                        _tmark(str(arg), 'ba')
                 elif k == 'b' and str(arg) not in ('TRUE', 'FALSE') and not re.search(r'[<>]', str(arg)) and not str(arg).startswith('UNINIT(') \
                         and not str_rhs(arg):
                     # BOOLEAN 形参：整型实参 (x <> 0) 包装（KAREL 双向都无隐式强转）
@@ -1543,7 +1578,7 @@ def eval_expr(toks, collect=False, pad=None):
             items = [str(x) for x in stack]
             if 1 <= len(items) <= 6 and re.match(r'^[A-Za-z_]\w*$', items[0]):
                 stack = []
-                file_vars.add(items[0])
+                _tmark(items[0], 'f')
                 lines.append('OPEN FILE ' + items[0] + '(' + ', '.join(items[1:]) + ')')
             else:
                 stack.append('0')
@@ -2178,7 +2213,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 continue
             if 'JZ' in kinds:
                 cond = expr if expr and expr != '0' else 'TRUE'
-                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') and cond not in bool_vars:
+                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') and not _thas(cond, 'b'):
                     cond = '(' + cond + ' <> 0)'
                 if close_of.get(bi, (None, ''))[1] == 'while':
                     _wline(f, 'WHILE (%s) DO' % cond)   # 长条件按顶层运算符续行（256 上限）
