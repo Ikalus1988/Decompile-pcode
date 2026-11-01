@@ -299,6 +299,113 @@ def _parse_symmap(dec, nsyms):
     return out
 
 _SYMS = _parse_symtable(dec)
+
+# ---- 类型表 + 结构体字段名还原（probe_symenc 落锤定编码）----
+# 符号表条目 = <scope> NAME \0 <flags:1> <type:2> [<dim:u16> if type[0]==0x20]
+# 类型表条目 = TYPENAME \0 <字段数:1>，字段 = FIELDNAME \0 03 <type:2> [<dim:u16>]
+# type: 00 10=INT 00 11=REAL 00 12=BOOL 1f<len>=STRING 20<el><dim>=ARRAY
+#       01 02=POSITION(36B)  11 <idx>=结构体引用（idx=定义顺序）
+# 用途：把合成名 基_f<偏移> 还原成 基.字段名（ISV_VG 实证 11/11 偏移吻合）
+def _parse_types(dec):
+    types, i = [], 0
+    while i < len(dec) - 2:
+        m = re.match(rb'([A-Za-z_][A-Za-z0-9_]*)\x00([\x01-\x20])', dec[i:])
+        if not m:
+            i += 1
+            continue
+        tname, nfields = m.group(1).decode(), m.group(2)[0]
+        j, fields, ok = i + m.end(), [], True
+        for _ in range(nfields):
+            m2 = re.match(rb'([A-Za-z_][A-Za-z0-9_]*)\x00\x03([\x00-\xff]{2})', dec[j:])
+            if not m2:
+                ok = False
+                break
+            fname = m2.group(1).decode()
+            t0, t1 = m2.group(2)[0], m2.group(2)[1]
+            j += m2.end()
+            dim = None
+            if t0 == 0x20 and j + 2 <= len(dec):
+                dim = int.from_bytes(dec[j:j + 2], 'big')
+                j += 2
+            fields.append((fname, t0, t1, dim))
+        if ok and fields:
+            types.append((tname, fields))
+            i = j
+        else:
+            i += 1
+    return types
+
+
+def _tsize(t0, t1, dim, types, depth=0):
+    if depth > 6:
+        return 4
+    if (t0, t1) in ((0x01, 0x02), (0x01, 0x03)):
+        return 36                      # POSITION / JOINTPOS
+    if t0 == 0x1f:
+        return 4 + (t1 or 1)
+    if t0 == 0x20:
+        return 4 + (dim or 1) * 4
+    if t0 == 0x11 and t1 is not None and t1 < len(types):
+        return sum(_tsize(f[1], f[2], f[3], types, depth + 1) for f in types[t1][1])
+    return 4
+
+
+def _fld_offsets(types, tidx, base=0, path='', out=None, depth=0):
+    if out is None:
+        out = {}
+    if depth > 6 or tidx >= len(types):
+        return out
+    off = base
+    for fname, t0, t1, dim in types[tidx][1]:
+        full = (path + '.' + fname) if path else fname
+        out[off] = full
+        if t0 == 0x11 and t1 is not None and t1 < len(types):
+            _fld_offsets(types, t1, off, full, out, depth + 1)
+        off += _tsize(t0, t1, dim, types, depth + 1)
+    return out
+
+
+_P2K_FIELDS = os.environ.get('P2K_FIELDS', '0') == '1'   # 字段名还原开关
+_TYPES = _parse_types(dec) if _P2K_FIELDS else []
+_TYPE_DECLS = [(t, f) for t, f in _TYPES]          # 供输出 TYPE 块
+_FIELD_BY_PATH = {}      # '基' 或 '基.DDD' → {偏移: 子字段名}（FLD 增量合成用）
+_STRUCT_TYPE = {}        # 变量名 → 结构体类型名（声明用）
+
+
+def _build_fldmap(types, tidx, path, out, depth=0):
+    if depth > 6 or tidx >= len(types):
+        return
+    out[path] = {}
+    off = 0
+    for fname, t0, t1, dim in types[tidx][1]:
+        out[path][off] = fname
+        if t0 == 0x11 and t1 is not None and t1 < len(types):
+            _build_fldmap(types, t1, path + '.' + fname, out, depth + 1)
+        elif (t0, t1) in ((0x01, 0x02), (0x01, 0x03)):
+            # POSITION/JOINTPOS 内建类型的分量（实测 ISV_VG：+8..+28 = X/Y/Z/W/P/R）
+            out[path + '.' + fname] = {8: 'X', 12: 'Y', 16: 'Z', 20: 'W', 24: 'P', 28: 'R'}
+        off += _tsize(t0, t1, dim, types, depth + 1)
+
+
+if _TYPES:
+    _g, _o = dec.find(b'\xff$GROUP\x00\xfd'), dec.find(b'$ORNT_MROT')
+    if _g >= 0 and _o >= 0:
+        for _m in re.finditer(rb'([A-Za-z_][A-Za-z0-9_]{1,})\x00', dec[_o:_g]):
+            _vnm = _m.group(1).decode()
+            _k = _o + _m.end()
+            if _k + 3 > _g:
+                break
+            _t0, _t1 = dec[_k + 1], dec[_k + 2]
+            if _t0 in (0x11, 0x31) and _t1 < len(_TYPES):
+                # 11 <idx>=结构体引用；31 <idx>=结构体数组引用（元素类型=idx）
+                # 两者字段映射同源，数组元素访问 基[i].字段 也走同一张表
+                _build_fldmap(_TYPES, _t1, _vnm, _FIELD_BY_PATH)
+                if _t0 == 0x11:
+                    _STRUCT_TYPE[_vnm] = _TYPES[_t1][0]
+                else:
+                    # 0x31 = 结构体数组：必须按元素类型声明，否则 CURRES[i].字段 报
+                    # "Id type is not a STRUCTURE"（ISV_VG 实证 95 错）
+                    _STRUCT_TYPE[_vnm] = 'ARRAY[64] OF %s' % _TYPES[_t1][0]
 _SYMMAP = _parse_symmap(dec, len(_SYMS))
 # 槽号 k(1起) → 符号名（映射表=槽→声明序）
 SHV_NAMES, SHV_TYPE = {}, {}
@@ -363,10 +470,21 @@ for bi, (lid, off, toks, is_empty, is_data) in enumerate(bodies):
     if not is_data:
         sec_stmts.setdefault(section_of(off), []).append(bi)
 
+_CUR_SEC = 0          # 当前例程段号（局部名作用域用）
+_LOCALS = set()       # 已用到的 (段号, 局部槽号)
+
+
 def vn(tbl, idx):
     if tbl == 'v' and idx in SHV_NAMES:
         return SHV_NAMES[idx]
-    base = ('v' if tbl == 'v' else 'lc') + str(idx)
+    if tbl != 'v':
+        # 例程局部槽位必须带段号：不同例程用同一槽位存不同类型
+        # （ISV_VG 实证：lc2 在 ISV2_GIN 是标量，却被全局推成 ARRAY[64] OF REAL，
+        #  FOR 循环索引报 "must be an INTEGER"）→ r<段>_lc<槽> 各例程独立作用域
+        _LOCALS.add((_CUR_SEC, idx))
+        base = 'r%d_lc%d' % (_CUR_SEC, idx)
+    else:
+        base = 'v' + str(idx)
     if base.upper() in _TAKEN_UP:  # KAREL 不分大小写：回退名让位于真名（V37/v37 实证）
         return 'zz' + base
     return base
@@ -469,6 +587,8 @@ def looks_real(x):
     return any(nm in real_vars for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
 
 def vtype(name):
+    if name in _STRUCT_TYPE:
+        return _STRUCT_TYPE[name]     # 结构体变量按真类型名声明（类型表已解析）
     for _slot, _nm in ():  # 符号表类型覆盖已禁用（连带类型错误 > 收益，仅保留真名）
         if _nm == name and _slot in SHV_TYPE:
             _t0, _t1, _dim = SHV_TYPE[_slot]
@@ -501,6 +621,53 @@ def vtype(name):
 
 def _is_bool_name(nm):
     return False  # 纯名字模式：符号表类型不参与渲染判定（与 INTEGER 声明一致）
+
+
+# 只在【顶层逻辑/连接】运算符后断行。不能包含 '='/'<'/'>' 等比较符：
+# 它们出现在 (A = B) 子表达式内部，断在其后会产出 `(A = ` / `B)` 这种非法续行
+# （ISV_VG 实证：断在 '=' 后 → 行尾 ')'、下一行 'AND (...' → KTRANS "THEN expected"）
+_WRAP_OPS = (' AND ', ' OR ')   # 只用探针验证过的断点（probe_linelen：AND 结尾续行 OK）
+
+
+def _wrap_stmt(s, limit=250):
+    """KTRANS 源码行长上限 256（probe_linelen 实测 247 OK / 259 FAIL）。
+    KAREL 只支持【运算符在行尾】的续行（实测：`AND` 结尾续行 OK、`AND` 开头续行 FAIL）。
+    超长语句按运算符后断行；找不到安全断点则原样输出（宁可超长也不破坏语义）。"""
+    if len(s) <= limit:
+        return [s]
+    cuts, i, inq = [], 0, False
+    while i < len(s):
+        c = s[i]
+        if c == "'":
+            inq = not inq
+        elif not inq:
+            for op in _WRAP_OPS:
+                if s.startswith(op, i):
+                    cuts.append(i + len(op))
+                    break
+        i += 1
+    if not cuts:
+        return [s]
+    out, start, last = [], 0, 0
+    # ⚠️ 行尾也要当边界：只检查运算符位置会漏掉"最后一段超长"
+    #   （实证：断点都在 246<250，但整行 295 → 一段都没拆，KTRANS 超 256 上限）
+    for c in cuts + [len(s)]:
+        if c - start > limit:
+            if last > start:
+                out.append(s[start:last])
+                start = last
+            else:                      # 单段就超长，硬切（无安全断点）
+                out.append(s[start:start + limit])
+                start += limit
+        last = c
+    if start < len(s):
+        out.append(s[start:])
+    return out
+
+
+def _wline(f, line, indent='  '):
+    for p in _wrap_stmt(indent + line):
+        f.write(p + '\n')
 
 
 def _emit_residue(f, toks, written, lid):
@@ -683,17 +850,35 @@ def eval_expr(toks, collect=False, pad=None):
             if not stack:
                 continue  # WRITE 设备选择符（ad 后 32 00 01），无基址可弹
             base = stack.pop()
-            mb = re.match(r'^(\w+)\[([^\]]*\])$', str(base))
+            mb = re.match(r'^(\w+)\[([^\]]*)\]?$', str(base))
             if mb:
-                nm2 = '%s_f%02x[%s' % (mb.group(1), val, mb.group(2))
-                arr_vars.add('%s_f%02x' % (mb.group(1), val))
-                if kind == 'FLDSTR':
-                    str_arr_vars.add('%s_f%02x' % (mb.group(1), val))
-            elif re.match(r'^[A-Za-z_]\w*$', str(base)):
-                nm2 = '%s_f%02x' % (base, val)
-                fld_vars.add(nm2)
-                if kind == 'FLDSTR':
-                    str_vars.add(nm2)
+                _bname, _idx = mb.group(1), mb.group(2)
+                _sub = _FIELD_BY_PATH.get(_bname, {}).get(val)
+                if _sub:
+                    nm2 = '%s[%s].%s' % (_bname, _idx, _sub)   # 基[i].字段
+                    if kind == 'FLDSTR':
+                        str_vars.add(nm2)
+                else:
+                    nm2 = '%s_f%02x[%s]' % (_bname, val, _idx)
+                    arr_vars.add('%s_f%02x' % (_bname, val))
+                    if kind == 'FLDSTR':
+                        str_arr_vars.add('%s_f%02x' % (_bname, val))
+            elif re.match(r'^[A-Za-z_][\w.\[\]]*$', str(base)):
+                # 结构体字段名还原：类型表有真名就用 点路径（VGCONFIG_f6c → VGCONFIG.OFFSET_PT）
+                # ⚠️ base 可能是 'CURRES[pp00].OFFSET' 这种带下标+点的形式，
+                #    查表前要剥掉 [..] 得到 'CURRES.OFFSET'（否则二级字段丢失，
+                #    POSITION 被当标量 → "Data type of Id is incompatible" ×80）
+                _key = re.sub(r'\[[^\]]*\]', '', str(base))
+                _sub = _FIELD_BY_PATH.get(_key, {}).get(val)
+                if _sub:
+                    nm2 = str(base) + '.' + _sub       # 点路径=字段访问，无需单独声明
+                    # ⚠️ 不要往 str_vars 塞：类型已由 TYPE 块决定，
+                    #    塞进去会把当 FOR 索引用的字段推成 STRING（JLR SCHEDULE_IDX 实证回归）
+                else:
+                    nm2 = '%s_f%02x' % (base, val)
+                    fld_vars.add(nm2)
+                    if kind == 'FLDSTR':
+                        str_vars.add(nm2)
             else:
                 nm2 = base
             stack.append(nm2)
@@ -925,6 +1110,7 @@ def eval_expr(toks, collect=False, pad=None):
 # pass 1: 收集（跑两轮：字段/元素类型沿赋值链传播）
 for _pass in range(2):
     for si, bis in sec_stmts.items():
+        _CUR_SEC = si
         for bi in bis:
             lid, off, toks, is_empty, is_data = bodies[bi]
             eval_expr(toks, collect=True)
@@ -1075,16 +1261,66 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     f.write('PROGRAM ' + name + '\n')
     f.write("%%COMMENT = '%s'\n" % (_hdr_comment.replace("'", "''")))
     f.write('%NOBUSYLAMP\n%NOLOCKGROUP\n%NOPAUSE = COMMAND + TPENABLE + ERROR\n%NOABORT = ERROR + COMMAND\n')
+    # TYPE 块：结构体类型真名+真字段名（probe_symenc 定的编码，字段名不再退化成 _f<偏移>）
+    if _TYPE_DECLS:
+        f.write('TYPE\n')
+        # POSITION/JOINTPOS 是内建类型、无命名字段，.X 访问非法。
+        # 渲染成同形结构体（X/Y/Z/W/P/R），使字段访问合法且语义等价
+        f.write('\tT_POS = STRUCTURE\n\tX: INTEGER\n\tY: INTEGER\n\tZ: INTEGER\n'
+                '\tW: INTEGER\n\tP: INTEGER\n\tR: INTEGER\n\tENDSTRUCTURE\n')
+        for _tn, _fs in _TYPE_DECLS:
+            f.write('\t%s = STRUCTURE\n' % _tn)
+            for _fn, _t0, _t1, _dim in _fs:
+                if _t0 == 0x1f:
+                    _tt = 'STRING[%d]' % max(_t1, 1)
+                elif _t0 == 0x20:
+                    _tt = 'ARRAY[%d] OF %s' % (max(_dim or 1, 1),
+                                               {0x10: 'INTEGER', 0x11: 'REAL',
+                                                0x12: 'BOOLEAN', 0x1f: 'STRING'}.get(_t1, 'INTEGER'))
+                elif (_t0, _t1) in ((0x01, 0x02), (0x01, 0x03)):
+                    _tt = 'T_POS'      # 用同形结构体替代内建 POSITION，.X 等字段访问才合法
+                elif _t0 == 0x11 and _t1 < len(_TYPE_DECLS):
+                    _tt = _TYPE_DECLS[_t1][0]
+                else:
+                    _tt = {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN',
+                           0x1d: 'FILE'}.get(_t0, 'INTEGER')
+                f.write('\t%s: %s\n' % (_fn, _tt))
+            f.write('\tENDSTRUCTURE\n')
     f.write('VAR\n')
     for nm in sorted(io_vars):
         f.write('  %s : ARRAY[512] OF INTEGER\n' % nm)
     for n in range(1, n_v):
         f.write('  %s : %s\n' % (vn('v', n), vtype(vn('v', n))))
-    for n in range(max_lc):
-        f.write('  %s : %s\n' % (vn('l', n), vtype(vn('l', n))))
+    # 符号表里有、但代码零引用的变量（声明未用）也要补上——保真要求源码声明全在。
+    # ⚠️ 要从 _SYMS 取，不能只用 SHV_NAMES：声明未用的变量不占槽位、进不了槽映射
+    #    （ISV_VG 实证：_SYMS 14 名含 TIMER1，SHV_NAMES 只 13 个，TIMER1 被漏）
+    # 未引用者无代码证据，类型直接取符号表（t0/t1/dim），比 vtype() 的默认 INTEGER 准
+    def _symtype(t0, t1, dim):
+        if t0 == 0x1f:
+            return 'STRING[%d]' % max(t1, 1)
+        if t0 == 0x20:
+            _el = {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1f: 'STRING'}.get(t1, 'INTEGER')
+            return 'ARRAY[%d] OF %s' % (max(dim or 1, 1), _el)
+        if (t0 >> 4) >= 2:
+            return 'ARRAY[64] OF INTEGER'
+        return {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1d: 'FILE'}.get(t0, 'INTEGER') \
+            if t0 in (0x10, 0x11, 0x12, 0x1d) else \
+            {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1d: 'FILE'}.get(t1, 'INTEGER')
+    # ⚠️ KAREL 不分大小写：比对必须统一大写，否则 'V8' 会绕过 'v8' 的已声明检查 → 重复声明
+    _emitted = {vn('v', n).upper() for n in range(1, n_v)}
+    for _s in _SYMS:
+        _nm = _s[0]
+        if _nm.upper() in _emitted or _nm.upper() in ('SV_I', 'SV_S'):
+            continue
+        _emitted.add(_nm.upper())
+        f.write('  %s : %s\n' % (_nm, _symtype(_s[1], _s[2], _s[3])))
+    # 例程局部槽位不再进程序级 VAR：改由各例程自己的 VAR 块声明（作用域独立，
+    # 避免不同例程同槽位不同类型互相污染——ISV_VG lc2 实证）
     # 字段合成名/派生数组名（v<n>_f<off> 等）补声明
     def _covered(nm):
         nm2 = nm[2:] if nm.startswith('zz') else nm
+        if re.match(r'^r\d+_lc\d+$', nm2):
+            return True   # 例程局部已由各例程 VAR 块声明，勿重复
         m = re.match(r'^v(\d+)$', nm2)
         if m:
             return int(m.group(1)) < n_v
@@ -1099,6 +1335,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         f.write('  %s : %s\n' % (nm, vtype(nm)))
     main_decls = set()
     for si2, bis2 in sec_stmts.items():
+        _CUR_SEC = si2
         if si2 >= len(routines):
             for bi2 in bis2:
                 _lid, _off, _toks, _ie, _id = bodies[bi2]
@@ -1113,6 +1350,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     # 野名字（RTN*/FN* 等动态槽位）自动补外部声明
     used = set()
     for si2, bis2 in sec_stmts.items():
+        _CUR_SEC = si2
         for bi2 in bis2:
             lid, off, toks, is_empty, is_data = bodies[bi2]
             ls, _e, _p, _s = eval_expr(toks)
@@ -1189,6 +1427,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     for si in _order:
         if si not in sec_stmts:
             continue  # 拓扑依赖到的无语句例程段（KeyError 防护）
+        _CUR_SEC = si
         bis = sec_stmts[si]
         _rev = {b2: b1 for b1, b2 in zip(bis, bis[1:])}
         if si < len(routines):
@@ -1226,16 +1465,19 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     else_lines.add(b2)
                     seen = True
         declp = set()
+        _locs = set()
         for bi in bis:
             lid, off, toks, is_empty, is_data = bodies[bi]
             _, _, p, _s = eval_expr(toks)
             declp |= p
-        if declp and si < len(routines):
-            declp2 = [d for d in sorted(declp) if not re.match(r'^pp[0-9a-f]{2}$', d)]
-            if declp2:
-                f.write('VAR\n')
-                for d in declp2:
-                    f.write('  %s : INTEGER\n' % d)
+            for _t in toks:
+                if _t[1] == 'VAR' and _t[2][1] == 'l':
+                    _locs.add(vn('l', _t[2][2]))   # 例程局部 → 各例程 VAR 块独立声明
+        declp2 = [d for d in sorted(declp) if not re.match(r'^pp[0-9a-f]{2}$', d)] + sorted(_locs)
+        if declp2 and si < len(routines):
+            f.write('VAR\n')
+            for d in declp2:
+                f.write('  %s : %s\n' % (d, vtype(d)))
         f.write('BEGIN\n')
         _sel_open = False
         open_blocks = []          # 段内块平衡栈: 'if'/'while'/'for'
@@ -1259,7 +1501,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     if _seg:
                         _ls, _ex, _pp, _st = eval_expr(_seg)
                         for _l in _ls:
-                            f.write('  ' + _l + '\n')
+                            _wline(f, _l)
                             _seg_written.append(_l)
                         if _ex and _ex != '0':
                             _last_expr = _ex
@@ -1317,7 +1559,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     else:
                         rest.append(l)
                 for l in rest:
-                    f.write('  ' + l + '\n')
+                    _wline(f, l)
                 f.write('  FOR %s = %s TO 3 DO\n' % (forvar, init))
                 open_blocks.append('for')
                 continue
@@ -1338,10 +1580,10 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') and cond not in bool_vars:
                     cond = '(' + cond + ' <> 0)'
                 if close_of.get(bi, (None, ''))[1] == 'while':
-                    f.write('  WHILE (%s) DO\n' % cond)
+                    _wline(f, 'WHILE (%s) DO' % cond)   # 长条件按顶层运算符续行（256 上限）
                     open_blocks.append('while')
                 else:
-                    f.write('  IF (%s) THEN\n' % cond)
+                    _wline(f, 'IF (%s) THEN' % cond)
                     open_blocks.append('if')
                 continue
             if 'LOOPBACK' in kinds:
@@ -1353,7 +1595,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 f.write('  RETURN(0)\n' if si < len(routines) else '  RETURN\n')
                 continue
             for l in cleaned:
-                f.write('  ' + l + '\n')
+                _wline(f, l)
             _stray = [str(x) for x in stk if str(x) != '0']
             if _stray:
                 f.write('  -- stmt%d stray %s' % (lid, ' | '.join(_stray)) + chr(10))
