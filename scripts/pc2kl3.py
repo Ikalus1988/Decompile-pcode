@@ -30,17 +30,18 @@ def scan(seg, base):
                     out.append((base + i, 'STR', s.decode(), 2 + ln)); i += 2 + ln; continue
         if b == 0x2e and i + 4 < len(seg):
             out.append((base + i, 'INT', int.from_bytes(seg[i+1:i+5], 'big'), 5)); i += 5; continue
-        # 参数族（PROBE5 实证）：17/74=引用 2d=读 2f=写整 a2=写串 a1=读串；槽号=i32BE（负小数）
+        # 参数族（PROBE5 + 探针 T_PARAM/T_PARAM2 落锤）：17/74=引用 2d=读 2f=写整 a2=写串 a1=读串
+        # 编码 = op ff <i32BE 槽号>。槽号规律（27 组 0 矛盾）：形参【逆声明序】从 0 向下分配，
+        # STRING 形参占 2 槽（r_ss(x,y:STRING) → x=-3 y=-1），引用编码=该形参区域底部槽。
+        # token val = 槽号 int；发射时按名字表形参签名解析成 p<序号>，无签名兜底 pp<hex>。
+        if b in (0x17, 0x74, 0x2d, 0x2f, 0xa1, 0xa2) and i + 5 < len(seg) and seg[i + 1] == 0xff:
+            _slot = int.from_bytes(seg[i + 2:i + 6], 'big', signed=True)
+            if -64 <= _slot <= 0:
+                _kk = {0x17: 'PREF', 0x74: 'PREF', 0x2d: 'PLD', 0x2f: 'PST',
+                       0xa1: 'PLDSTR', 0xa2: 'PSTSTR'}[b]
+                out.append((base + i, _kk, _slot, 6)); i += 6; continue
         if b in (0x17, 0x74) and i + 5 < len(seg):
             out.append((base + i, 'PREF', 'pp' + seg[i+1:i+6].hex()[-2:], 6)); i += 6; continue
-        if b == 0x2d and i + 5 < len(seg) and seg[i + 1] == 0xff:
-            out.append((base + i, 'PLD', 'pp' + seg[i+2:i+6].hex()[-2:], 6)); i += 6; continue
-        if b == 0x2f and i + 5 < len(seg) and seg[i + 1] == 0xff:
-            out.append((base + i, 'PST', 'pp' + seg[i+2:i+6].hex()[-2:], 6)); i += 6; continue
-        if b == 0xa1 and i + 5 < len(seg) and seg[i + 1] == 0xff:
-            out.append((base + i, 'PLDSTR', 'pp' + seg[i+2:i+6].hex()[-2:], 6)); i += 6; continue
-        if b == 0xa2 and i + 5 < len(seg) and seg[i + 1] == 0xff:
-            out.append((base + i, 'PSTSTR', 'pp' + seg[i+2:i+6].hex()[-2:], 6)); i += 6; continue
         if b == 0x32 and i + 2 < len(seg) and seg[i + 1] == 0x00:
             # 32 00 <偏移> [5E]：5E=串字段访问第4字节（串变长，寻址比整型字段多1字节）。
             # 罗塞塔实证 dcpfault_mh: `DCPPLCText = RobotName + ',Tool-' + ToolID + ',' +
@@ -127,9 +128,11 @@ def _stdlib_sigs():
     def _cls(bs):
         t = bs[:2]
         if t[0] in (0x20, 0x3f):
-            # 数组 desc 5B：20 <元素型> 00 00 00 / 3f 通配（必须先于元素型判定）
+            # 数组 desc 5B：20 <元素型> 00 00 00 / 3f <串长> <数>=ARRAY OF STRING
+            # （类型表 `3f c8 00 06` ⟷ ARRAY[6] OF STRING[200] 落锤——旧映射 'ag'=通配 是错的，
+            #  DISCTRL_FORM VALUE_ARRAY 实证：'ag'→'ARRAY OF INTEGER' 与 KTRANS 内建签名相撞）
             if t[0] == 0x3f:
-                return 'ag'
+                return 'as'
             if len(bs) > 1 and bs[1] == 0x1f:
                 return 'as'
             if len(bs) > 1 and bs[1] == 0x12:
@@ -209,6 +212,7 @@ STD_SIGS['GET_JPOS_REG'] = ('jpos', ['i', 'i'], 2)
 
 _NAME_ANCHOR = -1
 routines, imports, call_names = [], {}, {}
+import_ptypes = {}     # 导入例程形参类型码（名字表 desc 权威）
 # 名字表锚点：通用 = <单字母前缀><程序名>\0（'VMI0' 只是 V 前缀撞名特例，123/125 模块踩空）
 _prog = dec[4:20].split(b'\x00')[0]
 _m0 = re.search(rb'\x00([ -~]{2,})\x00', dec[4:80])
@@ -229,9 +233,22 @@ if i >= 0:
             continue
         desc = seg[off + len(nm.encode()) + 1:]
         if desc[:1] == b'\x00' and len(desc) >= 6 and desc[1:3] != b'\xff\xff':
-            routines.append({'name': nm, 'entry': int.from_bytes(desc[1:3], 'big'), 'argc': desc[5] if desc[5] <= 24 else 0, 'ei': ei})
+            # 本地例程 desc = 00 <entry u16> <ret u16> <argc u8> <形参类型 2B×argc>
+            # 形参类型码同符号表：00 10=INT 00 11=REAL 00 12=BOOL 00 1d=FILE 1f<len>=STRING
+            #                    11 <idx>=结构体引用（idx=类型表定义序）——T_PARAM 探针落锤
+            _ac = desc[5] if desc[5] <= 24 else 0
+            _pt = [(desc[6 + 2 * k], desc[7 + 2 * k]) for k in range(_ac)
+                   if 8 + 2 * k <= len(desc)]
+            routines.append({'name': nm, 'entry': int.from_bytes(desc[1:3], 'big'),
+                             'ret': int.from_bytes(desc[3:5], 'big'), 'argc': _ac,
+                             'ptypes': _pt, 'ei': ei})
         elif re.match(rb'[\x01-\x0f]\xff\xff', desc):
+            # 导入 desc = <库号> ff ff <ret u16> <argc u8> <形参类型 2B×argc>
             imports[nm] = desc[3] if len(desc) > 3 else 0x10
+            _ac2 = desc[5] if len(desc) > 5 and desc[5] <= 24 else 0
+            _pt2 = [(desc[6 + 2 * k], desc[7 + 2 * k]) for k in range(_ac2)
+                    if 8 + 2 * k <= len(desc)]
+            import_ptypes[nm] = _pt2
 _prog_s = _prog.decode(errors='replace').upper()
 routines = [r for r in routines
             if not (r['name'].upper() == _prog_s
@@ -324,7 +341,10 @@ def _parse_types(dec):
             t0, t1 = m2.group(2)[0], m2.group(2)[1]
             j += m2.end()
             dim = None
-            if t0 == 0x20 and j + 2 <= len(dec):
+            # 维度字节：t0 高半字节 >= 2 带 u16 维度（与符号表同规则）。
+            # 0x3f <串长> <u16 数> = ARRAY[n] OF STRING[len]（XYZ_MSG_T MSG_ARRAY_
+            # `3f c8 00 06` ⟷ ARRAY[6] OF STRING[200]，'mlen=quot*200+rema' 对拍）
+            if (t0 >> 4) >= 2 and j + 2 <= len(dec):
                 dim = int.from_bytes(dec[j:j + 2], 'big')
                 j += 2
             fields.append((fname, t0, t1, dim))
@@ -345,6 +365,8 @@ def _tsize(t0, t1, dim, types, depth=0):
         return 4 + (t1 or 1)
     if t0 == 0x20:
         return 4 + (dim or 1) * 4
+    if t0 == 0x3f:
+        return 4 + (dim or 1) * 4    # ARRAY[n] OF STRING[len]（3f <len> <n>）
     if t0 == 0x11 and t1 is not None and t1 < len(types):
         return sum(_tsize(f[1], f[2], f[3], types, depth + 1) for f in types[t1][1])
     return 4
@@ -365,11 +387,12 @@ def _fld_offsets(types, tidx, base=0, path='', out=None, depth=0):
     return out
 
 
-_P2K_FIELDS = os.environ.get('P2K_FIELDS', '0') == '1'   # 字段名还原开关
-_TYPES = _parse_types(dec) if _P2K_FIELDS else []
+_P2K_FIELDS = os.environ.get('P2K_FIELDS', '0') == '1'   # 程序级字段名还原开关
+_TYPES = _parse_types(dec)     # 类型表总是解析：名字表形参签名（11 <idx>）要查它
 _TYPE_DECLS = [(t, f) for t, f in _TYPES]          # 供输出 TYPE 块
 _FIELD_BY_PATH = {}      # '基' 或 '基.DDD' → {偏移: 子字段名}（FLD 增量合成用）
 _STRUCT_TYPE = {}        # 变量名 → 结构体类型名（声明用）
+_STRUCT_TYPE_IDX = {}    # 变量名 → 类型表 idx（TYPE 块按需发射用）
 
 
 def _build_fldmap(types, tidx, path, out, depth=0):
@@ -387,6 +410,21 @@ def _build_fldmap(types, tidx, path, out, depth=0):
         off += _tsize(t0, t1, dim, types, depth + 1)
 
 
+def _build_pmap(types, tidx, path, si, depth=0):
+    """形参结构体字段表：_par_fldmap[(段号, 路径)][偏移] = (字段名, t0, t1)
+    （字段名+字段类型均取类型表——名字表形参签名定位类型，权威非推断）"""
+    if depth > 6 or tidx >= len(types):
+        return
+    out = {}
+    _par_fldmap[(si, path)] = out
+    off = 0
+    for fname, t0, t1, dim in types[tidx][1]:
+        out[off] = (fname, t0, t1)
+        if t0 == 0x11 and t1 is not None and t1 < len(types):
+            _build_pmap(types, t1, path + '.' + fname, si, depth + 1)
+        off += _tsize(t0, t1, dim, types, depth + 1)
+
+
 if _TYPES:
     _g, _o = dec.find(b'\xff$GROUP\x00\xfd'), dec.find(b'$ORNT_MROT')
     if _g >= 0 and _o >= 0:
@@ -398,8 +436,11 @@ if _TYPES:
             _t0, _t1 = dec[_k + 1], dec[_k + 2]
             if _t0 in (0x11, 0x31) and _t1 < len(_TYPES):
                 # 11 <idx>=结构体引用；31 <idx>=结构体数组引用（元素类型=idx）
-                # 两者字段映射同源，数组元素访问 基[i].字段 也走同一张表
-                _build_fldmap(_TYPES, _t1, _vnm, _FIELD_BY_PATH)
+                # 「变量→结构体类型」绑定=符号表权威，总是生效（声明才对得上形参签名）；
+                # 字段名点路径还原（_FIELD_BY_PATH）仍是 P2K_FIELDS 实验特性
+                if _P2K_FIELDS:
+                    _build_fldmap(_TYPES, _t1, _vnm, _FIELD_BY_PATH)
+                _STRUCT_TYPE_IDX[_vnm] = _t1
                 if _t0 == 0x11:
                     _STRUCT_TYPE[_vnm] = _TYPES[_t1][0]
                 else:
@@ -427,6 +468,43 @@ def _wild(prefix, val):
     nm = prefix + str(val)
     return nm + 'x' if nm.upper() in _KNOWN else nm
 rname_to_idx = {r['name']: n for n, r in enumerate(routines)}
+
+# ---- 形参槽位分配（探针 T_PARAM/T_PARAM2 落锤，27 组 0 矛盾）----
+# 从 0 向下分配、逆声明序（末参最靠 0）；每参 1 槽，STRING 占 2 槽；
+# 引用编码 = 该形参区域底部槽。槽号 → (形参序号, 类型码)
+def _alloc_slots(ptypes):
+    cur, m = 0, {}
+    for ord_ in range(len(ptypes) - 1, -1, -1):
+        t = ptypes[ord_]
+        # 槽宽（T_PARAM2/3/4 落锤）：STRING(1f) 与聚合型 POS/JOINTPOS(01 xx) 占 2 槽，
+        # 其余（11 结构引用 / 20 ARRAY / 00 10 INT / 00 11 REAL / 00 12 BOOL / 00 1d FILE）1 槽
+        size = 2 if t[0] in (0x1f, 0x01) else 1
+        ref = cur - (size - 1)
+        for s in range(ref, cur + 1):
+            m[s] = (ord_, t)
+        cur = ref - 1
+    return m
+
+
+# 形参例程作用域类型集（名字表权威；键=(段号, 名)，防跨例程污染）
+_par_str = set()      # (段号, 名)
+_par_strarr = set()   # (段号, 名) — 元素为串的数组形参
+_par_real = set()
+_par_bool = set()
+_par_file = set()
+_par_struct = {}      # (段号, 名) → 结构体类型 idx
+_par_fldmap = {}      # (段号, 路径) → {偏移: (字段名, t0, t1)}
+
+_PARAMS = {}   # 例程序号 → {槽号: (形参序号, 类型码)}
+for _si, _r in enumerate(routines):
+    if _r.get('ptypes'):
+        _PARAMS[_si] = _alloc_slots(_r['ptypes'])
+_PAR_T = {}    # (段号, 'p<序号>') → 类型码（名字表权威）
+for _si, _pm in _PARAMS.items():
+    for _slot, (_ord, _t) in _pm.items():
+        _PAR_T[(_si, 'p%d' % _ord)] = _t
+        if _t[0] == 0x11 and _t[1] is not None and _t[1] < len(_TYPES):
+            _build_pmap(_TYPES, _t[1], 'p%d' % _ord, _si)   # 形参→结构体类型绑定（字段偏移布局）
 
 name = dec[4:20].split(b'\x00')[0].decode(errors='replace')
 ver = dec[4 + len(name) + 1:][:12].split(b'\x00')[0].decode(errors='replace')
@@ -459,10 +537,75 @@ for i, (off, lid) in enumerate(markers):
     for sub in subs:
         bodies.append((lid, off, sub, len(sub) == 0, False))
 
+# ---- 代码基址校准（探针 T_PARAM/T_PARAM2 落锤）----
+# 名字表 entry =【代码区相对偏移】，基址=首例程段起点（v1=0x33 / v2=0x34 实测）。
+# 旧代码把 entry 当绝对偏移用，误差=基址字节数 → 上一段尾部（END 体=返回 stub）
+# 并进下一段顶部：每个例程开头多一句 RETURN(0)、段尾语句串段
+# （XYZ_PKT：GET_MLEN 的尾语句被分进 ADD_MSG，逐字节实证）。
+# 基址判据：①段界落在「返回 stub 尾」②形参槽号在所属例程形参区域内（错基址必越界）。
+# 两项证据都拿不到 → 回退 0（旧行为），不瞎猜。
+def _estimate_code_base():
+    if not routines:
+        return 0
+    stub_ends = set()
+    for m in re.finditer(rb'\x7f[\x00-\x08][\x00\x04\xff][\x00\x04\xfd\xff]', dec):
+        stub_ends.add(m.end())
+    anc_offs = sorted(a for a, _ in markers)
+
+    def _next_anc(b):
+        for a in anc_offs:
+            if a >= b:
+                return a
+        return None
+
+    body_slots = {}
+    for lid, off, toks, ie, idt in bodies:
+        if idt:
+            continue
+        s = {t[2] for t in toks
+             if t[1] in ('PREF', 'PLD', 'PST', 'PLDSTR', 'PSTSTR') and isinstance(t[2], int)}
+        if s:
+            body_slots[off] = s
+    best, best_sc, best_ev = 0, -10 ** 9, 0
+    for B in range(0, 0x120):
+        sc, ev = 0, 0
+        for n, r in enumerate(routines):
+            b = B + r['entry']
+            if b in stub_ends:
+                sc += 3
+                ev += 1
+            na = _next_anc(b)
+            if na is not None and 0 <= na - b <= 0x48:
+                sc += 1
+            else:
+                sc -= 2
+        for off, slots in body_slots.items():
+            rel = off - B
+            idx = len(routines)
+            for n, r in enumerate(routines):
+                if rel >= r['entry']:
+                    idx = n
+            valid = set(_PARAMS.get(idx, {}))
+            if not valid:
+                continue
+            if slots <= valid:
+                sc += 2
+                ev += 1
+            else:
+                sc -= 3
+        if sc > best_sc:
+            best, best_sc, best_ev = B, sc, ev
+    return best if best_ev else 0
+
+
+_CODE_BASE = _estimate_code_base()
+
+
 def section_of(off):
     idx = len(routines)  # 默认主程序段
+    rel = off - _CODE_BASE
     for n, r in enumerate(routines):
-        if off >= r['entry']:
+        if rel >= r['entry']:
             idx = n
     return idx
 sec_stmts = {}
@@ -472,6 +615,45 @@ for bi, (lid, off, toks, is_empty, is_data) in enumerate(bodies):
 
 _CUR_SEC = 0          # 当前例程段号（局部名作用域用）
 _LOCALS = set()       # 已用到的 (段号, 局部槽号)
+
+# ---- 形参（名字表签名权威）：显示名 p<序号>，类型走例程作用域表防跨例程污染 ----
+# （集合声明在 _PARAMS 构建前，_build_pmap 要写 _par_fldmap）
+
+
+def _is_par(nm):
+    return bool(re.match(r'^p\d+$', str(nm)))
+
+
+def _pnm(slot):
+    """形参槽号→显示名：本例程名字表签名命中→p<序号>；否则兜底 pp<hex>（旧口径）。
+    非 int（旧式 PREF 兜底 token）原样返回。"""
+    if isinstance(slot, str):
+        return slot
+    m = _PARAMS.get(_CUR_SEC, {})
+    if slot in m:
+        nm = 'p%d' % m[slot][0]
+        return ('zp%d' % m[slot][0]) if nm.upper() in _TAKEN_UP else nm
+    return 'pp%02x' % (slot & 0xff)
+
+
+def _reg_par(nm):
+    """按名字表类型码登记形参类型（例程作用域）——权威，不走使用点推断"""
+    t = _PAR_T.get((_CUR_SEC, nm))
+    if t is None:
+        return
+    t0, t1 = t
+    if t0 == 0x1f:
+        _par_str.add((_CUR_SEC, nm))
+    elif t0 == 0x11:
+        _par_struct[(_CUR_SEC, nm)] = t1
+    elif t0 == 0x20 and t1 == 0x1f:
+        _par_strarr.add((_CUR_SEC, nm))
+    elif t0 == 0x00 and t1 == 0x11:
+        _par_real.add((_CUR_SEC, nm))
+    elif t0 == 0x00 and t1 == 0x12:
+        _par_bool.add((_CUR_SEC, nm))
+    elif t0 == 0x00 and t1 == 0x1d:
+        _par_file.add((_CUR_SEC, nm))
 
 
 def vn(tbl, idx):
@@ -519,10 +701,12 @@ BUILTIN_SIG = {'POST_ERR': 'isii', 'SET_INT_REG': 'iii', 'SET_REAL_REG': 'iii',
 
 def is_str(x):
     # 单字面量判定要严：'a' + '' 两端带引号但不是字面量（旧判定把它当纯串整个吞成 0）
-    if re.match(r"^'(?:[^']|'')*'$", str(x)) or (x in str_vars):
+    if re.match(r"^'(?:[^']|'')*'$", str(x)) or (x in str_vars) \
+            or ((_CUR_SEC, str(x)) in _par_str):
         return True
-    mb = re.match(r'^(\w+)\[[^\]]*\]$', str(x))
-    return bool(mb and mb.group(1) in str_arr_vars)
+    mb = re.match(r'^([\w.]+)(?:\[[^\]]*\])+$', str(x))   # 基名可含点、可多维（v15[v1][v13]）
+    return bool(mb and (mb.group(1) in str_arr_vars
+                        or (_CUR_SEC, mb.group(1)) in _par_strarr))
 
 def str_rhs(x):
     """右值携带字符串语义：字面量、串变量、或含串字面量的拼接表达式"""
@@ -531,12 +715,23 @@ def str_rhs(x):
 def arg_kind(x):
     """实参类型：'as'/'ai'=整个数组传址，'s'=串，'r'=实，'i'=整（元素访问=标量元素类型）"""
     xs = str(x)
-    mb = re.match(r'^(\w+)\[[^\]]*\]$', xs)
+    mb = re.match(r'^([\w.]+)(?:\[[^\]]*\])+$', xs)   # 基名可含点、可多维
     if mb:
         base = mb.group(1)
-        if base in str_arr_vars:
+        if base in str_arr_vars or (_CUR_SEC, base) in _par_strarr:
             return 's'
         return 'r' if base in real_vars else 'i'
+    # 形参实参：类型码权威（名字表签名），不走使用点推断
+    if (_CUR_SEC, xs) in _par_str:
+        return 's'
+    if (_CUR_SEC, xs) in _par_strarr:
+        return 'as'
+    if (_CUR_SEC, xs) in _par_file:
+        return 'f'
+    if (_CUR_SEC, xs) in _par_bool:
+        return 'b'
+    if (_CUR_SEC, xs) in _par_real:
+        return 'r'
     if xs in str_vars:
         return 's'
     if xs in str_arr_vars:
@@ -574,6 +769,55 @@ def fmt_params(kinds):
         groups.append((', '.join(cur_ids), cur_k))
     return '; '.join('%s : %s' % (ids, TNAME.get(k, 'INTEGER')) for ids, k in groups)
 
+
+def _ptype_name(t):
+    """名字表类型码 → KAREL 类型名（权威）。结构体引用 → 类型表真名；
+    类型表缺失该 idx（跨模块引用）→ 退 INTEGER（字段访问走合成名兜底）。"""
+    t0, t1 = t
+    if t0 == 0x1f:
+        return 'STRING'
+    if t0 == 0x11 and t1 is not None and t1 < len(_TYPE_DECLS):
+        return _TYPE_DECLS[t1][0]
+    if t0 == 0x20:
+        return 'ARRAY OF ' + {0x10: 'INTEGER', 0x11: 'REAL',
+                              0x12: 'BOOLEAN', 0x1f: 'STRING'}.get(t1, 'INTEGER')
+    if t0 == 0x01:
+        return 'POSITION' if t1 in (0x01, 0x02, 0x03) else 'JOINTPOS'
+    if t0 == 0x00 and t1 in (0x10, 0x11, 0x12, 0x1d):
+        return {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1d: 'FILE'}[t1]
+    return 'INTEGER'
+
+
+def fmt_ptypes(ptypes):
+    """按类型分组压缩形参行：p0 : XYZ_MSG_T; p1 : STRING"""
+    groups, cur_t, cur_ids = [], None, []
+    for x, t in enumerate(ptypes):
+        tn = _ptype_name(t)
+        if tn != cur_t:
+            if cur_ids:
+                groups.append((', '.join(cur_ids), cur_t))
+            cur_t, cur_ids = tn, []
+        cur_ids.append('p%d' % x)
+    if cur_ids:
+        groups.append((', '.join(cur_ids), cur_t))
+    return '; '.join('%s : %s' % (ids, tn) for ids, tn in groups)
+
+
+def _pk(t):
+    """名字表类型码 → 实参强转用 kind 字符。'st'=结构体传址（不强转）"""
+    t0, t1 = t
+    if t0 == 0x1f:
+        return 's'
+    if t0 == 0x11:
+        return 'st'
+    if t0 == 0x20:
+        return 'as' if t1 == 0x1f else 'ai'
+    if t0 == 0x01:
+        return 'pos'
+    if t0 == 0x00:
+        return {0x10: 'i', 0x11: 'r', 0x12: 'b', 0x1d: 'f'}.get(t1, 'i')
+    return 'i'
+
 def boolish(x):
     bare = re.sub(r"'[^']*'", '', str(x))
     return bool(re.search(r' (AND|OR) |^NOT ', bare) or re.search(r'[<>]|<>', bare)
@@ -584,7 +828,8 @@ def looks_real(x):
     xs = str(x)
     if re.search(r'\d+\.\d', xs) or re.search(r'[^/<>] / ', xs):
         return True
-    return any(nm in real_vars for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
+    return any(nm in real_vars or (_CUR_SEC, nm) in _par_real
+               for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
 
 def vtype(name):
     if name in _STRUCT_TYPE:
@@ -670,6 +915,31 @@ def _wline(f, line, indent='  '):
         f.write(p + '\n')
 
 
+def _cmt_lines(prefix, text):
+    """注释折行：KTRANS 行长上限 256，超长注释会断裂成真代码
+    （MI04_SSW stmt61 残差 400+ 字符单行 → 'Invalid statement' ×25 实证）"""
+    out, cur = [], prefix
+    for w in str(text).split(' '):
+        while len(w) > 200:          # 超长单词（无空格长串）硬切
+            if cur != prefix:
+                out.append(cur)
+                cur = prefix
+            out.append(prefix + w[:200])
+            w = w[200:]
+        if len(cur) + 1 + len(w) > 240:
+            out.append(cur)
+            cur = prefix + w
+        else:
+            cur = (cur + ' ' + w) if cur != prefix else (prefix + w)
+    out.append(cur)
+    return out
+
+
+def _cmt_write(f, prefix, text):
+    for _l in _cmt_lines(prefix, text):
+        f.write(_l + chr(10))
+
+
 def _emit_residue(f, toks, written, lid):
     """语句字面量残差兜底：串/常量未进产物文本 → 留痕（静默丢失清零）"""
     _lost = []
@@ -687,7 +957,7 @@ def _emit_residue(f, toks, written, lid):
         for _ in range(_n - _present):
             _lost.append(_key)
     if _lost:
-        f.write('  -- stmt%d residue %s' % (lid, ', '.join(_lost)) + chr(10))
+        _cmt_write(f, '  -- stmt%d residue ' % lid, ', '.join(_lost))
 
 def emit_assign(lines, lhs, rhs):
     """布尔右值赋给整型目标 → IF/ELSE 1/0 包装（KAREL 不允许 bool 直接赋 int）"""
@@ -747,19 +1017,33 @@ def eval_expr(toks, collect=False, pad=None):
             else:
                 stack.append(nm)
         elif kind in ('PREF', 'PLD', 'PLDSTR'):
-            par_vars.add(val)
-            if kind == 'PLDSTR':
-                str_vars.add(val)
+            val = _pnm(val)
+            if _is_par(val):
+                _reg_par(val)                 # 形参：名字表类型码权威，例程作用域
+                if kind == 'PLDSTR':
+                    _par_str.add((_CUR_SEC, val))
+            else:
+                par_vars.add(val)             # 兜底 pp<hex>：模块级声明（旧口径）
+                if kind == 'PLDSTR':
+                    str_vars.add(val)
             stack.append(val)
         elif kind in ('PST', 'PSTSTR'):
-            par_vars.add(val)
+            val = _pnm(val)
             rhs = stack.pop() if stack else '0'
-            if kind == 'PSTSTR' or str_rhs(rhs):
-                str_vars.add(val)
-            elif val in str_vars:
-                rhs = "''"
-            if looks_real(rhs):
-                real_vars.add(val)
+            if _is_par(val):
+                _reg_par(val)
+                if kind == 'PSTSTR' or str_rhs(rhs):
+                    _par_str.add((_CUR_SEC, val))
+                elif (_CUR_SEC, val) in _par_str:
+                    rhs = "''"
+            else:
+                par_vars.add(val)
+                if kind == 'PSTSTR' or str_rhs(rhs):
+                    str_vars.add(val)
+                elif val in str_vars:
+                    rhs = "''"
+                if looks_real(rhs):
+                    real_vars.add(val)
             params.add(val)
             emit_assign(lines, val, rhs)
         elif kind in ('ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'ADDR', 'SUBR', 'MULR', 'DIVR',
@@ -853,32 +1137,51 @@ def eval_expr(toks, collect=False, pad=None):
             mb = re.match(r'^(\w+)\[([^\]]*)\]?$', str(base))
             if mb:
                 _bname, _idx = mb.group(1), mb.group(2)
-                _sub = _FIELD_BY_PATH.get(_bname, {}).get(val)
-                if _sub:
+                _pm = _par_fldmap.get((_CUR_SEC, _bname))
+                if _pm and val in _pm:
+                    _sub, _t0, _t1 = _pm[val]
                     nm2 = '%s[%s].%s' % (_bname, _idx, _sub)   # 基[i].字段
-                    if kind == 'FLDSTR':
-                        str_vars.add(nm2)
+                    if kind == 'FLDSTR' or _t0 == 0x1f:
+                        _par_str.add((_CUR_SEC, nm2))
+                    if _t0 == 0x3f or (_t0 == 0x20 and _t1 == 0x1f):
+                        _par_strarr.add((_CUR_SEC, '%s.%s' % (_bname, _sub)))
                 else:
-                    nm2 = '%s_f%02x[%s]' % (_bname, val, _idx)
-                    arr_vars.add('%s_f%02x' % (_bname, val))
-                    if kind == 'FLDSTR':
-                        str_arr_vars.add('%s_f%02x' % (_bname, val))
+                    _sub = _FIELD_BY_PATH.get(_bname, {}).get(val)
+                    if _sub:
+                        nm2 = '%s[%s].%s' % (_bname, _idx, _sub)   # 基[i].字段
+                        if kind == 'FLDSTR':
+                            str_vars.add(nm2)
+                    else:
+                        nm2 = '%s_f%02x[%s]' % (_bname, val, _idx)
+                        arr_vars.add('%s_f%02x' % (_bname, val))
+                        if kind == 'FLDSTR':
+                            str_arr_vars.add('%s_f%02x' % (_bname, val))
             elif re.match(r'^[A-Za-z_][\w.\[\]]*$', str(base)):
                 # 结构体字段名还原：类型表有真名就用 点路径（VGCONFIG_f6c → VGCONFIG.OFFSET_PT）
                 # ⚠️ base 可能是 'CURRES[pp00].OFFSET' 这种带下标+点的形式，
                 #    查表前要剥掉 [..] 得到 'CURRES.OFFSET'（否则二级字段丢失，
                 #    POSITION 被当标量 → "Data type of Id is incompatible" ×80）
                 _key = re.sub(r'\[[^\]]*\]', '', str(base))
-                _sub = _FIELD_BY_PATH.get(_key, {}).get(val)
-                if _sub:
-                    nm2 = str(base) + '.' + _sub       # 点路径=字段访问，无需单独声明
-                    # ⚠️ 不要往 str_vars 塞：类型已由 TYPE 块决定，
-                    #    塞进去会把当 FOR 索引用的字段推成 STRING（JLR SCHEDULE_IDX 实证回归）
+                _pm = _par_fldmap.get((_CUR_SEC, _key))
+                if _pm and val in _pm:
+                    # 形参结构体字段：名字表类型码权威，字段名/字段类型全还原
+                    _sub, _t0, _t1 = _pm[val]
+                    nm2 = str(base) + '.' + _sub
+                    if kind == 'FLDSTR' or _t0 == 0x1f:
+                        _par_str.add((_CUR_SEC, nm2))
+                    if _t0 == 0x3f or (_t0 == 0x20 and _t1 == 0x1f):
+                        _par_strarr.add((_CUR_SEC, nm2))   # 数组字段基名（元素串型）
                 else:
-                    nm2 = '%s_f%02x' % (base, val)
-                    fld_vars.add(nm2)
-                    if kind == 'FLDSTR':
-                        str_vars.add(nm2)
+                    _sub = _FIELD_BY_PATH.get(_key, {}).get(val)
+                    if _sub:
+                        nm2 = str(base) + '.' + _sub       # 点路径=字段访问，无需单独声明
+                        # ⚠️ 不要往 str_vars 塞：类型已由 TYPE 块决定，
+                        #    塞进去会把当 FOR 索引用的字段推成 STRING（JLR SCHEDULE_IDX 实证回归）
+                    else:
+                        nm2 = '%s_f%02x' % (base, val)
+                        fld_vars.add(nm2)
+                        if kind == 'FLDSTR':
+                            str_vars.add(nm2)
             else:
                 nm2 = base
             stack.append(nm2)
@@ -912,16 +1215,24 @@ def eval_expr(toks, collect=False, pad=None):
             fld = stack.pop() if stack else vn('v', 1)
             rhs = stack.pop() if stack else '0'
             fs = str(fld)
-            if not re.match(r'^[A-Za-z_]\w*(\[[^\]]*\])?$', fs):
+            if not re.match(r'^[A-Za-z_]\w*((\.\w+)|(\[[^\]]*\]))*$', fs):
+                # 点路径/下标交错（p0.FA / 基[i].字段 / A[i].b.c[j]）都是合法赋值目标——
+                # 旧正则不含点、且只许尾下标，复合目标被兜底砸成 vn('v',1)
+                # （名字丢、字面量还在，门查不出；vn('v',1)=SHV_NAMES[1]=SCHEDULE_IDX
+                #  时还会把真变量污染成串型 → JLR SCHEDULE_IDX 回归的真正源头）
                 fs = vn('v', 1)   # 兜底必须走 vn()：硬编码 'v1' 在槽位1已复原真名时不会被声明
             base_n = fs.split('[')[0]
             if str_rhs(rhs):
-                if '[' in fs:
+                if '[' in fs and '.' not in fs:
                     arr_vars.add(base_n)
                     str_arr_vars.add(base_n)
-                else:
+                elif '.' not in fs:
                     str_vars.add(fs)
-            elif fs in str_vars or base_n in str_arr_vars:
+                # 基[i].字段 / 基.字段（含点）：基是结构体，串性由 TYPE 块/作用域表决定，
+                # 不能标基（否则整个结构体数组被推成串数组 → 全部字段赋值被抹成 ''
+                #  DCPFAULTNUM = '' 实证）
+            elif fs in str_vars or ((_CUR_SEC, fs) in _par_str) \
+                    or (base_n in str_arr_vars and '.' not in fs):
                 rhs = "''"
             if looks_real(rhs):
                 real_vars.add(base_n if '[' in fs else fs)
@@ -929,13 +1240,30 @@ def eval_expr(toks, collect=False, pad=None):
         elif kind == 'ARG':
             stack.append('<ARG>')
         elif kind in ('CALLLOC', 'CALLIMP', 'FN'):
-            deepest = -1
-            for si, it in enumerate(stack):
-                if it == '<ARG>':
-                    deepest = si
-                    break
-            region = stack[deepest:] if deepest >= 0 else []
-            stack = stack[:deepest] if deepest >= 0 else []
+            if kind == 'CALLLOC':
+                # id 空间 = 名字表全索引（本地+导入交错，dcp_spot DCPDISP(ei=1) 落锤：
+                # 源码 812 `DCPDISP(DCPText)` 是导入调用，旧 loc_by_id 只索引本地 → 失配变 rtn1）
+                nm = call_names.get(val, _wild('rtn', val))
+            elif kind == 'CALLIMP':
+                nm = call_names.get(val, _wild('imp', val))
+            else:
+                nm = {14: 'str_len', 15: 'sub_str', 4: 'chr'}.get(val, _wild('fn', val))
+            # ---- 实参区提取（XYZ_PKT 嵌套 + DCP_HIST DISCTRL_FORM 落锤）----
+            # <ARG>(0x27)=实参前缀，但【不严格每参一个】（有的实参裸推）——实参=
+            # 区域内扁平化。调用头可能是 `27 27` 双连标记（DISCTRL_FORM/rtn3 落锤）：
+            # 嵌套调用的内层区起点 = 栈上【最后一个双连标记对的前一个】；
+            # 劈在对的后一个会把头拆散 → 游离标记被 CAT 当操作数吞掉、外层实参错位
+            # （SUB_STR 吞掉 xdat → 外层 PKT_ADD_DAT 实参变假 0/''）。
+            _mpos = [i for i, it in enumerate(stack) if it == '<ARG>']
+            if _mpos:
+                _start = _mpos[0]
+                for _j in range(1, len(_mpos)):
+                    if _mpos[_j] == _mpos[_j - 1] + 1:
+                        _start = _mpos[_j - 1]
+                region = stack[_start:]
+                stack = stack[:_start]
+            else:
+                region = []
             segs, cur = [], []
             for it in region:
                 if it == '<ARG>':
@@ -945,15 +1273,12 @@ def eval_expr(toks, collect=False, pad=None):
             if cur: segs.append(cur)
             a = [x for sg in segs for x in sg]
             if kind == 'CALLLOC':
-                nm = loc_by_id.get(val, _wild('rtn', val))
                 if collect:
                     call_args.setdefault(nm, []).append([arg_kind(x) for x in a[:24]])
             elif kind == 'CALLIMP':
-                nm = call_names.get(val, _wild('imp', val))
                 if collect:
                     imp_args.setdefault(nm, []).append([arg_kind(x) for x in a[:24]])
             else:
-                nm = {14: 'str_len', 15: 'sub_str', 4: 'chr'}.get(val, _wild('fn', val))
                 if collect:
                     imp_args.setdefault(nm, []).append([arg_kind(x) for x in a])
             _std = STD_SIGS.get(nm.upper())
@@ -964,7 +1289,17 @@ def eval_expr(toks, collect=False, pad=None):
                 want = min(_std[2], 24) if _std else min(want, 24)  # 签名元数权威截断
                 kinds2 += ['i'] * (want - len(kinds2))
                 for _x, _k2 in enumerate(_std[1]):
-                    if _x < len(kinds2) and kinds2[_x] not in ('as', 'ai') and _k2 != 'ag':
+                    if _x >= len(kinds2):
+                        break
+                    if _k2 in ('ag', 'ab', 'as', 'ai') and kinds2[_x] in ('i', 'b', 'r', 'f', 's'):
+                        # std 判数组而推断只有标量形态（混样冲突降级实证）→ std 为准
+                        # （DCP_HIST DISCTRL_FORM p2 'ag' 被降级 'i' → VALUE_ARRAY 被砸成 0）
+                        kinds2[_x] = _k2
+                    elif _k2 in ('ab', 'as') and kinds2[_x] == 'ai':
+                        # std 精确数组类型（BOOLEAN 数组/串数组）> 泛型数组证据 'ai'
+                        # （INACT_ARRAY 被 'ai' 盖住 → 声明 ARRAY OF INTEGER 与内建 BOOLEAN 撞）
+                        kinds2[_x] = _k2
+                    elif kinds2[_x] not in ('as', 'ai') and _k2 != 'ag':
                         kinds2[_x] = _k2  # 数组证据（元素访问实证）优先于 desc 走查
                 kinds2 = kinds2[:want]
             while len(a) < want:
@@ -973,7 +1308,7 @@ def eval_expr(toks, collect=False, pad=None):
             a2 = []
             dropped = []
             for _x2 in range(len(a)):
-                if re.match(r'^[A-Za-z_]\w*\[[^\]]+\]$', str(a[_x2])):
+                if re.match(r'^[A-Za-z_][\w.]*\[[^\]]+\](\[[^\]]+\])*$', str(a[_x2])):
                     a[_x2] = '(' + str(a[_x2]) + ')'  # KAREL：数组元素按值传需括号（ISRA_AV 实证）
             for x, arg in enumerate(a):
                 k = kinds2[x] if x < len(kinds2) else 'i'
@@ -992,29 +1327,36 @@ def eval_expr(toks, collect=False, pad=None):
                     dropped.append(orig); arg = 'sv_j'
                 elif k == 'r' and str(arg) in str_vars:
                     dropped.append(orig); arg = '0.0'
-                elif k in ('r', 's', 'f') and re.match(r'^[A-Za-z_]\w*$', str(arg)):
+                elif k in ('r', 's', 'f') and re.match(r'^[A-Za-z_]\w*$', str(arg)) \
+                        and not _is_par(arg) and str(arg) not in arr_vars:
                     # std 形参类型反推实参变量类型（GET_REG 第4参 REAL 实证）
+                    # 形参名跳过：类型码权威（_PAR_T），塞全局集会跨例程污染；
+                    # 数组名跳过：整组传标量形参是错渲染，不该反向污染数组元素类型
+                    # （MM_MODULE v80 被标 REAL → ARRAY OF REAL 撞 fn26 ARRAY OF INTEGER）
                     if k == 'r':
                         real_vars.add(str(arg))
                     elif k == 's':
                         str_vars.add(str(arg))
                     else:
                         file_vars.add(str(arg))
-                elif k in ('ai', 'as', 'ab') and re.match(r'^[A-Za-z_]\w*$', str(arg)):
+                elif k in ('ai', 'as', 'ab') and re.match(r'^[A-Za-z_]\w*$', str(arg)) \
+                        and not _is_par(arg):
                     arr_vars.add(str(arg))
                     if k == 'as':
                         str_arr_vars.add(str(arg))
                     elif k == 'ab':
                         bool_arr_vars.add(str(arg))
-                elif k == 'b' and str(arg) not in ('TRUE', 'FALSE') and not re.search(r'[<>]', str(arg)) and not str(arg).startswith('UNINIT('):
+                elif k == 'b' and str(arg) not in ('TRUE', 'FALSE') and not re.search(r'[<>]', str(arg)) and not str(arg).startswith('UNINIT(') \
+                        and not str_rhs(arg):
                     # BOOLEAN 形参：整型实参 (x <> 0) 包装（KAREL 双向都无隐式强转）
+                    # 串实参不包装：`('' + '.DT' <> 0)` 是非法比较（MI04_SSW_MON DELETE_FILE 实证）
                     arg = '(' + str(arg) + ' <> 0)'
                 if arg != orig:
                     dropped.append(orig)
                 a2.append(arg)
             _std = STD_SIGS.get(nm.upper())
             if nm.upper() == _prog_s:
-                lines.append('-- 重入调用(名字表歧义): ' + nm + '(' + ', '.join(a2) + ')')
+                lines.extend(_cmt_lines('-- 重入调用(名字表歧义): ', nm + '(' + ', '.join(a2) + ')'))
                 dropped.append(nm + '(' + ', '.join(a2) + ')')
                 stack.append('sv_i')
                 continue
@@ -1023,12 +1365,16 @@ def eval_expr(toks, collect=False, pad=None):
                 lines.append(_call)
                 stack.append('0')
             else:
-                _ret = _std[0] if _std else ('s' if returns_str(nm) else 'i')
+                # 返回类型与声明谓词一致（imports ret 高字节==0x1f 或名字启发式）——
+                # 否则 desc 说 STRING、临时却用 sv_i : INTEGER → 类型不匹配
+                # （DCPFAULT_MH GET_EPLANREF 实证）
+                _ret = _std[0] if _std else (
+                    's' if (imports.get(nm) == 0x1f or returns_str(nm)) else 'i')
                 tgt = {'s': 'sv_s', 'pos': 'sv_p', 'jpos': 'sv_j'}.get(_ret, 'sv_i')
                 lines.append(tgt + ' = ' + _call)
                 stack.append(tgt)
             if dropped:
-                lines.append('-- 弃参原式: ' + ' | '.join(dropped))
+                lines.extend(_cmt_lines('-- 弃参原式: ', ' | '.join(dropped)))
         elif kind in ('VSET', 'VGET'):
             deepest = -1
             for si, it in enumerate(stack):
@@ -1107,6 +1453,19 @@ def eval_expr(toks, collect=False, pad=None):
             stack.append('0')
     return lines, (stack[-1] if stack else None), params, list(stack)
 
+# 名字表形参签名是权威：ARITY/KINDS 覆盖调用点推断（形参字段类型错乱的根治）
+# ⚠️ 必须在 pass-1 收集【之前】就位：收集期的实参类型回传（file_vars/str_vars 标记）
+#    要按权威 kind 走，否则声明先于标记写出（ZJFILE : INTEGER 而真型 FILE 实证）。
+#    推断循环之后还有一份（防推断覆盖），幂等。
+for _r in routines:
+    if _r.get('ptypes'):
+        ARITY[_r['name']] = len(_r['ptypes'])
+        KINDS[_r['name']] = [_pk(_t) for _t in _r['ptypes']]
+for _nm2, _pt2 in import_ptypes.items():
+    if _pt2:
+        ARITY[_nm2] = len(_pt2)
+        KINDS[_nm2] = [_pk(_t) for _t in _pt2]
+
 # pass 1: 收集（跑两轮：字段/元素类型沿赋值链传播）
 for _pass in range(2):
     for si, bis in sec_stmts.items():
@@ -1137,6 +1496,23 @@ for nm, argss in list(call_args.items()) + list(imp_args.items()):
             if ('ai' in seen or 'as' in seen) and len(seen) > 1:
                 kinds[x] = 'i'
     KINDS[nm] = kinds
+
+# 名字表形参签名是权威：ARITY/KINDS 覆盖调用点推断（形参字段类型错乱的根治）
+for _r in routines:
+    if _r.get('ptypes'):
+        ARITY[_r['name']] = len(_r['ptypes'])
+        KINDS[_r['name']] = [_pk(_t) for _t in _r['ptypes']]
+for _nm2, _pt2 in import_ptypes.items():
+    if _pt2:
+        ARITY[_nm2] = len(_pt2)
+        KINDS[_nm2] = [_pk(_t) for _t in _pt2]
+# 通配名（FN 族 id 未映射 / 名字表失配兜底）身份不确定 → 数组形态压回 'i'（弃参留痕），
+# 标量类型（s/r/f/b）保留。数组形态精确化会与混样实参相撞（MM_MODULE fn26=Sock_Send：
+# 一次传 INT 数组、一次传 REAL 数组，实为 6 实参拆错）；但标量类型不能压——
+# fn17 的实参是 REAL（r1_lc25 * 1000），压成 INTEGER 反而撞（实证）。
+for _wn in list(KINDS):
+    if re.match(r'^(?:rtn|fn|imp)\d+x?$', _wn):
+        KINDS[_wn] = [_k if _k in ('s', 'r', 'f', 'b') else 'i' for _k in KINDS[_wn]]
 
 n_v, max_lc = 1, 0
 for lid, off, toks, is_empty, is_data in bodies:
@@ -1255,28 +1631,66 @@ for _bi, _t in JZ_TO.items():
         REPEAT_HEADS.add(_t)
         UNTIL_AT[_bi] = _t
 
+# 类型标记预热：KINDS/ARITY 就位后重跑一遍发射求值，让实参类型回传
+# （file/str/arr/bool_vars 标记）在【声明写出前】完成——声明先于发射，
+# 标记晚到就会写出错误类型（ZJFILE : INTEGER 而真型 FILE、
+# INACT_ARRAY : ARRAY OF INTEGER 而真型 BOOLEAN 实证）。
+for _si3, _bis3 in sec_stmts.items():
+    _CUR_SEC = _si3
+    for _bi3 in _bis3:
+        eval_expr(bodies[_bi3][2])
+
 BUILTIN = {'POST_ERR', 'SET_INT_REG', 'SET_REAL_REG', 'GET_REG', 'DB_PROMPT', 'CALL_PROG'}
+
+# 形参签名引用到的结构体类型（含传递依赖）→ TYPE 块按需发射
+_used_tidx = set()
+
+
+def _mark_tidx(idx, depth=0):
+    if depth > 6 or idx is None or idx >= len(_TYPES) or idx in _used_tidx:
+        return
+    _used_tidx.add(idx)
+    for _fn, _t0, _t1, _dim in _TYPES[idx][1]:
+        if _t0 == 0x11:
+            _mark_tidx(_t1, depth + 1)
+
+
+for _r in routines:
+    for _t in (_r.get('ptypes') or []):
+        if _t[0] == 0x11:
+            _mark_tidx(_t[1])
+for _pt in import_ptypes.values():
+    for _t in _pt:
+        if _t[0] == 0x11:
+            _mark_tidx(_t[1])
+for _ti in _STRUCT_TYPE_IDX.values():
+    _mark_tidx(_ti)      # 符号表结构体变量的声明也要 TYPE 块支撑
 with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     f.write('-- ' + os.path.basename(out_path) + ' (decompiled v3)\n')
     f.write('PROGRAM ' + name + '\n')
     f.write("%%COMMENT = '%s'\n" % (_hdr_comment.replace("'", "''")))
     f.write('%NOBUSYLAMP\n%NOLOCKGROUP\n%NOPAUSE = COMMAND + TPENABLE + ERROR\n%NOABORT = ERROR + COMMAND\n')
     # TYPE 块：结构体类型真名+真字段名（probe_symenc 定的编码，字段名不再退化成 _f<偏移>）
-    if _TYPE_DECLS:
+    # 默认只发形参签名引用到的类型（含传递依赖）；P2K_FIELDS 实验模式发全量
+    _emit_types = [_TYPE_DECLS[_i] for _i in sorted(_used_tidx)] if not _P2K_FIELDS else _TYPE_DECLS
+    if _emit_types:
         f.write('TYPE\n')
         # POSITION/JOINTPOS 是内建类型、无命名字段，.X 访问非法。
         # 渲染成同形结构体（X/Y/Z/W/P/R），使字段访问合法且语义等价
         f.write('\tT_POS = STRUCTURE\n\tX: INTEGER\n\tY: INTEGER\n\tZ: INTEGER\n'
                 '\tW: INTEGER\n\tP: INTEGER\n\tR: INTEGER\n\tENDSTRUCTURE\n')
-        for _tn, _fs in _TYPE_DECLS:
+        for _tn, _fs in _emit_types:
             f.write('\t%s = STRUCTURE\n' % _tn)
             for _fn, _t0, _t1, _dim in _fs:
                 if _t0 == 0x1f:
                     _tt = 'STRING[%d]' % max(_t1, 1)
+                elif _t0 == 0x3f:
+                    # ARRAY[n] OF STRING[len]：3f <len u8> <n u16>
+                    _tt = 'ARRAY[%d] OF STRING[%d]' % (max(_dim or 1, 1), max(_t1, 1))
                 elif _t0 == 0x20:
                     _tt = 'ARRAY[%d] OF %s' % (max(_dim or 1, 1),
                                                {0x10: 'INTEGER', 0x11: 'REAL',
-                                                0x12: 'BOOLEAN', 0x1f: 'STRING'}.get(_t1, 'INTEGER'))
+                                                0x12: 'BOOLEAN', 0x1f: 'STRING[64]'}.get(_t1, 'INTEGER'))
                 elif (_t0, _t1) in ((0x01, 0x02), (0x01, 0x03)):
                     _tt = 'T_POS'      # 用同形结构体替代内建 POSITION，.X 等字段访问才合法
                 elif _t0 == 0x11 and _t1 < len(_TYPE_DECLS):
@@ -1298,6 +1712,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     def _symtype(t0, t1, dim):
         if t0 == 0x1f:
             return 'STRING[%d]' % max(t1, 1)
+        if t0 == 0x3f:
+            return 'ARRAY[%d] OF STRING[%d]' % (max(dim or 1, 1), max(t1, 1))
         if t0 == 0x20:
             _el = {0x10: 'INTEGER', 0x11: 'REAL', 0x12: 'BOOLEAN', 0x1f: 'STRING'}.get(t1, 'INTEGER')
             return 'ARRAY[%d] OF %s' % (max(dim or 1, 1), _el)
@@ -1362,13 +1778,16 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         if nm in BUILTIN or nm.upper() in _seen_upper or nm.upper() == _prog_s:
             continue
         _seen_upper.add(nm.upper())
-        argc = ARITY.get(nm, 1)
-        kinds = ['i'] * argc
-        for alist in imp_args.get(nm, []):
-            for x in range(min(argc, len(alist))):
-                if alist[x] == 's':
-                    kinds[x] = 's'
-        plist = fmt_params(kinds)
+        if import_ptypes.get(nm):
+            plist = fmt_ptypes(import_ptypes[nm])   # 名字表签名权威
+        else:
+            argc = ARITY.get(nm, 1)
+            kinds = ['i'] * argc
+            for alist in imp_args.get(nm, []):
+                for x in range(min(argc, len(alist))):
+                    if alist[x] == 's':
+                        kinds[x] = 's'
+            plist = fmt_params(kinds)
         rett = 'STRING' if (ret == 0x1f or returns_str(nm)) else 'INTEGER'
         f.write('ROUTINE %s(%s) : %s FROM MI_LIB\n' % (nm, plist, rett))
     _with_body = {routines[si]['name'] for si in sec_stmts if si < len(routines)}
@@ -1432,14 +1851,17 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         _rev = {b2: b1 for b1, b2 in zip(bis, bis[1:])}
         if si < len(routines):
             r = routines[si]
-            ar = call_args.get(r['name'], []) + imp_args.get(r['name'], [])
-            argc = max([r['argc']] + [len(x) for x in ar])
-            kinds = ['i'] * argc
-            for alist in ar:
-                for x in range(min(argc, len(alist))):
-                    if alist[x] == 's':
-                        kinds[x] = 's'
-            plist = fmt_params(kinds)
+            if r.get('ptypes'):
+                plist = fmt_ptypes(r['ptypes'])   # 名字表签名权威（不再按调用点加码元数）
+            else:
+                ar = call_args.get(r['name'], []) + imp_args.get(r['name'], [])
+                argc = max([r['argc']] + [len(x) for x in ar])
+                kinds = ['i'] * argc
+                for alist in ar:
+                    for x in range(min(argc, len(alist))):
+                        if alist[x] == 's':
+                            kinds[x] = 's'
+                plist = fmt_params(kinds)
             f.write('ROUTINE %s(%s) : INTEGER\n' % (r['name'], plist) if plist else 'ROUTINE %s : INTEGER\n' % r['name'])
         else:
             pass
@@ -1473,7 +1895,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             for _t in toks:
                 if _t[1] == 'VAR' and _t[2][1] == 'l':
                     _locs.add(vn('l', _t[2][2]))   # 例程局部 → 各例程 VAR 块独立声明
-        declp2 = [d for d in sorted(declp) if not re.match(r'^pp[0-9a-f]{2}$', d)] + sorted(_locs)
+        declp2 = [d for d in sorted(declp) if not re.match(r'^(?:pp[0-9a-f]{2}|p\d+)$', d)] + sorted(_locs)
         if declp2 and si < len(routines):
             f.write('VAR\n')
             for d in declp2:
@@ -1596,9 +2018,9 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 continue
             for l in cleaned:
                 _wline(f, l)
-            _stray = [str(x) for x in stk if str(x) != '0']
+            _stray = [str(x) for x in stk if str(x) not in ('0', '<ARG>')]   # 引导标记是元数据不是值
             if _stray:
-                f.write('  -- stmt%d stray %s' % (lid, ' | '.join(_stray)) + chr(10))
+                _cmt_write(f, '  -- stmt%d stray ' % lid, ' | '.join(_stray))
             _emit_residue(f, toks, ' '.join(cleaned) + ' ' + ' '.join(_stray), lid)
         while open_blocks:
             k = open_blocks.pop()

@@ -1,0 +1,79 @@
+PROGRAM T_PARAM2
+%COMMENT = 'param slot probe v2'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+  TREC_A FROM T_PARAM2 = STRUCTURE
+    fa : INTEGER
+    fb : INTEGER
+  ENDSTRUCTURE
+VAR
+  gv : INTEGER
+
+ROUTINE r_a1(x : REAL)
+BEGIN
+  gv = 0
+  IF (x > 1.0) THEN
+    gv = 1
+  ENDIF
+END r_a1
+
+ROUTINE r_ai(x : REAL; y : INTEGER)
+BEGIN
+  gv = y
+  IF (x > 1.0) THEN
+    gv = 1
+  ENDIF
+END r_ai
+
+ROUTINE r_ia(x : INTEGER; y : REAL)
+BEGIN
+  gv = x
+  IF (y > 1.0) THEN
+    gv = 1
+  ENDIF
+END r_ia
+
+ROUTINE r_aa(x : REAL; y : REAL)
+BEGIN
+  IF (x > y) THEN
+    gv = 1
+  ENDIF
+  IF (y > 1.0) THEN
+    gv = 2
+  ENDIF
+END r_aa
+
+ROUTINE r_ss(x : STRING; y : STRING)
+BEGIN
+  gv = STR_LEN(x)
+  gv = STR_LEN(y)
+END r_ss
+
+ROUTINE r_si(x : STRING; y : INTEGER)
+BEGIN
+  gv = STR_LEN(x)
+  gv = y
+END r_si
+
+ROUTINE r_tr(x : TREC_A; y : REAL)
+BEGIN
+  x.fa = 1
+  IF (y > 1.0) THEN
+    x.fb = 2
+  ENDIF
+END r_tr
+
+ROUTINE r_rt(x : REAL; y : TREC_A)
+BEGIN
+  y.fa = 1
+  IF (x > 1.0) THEN
+    y.fb = 2
+  ENDIF
+END r_rt
+
+BEGIN
+  gv = 0
+END T_PARAM2
