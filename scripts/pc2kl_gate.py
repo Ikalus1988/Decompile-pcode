@@ -125,7 +125,7 @@ for l in _g3_lines:
 for k, v in opens.items():
     if v != 0:
         g3_problems.append(f'{k} 块不配平: {v}')
-routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: INTEGER)?$', kl, re.M) if 'FROM' not in m.group(0)]
+routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: [A-Z]+(\[\d+\])?)?$', kl, re.M) if 'FROM' not in m.group(0)]
 ends = re.findall(r'^END (\w+)', kl, re.M)
 if sorted(routines + [re.search(r'PROGRAM (\w+)', kl).group(1)]) != sorted(ends):
     g3_problems.append('ROUTINE/END 名称不匹配')

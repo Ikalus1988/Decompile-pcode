@@ -15,6 +15,40 @@ def scan(seg, base):
         b = seg[i]
         if b == 0x3e and i + 4 < len(seg) and seg[i + 1] <= 5:
             out.append((base + i, 'ANCHOR', seg[i + 2], 5)); i += 5; continue
+        # ---- 聚合拷贝族（T_AGG/T_AGG2 落锤）----
+        # 聚合引用实参对：`22 <ref 6B> 1c <同 ref 6B>` = CALLLOC 按引用传聚合（12B）
+        if b == 0x22 and i + 11 < len(seg) and seg[i + 6] == 0x1c \
+                and seg[i + 1] in (0x01, 0xff) and seg[i + 7] == seg[i + 1] \
+                and seg[i + 2:i + 6] == seg[i + 8:i + 12]:
+            out.append((base + i, 'AGGARG',
+                        (seg[i + 1], int.from_bytes(seg[i + 2:i + 6], 'big', signed=True)), 12))
+            i += 12; continue
+        # 聚合引用：`49`=变量读 `4a`=变量写 `4b`=形参读 `4c`=形参写
+        #   `<op> <01|ff> <i32BE 槽号>` 6B；写侧尾随 1B 拷贝类型（3c=POSITION 2c=JOINTPOS 等）
+        if b in (0x49, 0x4a, 0x4b, 0x4c) and i + 5 < len(seg) and seg[i + 1] in (0x01, 0xff):
+            _slot = int.from_bytes(seg[i + 2:i + 6], 'big', signed=True)
+            if b in (0x4a, 0x4c) and i + 6 < len(seg):
+                out.append((base + i, 'AGGREF', (b, seg[i + 1], _slot, seg[i + 6]), 7)); i += 7
+            else:
+                out.append((base + i, 'AGGREF', (b, seg[i + 1], _slot, None), 6)); i += 6
+            continue
+        # 读侧描述：`3c 01`=POSITION / `2c 09`=JOINTPOS（2B；仅当跟在聚合读引用后）
+        if seg[i:i + 2] in (b'\x3c\x01', b'\x2c\x09') and out and out[-1][1] == 'AGGREF' \
+                and out[-1][2][0] in (0x49, 0x4b):
+            out.append((base + i, 'AGGTY', seg[i + 1], 2)); i += 2; continue
+        # 返回桩 4B（T_AGG/T_AGG2 + LIB_ZJ1000 CUR_POS_ 落锤）：`7f <b2> 00 <类型字节>`
+        # 类型字节=拷贝尺寸码（04=标量 0c=VECTOR 2c=JOINTPOS 30=XYZWPREXT 3c=POSITION）；
+        # `7f 04 ff fd`=例程收尾（段尾自动闭合负责）
+        if seg[i:i + 4] == b'\x7f\x04\xff\xfd' or \
+                (b == 0x7f and i + 3 < len(seg) and seg[i + 2] == 0x00
+                 and seg[i + 3] in (0x04, 0x0c, 0x2c, 0x30, 0x3c)):
+            out.append((base + i, 'RSTUB', seg[i + 3], 4)); i += 4; continue
+        # `7e` = 位置族返回值物化（调用结果走返回缓冲区不上栈）——仅当后随返回桩时认领（5B）
+        if b == 0x7e and i + 8 < len(seg) and (
+                seg[i + 5:i + 9] == b'\x7f\x04\xff\xfd'
+                or (seg[i + 5] == 0x7f and seg[i + 7] == 0x00
+                    and seg[i + 8] in (0x04, 0x0c, 0x2c, 0x30, 0x3c))):
+            out.append((base + i, 'RETCV', None, 5)); i += 5; continue
         if b in (0x21, 0x22, 0x23, 0x73, 0x75, 0x9e, 0x9f) and i + 5 < len(seg) \
                 and seg[i + 1] in (0x01, 0xff) and seg[i + 2:i + 4] == b'\x00\x00':
             # PROBE5 实证：op <01共享|ff局部> <00 00> <u16BE 槽号>（槽号可 >255，见 yamazumi 514）
@@ -255,6 +289,7 @@ STD_SIGS['GET_JPOS_REG'] = ('jpos', ['i', 'i'], 2)
 _NAME_ANCHOR = -1
 routines, imports, call_names = [], {}, {}
 import_ptypes = {}     # 导入例程形参类型码（名字表 desc 权威）
+import_ret = {}        # 导入例程返回码 u16（desc 权威；imports 只存首字节）
 # 名字表锚点：通用 = <单字母前缀><程序名>\0（'VMI0' 只是 V 前缀撞名特例，123/125 模块踩空）
 _prog = dec[4:20].split(b'\x00')[0]
 _m0 = re.search(rb'\x00([ -~]{2,})\x00', dec[4:80])
@@ -287,6 +322,7 @@ if i >= 0:
         elif re.match(rb'[\x01-\x0f]\xff\xff', desc):
             # 导入 desc = <库号> ff ff <ret u16> <argc u8> <形参类型 2B×argc>
             imports[nm] = desc[3] if len(desc) > 3 else 0x10
+            import_ret[nm] = int.from_bytes(desc[3:5], 'big') if len(desc) > 4 else 0x10
             _ac2 = desc[5] if len(desc) > 5 and desc[5] <= 24 else 0
             _pt2 = [(desc[6 + 2 * k], desc[7 + 2 * k]) for k in range(_ac2)
                     if 8 + 2 * k <= len(desc)]
@@ -547,6 +583,26 @@ for _si, _pm in _PARAMS.items():
         _PAR_T[(_si, 'p%d' % _ord)] = _t
         if _t[0] == 0x11 and _t[1] is not None and _t[1] < len(_TYPES):
             _build_pmap(_TYPES, _t[1], 'p%d' % _ord, _si)   # 形参→结构体类型绑定（字段偏移布局）
+# 例程返回型（名字表 desc ret u16 权威）：POSITION/JOINTPOS/REAL 返回要走
+# 对应累加器（sv_p/sv_j/sv_r），否则 `sv_i = R_POS(...)` 类型不匹配（T_AGG 实证）。
+# ⚠️ 名字表 desc 类型码与符号表不同：01 01/01 02/01 03=POSITION、01 99=JOINTPOS（9 轴）
+_RET_BY_NAME = {str(_r['name']).upper(): _r.get('ret') for _r in routines}
+
+
+def _ret_kind(rc):
+    # 名字表 desc ret u16 → 累加器 kind（头/调用/自动闭合三处同源）。
+    # ⚠️ 名字表 desc 类型码：位置族 01 xx（01/02/06=POSITION/XYZWPR 等）、**01 99=JOINTPOS**
+    #    （CUR_POS_ ret=01 06、CUR_JPOS_ ret=01 99 实证）；1f xx=STRING（INT2STR ret=1f 00 实证）
+    if not rc:
+        return None
+    hi, lo = (rc >> 8) & 0xff, rc & 0xff
+    if hi == 0x1f:
+        return 's'
+    if hi == 0x01:
+        return 'jpos' if lo == 0x99 else 'pos'
+    if hi == 0x00:
+        return {0x11: 'r', 0x12: 'b'}.get(lo)
+    return None
 
 name = dec[4:20].split(b'\x00')[0].decode(errors='replace')
 ver = dec[4 + len(name) + 1:][:12].split(b'\x00')[0].decode(errors='replace')
@@ -758,6 +814,8 @@ par_vars = set()       # 参数合成名 pp<槽号hex>（2d/2f/17/a1/a2 四形�
 file_vars = set()      # FILE 型变量（OPEN FILE 首项）
 bool_vars = set()      # BOOLEAN 变量（std 形参 0x12 实证）
 bool_arr_vars = set()  # BOOLEAN 数组（DISCTRL_FORM INACT_ARRAY 5B desc 实证）
+pos_vars = set()       # POSITION 型变量（聚合拷贝写侧类型字节落锤）
+jpos_vars = set()      # JOINTPOS 型变量（同上）
 
 # ---- 类型证据作用域（续17：ISV_VG lc2 合成名教训的真名版）----
 # name_map 真名 = 例程局部：同名局部在不同例程类型可以不同，证据按 (段,名) 键控，
@@ -766,7 +824,8 @@ bool_arr_vars = set()  # BOOLEAN 数组（DISCTRL_FORM INACT_ARRAY 5B desc 实�
 _SEC_LOCALS = {}   # si -> set(例程局部名)（vn() 解析时登记）
 _SEC_T = {}        # (si, name) -> set(kind)
 _TSETS = {'s': str_vars, 'r': real_vars, 'a': arr_vars, 'sa': str_arr_vars,
-          'ba': bool_arr_vars, 'f': file_vars, 'b': bool_vars, 'fl': fld_vars}
+          'ba': bool_arr_vars, 'f': file_vars, 'b': bool_vars, 'fl': fld_vars,
+          'pos': pos_vars, 'jpos': jpos_vars}
 
 
 def _is_local(x):
@@ -927,7 +986,7 @@ def _pk(t):
 
 def boolish(x):
     bare = re.sub(r"'[^']*'", '', str(x))
-    return bool(re.search(r' (AND|OR) |^NOT ', bare) or re.search(r'[<>]|<>', bare)
+    return bool(re.search(r' (AND|OR) |^NOT ', bare) or re.search(r'[=<>]', bare)
                 or bare.startswith('UNINIT(') or 'UNINIT(' in bare
                 or bare == 'sv_b')   # sv_b=布尔累加器，类型内建
 
@@ -970,6 +1029,10 @@ def vtype(name):
         return 'STRING[64]'
     if _thas(name, 'r'):
         return 'REAL'
+    if _thas(name, 'pos'):
+        return 'POSITION'
+    if _thas(name, 'jpos'):
+        return 'JOINTPOS'
     return 'INTEGER'
 
 
@@ -1085,7 +1148,11 @@ def emit_assign(lines, lhs, rhs):
 
 def eval_expr(toks, collect=False, pad=None):
     lines, stack, params, wr = [], [], set(), []
+    _unk_tail = 0   # UNK 兜底 '0' 计数：盖在真值上会骗过聚合写/返回取值（T_AGG 实证）
     for off, kind, val, n in toks:
+        _ut = _unk_tail
+        if kind != 'UNK':
+            _unk_tail = 0
         if kind == 'INT':
             lit = str(val if val < 0x80000000 else val - 0x100000000)  # signed int32（3992977455 越界实证）
             if (0x3a000000 <= val <= 0x4b000000) or (0xba000000 <= val <= 0xcb000000):
@@ -1155,6 +1222,59 @@ def eval_expr(toks, collect=False, pad=None):
                     _tmark(val, 'r')
             params.add(val)
             emit_assign(lines, val, rhs)
+        elif kind == 'AGGARG':
+            # 聚合引用实参对（CALLLOC 按引用传）：`22 ref 1c ref` → 一个名字
+            _tb, _slot = val
+            nm = _pnm(_slot) if _slot < 0 else vn('v' if _tb == 0x01 else 'l', _slot)
+            if _slot < 0 and _is_par(nm):
+                _reg_par(nm)
+            stack.append(nm)
+        elif kind == 'AGGTY':
+            # 读侧描述（3c 01=POSITION / 2c 09=JOINTPOS）→ 源侧标位置类型
+            if stack and re.match(r'^[A-Za-z_]\w*$', str(stack[-1])):
+                _tmark(stack[-1], 'jpos' if val == 9 else 'pos')
+        elif kind == 'RETCV':
+            pass    # 位置族返回值物化：调用结果已在栈上（累加器），无需动作
+        elif kind == 'RSTUB':
+            # 值返回桩：弹栈渲染 RETURN(x)；收尾桩（fd）留给段尾自动闭合
+            if val != 0xfd:
+                for _ in range(_ut):        # 揭掉 UNK 兜底假 0
+                    if stack and str(stack[-1]) == '0':
+                        stack.pop()
+                    else:
+                        break
+                _rv = stack.pop() if stack else '0'
+                _bk = _ret_kind(routines[_CUR_SEC].get('ret')) if _CUR_SEC < len(routines) else None
+                if _bk == 'b' and str(_rv) in ('0', '1'):
+                    # 源码 RETURN(TRUE/FALSE) 编译成推 1/0 + 返回桩（MI04_SSW_GUI REALROBOT 实证）
+                    _rv = 'TRUE' if str(_rv) == '1' else 'FALSE'
+                if boolish(_rv) and str(_rv) not in ('TRUE', 'FALSE') and _bk not in ('s', 'pos', 'jpos', 'r'):
+                    # 布尔右值不能直返整型/布尔例程（KAREL 无隐式强转）→ 按返回型 IF 包裹
+                    _bt, _bf = ('TRUE', 'FALSE') if _bk == 'b' else ('1', '0')
+                    lines.append('IF %s THEN' % _rv)
+                    lines.append('  RETURN(%s)' % _bt)
+                    lines.append('ELSE')
+                    lines.append('  RETURN(%s)' % _bf)
+                    lines.append('ENDIF')
+                else:
+                    lines.append('RETURN(%s)' % _rv)
+        elif kind == 'AGGREF':
+            # 聚合引用：49/4b=读（推名）4a/4c=写（弹右值发射赋值）；写侧尾字节=拷贝类型
+            _ob, _tb, _slot, _cm = val
+            nm = _pnm(_slot) if _slot < 0 else vn('v' if _tb == 0x01 else 'l', _slot)
+            if _slot < 0 and _is_par(nm):
+                _reg_par(nm)
+            if _ob in (0x49, 0x4b):
+                stack.append(nm)
+            else:
+                for _ in range(_ut):        # 揭掉 UNK 兜底假 0（真值被假 0 盖顶实证）
+                    if stack and str(stack[-1]) == '0':
+                        stack.pop()
+                    else:
+                        break
+                rhs = stack.pop() if stack else '0'
+                emit_assign(lines, nm, rhs)
+                _tmark(nm, 'jpos' if _cm == 0x2c else 'pos')
         elif kind in ('ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'ADDR', 'SUBR', 'MULR', 'DIVR',
                       'EQ', 'NE', 'LT', 'LE', 'GT', 'GE', 'AND', 'OR', 'CAT'):
             # 0x55=整数除（KAREL 关键字 DIV），0x6c=实除 /（PROBE T14-17 + ISRA_AV 实证）
@@ -1202,7 +1322,7 @@ def eval_expr(toks, collect=False, pad=None):
                     _tmark(nm2, 'r')
             elif kind in ('AND', 'OR'):
                 def boolify(x):
-                    if re.search(r'[=<>]', x) or x in ('TRUE', 'FALSE') or str(x).startswith(('UNINIT(', 'NOT (')):
+                    if re.search(r'[=<>]', x) or x in ('TRUE', 'FALSE') or str(x).startswith(('UNINIT(', 'NOT ('))                             or re.fullmatch(r'\(?\s*sv_b\s*\)?', str(x)) or _thas(str(x), 'b'):
                         return x
                     return '(' + x + ' <> 0)'
                 res = boolify(b1) + ' ' + m[kind] + ' ' + boolify(b2)
@@ -1215,10 +1335,10 @@ def eval_expr(toks, collect=False, pad=None):
                 stack.append('(0 - ' + x + ')')  # KAREL 表达式里一元负号非法，统一 (0 - N)
         elif kind == 'NOT':
             a1 = stack.pop() if stack else '0'
-            if re.search(r'[=<>]', a1) or str(a1).startswith('UNINIT(') or _thas(a1, 'b'):
+            if re.search(r'[=<>]', a1) or str(a1).startswith('UNINIT(') or re.fullmatch(r'\(?\s*sv_b\s*\)?', str(a1)) or _thas(a1, 'b'):
                 stack.append('NOT (' + a1 + ')')
             else:
-                stack.append('(' + a1 + ' = 0)')
+                stack.append('(' + a1 + ' = 0)')   # 非布尔名的 NOT → KAREL 整型惯用法 (x = 0)
         elif kind in ('ITOR', 'UNINIT'):
             if kind == 'UNINIT':
                 # UNINIT(x) 是 KAREL 布尔谓词（mifap mi04_td_pop `63 00 10` 实证）——不能吞成 0
@@ -1446,9 +1566,15 @@ def eval_expr(toks, collect=False, pad=None):
                                        and (_thas(str(arg), 'a') or _thas(str(arg), 'f')))):
                     arg = '0'
                 elif k == 'pos' and str(arg) != 'sv_p':
-                    dropped.append(orig); arg = 'sv_p'
+                    if _thas(str(arg), 'pos') or _thas(str(arg), 'jpos'):
+                        pass   # 已证位置型实参保留（AGGARG 按引用传/聚合读，T_AGG R_POS 实证）
+                    else:
+                        dropped.append(orig); arg = 'sv_p'
                 elif k == 'jpos' and str(arg) != 'sv_j':
-                    dropped.append(orig); arg = 'sv_j'
+                    if _thas(str(arg), 'pos') or _thas(str(arg), 'jpos'):
+                        pass
+                    else:
+                        dropped.append(orig); arg = 'sv_j'
                 elif k == 'ar':
                     # ARRAY OF REAL 形参（CNV_JPOS_REL/CNV_REL_JPOS 第2参，手册权威）：
                     # 整组实参（裸名）保留并反推 ARRAY OF REAL；元素/字面量/表达式替换 sv_a 留痕
@@ -1500,8 +1626,17 @@ def eval_expr(toks, collect=False, pad=None):
                 # 返回类型与声明谓词一致（imports ret 高字节==0x1f 或名字启发式）——
                 # 否则 desc 说 STRING、临时却用 sv_i : INTEGER → 类型不匹配
                 # （DCPFAULT_MH GET_EPLANREF 实证）
-                _ret = _std[0] if _std else (
-                    's' if (imports.get(nm) == 0x1f or returns_str(nm)) else 'i')
+                if _std:
+                    _ret = _std[0]
+                else:
+                    _rc2 = _RET_BY_NAME.get(str(nm).upper())
+                    _rk = _ret_kind(_rc2) or _ret_kind(import_ret.get(nm))
+                    if _rk:
+                        _ret = _rk
+                    elif _rc2 is not None:
+                        _ret = 'i'   # 例程 desc 权威（00 10=INT）：不给 returns_str 名字启发式翻案
+                    else:
+                        _ret = 's' if (imports.get(nm) == 0x1f or returns_str(nm)) else 'i'
                 tgt = {'s': 'sv_s', 'pos': 'sv_p', 'jpos': 'sv_j',
                        'r': 'sv_r', 'b': 'sv_b'}.get(_ret, 'sv_i')
                 lines.append(tgt + ' = ' + _call)
@@ -1584,6 +1719,7 @@ def eval_expr(toks, collect=False, pad=None):
                 stack.append('0')
         elif kind == 'UNK':
             stack.append('0')
+            _unk_tail += 1
     return lines, (stack[-1] if stack else None), params, list(stack)
 
 # 名字表形参签名是权威：ARITY/KINDS 覆盖调用点推断（形参字段类型错乱的根治）
@@ -1887,7 +2023,12 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         if _nm.upper() in _emitted or _nm.upper() in ('SV_I', 'SV_S', 'SV_P', 'SV_J', 'SV_R', 'SV_B', 'SV_A'):
             continue
         _emitted.add(_nm.upper())
-        f.write('  %s : %s\n' % (_nm, _symtype(_s[1], _s[2], _s[3])))
+        _tt = _symtype(_s[1], _s[2], _s[3])
+        if _thas(_nm, 'pos'):
+            _tt = 'POSITION'      # 聚合拷贝/位置返回证据盖过符号表旧口径（CART_POSE:XYZWPR 实证）
+        elif _thas(_nm, 'jpos'):
+            _tt = 'JOINTPOS'
+        f.write('  %s : %s\n' % (_nm, _tt))
     # 例程局部槽位不再进程序级 VAR：改由各例程自己的 VAR 块声明（作用域独立，
     # 避免不同例程同槽位不同类型互相污染——ISV_VG lc2 实证）
     # 字段合成名/派生数组名（v<n>_f<off> 等）补声明
@@ -1903,7 +2044,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             return int(m.group(1)) < max_lc
         return False
     _declared_syms = set(SHV_NAMES.values())
-    extras = {nm for nm in (fld_vars | arr_vars | str_vars | real_vars | par_vars) if nm not in _declared_syms
+    extras = {nm for nm in (fld_vars | arr_vars | str_vars | real_vars | par_vars | pos_vars | jpos_vars) if nm not in _declared_syms
               if nm.upper() not in ('SV_I', 'SV_S', 'SV_P', 'SV_J', 'SV_R', 'SV_B', 'SV_A')
               if not _covered(nm) and not re.match(r'^p\d+$', nm) and re.match(r'^[A-Za-z_]\w*$', nm)}
     for nm in sorted(extras):
@@ -1948,7 +2089,9 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     if alist[x] == 's':
                         kinds[x] = 's'
             plist = fmt_params(kinds)
-        rett = 'STRING' if (ret == 0x1f or returns_str(nm)) else 'INTEGER'
+        rett = {'pos': 'POSITION', 'jpos': 'JOINTPOS', 'r': 'REAL', 's': 'STRING', 'b': 'BOOLEAN'}.get(
+            _ret_kind(import_ret.get(nm)),
+            'STRING' if (ret == 0x1f or returns_str(nm)) else 'INTEGER')
         f.write('ROUTINE %s(%s) : %s FROM MI_LIB\n' % (nm, plist, rett))
     _with_body = {routines[si]['name'] for si in sec_stmts if si < len(routines)}
     for r in routines:
@@ -1958,8 +2101,10 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             _ac = ARITY.get(r['name'], 0)
             _kd = KINDS.get(r['name'], ['i'] * _ac)
             _pl = fmt_params(_kd[:_ac] if len(_kd) >= _ac else _kd + ['i'] * (_ac - len(_kd)))
-            f.write('ROUTINE %s(%s) : INTEGER FROM MI_LIB\n' % (r['name'], _pl) if _pl
-                    else 'ROUTINE %s : INTEGER FROM MI_LIB\n' % r['name'])
+            _rt2 = {'pos': 'POSITION', 'jpos': 'JOINTPOS', 'r': 'REAL', 's': 'STRING', 'b': 'BOOLEAN'}.get(
+                _ret_kind(_RET_BY_NAME.get(str(r['name']).upper())), 'INTEGER')
+            f.write('ROUTINE %s(%s) : %s FROM MI_LIB\n' % (r['name'], _pl, _rt2) if _pl
+                    else 'ROUTINE %s : %s FROM MI_LIB\n' % (r['name'], _rt2))
 
     declared = set(imports) | {r['name'] for r in routines} | BUILTIN
     declared |= {n.upper() for n in declared}
@@ -2023,7 +2168,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                         if alist[x] == 's':
                             kinds[x] = 's'
                 plist = fmt_params(kinds)
-            f.write('ROUTINE %s(%s) : INTEGER\n' % (r['name'], plist) if plist else 'ROUTINE %s : INTEGER\n' % r['name'])
+            _hn = {'pos': 'POSITION', 'jpos': 'JOINTPOS', 'r': 'REAL', 's': 'STRING', 'b': 'BOOLEAN'}.get(_ret_kind(r.get('ret')), 'INTEGER')
+            f.write('ROUTINE %s(%s) : %s\n' % (r['name'], plist, _hn) if plist else 'ROUTINE %s : %s\n' % (r['name'], _hn))
         else:
             pass
         close_of = block_struct(bis)
@@ -2206,14 +2352,16 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 continue
             if bi in UNTIL_AT:
                 cond = expr if expr and expr != '0' else 'TRUE'
-                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT ('):
+                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') \
+                        and not boolish(cond) and not _thas(cond, 'b'):
                     cond = '(' + cond + ' <> 0)'
                 f.write('  UNTIL(' + cond + ')\n')
                 _emit_residue(f, toks, '', lid)
                 continue
             if 'JZ' in kinds:
                 cond = expr if expr and expr != '0' else 'TRUE'
-                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') and not _thas(cond, 'b'):
+                if cond != 'TRUE' and not re.search(r'[=<>]', cond) and not cond.startswith('UNINIT(') and not cond.startswith('NOT (') \
+                        and not boolish(cond) and not _thas(cond, 'b'):
                     cond = '(' + cond + ' <> 0)'
                 if close_of.get(bi, (None, ''))[1] == 'while':
                     _wline(f, 'WHILE (%s) DO' % cond)   # 长条件按顶层运算符续行（256 上限）
@@ -2228,7 +2376,12 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     f.write('  ENDFOR\n')
                 continue
             if any(t[1] == 'RET' for t in toks):
-                f.write('  RETURN(0)\n' if si < len(routines) else '  RETURN\n')
+                # 返回型感知：非整型例程返 0 会撞类型（例程尾数据区的 RET 假信号同路径）
+                _rvv = '0'
+                if si < len(routines):
+                    _rvv = {'pos': 'sv_p', 'jpos': 'sv_j', 'r': 'sv_r', 's': 'sv_s', 'b': 'sv_b'}.get(
+                        _ret_kind(routines[si].get('ret')), '0')
+                f.write('  RETURN(%s)\n' % _rvv if si < len(routines) else '  RETURN\n')
                 continue
             for l in cleaned:
                 _wline(f, l)
@@ -2240,7 +2393,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             k = open_blocks.pop()
             f.write('  %s\n' % {'if': 'ENDIF', 'while': 'ENDWHILE', 'for': 'ENDFOR'}[k])
         if si < len(routines):
-            f.write('  RETURN(0)\n')
+            _rv = {'pos': 'sv_p', 'jpos': 'sv_j', 'r': 'sv_r', 's': 'sv_s', 'b': 'sv_b'}.get(_ret_kind(routines[si].get('ret')), '0')
+            f.write('  RETURN(%s)\n' % _rv)
         if _sel_open:
             # 段尾兜底收口：收口体被切到别的段/丢失时，SELECT 不能挂到 END 例程
             # （MI04_SSW_GUI ST_MACHINE 实证）。正常路径已在体开头收口，这里只兜漏。

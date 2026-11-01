@@ -1,0 +1,30 @@
+PROGRAM T_AGG
+%COMMENT = 'aggregate copy probe v1'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  gp : POSITION
+  gp2 : POSITION
+  jp : JOINTPOS
+  jp2 : JOINTPOS
+  rv : REAL
+  iv : INTEGER
+
+ROUTINE r_pos(x : POSITION; y : JOINTPOS) : POSITION
+VAR
+  t : POSITION
+BEGIN
+  t = x
+  jp2 = y
+  RETURN(t)
+END r_pos
+
+BEGIN
+  gp2 = gp
+  jp2 = jp
+  gp2 = r_pos(gp, jp)
+  rv = 1.0
+  iv = 1
+END T_AGG
