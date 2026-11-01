@@ -509,10 +509,19 @@ for _si, _pm in _PARAMS.items():
 name = dec[4:20].split(b'\x00')[0].decode(errors='replace')
 ver = dec[4 + len(name) + 1:][:12].split(b'\x00')[0].decode(errors='replace')
 
-markers = [(m.start(), m.group(2)[0]) for m in re.finditer(rb'\x3e([\x00-\x05])(.)', dec) if m.start() + 5 <= N]
+# ⚠️ 行号字节用 [\x00-\xff] 不用 '.'：'.' 不匹配 0x0a，源码行号=10 的锚点会被整条丢掉
+#   （PROBE7 SYM_SEL=3 消失实证；中途锚点丢失会让语句并进上一体、首个丢失直接蒸发）
+markers = [(m.start(), m.group(2)[0]) for m in re.finditer(rb'\x3e([\x00-\x05])([\x00-\xff])', dec) if m.start() + 5 <= N]
+# 跳转表位置 = 代码区终点：其后是表/名字堆/数据，不能再当语句扫
+# （表内 0x43/0x41 字节被误标成 SEL43/SEL41 → 野 ELSE:/CASE(3466) 实证）
+_JT_POS = dec.find(b'\x7f\x00\x00\x00\xff')
 bodies = []
 for i, (off, lid) in enumerate(markers):
     end = markers[i + 1][0] if i + 1 < len(markers) else N
+    if _JT_POS > off and _JT_POS < end:
+        end = _JT_POS          # 尾体截到跳转表前：表/数据区不当语句扫
+    if _JT_POS >= 0 and off >= _JT_POS:
+        bodies.append((lid, off, [], True, True)); continue
     body = dec[off + 5:end]
     if len(body) > 800:
         bodies.append((lid, off, [], True, True)); continue
@@ -1559,7 +1568,10 @@ def block_struct(bis):
 
 # ---- 跳转表 + 回边（REPEAT/UNTIL 重建） ----
 def _parse_jumptable(dec):
-    pos = dec.find(b'\x7f\x00\x00\x00\xff\x00')
+    # ⚠️ 签名是 5 字节 `7f 00 00 00 ff` + u16BE count——旧签名含尾 00，
+    # 那个 00 其实是 count 高字节：count≥256（dcp_spr1_1 322 子句）时签名失配、
+    # 跳表整体解析为空 → SELECT 收口/REPEAT 全瞎（「共锚点消歧未解」的最深根因）
+    pos = dec.find(b'\x7f\x00\x00\x00\xff')
     if pos < 0:
         return []
     count = int.from_bytes(dec[pos+5:pos+7], 'big')
@@ -1577,20 +1589,41 @@ _JT = _parse_jumptable(dec)
 _JT_BASE = None
 if _JT and markers:
     _offs = sorted({m for m, _l in markers})
+    _offset = set(_offs)
+    # 基址打分：跳转目标 = 锚点（语句首）【或 SELECT 子句头/ELSE 标记（40/43，落在体中）
+    # 或锚点前 1 字节（43 紧贴锚点）】——旧打分只认锚点，PROBE7 里目标指向子句头时
+    # 错基址凭两个巧合锚点 2:1 赢过真基址（ENDSELECT 不落、SELECT 结构全错的根因）。
     _best, _bestn = None, -1
-    for _b in range(0, 0x80):
-        _hit = sum(1 for t in _JT if (t + _b) in _offs)
+    for _b in range(0, 0x200):
+        _hit = 0
+        for _ti, t in enumerate(_JT):
+            _q = t + _b
+            if not (0 <= _q < N):
+                continue
+            # 严格形态：目标= `40 00 00 00 <u32>` 子句头 / `43 3e` ELSE 头 / 锚点。
+            # 松判（任意 0x40/0x43 字节 + 锚点邻接）会被字符串区假锚点灌分——
+            # dcp_spr1_1 323 项目标错基址 960 vs 真基址 650 的翻车实证。
+            _strict = ((dec[_q] == 0x40 and _q + 5 <= N
+                        and int.from_bytes(dec[_q + 1:_q + 5], 'big') <= 0xffff)
+                       or (dec[_q] == 0x43 and _q + 1 < N and dec[_q + 1] == 0x3e))
+            if _strict:
+                _hit += 4
+            elif _q in _offset:
+                # 表[0] = 公共收口（ENDSELECT）必落锚点，加权定盘
+                _hit += 8 if _ti == 0 else 1
         if _hit > _bestn:
             _best, _bestn = _b, _hit
     if _bestn >= max(1, len(_JT) // 4):
         _JT_BASE = _best
 
 def _jt_stmt(targets_off):
-    # 目标偏移 → 语句序（取 ≥ 目标的首个锚点语句）
-    import bisect
-    _offs = [m for m, _l in markers]
-    k = bisect.bisect_left(_offs, targets_off)
-    return k if k < len(_offs) else None
+    # 目标偏移 → bodies 序。目标可能落在锚点上（语句首）或体中（SELECT 子句头），
+    # 取 ≥ 目标的首个锚点体。⚠️ 返回 bodies 索引不是 markers 索引——旧版两者混用，
+    # 一体多子句（锚点丢失合并）时 REPEAT/SELECT_ENDS 判定整体错位。
+    for k, (_l, _o, _s, _ie, _id) in enumerate(bodies):
+        if _o >= targets_off:
+            return k
+    return None
 
 # 每语句的 JZ/JMP 目标语句号
 JZ_TO, JMP_TO = {}, {}
@@ -1902,10 +1935,32 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 f.write('  %s : %s\n' % (d, vtype(d)))
         f.write('BEGIN\n')
         _sel_open = False
+        _sel_base_depth = 0
+
+        def _sel_drain():
+            # 共锚点：「ENDIF 空锚点」可能与下个子句头合并（体带 SEL 标记非空），
+            # "空锚点=ENDIF" 规则落空 → IF 跨进下一个 CASE。子句边界收拢未闭块。
+            # ⚠️ 只收 SELECT 开启【后】新增的块：外层 IF 包裹 SELECT（IF…SELECT…
+            # ENDSELECT…ENDIF，MI04_SSW_ROUT 实证）时外层 IF 必须活过整个 SELECT。
+            while len(open_blocks) > _sel_base_depth:
+                _b = open_blocks.pop()
+                f.write('  %s\n' % {'if': 'ENDIF', 'while': 'ENDWHILE',
+                                    'for': 'ENDFOR'}.get(_b, 'ENDIF'))
+        _sel_case_buf = []   # 共锚点多值 CASE：相邻 SEL41 值聚成一行（T_CASE 探针定语法）
+        _sel_clause_seen = False   # 已落过 CASE 行 → 后续子句边界可收拢未闭块（护外层 IF）
         open_blocks = []          # 段内块平衡栈: 'if'/'while'/'for'
         for bi in bis:
             lid, off, toks, is_empty, is_data = bodies[bi]
             kinds = [t[1] for t in toks]
+            if _sel_open and bi in SELECT_ENDS:
+                # SELECT 收口统一在体开头落：目标体可能是空锚点、下一个 SELECT 的
+                # 子句头（共锚点，MI04_SSW 串联 SELECT 实证）或普通语句体
+                if _sel_case_buf:
+                    f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                    _sel_case_buf = []
+                _sel_drain()
+                f.write('  ENDSELECT\n')
+                _sel_open = False
             if any(k in kinds for k in ('SEL40', 'SEL41', 'SEL42', 'SEL43')):
                 if bi in REPEAT_HEADS:
                     f.write('  REPEAT\n')
@@ -1921,6 +1976,13 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     if _seg and _seg[-1][1] == 'JMP':
                         _seg = _seg[:-1]
                     if _seg:
+                        if _sel_case_buf:
+                            # 标签在前体在后（共锚点：体尾带下一句头）——先落 CASE 行
+                            if _sel_clause_seen:
+                                _sel_drain()
+                            f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                            _sel_case_buf = []
+                            _sel_clause_seen = True
                         _ls, _ex, _pp, _st = eval_expr(_seg)
                         for _l in _ls:
                             _wline(f, _l)
@@ -1930,13 +1992,32 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                     if _bounds[_bi3 + 1] < len(toks):
                         _mk = toks[_bounds[_bi3 + 1]]
                         if _mk[1] == 'SEL41':
-                            _prefix_has_jmp = any(t[1] == 'JMP' for t in toks[:_bounds[_bi3 + 1]])
-                            if not _sel_open and not _prefix_has_jmp:
-                                f.write('  -- SELECT %s OF\n' % (_last_expr or 'v1'))
+                            if not _sel_open:
+                                # 串联 SELECT：子句头可带前段尾跳（共锚点），不能因 JMP 前缀不开句
+                                f.write('  SELECT %s OF\n' % (_last_expr or 'sv_i'))
                                 _sel_open = True
-                            f.write('  -- CASE(%d):\n' % _mk[2])
-                        elif _mk[1] == 'SEL43':
-                            f.write('  -- ELSE:\n')
+                                _sel_clause_seen = False
+                                _sel_base_depth = len(open_blocks)   # 外层包裹块不许收
+                            if _sel_open:
+                                _sel_case_buf.append(_mk[2])   # 多值 CASE 聚行（T_CASE: CASE(7, 8, 9):）
+                        elif _mk[1] == 'SEL42' and _sel_open:
+                            if _sel_case_buf:
+                                if _sel_clause_seen:
+                                    _sel_drain()
+                                f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                                _sel_case_buf = []
+                                _sel_clause_seen = True
+                        elif _mk[1] == 'SEL43' and _sel_open:
+                            if _sel_case_buf:
+                                if _sel_clause_seen:
+                                    _sel_drain()
+                                f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                                _sel_case_buf = []
+                                _sel_clause_seen = True
+                            if _sel_clause_seen:
+                                _sel_drain()
+                            f.write('  ELSE:\n')
+                        # SEL40 = 子句头（失败跳表指针，纯字节码控制流，无源码对应）
                 if bi in UNTIL_AT and _last_expr:
                     f.write('  UNTIL(' + _last_expr + ')\n')
                 # ⚠️ _seg_written 是 list，而 _emit_residue 用 written.count(子串) 判在场：
@@ -1956,8 +2037,13 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             if bi in REPEAT_HEADS:
                 f.write('  REPEAT\n')
             if is_empty:
-                if _sel_open and (bi in SELECT_ENDS or (not SELECT_ENDS and n_close_if.get(bi, 0) == 0)):
-                    f.write('  -- ENDSELECT\n')
+                if _sel_open and not SELECT_ENDS and n_close_if.get(bi, 0) == 0:
+                    # 兜底：跳表失效（SELECT_ENDS 空）时按旧口径在空锚点收口
+                    if _sel_case_buf:
+                        f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                        _sel_case_buf = []
+                    _sel_drain()
+                    f.write('  ENDSELECT\n')
                     _sel_open = False
                 for _ in range(n_close_if.get(bi, 0)):
                     if open_blocks and open_blocks[-1] == 'if':
@@ -2027,6 +2113,15 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             f.write('  %s\n' % {'if': 'ENDIF', 'while': 'ENDWHILE', 'for': 'ENDFOR'}[k])
         if si < len(routines):
             f.write('  RETURN(0)\n')
+        if _sel_open:
+            # 段尾兜底收口：收口体被切到别的段/丢失时，SELECT 不能挂到 END 例程
+            # （MI04_SSW_GUI ST_MACHINE 实证）。正常路径已在体开头收口，这里只兜漏。
+            if _sel_case_buf:
+                f.write('  CASE(%s):\n' % ', '.join(str(v) for v in _sel_case_buf))
+                _sel_case_buf = []
+            _sel_drain()
+            f.write('  ENDSELECT\n')
+            _sel_open = False
         f.write('END %s\n\n' % (routines[si]['name'] if si < len(routines) else name))
     if not any(si >= len(routines) for si in sec_stmts):
         f.write('BEGIN\nEND %s\n' % name)
