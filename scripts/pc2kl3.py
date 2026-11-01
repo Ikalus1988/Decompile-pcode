@@ -1,6 +1,6 @@
 # pc2kl3.py — .pc → 可编译 .kl（v3：例程切段 + 签名形参 + 类型推断 + 外部声明）
 # Usage: python -I pc2kl3.py <dec> <out.kl>
-import os, re, sys
+import os, re, sys, json
 
 dec_path, out_path = sys.argv[1], sys.argv[2]
 dec = open(dec_path, 'rb').read()
@@ -665,6 +665,20 @@ def _reg_par(nm):
         _par_file.add((_CUR_SEC, nm))
 
 
+# 方案1 跨实例名字映射（tests/build_name_map.py 产出，三族语料源码↔PC 对拍反推）：
+# 命中 (模块,例程,槽号) → 例程局部用真名。机制已验证（续12 XYZ_PKT 115 处替换），
+# 未命中自动退 r<段>_lc<槽> 合成名，零回归风险。
+_NAME_MAP = {}
+_MAPPED_UP = set()
+_mp = os.environ.get('P2K_NAME_MAP',
+                     r'D:\Downloads\Decompile-pcode-tests\tests\name_map.json')
+if os.path.exists(_mp):
+    try:
+        _NAME_MAP = json.load(open(_mp, encoding='utf-8'))
+    except Exception:
+        _NAME_MAP = {}
+
+
 def vn(tbl, idx):
     if tbl == 'v' and idx in SHV_NAMES:
         return SHV_NAMES[idx]
@@ -673,6 +687,13 @@ def vn(tbl, idx):
         # （ISV_VG 实证：lc2 在 ISV2_GIN 是标量，却被全局推成 ARRAY[64] OF REAL，
         #  FOR 循环索引报 "must be an INTEGER"）→ r<段>_lc<槽> 各例程独立作用域
         _LOCALS.add((_CUR_SEC, idx))
+        if _NAME_MAP and _CUR_SEC < len(routines):
+            _rn = _NAME_MAP.get('%s|%s|%d' % (
+                name.lower(), routines[_CUR_SEC]['name'].lower(), idx))
+            # 真名有效性：标识符合法、不撞符号表真名（KAREL 不分大小写）
+            if _rn and re.match(r'^[A-Za-z_]\w*$', _rn) and _rn.upper() not in _TAKEN_UP:
+                _MAPPED_UP.add(_rn.upper())
+                return _rn
         base = 'r%d_lc%d' % (_CUR_SEC, idx)
     else:
         base = 'v' + str(idx)
@@ -1768,8 +1789,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     # 字段合成名/派生数组名（v<n>_f<off> 等）补声明
     def _covered(nm):
         nm2 = nm[2:] if nm.startswith('zz') else nm
-        if re.match(r'^r\d+_lc\d+$', nm2):
-            return True   # 例程局部已由各例程 VAR 块声明，勿重复
+        if re.match(r'^r\d+_lc\d+$', nm2) or nm2.upper() in _MAPPED_UP:
+            return True   # 例程局部（合成名/映射真名）已由各例程 VAR 块声明，勿重复
         m = re.match(r'^v(\d+)$', nm2)
         if m:
             return int(m.group(1)) < n_v
