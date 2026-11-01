@@ -1,0 +1,32 @@
+PROGRAM T_FNS2
+%COMMENT = 'fn id probe v2 gap fill'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iv : INTEGER
+  rv : REAL
+  sv : STRING[32]
+  bv : BOOLEAN
+  ep : POSITION
+  ep2 : POSITION
+  ex : XYZWPREXT
+  ex2 : XYZWPREXT
+  jp : JOINTPOS
+  cfg : CONFIG
+  vx : VECTOR
+  wp : XYZWPR
+
+BEGIN
+  rv = ABS(rv)
+  iv = ROUND(rv)
+  bv = IN_RANGE(ex)
+  ep2 = FRAME(ep, ep, ep)
+  ex2 = MIRROR(ep, ep, TRUE)
+  vx = ORIENT(ep)
+  wp = POS(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, cfg)
+  ep2 = INV(ep)
+  iv = SEMA_COUNT(1)
+  sv = CURR_PROG
+END T_FNS2

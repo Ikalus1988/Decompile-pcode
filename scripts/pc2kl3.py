@@ -122,6 +122,21 @@ def scan(seg, base):
     return out
 
 
+# FN 族 `76 <id>` = KAREL 内建函数调用（编译器内建表，全局稳定，跨模块同 id 同名）。
+# 来源：fn_census.py 投票普查（四族配对语料+探针，锚点行号归因）+ T_FNS 系列探针落锤。
+# 旧映射 {14:'str_len', 15:'sub_str', 4:'chr'} 的键是十六进制 0x14/0x15 误写成十进制
+# （4=chr 系 0x04 恰等值才命中过）——已纠正。id 序≈内建名 ASCII 序（1-23 段），
+# 25/26=追加段（SYSTEM 组转换）；0/9/24 为未见面层名的内部槽（fnN 兜底）。
+# 不进本表：ABS=算子 0x50(整)/0x67(实)、UNINIT=0x63、GET_VAR/SET_VAR=af/b0（均有专用算子）；
+# CNV_INT_STR 族/CHECK_*/GET_TSK_INFO 等=CALLIMP（名字表已还原）。
+_FN_NAMES = {
+    1: 'acos', 2: 'asin', 3: 'atan2', 4: 'chr', 5: 'cos', 6: 'curjpos', 7: 'curpos',
+    8: 'exp', 10: 'frame', 11: 'index', 12: 'inv', 13: 'in_range', 14: 'ln', 15: 'ord',
+    16: 'pos', 17: 'round', 18: 'sin', 19: 'sqrt', 20: 'str_len', 21: 'sub_str',
+    22: 'tan', 23: 'trunc', 25: 'cnv_jpos_rel', 26: 'cnv_rel_jpos',
+}
+
+
 def _stdlib_sigs():
     """KTRANS 支持库(core.ev)权威签名：NAME\x00 ff ff <argc u8> <ret u16BE> <参数 NAME\x00 3B类型>
     ret 0000=VOID/0010=INTEGER/1fxx=STRING；参数 (00,10)=int (1f,..)=str (00,1d)=file (00,11)=real"""
@@ -202,6 +217,33 @@ for _nm, (_ac, _rt) in REGOPE_BASIC.items():
     _pt += ['i'] * (_ac - len(_pt))
     STD_SIGS[_nm] = (_rt, _pt, _ac)
 STD_SIGS['CNV_INT_STR'] = ('v', ['i', 'i', 'i', 's'], 4)  # TARGET=STRING（ev 走查断链兜底）
+# ---- FN 族内建签名（KAREL 手册 A.x 权威形参/返回型；id→名=fn_census 实测，_FN_NAMES）----
+# 返回型: v=过程(裸调用)/i=INTEGER/r=REAL/s=STRING/b=BOOLEAN/pos=POSITION/jpos=JOINTPOS。
+# 可选参（CURPOS 第3组号/FRAME 第4点）暂按必选元数截断——语料实测调用均不含可选参。
+STD_SIGS['CHR'] = ('s', ['i'], 1)
+STD_SIGS['SUB_STR'] = ('s', ['s', 'i', 'i'], 3)
+STD_SIGS['STR_LEN'] = ('i', ['s'], 1)
+STD_SIGS['INDEX'] = ('i', ['s', 's'], 2)
+STD_SIGS['ORD'] = ('i', ['s', 'i'], 2)
+STD_SIGS['ROUND'] = ('i', ['r'], 1)
+STD_SIGS['TRUNC'] = ('i', ['r'], 1)
+STD_SIGS['CURPOS'] = ('pos', ['i', 'i'], 2)      # (axis_limit_mask, ovr_trv_mask)
+STD_SIGS['CURJPOS'] = ('jpos', ['i', 'i'], 2)    # (axs_lim_mask, ovr_trv_mask)
+STD_SIGS['CNV_JPOS_REL'] = ('v', ['jpos', 'ar', 'i'], 3)   # (jointpos, real_array, status)
+STD_SIGS['CNV_REL_JPOS'] = ('v', ['ar', 'jpos', 'i'], 3)   # (real_array, joint_pos, status)
+STD_SIGS['ACOS'] = ('r', ['r'], 1)
+STD_SIGS['ASIN'] = ('r', ['r'], 1)
+STD_SIGS['ATAN2'] = ('r', ['r', 'r'], 2)
+STD_SIGS['COS'] = ('r', ['r'], 1)
+STD_SIGS['EXP'] = ('r', ['r'], 1)
+STD_SIGS['LN'] = ('r', ['r'], 1)
+STD_SIGS['SIN'] = ('r', ['r'], 1)
+STD_SIGS['SQRT'] = ('r', ['r'], 1)
+STD_SIGS['TAN'] = ('r', ['r'], 1)
+STD_SIGS['IN_RANGE'] = ('b', ['pos'], 1)         # (posn:XYZWPREXT)
+STD_SIGS['INV'] = ('pos', ['pos'], 1)
+STD_SIGS['FRAME'] = ('pos', ['pos', 'pos', 'pos'], 3)
+STD_SIGS['POS'] = ('pos', ['r', 'r', 'r', 'r', 'r', 'r', 'i'], 7)  # 末参 c:CONFIG 无对应 kind，退 'i' 保原式
 STD_SIGS['SET_POS_REG'] = ('v', ['i', 'pos', 'i'], 3)
 STD_SIGS['SET_EPOS_REG'] = ('v', ['i', 'pos', 'i'], 3)
 STD_SIGS['SET_JPOS_REG'] = ('v', ['i', 'jpos', 'i'], 3)
@@ -732,7 +774,7 @@ BUILTIN_SIG = {'POST_ERR': 'isii', 'SET_INT_REG': 'iii', 'SET_REAL_REG': 'iii',
 def is_str(x):
     # 单字面量判定要严：'a' + '' 两端带引号但不是字面量（旧判定把它当纯串整个吞成 0）
     if re.match(r"^'(?:[^']|'')*'$", str(x)) or (x in str_vars) \
-            or ((_CUR_SEC, str(x)) in _par_str):
+            or str(x) == 'sv_s' or ((_CUR_SEC, str(x)) in _par_str):   # sv_s=串累加器，类型内建
         return True
     mb = re.match(r'^([\w.]+)(?:\[[^\]]*\])+$', str(x))   # 基名可含点、可多维（v15[v1][v13]）
     return bool(mb and (mb.group(1) in str_arr_vars
@@ -851,14 +893,16 @@ def _pk(t):
 def boolish(x):
     bare = re.sub(r"'[^']*'", '', str(x))
     return bool(re.search(r' (AND|OR) |^NOT ', bare) or re.search(r'[<>]|<>', bare)
-                or bare.startswith('UNINIT(') or 'UNINIT(' in bare)
+                or bare.startswith('UNINIT(') or 'UNINIT(' in bare
+                or bare == 'sv_b')   # sv_b=布尔累加器，类型内建
+
 
 def looks_real(x):
     """右值是实型结果：浮点字面量、实除 '/'（0x6c）表达式、或引用了已知 REAL 名 → 存储目标声明 REAL"""
     xs = str(x)
     if re.search(r'\d+\.\d', xs) or re.search(r'[^/<>] / ', xs):
         return True
-    return any(nm in real_vars or (_CUR_SEC, nm) in _par_real
+    return any(nm in real_vars or nm == 'sv_r' or (_CUR_SEC, nm) in _par_real   # sv_r=实累加器，类型内建
                for nm in re.findall(r'\b[A-Za-z_]\w*\b', xs))
 
 def vtype(name):
@@ -1277,7 +1321,7 @@ def eval_expr(toks, collect=False, pad=None):
             elif kind == 'CALLIMP':
                 nm = call_names.get(val, _wild('imp', val))
             else:
-                nm = {14: 'str_len', 15: 'sub_str', 4: 'chr'}.get(val, _wild('fn', val))
+                nm = _FN_NAMES.get(val, _wild('fn', val))
             # ---- 实参区提取（XYZ_PKT 嵌套 + DCP_HIST DISCTRL_FORM 落锤）----
             # <ARG>(0x27)=实参前缀，但【不严格每参一个】（有的实参裸推）——实参=
             # 区域内扁平化。调用头可能是 `27 27` 双连标记（DISCTRL_FORM/rtn3 落锤）：
@@ -1321,15 +1365,20 @@ def eval_expr(toks, collect=False, pad=None):
                 for _x, _k2 in enumerate(_std[1]):
                     if _x >= len(kinds2):
                         break
-                    if _k2 in ('ag', 'ab', 'as', 'ai') and kinds2[_x] in ('i', 'b', 'r', 'f', 's'):
+                    if _k2 in ('ag', 'ar', 'ab', 'as', 'ai') and kinds2[_x] in ('i', 'b', 'r', 'f', 's'):
                         # std 判数组而推断只有标量形态（混样冲突降级实证）→ std 为准
                         # （DCP_HIST DISCTRL_FORM p2 'ag' 被降级 'i' → VALUE_ARRAY 被砸成 0）
                         kinds2[_x] = _k2
-                    elif _k2 in ('ab', 'as') and kinds2[_x] == 'ai':
+                    elif _k2 in ('ab', 'as', 'ar') and kinds2[_x] == 'ai':
                         # std 精确数组类型（BOOLEAN 数组/串数组）> 泛型数组证据 'ai'
                         # （INACT_ARRAY 被 'ai' 盖住 → 声明 ARRAY OF INTEGER 与内建 BOOLEAN 撞）
                         kinds2[_x] = _k2
-                    elif kinds2[_x] not in ('as', 'ai') and _k2 != 'ag':
+                    elif _k2 in ('pos', 'jpos'):
+                        # 位置形参权威盖过一切使用点证据——聚合/位置实参常被 arg_kind
+                        # 误判 'ai'（元素访问形态），走"数组证据优先"会漏替换 → 类型不匹配
+                        # （XYZ_MOTION cnv_jpos_rel(i__, ret, joint_data) 实证）
+                        kinds2[_x] = _k2
+                    elif kinds2[_x] not in ('as', 'ai') and _k2 not in ('ag', 'ar'):
                         kinds2[_x] = _k2  # 数组证据（元素访问实证）优先于 desc 走查
                 kinds2 = kinds2[:want]
             while len(a) < want:
@@ -1344,7 +1393,17 @@ def eval_expr(toks, collect=False, pad=None):
                 k = kinds2[x] if x < len(kinds2) else 'i'
                 orig = arg
                 if k == 's' and not str_rhs(arg):
-                    arg = "''"   # 同上：复合串表达式不可抹（is_str 认不出 (a+'b') ）
+                    if re.match(r'^[A-Za-z_]\w*$', str(arg)) and not _is_par(arg) \
+                            and str(arg) not in ('TRUE', 'FALSE') \
+                            and str(arg) not in arr_vars and str(arg) not in file_vars \
+                            and str(arg) not in real_vars:
+                        # 串形参反推实参类型（签名权威）：旧分支一刀切抹成 ''，真名还原后
+                        # 错型实参无法自愈（YAMAZUMI SUB_STR(TimeDate,1,2) 实证：TIMEDATE 真型
+                        # STRING[18] 被推成 INTEGER，旧代码被通配名 fn21 掩盖）。形参类型为准，
+                        # 标串保留；已有强证据（数组/文件/REAL）不翻案（弱证据不盖强证据）。
+                        str_vars.add(str(arg))
+                    else:
+                        arg = "''"   # 复合/未知表达式仍抹（保编译，is_str 认不出 (a+'b')）
                 elif k == 'i' and re.match(r'^[A-Za-z_]\w*$', str(arg)) and str(arg) in real_vars:
                     dropped.append(orig); arg = '0'  # REAL 实参入 INTEGER 形参弃参留痕
                 elif k == 'i' and (str_rhs(arg) or re.search(r'[=<>]', arg)
@@ -1355,6 +1414,14 @@ def eval_expr(toks, collect=False, pad=None):
                     dropped.append(orig); arg = 'sv_p'
                 elif k == 'jpos' and str(arg) != 'sv_j':
                     dropped.append(orig); arg = 'sv_j'
+                elif k == 'ar':
+                    # ARRAY OF REAL 形参（CNV_JPOS_REL/CNV_REL_JPOS 第2参，手册权威）：
+                    # 整组实参（裸名）保留并反推 ARRAY OF REAL；元素/字面量/表达式替换 sv_a 留痕
+                    _a = str(arg)
+                    if re.match(r'^[A-Za-z_]\w*$', _a) and not _is_par(_a):
+                        arr_vars.add(_a); real_vars.add(_a)
+                    else:
+                        dropped.append(orig); arg = 'sv_a'
                 elif k == 'r' and str(arg) in str_vars:
                     dropped.append(orig); arg = '0.0'
                 elif k in ('r', 's', 'f') and re.match(r'^[A-Za-z_]\w*$', str(arg)) \
@@ -1400,7 +1467,8 @@ def eval_expr(toks, collect=False, pad=None):
                 # （DCPFAULT_MH GET_EPLANREF 实证）
                 _ret = _std[0] if _std else (
                     's' if (imports.get(nm) == 0x1f or returns_str(nm)) else 'i')
-                tgt = {'s': 'sv_s', 'pos': 'sv_p', 'jpos': 'sv_j'}.get(_ret, 'sv_i')
+                tgt = {'s': 'sv_s', 'pos': 'sv_p', 'jpos': 'sv_j',
+                       'r': 'sv_r', 'b': 'sv_b'}.get(_ret, 'sv_i')
                 lines.append(tgt + ' = ' + _call)
                 stack.append(tgt)
             if dropped:
@@ -1537,9 +1605,10 @@ for _nm2, _pt2 in import_ptypes.items():
         ARITY[_nm2] = len(_pt2)
         KINDS[_nm2] = [_pk(_t) for _t in _pt2]
 # 通配名（FN 族 id 未映射 / 名字表失配兜底）身份不确定 → 数组形态压回 'i'（弃参留痕），
-# 标量类型（s/r/f/b）保留。数组形态精确化会与混样实参相撞（MM_MODULE fn26=Sock_Send：
-# 一次传 INT 数组、一次传 REAL 数组，实为 6 实参拆错）；但标量类型不能压——
-# fn17 的实参是 REAL（r1_lc25 * 1000），压成 INTEGER 反而撞（实证）。
+# 标量类型（s/r/f/b）保留。数组形态精确化会与混样实参相撞（MM_MODULE fn26=CNV_REL_JPOS：
+# 首参 ARRAY OF REAL + JOINTPOS 聚合实参被扁平化拆散，INT/REAL 数组混样即此错；旧注释
+# "fn26=Sock_Send" 是误读——fn26=CNV_REL_JPOS、fn17=ROUND）；但标量类型不能压——
+# fn17=ROUND 的实参是 REAL（r1_lc25 * 1000），压成 INTEGER 反而撞（实证）。
 for _wn in list(KINDS):
     if re.match(r'^(?:rtn|fn|imp)\d+x?$', _wn):
         KINDS[_wn] = [_k if _k in ('s', 'r', 'f', 'b') else 'i' for _k in KINDS[_wn]]
@@ -1780,7 +1849,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
     _emitted = {vn('v', n).upper() for n in range(1, n_v)}
     for _s in _SYMS:
         _nm = _s[0]
-        if _nm.upper() in _emitted or _nm.upper() in ('SV_I', 'SV_S'):
+        if _nm.upper() in _emitted or _nm.upper() in ('SV_I', 'SV_S', 'SV_P', 'SV_J', 'SV_R', 'SV_B', 'SV_A'):
             continue
         _emitted.add(_nm.upper())
         f.write('  %s : %s\n' % (_nm, _symtype(_s[1], _s[2], _s[3])))
@@ -1800,6 +1869,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         return False
     _declared_syms = set(SHV_NAMES.values())
     extras = {nm for nm in (fld_vars | arr_vars | str_vars | real_vars | par_vars) if nm not in _declared_syms
+              if nm.upper() not in ('SV_I', 'SV_S', 'SV_P', 'SV_J', 'SV_R', 'SV_B', 'SV_A')
               if not _covered(nm) and not re.match(r'^p\d+$', nm) and re.match(r'^[A-Za-z_]\w*$', nm)}
     for nm in sorted(extras):
         f.write('  %s : %s\n' % (nm, vtype(nm)))
@@ -1815,7 +1885,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
         if re.match(r'^pp[0-9a-f]{2}$', d):
             continue  # 参数合成名已由 extras 按类型声明
         f.write('  %s : INTEGER\n' % d)
-    f.write('  sv_i : INTEGER\n  sv_s : STRING[64]\n  sv_p : POSITION\n  sv_j : JOINTPOS\n')
+    f.write('  sv_i : INTEGER\n  sv_s : STRING[64]\n  sv_p : POSITION\n  sv_j : JOINTPOS\n'
+            '  sv_r : REAL\n  sv_b : BOOLEAN\n  sv_a : ARRAY[9] OF REAL\n')
     f.write('\n')
     # 野名字（RTN*/FN* 等动态槽位）自动补外部声明
     used = set()
@@ -1857,7 +1928,8 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
 
     declared = set(imports) | {r['name'] for r in routines} | BUILTIN
     declared |= {n.upper() for n in declared}
-    _NODECL = {'chr', 'sub_str', 'str_len', 'sv_i', 'sv_s'}
+    _NODECL = {'sv_i', 'sv_s', 'sv_p', 'sv_j', 'sv_r', 'sv_b', 'sv_a'} \
+        | set(_FN_NAMES.values())   # 内建名/累加器 KTRANS 原生或已声明，免自动补声明
     for u in sorted(set(used) | set(call_args) | set(imp_args)):
         if u in _NODECL or u.upper() == _prog_s:
             continue
