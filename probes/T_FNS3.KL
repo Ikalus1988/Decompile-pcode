@@ -1,0 +1,15 @@
+PROGRAM T_FNS3
+%COMMENT = 'fn id probe v3 abs-int uninit-value'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iv : INTEGER
+  rv : REAL
+  bv : BOOLEAN
+
+BEGIN
+  iv = ABS(iv)
+  bv = UNINIT(rv)
+END T_FNS3

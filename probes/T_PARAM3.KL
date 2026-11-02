@@ -1,0 +1,47 @@
+PROGRAM T_PARAM3
+%COMMENT = 'param slot probe v3 widths'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  gv : INTEGER
+  gpos : POSITION
+
+ROUTINE r_f(x : FILE)
+BEGIN
+  gv = 0
+  CLOSE FILE x
+END r_f
+
+ROUTINE r_p(x : POSITION)
+BEGIN
+  gv = 0
+  gpos = x
+END r_p
+
+ROUTINE r_b(x : BOOLEAN; y : BOOLEAN)
+BEGIN
+  IF (x = y) THEN
+    gv = 1
+  ENDIF
+END r_b
+
+ROUTINE r_fb(x : FILE; y : BOOLEAN)
+BEGIN
+  IF (y = TRUE) THEN
+    CLOSE FILE x
+  ENDIF
+END r_fb
+
+ROUTINE r_pr(x : POSITION; r : REAL)
+BEGIN
+  IF (r > 1.0) THEN
+    gpos = x
+    gv = 1
+  ENDIF
+END r_pr
+
+BEGIN
+  gv = 0
+END T_PARAM3

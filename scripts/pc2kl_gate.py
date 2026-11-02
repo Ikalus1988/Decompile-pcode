@@ -93,9 +93,17 @@ except Exception as e:
 gate('G2 语义指纹', g2_ok, g2_detail)
 
 # G3 结构门
+# 先拼接续行：长条件按顶层运算符断行（KTRANS 256 上限，probe_linelen 实测），
+# 逐行匹配会把 IF 计漏（ISV_VG 实证：IF/ENDIF 文件级 114/114 配平，G3 却报 -1）
+_g3_lines = []
+for _l in kl_lines:
+    if _g3_lines and re.search(r'( AND | OR |, | \+ )\s*$', _g3_lines[-1]):
+        _g3_lines[-1] = _g3_lines[-1].rstrip() + ' ' + _l.strip()
+    else:
+        _g3_lines.append(_l)
 g3_problems = []
 opens = {'IF': 0, 'WHILE': 0, 'FOR': 0}
-for l in kl_lines:
+for l in _g3_lines:
     t = l.strip()
     if re.match(r'^IF .* THEN$', t):
         opens['IF'] += 1
@@ -117,7 +125,7 @@ for l in kl_lines:
 for k, v in opens.items():
     if v != 0:
         g3_problems.append(f'{k} 块不配平: {v}')
-routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: INTEGER)?$', kl, re.M) if 'FROM' not in m.group(0)]
+routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: [A-Z]+(\[\d+\])?)?$', kl, re.M) if 'FROM' not in m.group(0)]
 ends = re.findall(r'^END (\w+)', kl, re.M)
 if sorted(routines + [re.search(r'PROGRAM (\w+)', kl).group(1)]) != sorted(ends):
     g3_problems.append('ROUTINE/END 名称不匹配')

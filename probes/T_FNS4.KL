@@ -1,0 +1,19 @@
+PROGRAM T_FNS4
+%COMMENT = 'fn id probe v4 slot9 getvar setvar filelist'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iv : INTEGER
+  iv2 : INTEGER
+  st : INTEGER
+  an : ARRAY[4] OF STRING[20]
+
+BEGIN
+  GET_VAR(1, 'T_FNS4', 'iv', iv2, st)
+  SET_VAR(1, 'T_FNS4', 'iv', iv2, st)
+  FILE_LIST('*.*', 0, 1, an, iv, st)
+  FORCE_SPMENU(0, 0, 0)
+  FORMAT_DEV('MC:', 'VOL', FALSE, st)
+END T_FNS4

@@ -1,0 +1,53 @@
+PROGRAM T_FNS
+%COMMENT = 'fn id probe v1 builtins'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  iv : INTEGER
+  rv : REAL
+  sv : STRING[32]
+  jp : JOINTPOS
+  ra : ARRAY[9] OF REAL
+  st : INTEGER
+  ep : POSITION
+  ex : XYZWPREXT
+  cfg : CONFIG
+
+BEGIN
+  sv = CHR(65)
+  sv = SUB_STR('ABCDEF', 2, 3)
+  iv = STR_LEN('ABCDEF')
+  iv = INDEX('ABCDEF', 'CD')
+  iv = ORD('A', 1)
+  jp = CURJPOS(0, 0)
+  ep = CURPOS(0, 0)
+  CNV_JPOS_REL(jp, ra, st)
+  CNV_REL_JPOS(ra, jp, st)
+  CNV_INT_STR(iv, 8, 10, sv)
+  CNV_STR_INT('123', iv)
+  CNV_REAL_STR(rv, 10, 3, sv)
+  CNV_STR_REAL('1.5', rv)
+  CNV_TIME_STR(0, sv)
+  CNV_STR_TIME('12:00:00', iv)
+  CNV_CONF_STR(cfg, sv)
+  CNV_STR_CONF('N U T, 0, 0, 0', cfg, st)
+  CHECK_NAME('T_FNS', st)
+  CHECK_EPOS(ex, ep, ep, st)
+  GET_TSK_INFO('T_FNS', iv, 1, iv, sv, st)
+  rv = ABS(0 - 1.5)
+  rv = SQRT(2.0)
+  rv = SIN(0.0)
+  rv = COS(0.0)
+  rv = TAN(0.0)
+  rv = ASIN(0.0)
+  rv = ACOS(1.0)
+  rv = ATAN2(1.0, 1.0)
+  rv = EXP(1.0)
+  rv = LN(2.0)
+  rv = TRUNC(1.7)
+  IF UNINIT(rv) THEN
+    rv = 0.0
+  ENDIF
+END T_FNS
