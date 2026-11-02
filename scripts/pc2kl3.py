@@ -2217,6 +2217,10 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
             for _t in toks:
                 if _t[1] == 'VAR' and _t[2][1] == 'l':
                     _locs.add(vn('l', _t[2][2]))   # 例程局部 → 各例程 VAR 块独立声明
+                elif _t[1] == 'AGGREF' and _t[2][1] == 0xff and _t[2][2] >= 0:
+                    _locs.add(vn('l', _t[2][2]))   # 聚合引用局部（续18 令牌，漏收集会"Id must be defined"）
+                elif _t[1] == 'AGGARG' and _t[2][0] == 0xff and _t[2][1] >= 0:
+                    _locs.add(vn('l', _t[2][1]))
         declp2 = [d for d in sorted(declp) if not re.match(r'^(?:pp[0-9a-f]{2}|p\d+)$', d)] + sorted(_locs)
         if declp2 and si < len(routines):
             f.write('VAR\n')
