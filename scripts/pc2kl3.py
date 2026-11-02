@@ -587,6 +587,7 @@ for _si, _pm in _PARAMS.items():
 # 对应累加器（sv_p/sv_j/sv_r），否则 `sv_i = R_POS(...)` 类型不匹配（T_AGG 实证）。
 # ⚠️ 名字表 desc 类型码与符号表不同：01 01/01 02/01 03=POSITION、01 99=JOINTPOS（9 轴）
 _RET_BY_NAME = {str(_r['name']).upper(): _r.get('ret') for _r in routines}
+_PTYPE_BY_NAME = {str(_r['name']).upper(): _r.get('ptypes') for _r in routines}
 
 
 def _ret_kind(rc):
@@ -622,6 +623,12 @@ for i, (off, lid) in enumerate(markers):
         bodies.append((lid, off, [], True, True)); continue
     body = dec[off + 5:end]
     if len(body) > 800:
+        bodies.append((lid, off, [], True, True)); continue
+    if body[:1] == b'\x7f':
+        # 例程尾块（收尾桩 7f ?? ?? ?? 前缀 + 2b 参数/类型描述 + 7b/3B 步长偏移表）不是语句：
+        # 里面的 11/2b/0f 字节被误扫成 DELAY/PAUSE/RET 假信号 → "Invalid statement" 级联
+        # （XYZ_MOTION DELAY UNINIT(0) + 偏移表实证；三族 108 块普查零真语句混入。
+        #  真语句体从不以 7f 开头——返回桩恒在体尾，值返回体以推值起头）
         bodies.append((lid, off, [], True, True)); continue
     toks = scan(body, off + 5)
     # off<0x30 原本一刀切当"头部/数据区"，但有的模块第一条真语句就在偏移 35-47
@@ -1544,9 +1551,17 @@ def eval_expr(toks, collect=False, pad=None):
             for _x2 in range(len(a)):
                 if re.match(r'^[A-Za-z_][\w.]*\[[^\]]+\](\[[^\]]+\])*$', str(a[_x2])):
                     a[_x2] = '(' + str(a[_x2]) + ')'  # KAREL：数组元素按值传需括号（ISRA_AV 实证）
+            _st_ords = {}
+            _pts2 = _PTYPE_BY_NAME.get(str(nm).upper()) or import_ptypes.get(nm)                 or import_ptypes.get(str(nm).upper())
+            for _x2b, _t2b in enumerate(_pts2 or ()):
+                if _t2b[0] == 0x11:
+                    _st_ords[_x2b] = _ptype_name(_t2b)
             for x, arg in enumerate(a):
                 k = kinds2[x] if x < len(kinds2) else 'i'
                 orig = arg
+                if x in _st_ords and re.match(r'^[A-Za-z_]\w*$', str(arg)) and not _is_par(arg):
+                    # 结构体形参实参 → 绑结构体真类型（temp_data:XYZ_MSG_T 被推成 INTEGER 实证）
+                    _STRUCT_TYPE[str(arg)] = _st_ords[x]
                 if k == 's' and not str_rhs(arg):
                     if re.match(r'^[A-Za-z_]\w*$', str(arg)) and not _is_par(arg) \
                             and str(arg) not in ('TRUE', 'FALSE') \

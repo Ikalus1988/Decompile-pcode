@@ -33,7 +33,7 @@ for ai, (aoff, line) in enumerate(anch):
     if end <= aoff + 5:
         continue
     body = dec[aoff + 5:end]
-    if len(body) > 300:
+    if len(body) > 1200:
         continue
     toks = scan(body, aoff + 5)
     kinds = {t[1] for t in toks}
