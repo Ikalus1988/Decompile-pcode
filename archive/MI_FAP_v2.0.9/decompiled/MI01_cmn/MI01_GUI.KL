@@ -1,0 +1,207 @@
+-- MI01_GUI.KL (decompiled v3)
+PROGRAM MI01_GUI
+%COMMENT = 'GUI 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	POPLIST_T = STRUCTURE
+	NUM_ITEMS: INTEGER
+	STRINGS: ARRAY[100] OF STRING[24]
+	FK_LABELS: STRING[40]
+	ENDSTRUCTURE
+VAR
+  v1 : STRING[64]
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : STRING[64]
+  I_STATUS : INTEGER
+  v4_f00 : INTEGER
+  v4_f04 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : STRING[64]
+  r0_lc3 : INTEGER
+BEGIN
+  sv_i = str_len(p0)
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i <> sv_i) AND (sv_i <> 9)) THEN
+  r0_lc2 = ''
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  ENDIF
+  ENDFOR
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i <> sv_i) AND (sv_i <> 9)) THEN
+  r0_lc3 = r0_lc1
+  r0_lc1 = 1
+  ENDIF
+  ENDFOR
+  sv_s = sub_str(p0, 0, r0_lc3 - 0 + 1)
+  -- Æú²ÎÔ­Ê½: r0_lc2
+  -- stmt76 stray sv_s
+  RETURN(sv_s)
+END KILLBLANKS
+
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING
+VAR
+  r1_lc17 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 0, 0, r1_lc17)
+  sv_s = KILLBLANKS(r1_lc17)
+  -- stmt91 stray sv_s
+  RETURN(sv_s)
+END INTTOSTR
+
+ROUTINE STRTOINT(p0 : STRING) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  CNV_STR_INT(p0, r2_lc1)
+  RETURN(r2_lc1)
+  RETURN(0)
+END STRTOINT
+
+ROUTINE INTTOSTRADD0(p0 : INTEGER) : STRING
+VAR
+  r3_lc2 : STRING[64]
+BEGIN
+  IF ((p0 < 10)) THEN
+  sv_s = INTTOSTR(p0)
+  r3_lc2 = '0' + sv_s
+  ELSE
+  sv_s = INTTOSTR(p0)
+  r3_lc2 = sv_s
+  ENDIF
+  -- stmt124 stray r3_lc2
+  RETURN(sv_s)
+END INTTOSTRADD0
+
+ROUTINE CREATELIST : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+BEGIN
+  v1 = ''
+  r4_lc2 = 0
+  FOR v2 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt142 residue 'APPS_LOADER', 'APPS_LST[', '].INSTALLED'
+  IF ((r4_lc1 <> 0)) THEN
+  SELECT v2 OF
+  CASE(1):
+  CASE(2):
+  CASE(3):
+  CASE(4):
+  CASE(8):
+  CASE(9):
+  CASE(11):
+  CASE(13):
+  CASE(14):
+  CASE(15):
+  CASE(17):
+  CASE(19):
+  CASE(20):
+  CASE(21):
+  CASE(22):
+  CASE(24):
+  r4_lc2 = r4_lc2 + 1
+  sv_s = INTTOSTRADD0(v2)
+  v4_f04[r4_lc2] = 'MI' + sv_s + ' Setup'
+  ELSE:
+  ENDSELECT
+  ENDIF
+  ENDFOR
+  v4_f00 = r4_lc2
+  v1 = ''
+  -- stmt153 stray '' | v4
+  v5 = '[MI01_GUI]poplist'
+  RETURN(0)
+END CREATELIST
+
+ROUTINE CALLGUI : INTEGER
+VAR
+  r5_lc6 : STRING[64]
+  r5_lc7 : INTEGER
+BEGIN
+  IF ((v1 <> '')) THEN
+  sv_s = sub_str(v1, 3, 4)
+  sv_i = STRTOINT(sv_s)
+  r5_lc7 = sv_i
+  SELECT r5_lc7 OF
+  CASE(1):
+  r5_lc6 = 'MI01_CMN_GUI'
+  CASE(2):
+  r5_lc6 = 'MI02_TCH_GUI'
+  CASE(3):
+  r5_lc6 = 'MI03_GRP_GUI'
+  CASE(4):
+  r5_lc6 = 'MI04_SSW_GUI'
+  CASE(8):
+  r5_lc6 = 'MI08_DSP_GUI'
+  CASE(9):
+  r5_lc6 = 'MI09_DSD_GUI'
+  CASE(11):
+  r5_lc6 = 'MI11_APL_GUI'
+  CASE(13):
+  r5_lc6 = 'MI13_RVH_GUI'
+  CASE(14):
+  r5_lc6 = 'MI14_SPR_GUI'
+  CASE(15):
+  r5_lc6 = 'MI15_SPR_GUI'
+  CASE(17):
+  r5_lc6 = 'MI17_OBJ_GUI'
+  CASE(19):
+  r5_lc6 = 'MI19_CLI_GUI'
+  CASE(20):
+  r5_lc6 = 'MI20_SWH_GUI'
+  CASE(21):
+  r5_lc6 = 'MI21_SWH_GUI'
+  CASE(22):
+  r5_lc6 = 'MI22_FDS_GUI'
+  CASE(24):
+  r5_lc6 = 'MI24_ARC_GUI'
+  ELSE:
+  ENDSELECT
+  ENDIF
+  CALL_PROG(r5_lc6, 1)
+  POST_ERR(38100, 'No application selected', 0, 0)
+  sv_i = CREATELIST
+  -- stmt235 stray sv_i
+  IF ((v4_f00 > 0)) THEN
+  sv_i = DB_LIST(2, v5, v1)
+  v3 = sv_i
+  sv_i = CALLGUI
+  -- stmt239 stray sv_i
+  ELSE
+  POST_ERR(38100, 'No GUI for installed apps', 0, 0)
+  ENDIF
+  RETURN(0)
+END CALLGUI
+
+BEGIN
+END MI01_GUI
+-- module-residue ' ', ' '

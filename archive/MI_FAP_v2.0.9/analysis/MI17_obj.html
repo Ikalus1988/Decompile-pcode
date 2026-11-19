@@ -1,0 +1,2225 @@
+<!doctype html><meta charset=utf-8><title>OBJ 坐标/对象</title>
+<style>
+body{font:14px/1.55 ui-monospace,Consolas,monospace;margin:24px auto;max-width:1100px;
+ background:#fafafa;color:#222}
+h1{font-size:20px} h2{font-size:16px;border-bottom:1px solid #ccc;padding-bottom:4px}
+.note{background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;margin:8px 0} td,th{border:1px solid #ccc;padding:3px 10px;font-size:12px}
+pre{background:#fff;border:1px solid #ddd;padding:10px;overflow:auto;font-size:12px;line-height:1.45}
+.k{color:#7a3;font-weight:600}.s{color:#c39}.c{color:#888}.n{color:#36c}
+details{margin:10px 0} summary{cursor:pointer;font-weight:600}
+</style>
+<h1>MI_FAP v2.0.9 · OBJ 坐标/对象</h1>
+<div class=note><b>应用定位</b>：工件/对象与坐标系数据（OBJ）：GGTFRAME 坐标框架、目标位姿与跟踪数据维护（代码修改标记 2020-01-16）。</div>
+<p>TP 程序 6 个：R01_OBJ_XX.LS, R01_OBJ_XX.TP, VISION_CAL.LS, VISION_CAL.TP, dis_ualm.tp, get_frame.tp</p>
+<h2>模块与例程</h2>
+<table><tr><th>模块</th><th>例程</th><th>SELECT</th><th>例程名</th><th>IO</th></tr><tr><td>GGTFRAME.KL</td><td>5</td><td>0</td><td>TP_CLS, WRITE_MSG, CHK_STAT, GET_IPARM, INTTOSTR</td><td></td></tr><tr><td>MI17_OBJ.KL</td><td>60</td><td>1</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td></td></tr><tr><td>MI17_OBJ_GUI.KL</td><td>67</td><td>3</td><td>CLR_FSCR, KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE</td><td></td></tr><tr><td>MI17_OBJ_MON.KL</td><td>2</td><td>0</td><td>INTERCONNECT, MI17_SENDBSNUM</td><td></td></tr><tr><td>MI17_OBJ_ROUT.KL</td><td>58</td><td>0</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02</td></tr><tr><td>MI17_OBJ_VAR.KL</td><td>0</td><td>0</td><td></td><td></td></tr><tr><td>VS_APPCOR.KL</td><td>8</td><td>1</td><td>GET_PARM, READ_DATA, TP_CLS, TIMER_START, TIMER_STOP, WRITE_DATA, WAITDATA, READ_OFS_DAT</td><td></td></tr><tr><td>VS_ERRCHK.KL</td><td>2</td><td>0</td><td>DIS_UALM, GET_PARM</td><td></td></tr><tr><td>VS_INIT.KL</td><td>7</td><td>0</td><td>GET_PARM, WRITE_DATA, READ_DATA, TP_CLS, TIMER_START, TIMER_STOP, WAITDATA</td><td></td></tr><tr><td>VS_MAIN.KL</td><td>3</td><td>0</td><td>GET_SIGNAL, WRITE_DATA, READ_DATA</td><td></td></tr><tr><td>VS_SEND.KL</td><td>9</td><td>1</td><td>TP_CLS, TIMER_START, TIMER_STOP, WRITE_DATA, READ_DATA, WAITDATA, GET_PARM, GET_REAL</td><td></td></tr></table>
+<h2>调用与消息</h2>
+<table><tr><th>模块</th><th>外部调用/消息</th></tr><tr><td>GGTFRAME.KL</td><td>ABORT_TASK, FORCE_SPMENU, GET_POS_REG, GET_TPE_PRM</td></tr><tr><td>GGTFRAME.KL 消息</td><td>Cnv Uframe V1.0 |        ** ERROR ** |             *** ERROR ***               |        Invalid Parm (Integer) |        Abort | Get Parm1 Failed | Get Parm2 Failed | Get Parm3 Failed</td></tr><tr><td>MI17_OBJ.KL</td><td>UNINIT</td></tr><tr><td>MI17_OBJ.KL 消息</td><td>MI17 2.0.9 | MI17_obj_mon</td></tr><tr><td>MI17_OBJ_GUI.KL</td><td>ADD_DICT, DISCTRL_FORM, FORCE_SPMENU, GET_DEV_INFO, SET_LANG, UNINIT</td></tr><tr><td>MI17_OBJ_GUI.KL 消息</td><td>MI17 2.0.9 | *SYSTEM* | $VIRTUALEDIT | *SYSTEM* | $LANGUAGE | )) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG( | , r1_lc10)
+  -- stmt116 stray  | 
+  ELSE
+  -- stmt118 stray </td></tr><tr><td>MI17_OBJ_MON.KL</td><td>UNINIT</td></tr><tr><td>MI17_OBJ_MON.KL 消息</td><td>MI17 2.0.9</td></tr><tr><td>MI17_OBJ_ROUT.KL 消息</td><td>MI17 2.0.9</td></tr><tr><td>MI17_OBJ_VAR.KL 消息</td><td>MI17 2.0.9</td></tr><tr><td>VS_APPCOR.KL</td><td>SET_POS_REG, UNINIT</td></tr><tr><td>VS_APPCOR.KL 消息</td><td>Vs App V1.8 | Modification Data : 2020-01-16 |    ###  Set The Max Offset For X(mm)  ### |   Plsase input value = |    ###  Set The Max Offset For Y(mm)  ### |   Plsase input value = |    ###  Set The Max Offset For Z(mm)  ### |   Plsase input value =</td></tr><tr><td>VS_ERRCHK.KL 消息</td><td>Vs Chk Err V1.4 | 
+  v4[1] =  | 
+  v4[2] =  | 
+  v4[3] =  | 
+  v4[4] =  | 
+  v4[5] =  | 
+  v4[6] =  | 
+  v4[7] = </td></tr><tr><td>VS_INIT.KL</td><td>FORCE_SPMENU</td></tr><tr><td>VS_INIT.KL 消息</td><td>Vs Init V1.6 | Modification Data : 2020-01-17 | Vision Initialization | Initialization Complete</td></tr><tr><td>VS_MAIN.KL</td><td>GET_PORT_VAL, SET_PORT_VAL, UNINIT</td></tr><tr><td>VS_MAIN.KL 消息</td><td>Vs Main V1.0 | )) THEN
+  SET_PORT_VAL(2, p1.SIG_START + r1_lc36 - 1, 0, r1_lc37)
+  ELSE
+  IF ((r1_lc34 = </td></tr><tr><td>VS_SEND.KL</td><td>GET_TPE_PRM</td></tr><tr><td>VS_SEND.KL 消息</td><td>Vs Send Pos V1.8 | Modification Data : 2020-01-16 |             *** ERROR ***               |        Invalid Uframe No. (0 - 99) |        Abort |             *** ERROR ***               |        Invalid Tool No. (0 - 99) |        Abort</td></tr></table>
+<h2>源码（反编译 .KL）</h2>
+<details><summary>GGTFRAME.KL（5 例程）</summary><pre><span class=c>-- GGTFRAME.KL (decompiled v3)
+PROGRAM GGTFRAME
+%COMMENT = &#x27;Cnv Uframe V1.0&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : POSITION
+  v7 : ARRAY[64] OF INTEGER
+  v8 : POSITION
+  v9 : POSITION
+  v10 : ARRAY[64] OF INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v10_f00 : ARRAY[64] OF INTEGER
+  v11 : POSITION
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE TP_CLS : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 37, 1)
+  RETURN(0)
+END TP_CLS
+
+ROUTINE WRITE_MSG(p0 : STRING) : INTEGER
+BEGIN
+  WRITE(&#x27;  &#x27;, p0, CR)
+  RETURN(0)
+END WRITE_MSG
+
+ROUTINE CHK_STAT(p0 : INTEGER; p1 : STRING; p2 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 &lt;&gt; 0)) THEN
+  sv_i = TP_CLS
+  -- stmt45 stray sv_i
+  sv_i = WRITE_MSG(&#x27;       ** ERROR **&#x27;)
+  -- stmt46 stray sv_i
+  sv_i = WRITE_MSG(p1)
+  -- stmt47 stray sv_i
+  POST_ERR(p0, &#x27;&#x27;, 0, p2)
+  ENDIF
+  RETURN(0)
+END CHK_STAT
+
+ROUTINE GET_IPARM(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r3_lc2 : STRING[64]
+  r3_lc3 : INTEGER
+  r3_lc4 : INTEGER
+  r3_lc5 : REAL
+BEGIN
+  GET_TPE_PRM(p0, r3_lc3, r3_lc4, r3_lc5, r3_lc2, v1)
+  IF ((r3_lc3 &lt;&gt; 1)) THEN
+  sv_i = TP_CLS
+  -- stmt62 stray sv_i
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;       Invalid Parm (Integer)&#x27;, CR)
+  WRITE(&#x27;       Abort&#x27;, CR)
+  ABORT_TASK(&#x27;*ALL*&#x27;, (0 &lt;&gt; 0), (1 &lt;&gt; 0), v1)
+  -- ����ԭʽ: 0 | 1
+  ENDIF
+  IF ((v1 &lt;&gt; 0)) THEN
+  p2 = v1
+  ENDIF
+  p1 = r3_lc4
+  p2 = 0
+  RETURN(0)
+END GET_IPARM
+
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING
+VAR
+  r4_lc2 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 1, 0, r4_lc2)
+  sv_i = str_len(r4_lc2)
+  sv_s = sub_str(r4_lc2, 2, sv_i - 1)
+  r4_lc2 = sv_s
+  -- stmt82 stray r4_lc2
+  sv_i = GET_IPARM(1, v2, v1)
+  -- stmt88 stray sv_i
+  sv_i = CHK_STAT(v1, &#x27;Get Parm1 Failed&#x27;, 2)
+  -- stmt88 stray sv_i
+  sv_i = GET_IPARM(2, v3, v1)
+  -- stmt89 stray sv_i
+  sv_i = CHK_STAT(v1, &#x27;Get Parm2 Failed&#x27;, 2)
+  -- stmt89 stray sv_i
+  sv_i = GET_IPARM(3, v4, v1)
+  -- stmt90 stray sv_i
+  sv_i = CHK_STAT(v1, &#x27;Get Parm3 Failed&#x27;, 2)
+  -- stmt90 stray sv_i
+  sv_i = GET_IPARM(4, v5, v1)
+  -- stmt92 stray sv_i
+  sv_i = CHK_STAT(v1, &#x27;Get Parm4 Failed&#x27;, 2)
+  -- stmt92 stray sv_i
+  sv_p = GET_POS_REG(v2, v1)
+  v6 = sv_p
+  sv_i = CHK_STAT(v1, &#x27;Get Offset Pr Failed&#x27;, 2)
+  -- stmt94 stray sv_i
+  PURGE CONDITION[1]
+  v8 = v7[1][v3]
+  PURGE CONDITION[1]
+  v9 = v7[1][v5]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt98 stray v10_f00[1] | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt98 stray v10_f00[1] | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v8 = sv_p
+  sv_p = inv(v9)
+  v8 = sv_p
+  -- stmt100 stray v8
+  v11 = v6
+  -- stmt102 stray v8
+  PURGE CONDITION[1]
+  -- stmt103 stray v11 | v7[1][v4]
+  RETURN(sv_s)
+END INTTOSTR
+
+BEGIN
+END GGTFRAME
+</span></pre></details><details><summary>MI17_OBJ.KL（60 例程）</summary><pre><span class=c>-- MI17_OBJ.KL (decompiled v3)
+PROGRAM MI17_OBJ
+%COMMENT = &#x27;MI17 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  I_MI17_DI : INTEGER
+  I_MI17_DO : INTEGER
+  I_MI17_GI : INTEGER
+  I_MI17_GO : INTEGER
+  B_MON_17 : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DI : INTEGER
+  I_MI01_DO : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MON : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INTERCONNECT(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI17_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INIT : INTEGER
+BEGIN
+  IF (UNINIT(I_MI17_DI)) THEN
+  I_MI17_DI = 3096
+  ENDIF
+  IF (UNINIT(I_MI17_DO)) THEN
+  I_MI17_DO = 3096
+  ENDIF
+  IF (UNINIT(I_MI17_GI)) THEN
+  I_MI17_GI = 60
+  ENDIF
+  IF (UNINIT(I_MI17_GO)) THEN
+  I_MI17_GO = 60
+  ENDIF
+  RETURN(0)
+END INIT
+
+ROUTINE ACTIONSELECT : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  sv_i = GETTPEPRMINT(1)
+  r1_lc1 = sv_i
+  SELECT r1_lc1 OF
+  CASE(1):
+  sv_i = BSN_ENABLE(0)
+  -- stmt80 stray sv_i
+  B_MON_17 = 1
+  sv_i = RUN_MONITOR(&#x27;MI17_obj_mon&#x27;)
+  ELSE:
+  ENDSELECT
+  sv_i = INIT
+  -- stmt95 stray sv_i
+  sv_i = ACTIONSELECT
+  -- stmt97 stray sv_i
+  RETURN(0)
+END ACTIONSELECT
+
+BEGIN
+END MI17_OBJ
+</span></pre></details><details><summary>MI17_OBJ_GUI.KL（67 例程）</summary><pre><span class=c>-- MI17_OBJ_GUI.KL (decompiled v3)
+PROGRAM MI17_OBJ_GUI
+%COMMENT = &#x27;MI17 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF STRING[64]
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : ARRAY[64] OF BOOLEAN
+  v14 : ARRAY[64] OF BOOLEAN
+  v15 : INTEGER
+  v16 : INTEGER
+  v3_f04 : ARRAY[64] OF INTEGER
+  v3_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE REALROBOT : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$VIRTUALEDIT&#x27;, r0_lc1, v1)
+  IF ((v1 &lt;&gt; 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END REALROBOT
+
+ROUTINE CURRLANGUAGE : STRING
+VAR
+  r1_lc10 : INTEGER
+  r1_lc4 : STRING[64]
+  r1_lc8 : STRING[64]
+  r1_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$LANGUAGE&#x27;, r1_lc8, r1_lc10)
+  sv_i = index(r1_lc8, &#x27; &#x27;)
+  r1_lc9 = sv_i
+  sv_s = sub_str(r1_lc8, 1, r1_lc9 - 1)
+  r1_lc4 = sv_s
+  IF ((r1_lc4 &lt;&gt; &#x27;DEFAULT&#x27;)) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG(&#x27;ENGLISH     &#x27;, r1_lc10)
+  -- stmt116 stray &#x27;ENGLISH     &#x27;
+  ELSE
+  -- stmt118 stray &#x27;DEFAULT     &#x27;
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURRLANGUAGE
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r2_lc9 : STRING[64]
+BEGIN
+  r2_lc9 = &#x27;FR:\&#x27; + p1
+  -- stmt135 residue &#x27;FR:\\&#x27;
+  IF ((sv_s = &#x27;ENGLISH     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;ENGLISH     &#x27;, 4, v1)
+  ELSE
+  IF ((sv_s = &#x27;CHINESE     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;CHINESE     &#x27;, 4, v1)
+  ELSE
+  ADD_DICT(r2_lc9, p0, &#x27;DEFAULT     &#x27;, 4, v1)
+  ENDIF
+  ENDIF
+  IF ((v1 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Failed to load dict &#x27; + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE RESET_VALARRAY : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v2[r3_lc1] = &#x27;&#x27;
+  ENDFOR
+  RETURN(0)
+END RESET_VALARRAY
+
+ROUTINE USERSCREEN : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+  r4_lc4 : INTEGER
+  r4_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r4_lc1, r4_lc2, r4_lc3, r4_lc4, r4_lc5, v1)
+  v4 = v3_f04[r4_lc2]
+  v5 = v3_f08[r4_lc2]
+  SELECT r4_lc2 OF
+  CASE(1):
+  v6 = 1
+  CASE(2):
+  v6 = 2
+  CASE(3):
+  v6 = 3
+  ELSE:
+  v6 = 1
+  ENDSELECT
+  FORCE_SPMENU(v6, 190, 1)
+  RETURN(0)
+END USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = 0
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt217 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r5_lc3 = r5_lc3 + r5_lc2
+  ENDFOR
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, v7, v1)
+  RETURN(r5_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  DELAY 100
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt241 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  IF ((r6_lc3 &lt;&gt; v8)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, r6_lc4, v1)
+  IF ((r6_lc4 &lt;&gt; v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE INITLOALVARS : INTEGER
+BEGIN
+  IF (UNINIT(v9)) THEN
+  v9 = 32
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE SHOW_MI17STP : INTEGER
+BEGIN
+  v10 = 1
+  v11 = 1
+  v2[v11] = &#x27;[MI17_OBJ_VAR]i_mon&#x27;
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v12 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt32 stray sv_i
+  DISCTRL_FORM(&#x27;AOBJ&#x27;, 0, v2, v13, v14, 2 + 2048, v15, v12, v1)
+  SELECT v12 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  CASE(131):
+  CASE(138):
+  CASE(132):
+  CASE(139):
+  CASE(133):
+  CASE(134):
+  CASE(232):
+  CASE(13):
+  RETURN(v10)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v10)
+  RETURN(0)
+END SHOW_MI17STP
+
+ROUTINE ST_MACHINE(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  sv_i = SHOW_MI17STP
+  RETURN(sv_i)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  sv_i = INITLOALVARS
+  -- stmt94 stray sv_i
+  sv_i = RESET_VALARRAY
+  -- stmt96 stray sv_i
+  sv_i = LOAD_TX(&#x27;AOBJ&#x27;, &#x27;17aobjeg&#x27;)
+  -- stmt100 stray sv_i
+  sv_i = USERSCREEN
+  -- stmt103 stray sv_i
+  v12 = 0
+  v15 = 1
+  v16 = 1
+  REPEAT
+  sv_i = ST_MACHINE(v16)
+  v16 = sv_i
+  DELAY 64
+  UNTIL((v16 = 0))
+  RETURN(0)
+END ST_MACHINE
+
+BEGIN
+END MI17_OBJ_GUI
+-- module-residue &#x27;H521&#x27;, &#x27;H538&#x27;
+</span></pre></details><details><summary>MI17_OBJ_MON.KL（2 例程）</summary><pre><span class=c>-- MI17_OBJ_MON.KL (decompiled v3)
+PROGRAM MI17_OBJ_MON
+%COMMENT = &#x27;MI17 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  B_MON_17 : INTEGER
+  I_MON : INTEGER
+  I_MI17_DI : INTEGER
+  I_MI17_DO : INTEGER
+  I_MI17_GI : INTEGER
+  I_MI17_GO : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE INTERCONNECT(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI17_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  IF ((B_MON_17 &lt;&gt; 0)) THEN
+  sv_i = MI17_SENDBSNUM(0)
+  -- stmt29 stray sv_i
+  IF (UNINIT(I_MON)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &lt; 32)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &gt; 256)) THEN
+  I_MON = 256
+  ENDIF
+  DELAY I_MON
+  ELSE
+  ENDIF
+END MI17_OBJ_MON
+
+</span></pre></details><details><summary>MI17_OBJ_ROUT.KL（58 例程）</summary><pre><span class=c>-- MI17_OBJ_ROUT.KL (decompiled v3)
+PROGRAM MI17_OBJ_ROUT
+%COMMENT = &#x27;MI17 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  I_MI01_DI : INTEGER
+  I_MI17_DO : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MI17_DI : INTEGER
+  I_MI17_GI : INTEGER
+  I_MI17_GO : INTEGER
+  B_MON_17 : BOOLEAN
+  I_MON : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INTERCONNECT(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[p0] &lt;&gt; 0)) THEN
+  io_02[p1] = 1
+  ELSE
+  io_02[p1] = 0
+  ENDIF
+  RETURN(0)
+END INTERCONNECT
+
+ROUTINE MI17_SENDBSNUM : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+  r1_lc3 : INTEGER
+  r1_lc4 : INTEGER
+BEGIN
+  sv_i = round(64 / 8)
+  FOR r1_lc2 = 1 TO 3 DO
+  FOR r1_lc1 = 1 TO 3 DO
+  r1_lc3 = I_MI01_DI + 129 + r1_lc1 - 1 + r1_lc2 - 1 * 8
+  r1_lc4 = I_MI17_DO + 233 + r1_lc1 - 1 + r1_lc2 - 1 * 4
+  sv_i = INTERCONNECT(r1_lc3, r1_lc4)
+  -- stmt57 stray sv_i
+  ENDFOR
+  ENDFOR
+  RETURN(0)
+END MI17_SENDBSNUM
+
+BEGIN
+END MI17_OBJ_ROUT
+</span></pre></details><details><summary>MI17_OBJ_VAR.KL（0 例程）</summary><pre><span class=c>-- MI17_OBJ_VAR.KL (decompiled v3)
+PROGRAM MI17_OBJ_VAR
+%COMMENT = &#x27;MI17 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+END MI17_OBJ_VAR
+
+</span></pre></details><details><summary>VS_APPCOR.KL（8 例程）</summary><pre><span class=c>-- VS_APPCOR.KL (decompiled v3)
+PROGRAM VS_APPCOR
+%COMMENT = &#x27;Vs App V1.8&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+	UFRAME_DAT = STRUCTURE
+	UFRAME_NO: INTEGER
+	UFRAME_POS: INTEGER
+	ENDSTRUCTURE
+	UTOOL_DAT = STRUCTURE
+	UTOOL_NO: INTEGER
+	UTOOL_POS: INTEGER
+	ENDSTRUCTURE
+	OFFSET_DAT = STRUCTURE
+	X_OFFSET: INTEGER
+	Y_OFFSET: INTEGER
+	Z_OFFSET: INTEGER
+	W_OFFSET: INTEGER
+	P_OFFSET: INTEGER
+	R_OFFSET: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : STRING[64]
+  v2 : STRING[64]
+  v3 : STRING[64]
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : INTEGER
+  v17 : POSITION
+  v18 : INTEGER
+  v19 : SIGNAL_DEF
+  v20 : SIGNAL_DEF
+  v21 : SIGNAL_DEF
+  v22 : SIGNAL_DEF
+  v23 : INTEGER
+  v24 : SIGNAL_DEF
+  v25 : SIGNAL_DEF
+  v26 : SIGNAL_DEF
+  v27 : INTEGER
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  v30 : SIGNAL_DEF
+  v31 : SIGNAL_DEF
+  v32 : SIGNAL_DEF
+  v33 : SIGNAL_DEF
+  v34 : SIGNAL_DEF
+  v35 : SIGNAL_DEF
+  v36 : SIGNAL_DEF
+  v37 : SIGNAL_DEF
+  v38 : INTEGER
+  TELL_ID_O : REAL
+  MODE_ID_O : REAL
+  JOB_ID_O : REAL
+  POS_ID_O : REAL
+  SYSTEM_ID : REAL
+  GO_X_INT : REAL
+  GO_X_REAL : REAL
+  GO_Y_INT : REAL
+  GO_Y_REAL : REAL
+  GO_Z_INT : REAL
+  GO_Z_REAL : REAL
+  GO_W_INT : REAL
+  GO_W_REAL : REAL
+  GO_P_INT : REAL
+  GO_P_REAL : REAL
+  GO_R_INT : REAL
+  GO_R_REAL : REAL
+  TELL_ID_I : REAL
+  STATUS_ID : REAL
+  ERROR_ID : REAL
+  RESERVE_I : REAL
+  PC_STATUS : REAL
+  GI_X_INT : REAL
+  GI_X_REAL : REAL
+  GI_Y_INT : REAL
+  GI_Y_REAL : REAL
+  GI_Z_INT : REAL
+  GI_Z_REAL : REAL
+  GI_W_INT : REAL
+  GI_W_REAL : REAL
+  GI_P_INT : REAL
+  GI_P_REAL : REAL
+  GI_R_INT : REAL
+  GI_R_REAL : REAL
+  CAMERA_ID : REAL
+  CALIB_NO : REAL
+  TELL_NO : INTEGER
+  TIMEOUT : INTEGER
+  ERROR_VAL : INTEGER
+  TIMEOUT_STAT : BOOLEAN
+  UFRAME_DEF : REAL
+  UTOOL_DEF : REAL
+  MODE_ID : INTEGER
+  OFFSET_VALUE : REAL
+  OFFSET_PR : INTEGER
+  STATUS : INTEGER
+  STAT_VAL : INTEGER
+  OFST_PREG : INTEGER
+  STAT_REG : INTEGER
+  MAX_OFST_X : REAL
+  MAX_OFST_Y : REAL
+  MAX_OFST_Z : REAL
+  MAX_OFST_W : REAL
+  MAX_OFST_P : REAL
+  MAX_OFST_R : REAL
+  CTL_VERSION : STRING[127]
+  PROG_DETAIL : STRING[127]
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v15_f04 : INTEGER
+  v16_f04 : INTEGER
+  v17_f08 : REAL
+  v17_f0c : REAL
+  v17_f10 : REAL
+  v17_f14 : REAL
+  v17_f18 : REAL
+  v17_f1c : REAL
+  v27_f00 : REAL
+  v27_f04 : REAL
+  v27_f08 : REAL
+  v27_f0c : REAL
+  v27_f10 : REAL
+  v27_f14 : REAL
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE TP_CLS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_START(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_STOP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE READ_OFS_DAT(p0, p1 : SIGNAL_DEF) : REAL
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : REAL
+  r0_lc4 : REAL
+BEGIN
+  sv_i = READ_DATA(p0)
+  r0_lc1 = sv_i
+  sv_i = READ_DATA(p1)
+  r0_lc2 = sv_i
+  r0_lc3 = r0_lc2 / 10000
+  r0_lc4 = r0_lc1 + r0_lc3
+  RETURN(r0_lc4)
+  v2 = v1
+  v3 = &#x27;Modification Data : 2020-01-16&#x27;
+  SELECT v4 OF
+  CASE(28):
+  IF (UNINIT(v5)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt101 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For X(mm)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt104 stray v5
+  ENDIF
+  IF (UNINIT(v6)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt107 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For Y(mm)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt110 stray v6
+  ENDIF
+  IF (UNINIT(v7)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt113 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For Z(mm)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt116 stray v7
+  ENDIF
+  IF (UNINIT(v8)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt119 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For W(deg)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt122 stray v8
+  ENDIF
+  IF (UNINIT(v9)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt125 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For P(deg)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt128 stray v9
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt131 stray sv_i
+  WRITE(&#x27;   ###  Set The Max Offset For R(deg)  ###&#x27;, CR, CR, CR, CR)
+  WRITE(CR, CR, CR, &#x27;  Plsase input value =&#x27;)
+  DELAY 0
+  -- stmt134 stray v10
+  sv_i = TP_CLS(0)
+  -- stmt135 stray sv_i
+  WRITE(&#x27;     This step occurs only once&#x27;, CR)
+  WRITE(&#x27; when the program is loaded.&#x27;, CR)
+  WRITE(&#x27;     If you want to change &#x27;, CR)
+  WRITE(&#x27; this value again later.&#x27;, CR, CR)
+  WRITE(&#x27;     1,Go to then selection screen ,&#x27;, CR)
+  WRITE(&#x27;       Double click on the VS_APPCOR. &#x27;, CR)
+  WRITE(&#x27;     2,Press  DATA - KAREL_Vars.&#x27;, CR)
+  WRITE(&#x27;     3,Find  MAX_OFST_XYZWPR and modified.&#x27;, CR)
+  WRITE(&#x27;                                NEXT &#x27;, CR)
+  WRITE(&#x27;Press f5 again&#x27;, CR)
+  -- stmt146 stray 134
+  sv_i = TP_CLS(0)
+  -- stmt147 stray sv_i
+  ENDIF
+  sv_i = GET_PARM(1, v11, v12)
+  -- stmt149 stray sv_i
+  sv_i = GET_PARM(2, v13, v12)
+  -- stmt150 stray sv_i
+  SET_INT_REG(v13, 0, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  IF ((v14 &lt;&gt; 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt170 stray v15_f04 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt170 stray v16_f04 | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v17 = sv_p
+  WRITE(&#x27;Waiting For Read Offset Data&#x27;, CR)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(29, v19)
+  -- stmt174 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt176 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt179 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt180 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 &lt;&gt; 1)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  -- stmt188 stray 1
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt191 stray sv_i
+  -- stmt192 stray 1
+  SET_INT_REG(v13, 0, v12)
+  sv_r = READ_OFS_DAT(v25, v26)
+  v27_f00 = sv_r
+  sv_r = READ_OFS_DAT(v28, v29)
+  v27_f04 = sv_r
+  sv_r = READ_OFS_DAT(v30, v31)
+  v27_f08 = sv_r
+  sv_r = READ_OFS_DAT(v32, v33)
+  v27_f0c = sv_r
+  sv_r = READ_OFS_DAT(v34, v35)
+  v27_f10 = sv_r
+  sv_r = READ_OFS_DAT(v36, v37)
+  v27_f14 = sv_r
+  WRITE(&#x27;Reading Offset Data Successful&#x27;, CR)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(&#x27;  X=&#x27;, &#x27;   Y=&#x27;, &#x27;   Z=&#x27;, CR)
+  -- stmt201 stray v27_f00 | 8 | 3 | v27_f04 | 8 | 3 | v27_f08 | 8 | 3
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(&#x27;  W=&#x27;, &#x27;   P=&#x27;, &#x27;   R=&#x27;, CR)
+  -- stmt202 stray v27_f0c | 8 | 3 | v27_f10 | 8 | 3 | v27_f14 | 8 | 3
+  v17_f08 = v27_f00
+  v17_f0c = v27_f04
+  v17_f10 = v27_f08
+  v17_f14 = v27_f0c
+  v17_f18 = v27_f10
+  v17_f1c = v27_f14
+  IF ((v27_f08 &lt;&gt; 0) OR (0 &gt; v7)) THEN
+  SET_INT_REG(v13, 15, v12)
+  v14 = 15
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;        XYZ correction is too large&#x27;, CR)
+  ELSE
+  IF ((v27_f14 &lt;&gt; 0) OR (0 &gt; v10)) THEN
+  SET_INT_REG(v13, 16, v12)
+  v14 = 16
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;        WPR correction is too large&#x27;, CR)
+  ELSE
+  SET_POS_REG(v11, v17, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  ENDIF
+  CASE(20):
+  sv_i = GET_PARM(1, v13, v12)
+  -- stmt230 stray sv_i
+  IF ((v14 &lt;&gt; 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  SET_INT_REG(v13, 0, v12)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(21, v19)
+  -- stmt241 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt243 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt245 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt246 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 &lt;&gt; 0)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt251 stray sv_i
+  -- stmt252 stray 1
+  WRITE(&#x27;Send Calib Successful&#x27;, CR)
+  CASE(26):
+  sv_i = GET_PARM(1, v13, v12)
+  -- stmt255 stray sv_i
+  IF ((v14 &lt;&gt; 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  SET_INT_REG(v13, 0, v12)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(27, v19)
+  -- stmt9 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt11 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt14 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt15 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 &lt;&gt; 0)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt20 stray sv_i
+  -- stmt21 stray 1
+  WRITE(&#x27;Send Reference Successful&#x27;, CR)
+  ENDSELECT
+  IF ((v14 &lt;&gt; 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v38 &lt;&gt; 0)) THEN
+  SET_INT_REG(v13, 14, v12)
+  IF ((v12 &lt;&gt; 0)) THEN
+  POST_ERR(v12, &#x27;&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  RETURN(sv_r)
+END READ_OFS_DAT
+
+BEGIN
+END VS_APPCOR
+</span></pre></details><details><summary>VS_ERRCHK.KL（2 例程）</summary><pre><span class=c>-- VS_ERRCHK.KL (decompiled v3)
+PROGRAM VS_ERRCHK
+%COMMENT = &#x27;Vs Chk Err V1.4&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : ARRAY[64] OF STRING[64]
+  v4 : ARRAY[64] OF STRING[64]
+  v5 : INTEGER
+  UALARM_NO : INTEGER
+  STATUS : INTEGER
+  ERROR_VAL : INTEGER
+  ERR_MSG : ARRAY[20] OF STRING[29]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE DIS_UALM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  sv_i = GET_PARM(1, v1, v2)
+  -- stmt20 stray sv_i
+  v3[v1] = &#x27;   &#x27;
+  v4[1] = &#x27;ERROR_TELID&#x27;
+  v4[2] = &#x27;ERROR_JOBID&#x27;
+  v4[3] = &#x27;ERROR_REFERENCE&#x27;
+  v4[4] = &#x27;ERROR_PRODUCTION&#x27;
+  v4[5] = &#x27;ERROR_REALIGN&#x27;
+  v4[6] = &#x27;ERROR_MEASURE&#x27;
+  v4[7] = &#x27;ERROR_PRODUCTIONEND&#x27;
+  v4[8] = &#x27;ERROR_CALCULATION&#x27;
+  v4[9] = &#x27;                   &#x27;
+  v4[10] = &#x27;                   &#x27;
+  v4[11] = &#x27;                   &#x27;
+  v4[12] = &#x27;                   &#x27;
+  v4[13] = &#x27;                   &#x27;
+  v4[14] = &#x27;TIMEOUT&#x27;
+  v4[15] = &#x27;XYZ CORRECTION IS TOO LARGE&#x27;
+  v4[16] = &#x27;WPR CORRECTION IS TOO LARGE&#x27;
+  v4[17] = &#x27;                   &#x27;
+  v4[18] = &#x27;                   &#x27;
+  v4[19] = &#x27;                   &#x27;
+  v4[20] = &#x27;                   &#x27;
+  IF ((v5 &lt;&gt; 0)) THEN
+  WRITE(&#x27;Unuccessful&#x27;, CR)
+  v3[v1] = &#x27;&#x27;
+  -- stmt44 stray v4[v5]
+  sv_i = DIS_UALM(0)
+  -- stmt45 stray sv_i
+  ELSE
+  WRITE(&#x27;Successful,Ok To Continue&#x27;, CR)
+  ENDIF
+END VS_ERRCHK
+
+</span></pre></details><details><summary>VS_INIT.KL（7 例程）</summary><pre><span class=c>-- VS_INIT.KL (decompiled v3)
+PROGRAM VS_INIT
+%COMMENT = &#x27;Vs Init V1.6&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : STRING[64]
+  v7 : STRING[64]
+  v8 : STRING[64]
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : SIGNAL_DEF
+  v13 : SIGNAL_DEF
+  v14 : SIGNAL_DEF
+  v15 : SIGNAL_DEF
+  v16 : SIGNAL_DEF
+  v17 : SIGNAL_DEF
+  v18 : SIGNAL_DEF
+  v19 : SIGNAL_DEF
+  v20 : SIGNAL_DEF
+  v21 : SIGNAL_DEF
+  v22 : SIGNAL_DEF
+  v23 : SIGNAL_DEF
+  v24 : SIGNAL_DEF
+  v25 : SIGNAL_DEF
+  v26 : SIGNAL_DEF
+  v27 : SIGNAL_DEF
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  TELL_ID_O : REAL
+  MODE_ID_O : REAL
+  JOB_ID_O : REAL
+  POS_ID_O : REAL
+  SYSTEM_ID : REAL
+  GO_X_INT : REAL
+  GO_X_REAL : REAL
+  GO_Y_INT : REAL
+  GO_Y_REAL : REAL
+  GO_Z_INT : REAL
+  GO_Z_REAL : REAL
+  GO_W_INT : REAL
+  GO_W_REAL : REAL
+  GO_P_INT : REAL
+  GO_P_REAL : REAL
+  GO_R_INT : REAL
+  GO_R_REAL : REAL
+  TELL_ID_I : REAL
+  STATUS_ID : REAL
+  ERROR_ID : REAL
+  RESERVE_I : REAL
+  PC_STATUS : REAL
+  GI_X_INT : REAL
+  GI_X_REAL : REAL
+  GI_Y_INT : REAL
+  GI_Y_REAL : REAL
+  GI_Z_INT : REAL
+  GI_Z_REAL : REAL
+  GI_W_INT : REAL
+  GI_W_REAL : REAL
+  GI_P_INT : REAL
+  GI_P_REAL : REAL
+  GI_R_INT : REAL
+  GI_R_REAL : REAL
+  CAMERA_ID : REAL
+  CALIB_NO : REAL
+  TIME_COUNT : INTEGER
+  TIMEOUT : INTEGER
+  STATUS : INTEGER
+  TELL_NO : INTEGER
+  TIMEOUT_STAT : BOOLEAN
+  VS_STATUS : BOOLEAN
+  ERROR_VAL : INTEGER
+  CTL_VERSION : STRING[127]
+  PROG_DETAIL : STRING[127]
+  SYS_ID : INTEGER
+  PC_STAT : INTEGER
+  STAT_VAL : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+
+ROUTINE TP_CLS : INTEGER
+BEGIN
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 37, 1)
+  RETURN(0)
+END TP_CLS
+
+ROUTINE TIMER_START : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END TIMER_START
+
+ROUTINE TIMER_STOP : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END TIMER_STOP
+
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  DELAY 8
+  sv_i = READ_DATA(p0)
+  r3_lc1 = sv_i
+  IF ((r3_lc1 = p1) OR (v2 = 1)) THEN
+  PURGE CONDITION[1]
+  -- stmt73 stray 1 | v1 | v3 | 1 | 14
+  v4 = 0
+  v5 = 0
+  v7 = v6
+  v8 = &#x27;Modification Data : 2020-01-17&#x27;
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  WRITE(&#x27;Vision Initialization&#x27;, CR)
+  sv_i = GET_PARM(1, v9, v10)
+  -- stmt91 stray sv_i
+  v3 = 8000
+  v11 = 1
+  v2 = 0
+  sv_i = WRITE_DATA(0, v12)
+  -- stmt98 stray sv_i
+  sv_i = WRITE_DATA(0, v13)
+  -- stmt99 stray sv_i
+  sv_i = WRITE_DATA(0, v14)
+  -- stmt100 stray sv_i
+  sv_i = WRITE_DATA(v9, v15)
+  -- stmt101 stray sv_i
+  sv_i = WRITE_DATA(0, v16)
+  -- stmt102 stray sv_i
+  sv_i = WRITE_DATA(0, v17)
+  -- stmt103 stray sv_i
+  sv_i = WRITE_DATA(0, v18)
+  -- stmt104 stray sv_i
+  sv_i = WRITE_DATA(0, v19)
+  -- stmt105 stray sv_i
+  sv_i = WRITE_DATA(0, v20)
+  -- stmt106 stray sv_i
+  sv_i = WRITE_DATA(0, v21)
+  -- stmt107 stray sv_i
+  sv_i = WRITE_DATA(0, v22)
+  -- stmt108 stray sv_i
+  sv_i = WRITE_DATA(0, v23)
+  -- stmt109 stray sv_i
+  sv_i = WRITE_DATA(0, v24)
+  -- stmt110 stray sv_i
+  sv_i = WRITE_DATA(0, v25)
+  -- stmt111 stray sv_i
+  sv_i = WRITE_DATA(0, v26)
+  -- stmt112 stray sv_i
+  sv_i = WRITE_DATA(0, v27)
+  -- stmt113 stray sv_i
+  sv_i = WRITE_DATA(v5, v28)
+  -- stmt114 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START
+  -- stmt117 stray sv_i
+  sv_i = WAITDATA(v29, v5)
+  -- stmt118 stray sv_i
+  sv_i = TIMER_STOP
+  -- stmt123 stray sv_i
+  -- stmt124 stray 1
+  WRITE(&#x27;Initialization Complete&#x27;, CR)
+  ENDIF
+  RETURN(0)
+END WAITDATA
+
+BEGIN
+END VS_INIT
+</span></pre></details><details><summary>VS_MAIN.KL（3 例程）</summary><pre><span class=c>-- VS_MAIN.KL (decompiled v3)
+PROGRAM VS_MAIN
+%COMMENT = &#x27;Vs Main V1.0&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+VAR
+  DO_STARTBIT : INTEGER
+  DI_STARTBIT : INTEGER
+  TELL_ID_O : SIGNAL_DEF
+  MODE_ID_O : SIGNAL_DEF
+  JOB_ID_O : SIGNAL_DEF
+  POS_ID_O : SIGNAL_DEF
+  CAMERA_ID : SIGNAL_DEF
+  CALIB_NO : SIGNAL_DEF
+  SYSTEM_ID : SIGNAL_DEF
+  GO_X_INT : SIGNAL_DEF
+  GO_X_REAL : SIGNAL_DEF
+  GO_Y_INT : SIGNAL_DEF
+  GO_Y_REAL : SIGNAL_DEF
+  GO_Z_INT : SIGNAL_DEF
+  GO_Z_REAL : SIGNAL_DEF
+  GO_W_INT : SIGNAL_DEF
+  GO_W_REAL : SIGNAL_DEF
+  GO_P_INT : SIGNAL_DEF
+  GO_P_REAL : SIGNAL_DEF
+  GO_R_INT : SIGNAL_DEF
+  GO_R_REAL : SIGNAL_DEF
+  TELL_ID_I : SIGNAL_DEF
+  STATUS_ID : SIGNAL_DEF
+  ERROR_ID : SIGNAL_DEF
+  RESERVE_I : SIGNAL_DEF
+  PC_STATUS : SIGNAL_DEF
+  GI_X_INT : SIGNAL_DEF
+  GI_X_REAL : SIGNAL_DEF
+  GI_Y_INT : SIGNAL_DEF
+  GI_Y_REAL : SIGNAL_DEF
+  GI_Z_INT : SIGNAL_DEF
+  GI_Z_REAL : SIGNAL_DEF
+  GI_W_INT : SIGNAL_DEF
+  GI_W_REAL : SIGNAL_DEF
+  GI_P_INT : SIGNAL_DEF
+  GI_P_REAL : SIGNAL_DEF
+  GI_R_INT : SIGNAL_DEF
+  GI_R_REAL : SIGNAL_DEF
+  CALIB_NO_f00 : INTEGER
+  CALIB_NO_f04 : INTEGER
+  CAMERA_ID_f00 : INTEGER
+  CAMERA_ID_f04 : INTEGER
+  ERROR_ID_f00 : INTEGER
+  ERROR_ID_f04 : INTEGER
+  GI_P_INT_f00 : INTEGER
+  GI_P_INT_f04 : INTEGER
+  GI_P_REAL_f00 : INTEGER
+  GI_P_REAL_f04 : INTEGER
+  GI_R_INT_f00 : INTEGER
+  GI_R_INT_f04 : INTEGER
+  GI_R_REAL_f00 : INTEGER
+  GI_R_REAL_f04 : INTEGER
+  GI_W_INT_f00 : INTEGER
+  GI_W_INT_f04 : INTEGER
+  GI_W_REAL_f00 : INTEGER
+  GI_W_REAL_f04 : INTEGER
+  GI_X_INT_f00 : INTEGER
+  GI_X_INT_f04 : INTEGER
+  GI_X_REAL_f00 : INTEGER
+  GI_X_REAL_f04 : INTEGER
+  GI_Y_INT_f00 : INTEGER
+  GI_Y_INT_f04 : INTEGER
+  GI_Y_REAL_f00 : INTEGER
+  GI_Y_REAL_f04 : INTEGER
+  GI_Z_INT_f00 : INTEGER
+  GI_Z_INT_f04 : INTEGER
+  GI_Z_REAL_f00 : INTEGER
+  GI_Z_REAL_f04 : INTEGER
+  GO_P_INT_f00 : INTEGER
+  GO_P_INT_f04 : INTEGER
+  GO_P_REAL_f00 : INTEGER
+  GO_P_REAL_f04 : INTEGER
+  GO_R_INT_f00 : INTEGER
+  GO_R_INT_f04 : INTEGER
+  GO_R_REAL_f00 : INTEGER
+  GO_R_REAL_f04 : INTEGER
+  GO_W_INT_f00 : INTEGER
+  GO_W_INT_f04 : INTEGER
+  GO_W_REAL_f00 : INTEGER
+  GO_W_REAL_f04 : INTEGER
+  GO_X_INT_f00 : INTEGER
+  GO_X_INT_f04 : INTEGER
+  GO_X_REAL_f00 : INTEGER
+  GO_X_REAL_f04 : INTEGER
+  GO_Y_INT_f00 : INTEGER
+  GO_Y_INT_f04 : INTEGER
+  GO_Y_REAL_f00 : INTEGER
+  GO_Y_REAL_f04 : INTEGER
+  GO_Z_INT_f00 : INTEGER
+  GO_Z_INT_f04 : INTEGER
+  GO_Z_REAL_f00 : INTEGER
+  GO_Z_REAL_f04 : INTEGER
+  JOB_ID_O_f00 : INTEGER
+  JOB_ID_O_f04 : INTEGER
+  MODE_ID_O_f00 : INTEGER
+  MODE_ID_O_f04 : INTEGER
+  PC_STATUS_f00 : INTEGER
+  PC_STATUS_f04 : INTEGER
+  POS_ID_O_f00 : INTEGER
+  POS_ID_O_f04 : INTEGER
+  RESERVE_I_f00 : INTEGER
+  RESERVE_I_f04 : INTEGER
+  STATUS_ID_f00 : INTEGER
+  STATUS_ID_f04 : INTEGER
+  SYSTEM_ID_f00 : INTEGER
+  SYSTEM_ID_f04 : INTEGER
+  TELL_ID_I_f00 : INTEGER
+  TELL_ID_I_f04 : INTEGER
+  TELL_ID_O_f00 : INTEGER
+  TELL_ID_O_f04 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE GET_SIGNAL : INTEGER
+BEGIN
+  IF (UNINIT(DO_STARTBIT)) THEN
+  DO_STARTBIT = 3097
+  ENDIF
+  IF (UNINIT(DI_STARTBIT)) THEN
+  DI_STARTBIT = 3097
+  ENDIF
+  TELL_ID_O_f00 = DO_STARTBIT
+  TELL_ID_O_f04 = 8
+  MODE_ID_O_f00 = TELL_ID_O_f00 + TELL_ID_O_f04
+  MODE_ID_O_f04 = 8
+  JOB_ID_O_f00 = MODE_ID_O_f00 + MODE_ID_O_f04
+  JOB_ID_O_f04 = 8
+  POS_ID_O_f00 = JOB_ID_O_f00 + JOB_ID_O_f04
+  POS_ID_O_f04 = 8
+  CAMERA_ID_f00 = MODE_ID_O_f00 + MODE_ID_O_f04
+  CAMERA_ID_f04 = 8
+  CALIB_NO_f00 = JOB_ID_O_f00 + JOB_ID_O_f04
+  CALIB_NO_f04 = 8
+  SYSTEM_ID_f00 = POS_ID_O_f00 + POS_ID_O_f04
+  SYSTEM_ID_f04 = 8
+  GO_X_INT_f00 = SYSTEM_ID_f00 + SYSTEM_ID_f04
+  GO_X_INT_f04 = 16
+  GO_X_REAL_f00 = GO_X_INT_f00 + GO_X_INT_f04
+  GO_X_REAL_f04 = 16
+  GO_Y_INT_f00 = GO_X_REAL_f00 + GO_X_REAL_f04
+  GO_Y_INT_f04 = 16
+  GO_Y_REAL_f00 = GO_Y_INT_f00 + GO_X_INT_f04
+  GO_Y_REAL_f04 = 16
+  GO_Z_INT_f00 = GO_Y_REAL_f00 + GO_Y_REAL_f04
+  GO_Z_INT_f04 = 16
+  GO_Z_REAL_f00 = GO_Z_INT_f00 + GO_Z_INT_f04
+  GO_Z_REAL_f04 = 16
+  GO_W_INT_f00 = GO_Z_REAL_f00 + GO_Z_REAL_f04
+  GO_W_INT_f04 = 16
+  GO_W_REAL_f00 = GO_W_INT_f00 + GO_W_INT_f04
+  GO_W_REAL_f04 = 16
+  GO_P_INT_f00 = GO_W_REAL_f00 + GO_W_REAL_f04
+  GO_P_INT_f04 = 16
+  GO_P_REAL_f00 = GO_P_INT_f00 + GO_P_INT_f04
+  GO_P_REAL_f04 = 16
+  GO_R_INT_f00 = GO_P_REAL_f00 + GO_P_REAL_f04
+  GO_R_INT_f04 = 16
+  GO_R_REAL_f00 = GO_R_INT_f00 + GO_R_INT_f04
+  GO_R_REAL_f04 = 16
+  TELL_ID_I_f00 = DI_STARTBIT
+  TELL_ID_I_f04 = 8
+  STATUS_ID_f00 = TELL_ID_I_f00 + TELL_ID_I_f04
+  STATUS_ID_f04 = 8
+  ERROR_ID_f00 = STATUS_ID_f00 + STATUS_ID_f04
+  ERROR_ID_f04 = 8
+  RESERVE_I_f00 = ERROR_ID_f00 + ERROR_ID_f04
+  RESERVE_I_f04 = 8
+  PC_STATUS_f00 = RESERVE_I_f00 + RESERVE_I_f04
+  PC_STATUS_f04 = 8
+  GI_X_INT_f00 = PC_STATUS_f00 + PC_STATUS_f04
+  GI_X_INT_f04 = 16
+  GI_X_REAL_f00 = GI_X_INT_f00 + GI_X_INT_f04
+  GI_X_REAL_f04 = 16
+  GI_Y_INT_f00 = GI_X_REAL_f00 + GI_X_REAL_f04
+  GI_Y_INT_f04 = 16
+  GI_Y_REAL_f00 = GI_Y_INT_f00 + GI_X_INT_f04
+  GI_Y_REAL_f04 = 16
+  GI_Z_INT_f00 = GI_Y_REAL_f00 + GI_Y_REAL_f04
+  GI_Z_INT_f04 = 16
+  GI_Z_REAL_f00 = GI_Z_INT_f00 + GI_Z_INT_f04
+  GI_Z_REAL_f04 = 16
+  GI_W_INT_f00 = GI_Z_REAL_f00 + GI_Z_REAL_f04
+  GI_W_INT_f04 = 16
+  GI_W_REAL_f00 = GI_W_INT_f00 + GI_W_INT_f04
+  GI_W_REAL_f04 = 16
+  GI_P_INT_f00 = GI_W_REAL_f00 + GI_W_REAL_f04
+  GI_P_INT_f04 = 16
+  GI_P_REAL_f00 = GI_P_INT_f00 + GI_P_INT_f04
+  GI_P_REAL_f04 = 16
+  GI_R_INT_f00 = GI_P_REAL_f00 + GI_P_REAL_f04
+  GI_R_INT_f04 = 16
+  GI_R_REAL_f00 = GI_R_INT_f00 + GI_R_INT_f04
+  GI_R_REAL_f04 = 16
+  RETURN(0)
+END GET_SIGNAL
+
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER
+VAR
+  r1_lc33 : STRING[64]
+  r1_lc34 : STRING[64]
+  r1_lc35 : INTEGER
+  r1_lc36 : INTEGER
+  r1_lc37 : INTEGER
+BEGIN
+  sv_i = GET_SIGNAL
+  -- stmt82 stray sv_i
+  FOR r1_lc36 = 1 TO 3 DO
+  SET_PORT_VAL(2, p1.SIG_START + r1_lc36 - 1, 0, r1_lc37)
+  ENDFOR
+  CNV_INT_STR(p0, 0, 2, r1_lc33)
+  sv_i = str_len(r1_lc33)
+  r1_lc35 = sv_i - 1
+  sv_s = sub_str(r1_lc33, 2, r1_lc35)
+  r1_lc33 = sv_s
+  REPEAT
+  sv_i = str_len(r1_lc33)
+  r1_lc35 = sv_i
+  IF ((r1_lc35 &lt; p1.SIG_LEN)) THEN
+  r1_lc33 = &#x27;0&#x27; + r1_lc33
+  ENDIF
+  UNTIL((r1_lc35 = p1.SIG_LEN))
+  FOR r1_lc36 = 1 TO 3 DO
+  sv_s = sub_str(r1_lc33, p1.SIG_LEN - r1_lc36 + 1, 1)
+  r1_lc34 = sv_s
+  IF ((r1_lc34 = &#x27;0&#x27;)) THEN
+  SET_PORT_VAL(2, p1.SIG_START + r1_lc36 - 1, 0, r1_lc37)
+  ELSE
+  IF ((r1_lc34 = &#x27;1&#x27;)) THEN
+  SET_PORT_VAL(2, p1.SIG_START + r1_lc36 - 1, 1, r1_lc37)
+  ENDIF
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END WRITE_DATA
+
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER
+VAR
+  r2_lc17 : ARRAY[64] OF INTEGER
+  r2_lc18 : INTEGER
+  r2_lc19 : INTEGER
+  r2_lc20 : INTEGER
+  r2_lc21 : INTEGER
+BEGIN
+  sv_i = GET_SIGNAL
+  -- stmt122 stray sv_i
+  r2_lc17[1] = 1
+  r2_lc17[2] = 2
+  r2_lc17[3] = 4
+  r2_lc17[4] = 8
+  r2_lc17[5] = 16
+  r2_lc17[6] = 32
+  r2_lc17[7] = 64
+  r2_lc17[8] = 128
+  r2_lc17[9] = 256
+  r2_lc17[10] = 512
+  r2_lc17[11] = 1024
+  r2_lc17[12] = 2048
+  r2_lc17[13] = 4096
+  r2_lc17[14] = 8192
+  r2_lc17[15] = 16384
+  r2_lc17[16] = (0 - 32768)
+  r2_lc20 = 0
+  FOR r2_lc19 = 1 TO 3 DO
+  GET_PORT_VAL(1, p0.SIG_START + r2_lc19 - 1, r2_lc18, r2_lc21)
+  r2_lc20 = r2_lc20 + r2_lc18 * r2_lc17[r2_lc19]
+  ENDFOR
+  RETURN(r2_lc20)
+  RETURN(0)
+END READ_DATA
+
+BEGIN
+END VS_MAIN
+</span></pre></details><details><summary>VS_SEND.KL（9 例程）</summary><pre><span class=c>-- VS_SEND.KL (decompiled v3)
+PROGRAM VS_SEND
+%COMMENT = &#x27;Vs Send Pos V1.8&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+	UFRAME_DAT = STRUCTURE
+	UFRAME_NO: INTEGER
+	UFRAME_POS: INTEGER
+	ENDSTRUCTURE
+	UTOOL_DAT = STRUCTURE
+	UTOOL_NO: INTEGER
+	UTOOL_POS: INTEGER
+	ENDSTRUCTURE
+	POS_DAT = STRUCTURE
+	INT_VAL: INTEGER
+	DECI_VAL: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : STRING[64]
+  v3 : STRING[64]
+  v4 : STRING[64]
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : ARRAY[64] OF INTEGER
+  v8 : ARRAY[64] OF INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : SIGNAL_DEF
+  v15 : SIGNAL_DEF
+  v16 : SIGNAL_DEF
+  v17 : INTEGER
+  v18 : SIGNAL_DEF
+  v19 : SIGNAL_DEF
+  v20 : POSITION
+  v21 : INTEGER
+  v22 : INTEGER
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : INTEGER
+  v27 : SIGNAL_DEF
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  v30 : SIGNAL_DEF
+  v31 : SIGNAL_DEF
+  v32 : SIGNAL_DEF
+  v33 : SIGNAL_DEF
+  v34 : SIGNAL_DEF
+  v35 : SIGNAL_DEF
+  v36 : SIGNAL_DEF
+  v37 : SIGNAL_DEF
+  v38 : SIGNAL_DEF
+  v39 : INTEGER
+  v40 : SIGNAL_DEF
+  v41 : SIGNAL_DEF
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v20_f08 : REAL
+  v20_f0c : REAL
+  v20_f10 : REAL
+  v20_f14 : REAL
+  v20_f18 : REAL
+  v20_f1c : REAL
+  v21_f00 : INTEGER
+  v21_f04 : INTEGER
+  v22_f00 : INTEGER
+  v22_f04 : INTEGER
+  v23_f00 : INTEGER
+  v23_f04 : INTEGER
+  v24_f00 : INTEGER
+  v24_f04 : INTEGER
+  v25_f00 : INTEGER
+  v25_f04 : INTEGER
+  v26_f00 : INTEGER
+  v26_f04 : INTEGER
+  v5_f00 : INTEGER
+  v5_f04 : INTEGER
+  v6_f00 : INTEGER
+  v6_f04 : INTEGER
+  v7_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE TP_CLS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_START(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_STOP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r0_lc2 : STRING[64]
+  r0_lc3 : INTEGER
+  r0_lc4 : INTEGER
+  r0_lc5 : REAL
+BEGIN
+  GET_TPE_PRM(p0, r0_lc3, r0_lc4, r0_lc5, r0_lc2, v1)
+  IF ((r0_lc3 &lt;&gt; 1) OR (v1 &lt;&gt; 0)) THEN
+  p2 = 282
+  ENDIF
+  p1 = r0_lc4
+  p2 = 0
+  RETURN(0)
+END GET_PARM
+
+ROUTINE GET_REAL(p0 : REAL; p1 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  r1_lc1 = p1 - 0
+  -- stmt85 stray p0
+  sv_i = trunc(r1_lc1 * 10000)
+  r1_lc2 = sv_i
+  IF ((p0 &gt;= 0)) THEN
+  RETURN(r1_lc2)
+  ELSE
+  RETURN(r1_lc2 * (0 - 1))
+  ENDIF
+  RETURN(0)
+END GET_REAL
+
+ROUTINE CNV_INT(p0 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  IF ((p0 &lt; 0)) THEN
+  r2_lc1 = p0 + 65536
+  RETURN(r2_lc1)
+  ELSE
+  RETURN(p0)
+  ENDIF
+  v3 = v2
+  v4 = &#x27;Modification Data : 2020-01-16&#x27;
+  sv_i = GET_PARM(1, v5_f00, v1)
+  -- stmt126 stray sv_i
+  IF ((v5_f00 &lt; 0) OR (v5_f00 &gt; 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt128 stray sv_i
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;       Invalid Uframe No. (0 - 99)&#x27;, CR)
+  WRITE(&#x27;       Abort&#x27;, CR)
+  ABORT
+  ENDIF
+  sv_i = GET_PARM(2, v6_f00, v1)
+  -- stmt134 stray sv_i
+  IF ((v6_f00 &lt; 0) OR (v6_f00 &gt; 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt136 stray sv_i
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;       Invalid Tool No. (0 - 99)&#x27;, CR)
+  WRITE(&#x27;       Abort&#x27;, CR)
+  ABORT
+  ENDIF
+  IF ((v5_f00 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt143 stray v7_f00[1] | v5_f04
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt145 stray v8[1][v5_f00] | v5_f04
+  ENDIF
+  IF ((v6_f00 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt148 stray v7_f00[1] | v6_f04
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt150 stray v9[1][v6_f00] | v6_f04
+  ENDIF
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt153 stray v5_f04 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt153 stray v6_f04 | v0_f58[1]
+  sv_i = GET_PARM(3, v10, v1)
+  -- stmt155 stray sv_i
+  sv_i = GET_PARM(6, v11, v1)
+  -- stmt164 stray sv_i
+  IF ((v11 &lt; 0) OR (v11 &gt; 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt166 stray sv_i
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;       Invalid uframe_fix No. (0 - 99)&#x27;, CR)
+  WRITE(&#x27;       Abort&#x27;, CR)
+  ABORT
+  ENDIF
+  SELECT v10 OF
+  CASE(2):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt185 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt186 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt187 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  -- stmt188 stray sv_i
+  sv_i = WRITE_DATA(v13, v16)
+  CASE(28):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt202 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt203 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt204 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  -- stmt205 stray sv_i
+  sv_i = WRITE_DATA(v13, v16)
+  CASE(20):
+  sv_i = GET_PARM(4, v17, v1)
+  -- stmt216 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt217 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt218 stray sv_i
+  sv_i = WRITE_DATA(v17, v18)
+  -- stmt219 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  CASE(26):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt230 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt231 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  -- stmt232 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt233 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  CASE(10):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt244 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt245 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  -- stmt246 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt247 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  ELSE:
+  sv_i = TP_CLS(0)
+  -- stmt250 stray sv_i
+  WRITE(&#x27;            *** ERROR ***              &#x27;, CR)
+  WRITE(&#x27;       Mode_id Must Be (2 or 10 or 20 or 26 or 28)&#x27;, CR)
+  WRITE(&#x27;       Abort&#x27;, CR)
+  ABORT
+  ENDSELECT
+  IF ((v10 &lt;&gt; 2)) THEN
+  sv_p = curpos(0, 0)
+  v20 = sv_p
+  IF ((v10 = 28)) THEN
+  PURGE CONDITION[1]
+  v20 = v8[1][v11]
+  ENDIF
+  sv_i = trunc(v20_f08)
+  v21_f00 = sv_i
+  sv_i = GET_REAL(v20_f08, v21_f00)
+  v21_f04 = sv_i
+  sv_i = trunc(v20_f0c)
+  v22_f00 = sv_i
+  sv_i = GET_REAL(v20_f0c, v22_f00)
+  v22_f04 = sv_i
+  sv_i = trunc(v20_f10)
+  v23_f00 = sv_i
+  sv_i = GET_REAL(v20_f10, v23_f00)
+  v23_f04 = sv_i
+  sv_i = trunc(v20_f14)
+  v24_f00 = sv_i
+  sv_i = GET_REAL(v20_f14, v24_f00)
+  v24_f04 = sv_i
+  sv_i = trunc(v20_f18)
+  v25_f00 = sv_i
+  sv_i = GET_REAL(v20_f18, v25_f00)
+  v25_f04 = sv_i
+  sv_i = trunc(v20_f1c)
+  v26_f00 = sv_i
+  sv_i = GET_REAL(v20_f1c, v26_f00)
+  v26_f04 = sv_i
+  WRITE(&#x27;Sent Current Position&#x27;, CR)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(&#x27; X=&#x27;, &#x27;  Y=&#x27;, &#x27;  Z=&#x27;, CR)
+  -- stmt28 stray v20_f08 | 8 | 3 | v20_f0c | 8 | 3 | v20_f10 | 8 | 3
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(&#x27; W=&#x27;, &#x27;  P=&#x27;, &#x27;  R=&#x27;, CR)
+  -- stmt29 stray v20_f14 | 8 | 3 | v20_f18 | 8 | 3 | v20_f1c | 8 | 3
+  sv_i = CNV_INT(v21_f00)
+  sv_i = WRITE_DATA(sv_i, v27)
+  -- stmt30 stray sv_i
+  sv_i = CNV_INT(v21_f04)
+  sv_i = WRITE_DATA(sv_i, v28)
+  -- stmt31 stray sv_i
+  sv_i = CNV_INT(v22_f00)
+  sv_i = WRITE_DATA(sv_i, v29)
+  -- stmt32 stray sv_i
+  sv_i = CNV_INT(v22_f04)
+  sv_i = WRITE_DATA(sv_i, v30)
+  -- stmt33 stray sv_i
+  sv_i = CNV_INT(v23_f00)
+  sv_i = WRITE_DATA(sv_i, v31)
+  -- stmt34 stray sv_i
+  sv_i = CNV_INT(v23_f04)
+  sv_i = WRITE_DATA(sv_i, v32)
+  -- stmt35 stray sv_i
+  sv_i = CNV_INT(v24_f00)
+  sv_i = WRITE_DATA(sv_i, v33)
+  -- stmt36 stray sv_i
+  sv_i = CNV_INT(v24_f04)
+  sv_i = WRITE_DATA(sv_i, v34)
+  -- stmt37 stray sv_i
+  sv_i = CNV_INT(v25_f00)
+  sv_i = WRITE_DATA(sv_i, v35)
+  -- stmt38 stray sv_i
+  sv_i = CNV_INT(v25_f04)
+  sv_i = WRITE_DATA(sv_i, v36)
+  -- stmt39 stray sv_i
+  sv_i = CNV_INT(v26_f00)
+  sv_i = WRITE_DATA(sv_i, v37)
+  -- stmt40 stray sv_i
+  sv_i = CNV_INT(v26_f04)
+  sv_i = WRITE_DATA(sv_i, v38)
+  -- stmt41 stray sv_i
+  ENDIF
+  WRITE(&#x27;Trigger Pictures&#x27;, CR)
+  v39 = v39 + 1
+  sv_i = WRITE_DATA(v39, v40)
+  -- stmt46 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt49 stray sv_i
+  sv_i = WAITDATA(v41, v39)
+  -- stmt50 stray sv_i
+  sv_i = TIMER_STOP(0)
+  -- stmt55 stray sv_i
+  -- stmt56 stray 1
+  WRITE(&#x27;Trigger Pictures Successful&#x27;, CR)
+  RETURN(0)
+END CNV_INT
+
+BEGIN
+END VS_SEND
+</span></pre></details>

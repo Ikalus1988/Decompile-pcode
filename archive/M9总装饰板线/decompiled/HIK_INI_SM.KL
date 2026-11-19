@@ -1,0 +1,135 @@
+-- HIK_INI_SM.KL (decompiled v3)
+PROGRAM HIK_INI_SM
+%COMMENT = 'HIK_INI_SM'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : REAL
+  v5 : STRING[64]
+  v6 : STRING[64]
+  v7 : STRING[64]
+  v8 : STRING[64]
+  v9 : INTEGER
+  v10 : STRING[64]
+  v11 : STRING[64]
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE HIK_TP_PRM(p0, p1, p2 : INTEGER; p3 : REAL; p4, p5 : STRING) : INTEGER
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  IF (UNINIT(p0)) THEN
+  POST_ERR(38000, 'hik-err:socket order params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p1)) THEN
+  POST_ERR(38000, 'hik-err:socket type_ params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p3)) THEN
+  POST_ERR(38000, 'hik-err:socket realv params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p4)) THEN
+  POST_ERR(38000, 'hik-err:socket strv params not init.', 0, 2)
+  ENDIF
+  IF ((p0 > 6)) THEN
+  POST_ERR(38000, 'hik-err:params once set more than 6(x).', 0, 2)
+  ENDIF
+  GET_TPE_PRM(p0, p1, p2, p3, p4, r0_lc1)
+  IF ((r0_lc1 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'HIK:[SetParams] ' + p5 + ' set err', CR)
+  POST_ERR(38000, 'hik-err:set ' + p5 + ' config err.', 0, 2)
+  ENDIF
+  RETURN(0)
+END HIK_TP_PRM
+
+ROUTINE GVAR_INIT(p0 : INTEGER; p1 : REAL; p2 : STRING) : INTEGER
+BEGIN
+  IF (UNINIT(p0)) THEN
+  p0 = 0
+  ENDIF
+  IF (UNINIT(p1)) THEN
+  p1 = 0
+  ENDIF
+  IF (UNINIT(p2)) THEN
+  p2 = ''
+  ENDIF
+  v1 = 0
+  v2 = 0
+  sv_i = GVAR_INIT(v3, 0, '')
+  -- stmt68 stray sv_i
+  sv_i = GVAR_INIT(0, v4, '')
+  -- stmt69 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v5)
+  -- stmt70 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v6)
+  -- stmt71 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v7)
+  -- stmt72 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v8)
+  -- stmt73 stray sv_i
+  sv_i = GVAR_INIT(v9, 0, '')
+  -- stmt74 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v10)
+  -- stmt75 stray sv_i
+  sv_i = HIK_TP_PRM(1, 3, v3, v4, v6, 'socket')
+  -- stmt77 stray sv_i
+  sv_i = HIK_TP_PRM(2, 3, v3, v4, v7, 'socketnum')
+  -- stmt80 stray sv_i
+  sv_i = HIK_TP_PRM(3, 3, v3, v4, v8, 'sock_ip')
+  -- stmt83 stray sv_i
+  sv_i = HIK_TP_PRM(4, 1, v9, v4, v5, 'sock_port')
+  -- stmt86 stray sv_i
+  sv_i = HIK_TP_PRM(5, 1, v3, v4, v5, 'timeout')
+  -- stmt92 stray sv_i
+  v11 = '$HOST' + v6 + '_CFG[' + v7 + ']'
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$PROTOCOL', 'SM', v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$SERVER_PORT', v9, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$PATH', v8, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$STRT_PATH', v8, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$STRT_REMOTE', v8, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$REMOTE', v8, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$STATE', 3, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$OPER', 3, v2)
+  v1 = v1 + v2
+  SET_VAR(v12, '*SYSTEM*', v11 + '.$TIMEOUT', v3, v2)
+  v1 = v1 + v2
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38000, 'hik-err:set socket config err.', 0, 2)
+  ENDIF
+  GET_VAR(v12, '*SYSTEM*', v11 + '.$STATE', v13, v2)
+  IF ((v2 <> 0) OR (v13 <> 3)) THEN
+  POST_ERR(38000, 'hik-err:start socket err', 2, 2)
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'hik-err:Must Restart Robot To Save Config', CR)
+  v14 = '' + ':'
+  DELAY 500
+  RETURN(0)
+END GVAR_INIT
+
+BEGIN
+END HIK_INI_SM

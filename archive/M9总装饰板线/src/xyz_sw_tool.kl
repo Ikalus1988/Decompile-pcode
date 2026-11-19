@@ -1,0 +1,58 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_sw_tool
+-- 
+-- brief: xyz_sw_tool,
+--        switch tool
+--------------------------------------------------------------------------------
+PROGRAM xyz_sw_tool
+
+
+%COMMENT = 'switch tool'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+CONST
+    PARAM_NUM = 1
+
+VAR
+    ret       : INTEGER
+    data_type : INTEGER
+    tool_id   : INTEGER
+    real_NA   : REAL
+    str_NA    : STRING[20]
+    
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+GET_TPE_PRM(PARAM_NUM, data_type, tool_id, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[SW_TOOL] fail to get tool id')
+ENDIF
+ResetOutData
+ret = AddInttoArr(CMD_SW_TOOL)
+IF (ret <> 0) THEN
+    log_error('[SW_TOOL] fail to pack cmd')
+ENDIF
+ret = AddInttoArr(tool_id)
+IF (ret <> 0) THEN
+    log_error('[SW_TOOL] fail to pack tool id')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_sw_tool

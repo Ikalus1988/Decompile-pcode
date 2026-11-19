@@ -1,0 +1,448 @@
+PROGRAM DCP_NUT
+
+--Sends Quiss DCP Fault text to PLC using String Registers
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID, NutNum, NutNum1 :INTEGER
+paramReal, realDummy, realActThk, realReqThk:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL, strNutNum, strNutNum1:STRING[3]
+ToolID: STRING[2]
+strDCPText, strDCPText2, DCPPLCText: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+--Begin Prog
+BEGIN
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	strDCPText = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+--Get Bosch Nut Runner Program Number from Group Output
+--GET_PORT_VAL(io_gpout,40,NutNum,STATUS)
+GET_REG(71,FALSE,NutNum, realDummy,STATUS)
+GET_REG(73,FALSE,NutNum1, realDummy,STATUS)
+--Convert Bosch Nut Runner Program Number into a String
+CNV_INT_STR(NutNum,2,10,strNutNum)
+CNV_INT_STR(NutNum1,2,10,strNutNum1)
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+		
+	CASE(8001):
+	DCPText.DCPLine1 = 'TSR 1: Controller ID Out of Range'
+	DCPText.DCPFaultNum = 08001
+	
+	CASE(8002):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Prog Number out of Range'
+	DCPText.DCPFaultNum = 08002
+	
+	CASE(8003):
+	DCPText.DCPLine1 = 'TSR 1:Bosch Ctrl Enbl not on from Robot'
+	DCPText.DCPFaultNum = 08003
+	
+	CASE(8004):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Ctrl Ready is Not On'
+	DCPText.DCPFaultNum = 08004
+	
+	CASE(8005):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Ctrl No Faults Not On'
+	DCPText.DCPFaultNum = 08005
+	
+	CASE(8006):
+	DCPText.DCPLine1 = 'TSR 1:Bosch Ctrl Program Number Mismatch'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08006
+	
+	CASE(8007):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Ctrl In Cycle CW Not Off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08007
+	
+	CASE(8008):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Ctrl In Cycle CCW Not Off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08008
+	
+	CASE(8009):
+	DCPText.DCPLine1 = 'TSR 1: Bosch Ctrl End Of Cycle Not Off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08009
+	
+	CASE(8010):
+	DCPText.DCPLine1 = 'TSR 1: Started error start from robot not ON'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08010
+	
+	CASE(8011):
+	DCPText.DCPLine1 = 'TSR 1: Started error in cycle CW not ON'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08011
+	
+	CASE(8012):
+	DCPText.DCPLine1 = 'TSR 1: Started error end of cycle not OFF'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08012
+	
+	CASE(8013):
+	DCPText.DCPLine1 = 'TSR 1: Started error quality OK not OFF'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08013
+	
+	CASE(8014):
+	DCPText.DCPLine1 = 'TSR 1: Started error quality NOK not OFF'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08014
+	
+	CASE(8015):
+	DCPText.DCPLine1 = 'Started error UNKNOWN'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08015
+	
+	CASE(8016):
+	DCPText.DCPLine1 = 'TSR 1: Ended error end of cycle not ON'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08016
+	IF (NutNum <> 99)THEN
+		FKEY_SEL = 2
+	ENDIF
+	IF (NutNum = 99)THEN
+		FKEY_SEL = 1	
+	ENDIF	
+	CASE(8017):
+	DCPText.DCPLine1 = 'TSR 1: Ended error quality OK/NOK not ON'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08017
+	
+	CASE(8018):
+	DCPText.DCPLine1 = 'TSR 1: Quality NOK torque high'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08018
+	FKEY_SEL = 2
+	
+	CASE(8019):
+	DCPText.DCPLine1 = 'TSR 1: Quality NOK torque low'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08019
+	FKEY_SEL = 2
+	
+	CASE(8020):
+	DCPText.DCPLine1 = 'TSR 1: Quality NOK angle high'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08020
+	FKEY_SEL = 2
+	
+	CASE(8021):
+	DCPText.DCPLine1 = 'TSR 1: Quality NOK angle low'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08021
+	FKEY_SEL = 2
+	
+	CASE(8022):
+	DCPText.DCPLine1 = 'TSR 1: Quality NOK UNKNOWN'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08022
+	FKEY_SEL = 2
+	
+	CASE(8023):
+	DCPText.DCPLine1 = 'TSR 1: Process Repeat Error'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum
+	DCPText.DCPFaultNum = 08023
+	FKEY_SEL = 3
+
+	CASE(8024):
+	DCPText.DCPLine1 = 'TSR 1: Nut Detected in Tool'
+	DCPText.DCPLine3 = 'Please remove the bolt from Tool' 
+	DCPText.DCPLine4 = 'to continue with Pick cycle'
+	DCPText.DCPFaultNum = 08024
+
+	CASE(8025):
+	DCPText.DCPLine1 = 'TSR 1: Bolt Sensor not On'
+	DCPText.DCPFaultNum = 08025
+	
+	
+	CASE(8102):
+	DCPText.DCPLine1 = 'TSR 2: programID out of range'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08102
+	
+	CASE(8103):
+	DCPText.DCPLine1 = 'TSR 2: Enable not on from robot'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08103
+	
+	CASE(8104):
+	DCPText.DCPLine1 = 'TSR 2: Ready not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08104
+	
+	CASE(8105):
+	DCPText.DCPLine1 = 'TSR 2: No faults not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08105
+	
+	CASE(8106):
+	DCPText.DCPLine1 = 'TSR 2: Program number mis-match'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08106
+	
+	CASE(8107):
+	DCPText.DCPLine1 = 'TSR 2: In cycle Clockwise not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08107
+	
+	CASE(8108):
+	DCPText.DCPLine1 = 'TSR 2: In cycle CounterClockwise not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08108
+	
+	CASE(8109):
+	DCPText.DCPLine1 = 'TSR 2: End of Cycle not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08109
+	
+	CASE(8110):
+	DCPText.DCPLine1 = 'TSR 2: Started error robot start not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08110
+	
+	CASE(8111):
+	DCPText.DCPLine1 = 'TSR 2: Started error in cycle CW not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08111
+	
+	CASE(8112):
+	DCPText.DCPLine1 = 'TSR 2: Started error EOC not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08112
+	
+	CASE(8113):
+	DCPText.DCPLine1 = 'TSR 2: Started error quality OK not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08113
+	
+	CASE(8114):
+	DCPText.DCPLine1 = 'TSR 2: Started error quality NOK not off'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08114
+	
+	CASE(8115):
+	DCPText.DCPLine1 = 'TSR 2: Started error unknown'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08115
+	
+	CASE(8116):
+	DCPText.DCPLine1 = 'TSR 2: Ended error End of Cycle not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08116
+		IF (NutNum1 <> 99)THEN
+		FKEY_SEL = 2
+	ENDIF
+	IF (NutNum1 = 99)THEN
+		FKEY_SEL = 1	
+	ENDIF	
+	CASE(8117):
+	DCPText.DCPLine1 = 'TSR 2: Ended error quality OK/NOK not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08117
+	
+	CASE(8118):
+	DCPText.DCPLine1 = 'TSR 2: Quality NOK torque high'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08118
+	FKEY_SEL = 2
+	
+	CASE(8119):
+	DCPText.DCPLine1 = 'TSR 2: Quality NOK torque low'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08119
+	FKEY_SEL = 2
+	
+	CASE(8120):
+	DCPText.DCPLine1 = 'TSR 2: Quality NOK angle high'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08120
+	FKEY_SEL = 2
+	
+	CASE(8121):
+	DCPText.DCPLine1 = 'TSR 2: Quality NOK angle low'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08121
+	FKEY_SEL = 2
+	
+	CASE(8122):
+	DCPText.DCPLine1 = 'TSR 2: Quality NOK unknown'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08122
+	FKEY_SEL = 2
+	
+	CASE(8123):
+	DCPText.DCPLine1 = 'TSR 2: Process repeat error'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08123
+	FKEY_SEL = 3		
+	
+	CASE(8124):
+	DCPText.DCPLine1 = 'TSR 2: programID array not cleared'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08124
+	
+	CASE(8125):
+	DCPText.DCPLine1 = 'TSR 2: Bolt sensor NOT OFF'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08125
+	
+	CASE(8126):
+	DCPText.DCPLine1 = 'TSR 2: Bolt sensor not on'
+	DCPText.DCPLine2 = 'Bosch Program Number:- ' +strNutNum1
+	DCPText.DCPFaultNum = 08126
+	
+	
+		
+	
+	else:
+	strDCPText = 'Undefined DCP Fault Message'
+
+ENDSELECT
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' + DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+--Write DCP Fault to user screen
+--DCPText.DCPLine3 = 'Check Bosch Controller for Errors'
+IF (intDCPFault = 8023) OR (intDCPFault = 8123)THEN
+	DCPText.DCPLine3 =''
+	DCPText.DCPLine4 = 'Press Skip to Skip the Bolt'
+	DCPText.DCPLine5 = 'Press Retry to Continue with Repeat Bolt'
+ENDIF
+IF ((intDCPFault >= 8016) AND (intDCPFault <= 8021) AND (NutNum <> 99)) THEN
+	DCPText.DCPLine4 ='Press reset to Retry Tightening'
+	DCPText.DCPLine5 = 'Press CONT force Nut Complete'
+ENDIF
+
+IF ((intDCPFault >= 8116) AND (intDCPFault <= 8121) AND (NutNum1 <> 99)) THEN
+	DCPText.DCPLine4 ='Press reset to Retry Tightening'
+	DCPText.DCPLine5 = 'Press CONT force Nut Complete'
+ENDIF
+
+IF ((intDCPFault = 8016) AND (NutNum = 99)) THEN
+	DCPText.DCPLine4 ='Press reset to Retry Pick'
+ENDIF
+
+IF ((intDCPFault = 8116) AND (NutNum1 = 99)) THEN
+	DCPText.DCPLine4 ='Press reset to Retry Pick'
+ENDIF
+
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = TRUE
+  blIsra = FALSE
+  blQuiss = FALSE
+
+IF FKEY_SEL = 0 THEN
+	FKEYS[1] = 'ACK'
+	FKEYS[2] = ''
+	FKEYS[3] = ''
+	FKEYS[4] = ''
+ENDIF
+IF FKEY_SEL = 1 THEN
+	FKEYS[1] = ''
+	FKEYS[2] = 'RESET'
+	FKEYS[3] = ''
+	FKEYS[4] = ''
+ENDIF
+IF FKEY_SEL = 2 THEN
+	FKEYS[1] = ''
+	FKEYS[2] = ''
+	FKEYS[3] = 'RESET'
+	FKEYS[4] = 'CONT'
+ENDIF
+IF FKEY_SEL = 3 THEN
+	FKEYS[1] = ''
+	FKEYS[2] = ''
+	FKEYS[3] = 'RETRY'
+	FKEYS[4] = 'SKIP'
+ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+DCPDISP(DCPText)
+
+END DCP_NUT

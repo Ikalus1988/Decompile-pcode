@@ -1,0 +1,50 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzStatus
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzStatus(sock_fd : FILE) FROM xyz_status
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetJoints
+-- 
+-- [out   ]  jnts_str  : joint angles string with delimiter
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetJnts(jnts_str : STRING) FROM xyz_status
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetCartPose
+-- 
+-- [out   ]  cpos_str  : Cartesian pose string with delimiter
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetCpos(cpos_str : STRING) FROM xyz_status
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetDigitalInput
+-- 
+-- [out   ]  dins_str  : digital input string with delimiter
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetDins(dins_str : STRING) FROM xyz_status

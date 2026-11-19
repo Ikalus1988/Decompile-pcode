@@ -1,0 +1,427 @@
+-- VS_APPCOR.KL (decompiled v3)
+PROGRAM VS_APPCOR
+%COMMENT = 'Vs App V1.8'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+	UFRAME_DAT = STRUCTURE
+	UFRAME_NO: INTEGER
+	UFRAME_POS: INTEGER
+	ENDSTRUCTURE
+	UTOOL_DAT = STRUCTURE
+	UTOOL_NO: INTEGER
+	UTOOL_POS: INTEGER
+	ENDSTRUCTURE
+	OFFSET_DAT = STRUCTURE
+	X_OFFSET: INTEGER
+	Y_OFFSET: INTEGER
+	Z_OFFSET: INTEGER
+	W_OFFSET: INTEGER
+	P_OFFSET: INTEGER
+	R_OFFSET: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : STRING[64]
+  v2 : STRING[64]
+  v3 : STRING[64]
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : INTEGER
+  v17 : POSITION
+  v18 : INTEGER
+  v19 : SIGNAL_DEF
+  v20 : SIGNAL_DEF
+  v21 : SIGNAL_DEF
+  v22 : SIGNAL_DEF
+  v23 : INTEGER
+  v24 : SIGNAL_DEF
+  v25 : SIGNAL_DEF
+  v26 : SIGNAL_DEF
+  v27 : INTEGER
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  v30 : SIGNAL_DEF
+  v31 : SIGNAL_DEF
+  v32 : SIGNAL_DEF
+  v33 : SIGNAL_DEF
+  v34 : SIGNAL_DEF
+  v35 : SIGNAL_DEF
+  v36 : SIGNAL_DEF
+  v37 : SIGNAL_DEF
+  v38 : INTEGER
+  TELL_ID_O : REAL
+  MODE_ID_O : REAL
+  JOB_ID_O : REAL
+  POS_ID_O : REAL
+  SYSTEM_ID : REAL
+  GO_X_INT : REAL
+  GO_X_REAL : REAL
+  GO_Y_INT : REAL
+  GO_Y_REAL : REAL
+  GO_Z_INT : REAL
+  GO_Z_REAL : REAL
+  GO_W_INT : REAL
+  GO_W_REAL : REAL
+  GO_P_INT : REAL
+  GO_P_REAL : REAL
+  GO_R_INT : REAL
+  GO_R_REAL : REAL
+  TELL_ID_I : REAL
+  STATUS_ID : REAL
+  ERROR_ID : REAL
+  RESERVE_I : REAL
+  PC_STATUS : REAL
+  GI_X_INT : REAL
+  GI_X_REAL : REAL
+  GI_Y_INT : REAL
+  GI_Y_REAL : REAL
+  GI_Z_INT : REAL
+  GI_Z_REAL : REAL
+  GI_W_INT : REAL
+  GI_W_REAL : REAL
+  GI_P_INT : REAL
+  GI_P_REAL : REAL
+  GI_R_INT : REAL
+  GI_R_REAL : REAL
+  CAMERA_ID : REAL
+  CALIB_NO : REAL
+  TELL_NO : INTEGER
+  TIMEOUT : INTEGER
+  ERROR_VAL : INTEGER
+  TIMEOUT_STAT : BOOLEAN
+  UFRAME_DEF : REAL
+  UTOOL_DEF : REAL
+  MODE_ID : INTEGER
+  OFFSET_VALUE : REAL
+  OFFSET_PR : INTEGER
+  STATUS : INTEGER
+  STAT_VAL : INTEGER
+  OFST_PREG : INTEGER
+  STAT_REG : INTEGER
+  MAX_OFST_X : REAL
+  MAX_OFST_Y : REAL
+  MAX_OFST_Z : REAL
+  MAX_OFST_W : REAL
+  MAX_OFST_P : REAL
+  MAX_OFST_R : REAL
+  CTL_VERSION : STRING[127]
+  PROG_DETAIL : STRING[127]
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v15_f04 : INTEGER
+  v16_f04 : INTEGER
+  v17_f08 : REAL
+  v17_f0c : REAL
+  v17_f10 : REAL
+  v17_f14 : REAL
+  v17_f18 : REAL
+  v17_f1c : REAL
+  v27_f00 : REAL
+  v27_f04 : REAL
+  v27_f08 : REAL
+  v27_f0c : REAL
+  v27_f10 : REAL
+  v27_f14 : REAL
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE TP_CLS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_START(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_STOP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE READ_OFS_DAT(p0, p1 : SIGNAL_DEF) : REAL
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : REAL
+  r0_lc4 : REAL
+BEGIN
+  sv_i = READ_DATA(p0)
+  r0_lc1 = sv_i
+  sv_i = READ_DATA(p1)
+  r0_lc2 = sv_i
+  r0_lc3 = r0_lc2 / 10000
+  r0_lc4 = r0_lc1 + r0_lc3
+  RETURN(r0_lc4)
+  v2 = v1
+  v3 = 'Modification Data : 2020-01-16'
+  SELECT v4 OF
+  CASE(28):
+  IF (UNINIT(v5)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt101 stray sv_i
+  WRITE('   ###  Set The Max Offset For X(mm)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt104 stray v5
+  ENDIF
+  IF (UNINIT(v6)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt107 stray sv_i
+  WRITE('   ###  Set The Max Offset For Y(mm)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt110 stray v6
+  ENDIF
+  IF (UNINIT(v7)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt113 stray sv_i
+  WRITE('   ###  Set The Max Offset For Z(mm)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt116 stray v7
+  ENDIF
+  IF (UNINIT(v8)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt119 stray sv_i
+  WRITE('   ###  Set The Max Offset For W(deg)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt122 stray v8
+  ENDIF
+  IF (UNINIT(v9)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt125 stray sv_i
+  WRITE('   ###  Set The Max Offset For P(deg)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt128 stray v9
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt131 stray sv_i
+  WRITE('   ###  Set The Max Offset For R(deg)  ###', CR, CR, CR, CR)
+  WRITE(CR, CR, CR, '  Plsase input value =')
+  DELAY 0
+  -- stmt134 stray v10
+  sv_i = TP_CLS(0)
+  -- stmt135 stray sv_i
+  WRITE('     This step occurs only once', CR)
+  WRITE(' when the program is loaded.', CR)
+  WRITE('     If you want to change ', CR)
+  WRITE(' this value again later.', CR, CR)
+  WRITE('     1,Go to then selection screen ,', CR)
+  WRITE('       Double click on the VS_APPCOR. ', CR)
+  WRITE('     2,Press  DATA - KAREL_Vars.', CR)
+  WRITE('     3,Find  MAX_OFST_XYZWPR and modified.', CR)
+  WRITE('                                NEXT ', CR)
+  WRITE('Press f5 again', CR)
+  -- stmt146 stray 134
+  sv_i = TP_CLS(0)
+  -- stmt147 stray sv_i
+  ENDIF
+  sv_i = GET_PARM(1, v11, v12)
+  -- stmt149 stray sv_i
+  sv_i = GET_PARM(2, v13, v12)
+  -- stmt150 stray sv_i
+  SET_INT_REG(v13, 0, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  IF ((v14 <> 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt170 stray v15_f04 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt170 stray v16_f04 | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v17 = sv_p
+  WRITE('Waiting For Read Offset Data', CR)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(29, v19)
+  -- stmt174 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt176 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt179 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt180 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 <> 1)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  -- stmt188 stray 1
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt191 stray sv_i
+  -- stmt192 stray 1
+  SET_INT_REG(v13, 0, v12)
+  sv_r = READ_OFS_DAT(v25, v26)
+  v27_f00 = sv_r
+  sv_r = READ_OFS_DAT(v28, v29)
+  v27_f04 = sv_r
+  sv_r = READ_OFS_DAT(v30, v31)
+  v27_f08 = sv_r
+  sv_r = READ_OFS_DAT(v32, v33)
+  v27_f0c = sv_r
+  sv_r = READ_OFS_DAT(v34, v35)
+  v27_f10 = sv_r
+  sv_r = READ_OFS_DAT(v36, v37)
+  v27_f14 = sv_r
+  WRITE('Reading Offset Data Successful', CR)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE('  X=', '   Y=', '   Z=', CR)
+  -- stmt201 stray v27_f00 | 8 | 3 | v27_f04 | 8 | 3 | v27_f08 | 8 | 3
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE('  W=', '   P=', '   R=', CR)
+  -- stmt202 stray v27_f0c | 8 | 3 | v27_f10 | 8 | 3 | v27_f14 | 8 | 3
+  v17_f08 = v27_f00
+  v17_f0c = v27_f04
+  v17_f10 = v27_f08
+  v17_f14 = v27_f0c
+  v17_f18 = v27_f10
+  v17_f1c = v27_f14
+  IF ((v27_f08 <> 0) OR (0 > v7)) THEN
+  SET_INT_REG(v13, 15, v12)
+  v14 = 15
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('        XYZ correction is too large', CR)
+  ELSE
+  IF ((v27_f14 <> 0) OR (0 > v10)) THEN
+  SET_INT_REG(v13, 16, v12)
+  v14 = 16
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('        WPR correction is too large', CR)
+  ELSE
+  SET_POS_REG(v11, v17, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  ENDIF
+  CASE(20):
+  sv_i = GET_PARM(1, v13, v12)
+  -- stmt230 stray sv_i
+  IF ((v14 <> 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  SET_INT_REG(v13, 0, v12)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(21, v19)
+  -- stmt241 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt243 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt245 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt246 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 <> 0)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt251 stray sv_i
+  -- stmt252 stray 1
+  WRITE('Send Calib Successful', CR)
+  CASE(26):
+  sv_i = GET_PARM(1, v13, v12)
+  -- stmt255 stray sv_i
+  IF ((v14 <> 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  SET_INT_REG(v13, 0, v12)
+  v18 = v18 + 1
+  sv_i = WRITE_DATA(27, v19)
+  -- stmt9 stray sv_i
+  DELAY 100
+  sv_i = WRITE_DATA(v18, v20)
+  -- stmt11 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt14 stray sv_i
+  sv_i = WAITDATA(v21, v18)
+  -- stmt15 stray sv_i
+  sv_i = READ_DATA(v22)
+  v23 = sv_i
+  IF ((v23 <> 0)) THEN
+  sv_i = READ_DATA(v24)
+  v14 = sv_i
+  ENDIF
+  sv_i = TIMER_STOP(0)
+  -- stmt20 stray sv_i
+  -- stmt21 stray 1
+  WRITE('Send Reference Successful', CR)
+  ENDSELECT
+  IF ((v14 <> 0)) THEN
+  SET_INT_REG(v13, v14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v38 <> 0)) THEN
+  SET_INT_REG(v13, 14, v12)
+  IF ((v12 <> 0)) THEN
+  POST_ERR(v12, '', 0, 2)
+  ENDIF
+  ENDIF
+  RETURN(sv_r)
+END READ_OFS_DAT
+
+BEGIN
+END VS_APPCOR

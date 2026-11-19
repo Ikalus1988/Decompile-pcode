@@ -1,0 +1,17 @@
+PROGRAM  MM_START_VIZ
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Start_Viz'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Start_Viz FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Start_Viz
+END MM_START_VIZ

@@ -1,0 +1,168 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_status
+-- 
+-- brief: xyz_status
+--------------------------------------------------------------------------------
+PROGRAM xyz_status
+
+%STACKSIZE = 4000
+%COMMENT = 'xyz-status'
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+VAR
+    sock_fd : FILE
+
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_status_h
+
+
+BEGIN
+    xyzStatus(sock_fd)
+END xyz_status
+
+
+ROUTINE xyzStatus
+VAR
+    state_   : INTEGER
+    data_str : STRING[100]
+    ret_str  : STRING[220]
+    temp_str : STRING[7]
+    xsock : xyz_sock_t
+BEGIN
+    -- init socket
+    state_ = sock_ctor(xsock, 4, 'S')
+    IF (state_ <> 0) THEN
+        log_error('[STA] init sock failed')
+        GOTO EXIT_ON_ERR
+    ENDIF
+
+    --
+    log_info('[STA] Waiting connection')
+    state_ = sock_conn(xsock, sock_fd)
+    IF (state_ <> 0) THEN
+        log_error('[STA] sock connect failed')
+        GOTO EXIT_ON_ERR
+    ENDIF
+    log_info('[STA] connection success')
+
+    WHILE TRUE DO
+        ret_str = '200' + DELIMITER
+        data_str = ''
+        xyzGetJnts(data_str)
+        ret_str = ret_str + '201' + DELIMITER + data_str
+        data_str = ''
+        xyzGetCpos(data_str)
+        ret_str = ret_str + '202' + DELIMITER + data_str
+        ret_str = ret_str + TERMINATOR
+
+        state_ = sock_send(sock_fd, ret_str)
+        IF (state_ <> 0) THEN
+            log_error('[STA] send status to ipc failed')
+            GOTO EXIT_ON_ERR
+        ENDIF
+
+        temp_str = ''
+        state_ = sock_recv(sock_fd, temp_str, 7)
+        IF (state_ <> 0) THEN
+            log_error('[STA] recv reply from ipc failed')
+            GOTO EXIT_ON_ERR
+        ENDIF
+
+        DELAY 20
+    ENDWHILE
+
+EXIT_ON_ERR::
+    log_error('[STA] Err happend will close socket')
+    sock_close(xsock, sock_fd)
+
+END xyzStatus
+
+
+ROUTINE xyzGetJnts
+VAR
+    stat__     : INTEGER
+    i__        : INTEGER
+    cur_j_pos_ : JOINTPOS
+    joint_data : ARRAY[10] OF REAL
+    temp_str   : STRING[10]
+BEGIN
+    -- get current joint angles
+    cur_j_pos_ = CURJPOS(0, 0)
+
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+    
+    -- convert to REAL array
+    CNV_JPOS_REL(cur_j_pos_, joint_data, stat__)
+    IF (stat__ <> 0) THEN
+        log_error('[STA] jpos to rel failed')
+    ENDIF
+
+    jnts_str = ''
+    FOR i__ = 1 TO 6 DO
+        temp_str = ''
+        CNV_REAL_STR(joint_data[i__], 1, 4, temp_str)
+        jnts_str = jnts_str + temp_str + DELIMITER
+    ENDFOR
+    jnts_str = jnts_str + '0' + DELIMITER + '0' + DELIMITER
+    
+END xyzGetJnts
+
+
+ROUTINE xyzGetCpos
+VAR
+    cur_pos  : XYZWPREXT
+    temp_str : STRING[10]
+BEGIN
+    cur_pos = CURPOS(0, 0)
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.X, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.Y, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.Z, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.W, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.P, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.R, 1, 4, temp_str)
+    cpos_str = cpos_str + temp_str + DELIMITER
+
+    cpos_str = cpos_str + '0' + DELIMITER
+    
+END xyzGetCpos
+
+
+ROUTINE xyzGetDins
+BEGIN
+    dins_str = ''
+END xyzGetDins

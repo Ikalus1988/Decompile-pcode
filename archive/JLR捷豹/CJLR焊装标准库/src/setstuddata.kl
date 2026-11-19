@@ -1,0 +1,158 @@
+PROGRAM SetStudData
+
+%COMMENT = 'Version 1.3'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOABORT = ERROR + TPENABLE + COMMAND
+%NOPAUSE = ERROR + TPENABLE + COMMAND
+
+%INCLUDE kliotyps
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Type Declerations--
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	TYPE
+	Revision FROM SpotChkVer = STRUCTURE
+	Major:INTEGER
+	Minor:INTEGER
+	ENDSTRUCTURE
+
+VAR
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+--External Var Decs-------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+--NONE
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+--Program Var Decs-------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+STATUS:INTEGER
+
+intParam, intTemp,intTypeID,  intStudID, intLoops, intError, intReadOK, intStudOk:INTEGER
+realParam:REAL
+strParam, strTypeID, strSep, strStudID:STRING[12]
+blTimeout:BOOLEAN
+--Variables in CMOS for checking duplicated weld ID
+arrStudID IN CMOS: ARRAY[100] OF STRING[12]
+intStudCount IN CMOS:INTEGER
+intIdx, intStudSetOK:INTEGER
+WeldDataVer:Revision
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------ROUTINE DECLERATIONS
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------INTERNALS---
+--Get Version Routine
+ROUTINE WeldData_Ver:Revision
+
+BEGIN
+	
+WeldDataVer.Major = 1
+WeldDataVer.Minor = 0
+
+RETURN(WeldDataVer)
+
+END WeldData_Ver
+-------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+ROUTINE SetGroupIO
+
+VAR
+
+ intLS,intMS: INTEGER
+
+BEGIN
+   
+   		--Split weld number across the two group outputs. This is done because Group Outputs can only have 16 bits max. The weld number is 28 bits long!
+		intMS = intStudID DIV 65536
+  		intLS = 	intStudID MOD 65536
+  		
+  		--Set GO[37] 
+  		SET_PORT_VAL(io_gpout,25,intLS,STATUS)
+  		
+  		--check all was well. If not set error and exit
+  		IF (STATUS <>0) THEN
+  			
+  			intError = 4
+  			RETURN
+  			
+  			
+  		
+  		ENDIF
+  		
+  		
+  		--Set GO[38]
+  		SET_PORT_VAL(io_gpout,26,intMS,STATUS)
+  		
+  		--check all was well. If not set error and exit
+  		IF (STATUS <> 0) THEN
+  			
+  			intError = 5
+  			RETURN
+  			
+  		ENDIF
+  		
+END SetGroupIO
+
+BEGIN
+
+intError = 0
+
+--Get String for weld number
+GET_TPE_PRM(1,3,intParam,realParam,strParam,STATUS)
+
+IF STATUS = 0 THEN
+	strStudID = strParam
+	CNV_STR_INT(strStudID,intStudID)
+	SetGroupIO
+else
+	intError = 1	
+ENDIF	
+
+
+
+--Check for Duplicated Spot ID......
+
+--Set intRivSetOK to -1. Undetermined state..
+intStudSetOK = -1
+
+intIdx = 1
+
+FOR intIdx = 1 TO 100 DO
+	
+	IF NOT (UNINIT(arrStudID[intIdx])) THEN	
+		IF (arrStudID[intIdx] = strStudID) THEN
+			WRITE('Duplicate Stud ID!',CR)
+			WRITE ('ID: ' , strStudID,CR)
+			intStudSetOK = 0	
+		ENDIF
+	ENDIF
+ENDFOR
+
+--If Spot Count is uninit, set it to a value of 1.
+IF (UNINIT(intStudCount)) THEN
+	intStudCount = 1
+else
+	intStudCount = intStudCount + 1
+ENDIF
+
+IF (intStudsetOK = -1) THEN
+	
+	--Add Rivet ID to RivID Array
+	arrStudID[intStudCount] = strStudID
+	
+	--set Rivet Set OK to 1 (OK)
+	intStudSetOK = 1	
+				
+ENDIF
+
+---------------------------------------------------------
+--Spot Set OK---
+----------------------------------------------------------
+SET_INT_REG(195, intStudSetOK,STATUS)
+
+SET_INT_REG(33,intError,STATUS)
+
+END SetStudData

@@ -1,0 +1,588 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_motion
+-- 
+-- brief: xyz_motion,
+--
+--------------------------------------------------------------------------------
+PROGRAM xyz_motion
+
+%STACKSIZE = 5000
+%COMMENT = 'xyz-motion'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+
+
+
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+VAR
+    sock_fd : FILE
+
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_motion_h
+
+
+BEGIN
+    xyzMotion(sock_fd)
+END xyz_motion
+
+
+ROUTINE xyzMotion
+VAR
+    state_    : INTEGER
+    err_code  : INTEGER
+    temp_str  : STRING[10]
+    data_str  : STRING[80]
+    ret_str   : STRING[120]
+    mot_cmd   : INTEGER
+    xmsgt     : xyz_msg_t
+    xdat      : xyz_data_t
+    xsock     : xyz_sock_t
+BEGIN
+	log_info('[MOT] Version is ' + KAREL_VER)
+    -- init socket
+    state_ = sock_ctor(xsock, 3, 'S')
+    IF (state_ <> 0) THEN
+        log_error('[MOT] init sock failed')
+        GOTO EXIT_ON_ERR
+    ENDIF
+
+    log_info('[MOT] Waiting connection')
+    -- socket connection
+    state_ = sock_conn(xsock, sock_fd)
+    IF (state_ <> 0) THEN
+        log_error('[MOT] sock connect failed')
+        GOTO EXIT_ON_ERR
+    ENDIF
+    log_info('[MOT] connection success')
+
+    WHILE TRUE DO
+        err_code = NO_ERR
+        data_str = ''
+        ret_str = ''
+        pkt_ctor_msg(xmsgt)
+        pkt_ctor_dat(xdat)
+
+        -- recv from ipc
+        state_ = pkt_recv_sm(xmsgt, xsock, sock_fd)
+        IF (state_ <> 0) THEN
+            log_error('[MOT] recv msg failed')
+            GOTO EXIT_ON_ERR
+        ENDIF
+
+        -- convert msg to data array
+        state_ = pkt_cnv_mtd(xmsgt, xdat)
+        IF (state_ <> 0) THEN
+            log_error('[MOT] cnv msg to data failed')
+            GOTO EXIT_ON_ERR
+        ENDIF
+
+        mot_cmd = getMotCmd(xdat)
+        SELECT mot_cmd OF
+            CASE(CMD_GETVER):
+                err_code = xyzGetVer(xdat, data_str)
+            CASE(CMD_SETSPD):
+                err_code = xyzSetSpd(xdat)
+            CASE(CMD_SETACC):
+                err_code = xyzSetAcc(xdat)
+            CASE(CMD_SETZONE):
+                err_code = xyzSetZone(xdat)
+            CASE(CMD_SETDOUT):
+                err_code = xyzSetDout(xdat)
+            CASE(CMD_JNTMOVJ):
+                err_code = setJntsMovJ(xdat)
+            CASE(CMD_JNTMOVL):
+                err_code = setJntsMovL(xdat)
+            CASE(CMD_MOVJSEQ):
+                err_code = xyzMovjSeq(xdat)
+            CASE(CMD_MOVLUTL):
+                err_code = xyzMovlUtl(xdat)
+            CASE(CMD_GETDIN):
+                err_code = xyzGetDin(xdat, data_str)
+            CASE(CMD_GETDOUT):
+                err_code = xyzGetDout(xdat, data_str)
+            CASE(CMD_GETJNT):
+                err_code = xyzGetJnts(xdat, data_str)
+            CASE(CMD_GETCPOS):
+                err_code = xyzGetCpos(xdat, data_str)
+            ELSE:
+                err_code = ERR_INVA_CMD
+        ENDSELECT
+
+        -- pack ret string
+        temp_str = ''
+        CNV_INT_STR(mot_cmd, 1, 10, temp_str)
+        ret_str = ret_str + temp_str + DELIMITER
+        temp_str = ''
+        CNV_INT_STR(err_code, 1, 10, temp_str)
+        ret_str = ret_str + temp_str + DELIMITER
+        ret_str = ret_str + data_str + TERMINATOR
+
+        -- send reply to ipc
+        state_ = sock_send(sock_fd, ret_str)
+        IF (state_ <> 0) THEN
+            log_error('[MOT] send reply to ipc failed')
+            GOTO EXIT_ON_ERR
+        ENDIF
+
+    ENDWHILE
+
+EXIT_ON_ERR::
+    log_error('[MOT] Err happend will close socket')
+    sock_close(xsock, sock_fd)
+
+END xyzMotion
+
+
+ROUTINE getMotCmd
+VAR
+    mot_cmd : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[1], mot_cmd)
+    RETURN(mot_cmd)
+END getMotCmd
+
+
+ROUTINE xyzGetVer
+BEGIN
+    ret_str = KAREL_VER + DELIMITER
+    RETURN(0)
+
+END xyzGetVer
+
+
+ROUTINE xyzSetSpd
+VAR
+    ret  : INTEGER
+    jspd : INTEGER
+    lspd : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], jspd)
+    
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_INT_REG(REG_NO_JSPD, jspd, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- linear speed max 2000mm/s
+    lspd = jspd * 20
+    SET_INT_REG(REG_NO_LSPD, lspd, ret)
+    RETURN (ret)
+
+END xyzSetSpd
+
+
+ROUTINE xyzSetAcc
+VAR
+    ret : INTEGER
+    acc : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], acc)
+    
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_INT_REG(REG_NO_ACC, acc, ret)
+    RETURN(ret)
+
+END xyzSetAcc
+
+
+ROUTINE xyzSetZone
+VAR
+    ret : INTEGER
+    cnt : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], cnt)
+
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_INT_REG(REG_NO_CNT, cnt, ret)
+    RETURN(ret)
+
+END xyzSetZone
+
+
+ROUTINE xyzSetTool
+VAR
+    ret : INTEGER
+BEGIN
+    ret = 0
+    RETURN(ret)
+END xyzSetTool
+
+
+ROUTINE xyzSetDout
+VAR
+    port_   : INTEGER
+    signal_ : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], port_)
+    CNV_STR_INT(xdat.data_array_[3], signal_)
+    --
+    IF (signal_ > 0) THEN 
+        RDO[port_] = ON
+    ELSE
+        RDO[port_] = OFF
+    ENDIF
+    RETURN(0)
+END xyzSetDout
+
+
+ROUTINE setJntsMovJ
+VAR
+    i__        : INTEGER
+    ret        : INTEGER
+    joint_data : ARRAY[10] OF REAL
+    j_pos      : JOINTPOS
+    spd        : INTEGER
+    acc        : INTEGER
+    cnt        : INTEGER
+    
+BEGIN
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+
+    FOR i__ = 2 TO 7 DO
+        CNV_STR_REAL(xdat.data_array_[i__], joint_data[i__ - 1])
+    ENDFOR
+    CNV_STR_INT(xdat.data_array_[10], spd)
+    CNV_STR_INT(xdat.data_array_[11], acc)
+    CNV_STR_INT(xdat.data_array_[12], cnt)
+
+    CNV_REL_JPOS(joint_data, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_JPOS_REG(PREG_NO_MOV, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set speed reg
+    SET_INT_REG(REG_NO_JSPD, spd, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set acc reg
+    SET_INT_REG(REG_NO_ACC, acc, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set cnt reg
+    SET_INT_REG(REG_NO_CNT, cnt, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set move type movej
+    SET_INT_REG(REG_NO_MT, MT_JNT_MOVJ, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- back register writing finish
+    FLG[F_BACK_F_WRT] = ON
+
+    -- wait front read finish
+    WAIT FOR (FLG[F_BACK_F_WRT] = OFF)
+    
+    -- wait move finish
+    IF (cnt = 0) THEN
+        WAIT FOR (FLG[F_MOVE_END] = ON)
+    ENDIF
+
+    RETURN (0)
+
+END setJntsMovJ
+
+
+ROUTINE setJntsMovL
+VAR
+    i__        : INTEGER
+    ret        : INTEGER
+    joint_data : ARRAY[10] OF REAL
+    j_pos      : JOINTPOS
+    spd        : INTEGER
+    acc        : INTEGER
+    cnt        : INTEGER
+
+BEGIN
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+
+    FOR i__ = 2 TO 7 DO
+        CNV_STR_REAL(xdat.data_array_[i__], joint_data[i__ - 1])
+    ENDFOR
+
+    CNV_STR_INT(xdat.data_array_[10], spd)
+    CNV_STR_INT(xdat.data_array_[11], acc)
+    CNV_STR_INT(xdat.data_array_[12], cnt)
+
+    CNV_REL_JPOS(joint_data, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_JPOS_REG(PREG_NO_MOV, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set speed reg
+    spd = spd * 20
+    SET_INT_REG(REG_NO_LSPD, spd, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set acc reg
+    SET_INT_REG(REG_NO_ACC, acc, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set cnt reg
+    SET_INT_REG(REG_NO_CNT, cnt, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set move type movel
+    SET_INT_REG(REG_NO_MT, MT_JNT_MOVL, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- back register writing finish
+    FLG[F_BACK_F_WRT] = ON
+
+    -- wait front read finish
+    WAIT FOR (FLG[F_BACK_F_WRT] = OFF)
+
+    -- wait move finish
+    IF (cnt = 0) THEN
+        WAIT FOR (FLG[F_MOVE_END] = ON)
+    ENDIF
+
+    RETURN (0)
+
+END setJntsMovL
+
+
+ROUTINE xyzMovlUtl
+VAR
+    i__        : INTEGER
+    ret        : INTEGER
+    joint_data : ARRAY[10] OF REAL
+    j_pos      : JOINTPOS
+    spd        : INTEGER
+    acc        : INTEGER
+    cnt        : INTEGER
+    port_      : INTEGER
+
+BEGIN
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+
+    FOR i__ = 2 TO 7 DO
+        CNV_STR_REAL(xdat.data_array_[i__], joint_data[i__ - 1])
+    ENDFOR
+
+    CNV_STR_INT(xdat.data_array_[10], spd)
+    CNV_STR_INT(xdat.data_array_[11], acc)
+    CNV_STR_INT(xdat.data_array_[12], cnt)
+    CNV_STR_INT(xdat.data_array_[13], port_)
+
+    CNV_REL_JPOS(joint_data, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- wait register is ready for writing
+    WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+    SET_JPOS_REG(PREG_NO_MOV, j_pos, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set speed reg
+    spd = spd * 20
+    SET_INT_REG(REG_NO_LSPD, spd, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set acc reg
+    SET_INT_REG(REG_NO_ACC, acc, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set cnt reg
+    SET_INT_REG(REG_NO_CNT, cnt, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set port reg
+    SET_INT_REG(REG_NO_POT, port_, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+    -- set move type movel
+    SET_INT_REG(REG_NO_MT, MT_MOVL_UTL, ret)
+    IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+    -- back register writing finish
+    FLG[F_BACK_F_WRT] = ON
+
+    -- wait front read finish
+    WAIT FOR (FLG[F_BACK_F_WRT] = OFF)
+
+    -- wait move finish
+    IF (cnt = 0) THEN
+        WAIT FOR (FLG[F_MOVE_END] = ON)
+    ENDIF
+
+    RETURN (0)
+
+END xyzMovlUtl
+
+
+ROUTINE xyzGetDin
+VAR
+    port_ : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], port_)
+    IF RDI[port_] THEN
+        ret_str = '1' + DELIMITER
+    ELSE
+        ret_str = '0' + DELIMITER
+    ENDIF
+    RETURN (0)
+END xyzGetDin
+
+
+ROUTINE xyzGetDout
+VAR
+    port_ : INTEGER
+BEGIN
+    CNV_STR_INT(xdat.data_array_[2], port_)
+    IF RDO[port_] THEN
+        ret_str = '1' + DELIMITER
+    ELSE
+        ret_str = '0' + DELIMITER
+    ENDIF
+    RETURN (0)
+    
+END xyzGetDout
+
+
+ROUTINE xyzGetJnts
+VAR
+    i__        : INTEGER
+    ret        : INTEGER
+    cur_j_pos_ : JOINTPOS
+    joint_data : ARRAY[10] OF REAL
+    temp_str   : STRING[10]
+BEGIN
+    -- get current joint angles
+    cur_j_pos_ = CURJPOS(0, 0)
+
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+    
+    -- convert to REAL array
+    CNV_JPOS_REL(cur_j_pos_, joint_data, ret)
+    IF (ret <> 0) THEN
+        log_error('[MOT] jpos to rel failed')
+    ENDIF
+
+    ret_str = ''
+    FOR i__ = 1 TO 6 DO
+        temp_str = ''
+        CNV_REAL_STR(joint_data[i__], 1, 4, temp_str)
+        ret_str = ret_str + temp_str + DELIMITER
+    ENDFOR
+    ret_str = ret_str + '0' + DELIMITER + '0' + DELIMITER
+    RETURN(ret)
+
+END xyzGetJnts
+
+
+ROUTINE xyzGetCpos
+VAR
+    ret      : INTEGER
+    cur_pos  : XYZWPREXT
+    temp_str : STRING[10]
+BEGIN
+    cur_pos = CURPOS(0, 0)
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.X, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.Y, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.Z, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.W, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.P, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    temp_str = ''
+    CNV_REAL_STR(cur_pos.R, 1, 4, temp_str)
+    ret_str = ret_str + temp_str + DELIMITER
+
+    ret_str = ret_str + '0' + DELIMITER
+    RETURN(0)
+
+END xyzGetCpos
+
+ROUTINE xyzMovjSeq
+VAR
+    i__        : INTEGER
+    j__        : INTEGER
+    ret        : INTEGER
+    num        : INTEGER
+    spd        : INTEGER
+    acc        : INTEGER
+    cnt        : INTEGER
+    joint_data : ARRAY[10] OF REAL
+    j_pos      : JOINTPOS
+BEGIN
+    FOR i__ = 1 TO 10 DO
+        joint_data[i__] = 0
+    ENDFOR
+
+    i__ = 0
+    CNV_STR_INT(xdat.data_array_[2], num)
+    FOR i__ = 1 TO num DO
+        FOR j__ = 3 TO 8 DO
+            CNV_STR_REAL(xdat.data_array_[11 * (i__ - 1) + j__], joint_data[j__ - 2])
+        ENDFOR
+        CNV_STR_INT(xdat.data_array_[11 * (i__ - 1) + 11], spd)
+        CNV_STR_INT(xdat.data_array_[11 * (i__ - 1) + 12], acc)
+        CNV_STR_INT(xdat.data_array_[11 * (i__ - 1) + 13], cnt)
+        
+        CNV_REL_JPOS(joint_data, j_pos, ret)
+        IF (ret <> 0) THEN RETURN(ret); ENDIF
+
+        -- wait register is ready for writing
+        WAIT FOR (FLG[F_BACK_C_WRT] = ON)
+        SET_JPOS_REG(PREG_NO_MOV, j_pos, ret)
+        IF (ret <> 0) THEN RETURN(ret); ENDIF
+        -- set speed reg
+        SET_INT_REG(REG_NO_JSPD, spd, ret)
+        IF (ret <> 0) THEN RETURN(ret); ENDIF
+        -- set acc reg
+        SET_INT_REG(REG_NO_ACC, acc, ret)
+        IF (ret <> 0) THEN RETURN(ret); ENDIF
+        -- set cnt reg
+        SET_INT_REG(REG_NO_CNT, cnt, ret)
+        IF (ret <> 0) THEN RETURN(ret); ENDIF
+        -- set move type movej
+        FLG[F_MOVE_TYPE] = ON
+
+        -- back register writing finish
+        FLG[F_BACK_F_WRT] = ON
+
+        -- wait front read finish
+        WAIT FOR (FLG[F_BACK_F_WRT] = OFF)
+        
+        -- wait move finish
+        IF (cnt = 0) THEN
+            WAIT FOR (FLG[F_MOVE_END] = ON)
+        ENDIF
+    ENDFOR
+
+    RETURN (0)
+
+END xyzMovjSeq

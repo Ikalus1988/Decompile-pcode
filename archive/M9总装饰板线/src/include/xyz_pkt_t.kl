@@ -1,0 +1,19 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+TYPE
+    xyz_msg_t FROM xyz_pkt = STRUCTURE
+        msg_quot_    : INTEGER
+        msg_rema_    : INTEGER
+        msg_array_   : ARRAY[MAX_MGAY_LEN] OF STRING[MAX_ECMG_LEN]
+	ENDSTRUCTURE
+
+    xyz_data_t FROM xyz_pkt = STRUCTURE
+        data_num_    : INTEGER
+        data_array_  : ARRAY[MAX_DTAY_LEN] OF STRING[MAX_ECDT_LEN]
+    ENDSTRUCTURE

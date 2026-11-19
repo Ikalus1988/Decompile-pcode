@@ -1,0 +1,206 @@
+-- XYZ_STATUS.KL (decompiled v3)
+PROGRAM XYZ_STATUS
+%COMMENT = 'xyz-status'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	XYZ_MSG_T = STRUCTURE
+	MSG_QUOT_: INTEGER
+	MSG_REMA_: INTEGER
+	MSG_ARRAY_: ARRAY[6] OF STRING[200]
+	ENDSTRUCTURE
+	XYZ_DATA_T = STRUCTURE
+	DATA_NUM_: INTEGER
+	DATA_ARRAY_: ARRAY[70] OF STRING[20]
+	ENDSTRUCTURE
+	XYZ_SOCK_T = STRUCTURE
+	TYPE_: STRING[1]
+	CONNECTED_: INTEGER
+	STATUS_: INTEGER
+	TAG_IDX_: INTEGER
+	TAG_STR_: STRING[3]
+	PORT_: INTEGER
+	HOST_: STRING[30]
+	ENDSTRUCTURE
+VAR
+  SOCK_FD : FILE
+  cur_pos_f08 : REAL
+  cur_pos_f0c : REAL
+  cur_pos_f10 : REAL
+  cur_pos_f14 : REAL
+  cur_pos_f18 : REAL
+  cur_pos_f1c : REAL
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE PKT_CTOR_MSG(p0 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_CTOR_DAT(p0 : XYZ_DATA_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_GET_MLEN(p0 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_ADD_MSG(p0 : XYZ_MSG_T; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE PKT_CNV_MTD(p0 : XYZ_MSG_T; p1 : XYZ_DATA_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_ADD_DAT(p0 : XYZ_DATA_T; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE PKT_CNV_DTM(p0 : XYZ_DATA_T; p1 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_RECV_SM(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE PKT_SEND_ALL(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE PKT_RECV_UT(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CTOR(p0 : XYZ_SOCK_T; p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CONN(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLOSE(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SET_RT(p0 : FILE; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SOCK_OPFD(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLFD(p0 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SEND(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_RECV(p0 : FILE; p1 : STRING; p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_CLEAR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_FORCE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE XYZGETJNTS(p0 : STRING) : INTEGER
+VAR
+  cur_j_pos_ : INTEGER
+  i__ : ARRAY[64] OF REAL
+  joint_data : INTEGER
+  stat__ : JOINTPOS
+  temp_str : STRING[64]
+BEGIN
+  sv_j = curjpos(0, 0)
+  stat__ = sv_j
+  FOR joint_data = 1 TO 3 DO
+  i__[joint_data] = 0
+  ENDFOR
+  cnv_jpos_rel(stat__, i__, cur_j_pos_)
+  IF ((cur_j_pos_ <> 0)) THEN
+  sv_i = LOG_ERROR('[STA] jpos to rel failed')
+  -- stmt115 stray sv_i
+  ENDIF
+  p0 = ''
+  FOR joint_data = 1 TO 3 DO
+  temp_str = ''
+  CNV_REAL_STR((i__[joint_data]), 1, 4, temp_str)
+  p0 = '' + ','
+  ENDFOR
+  p0 = p0 + '0' + ',' + '0' + ','
+  RETURN(0)
+END XYZGETJNTS
+
+ROUTINE XYZGETCPOS(p0 : STRING) : INTEGER
+VAR
+  cur_pos : POSITION
+  temp_str : STRING[64]
+BEGIN
+  sv_p = curpos(0, 0)
+  cur_pos = sv_p
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f08, 1, 4, temp_str)
+  p0 = '' + ','
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f0c, 1, 4, temp_str)
+  p0 = '' + ','
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f10, 1, 4, temp_str)
+  p0 = '' + ','
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f14, 1, 4, temp_str)
+  p0 = '' + ','
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f18, 1, 4, temp_str)
+  p0 = '' + ','
+  temp_str = ''
+  CNV_REAL_STR(cur_pos_f1c, 1, 4, temp_str)
+  p0 = '' + ','
+  p0 = p0 + '0' + ','
+  RETURN(0)
+END XYZGETCPOS
+
+ROUTINE XYZSTATUS(p0 : FILE) : INTEGER
+VAR
+  data_str : STRING[64]
+  ret_str : STRING[64]
+  state_ : INTEGER
+  temp_str : STRING[64]
+  xsock : XYZ_SOCK_T
+BEGIN
+  sv_i = SOCK_CTOR(xsock, 4, 'S')
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[STA] init sock failed')
+  -- stmt51 stray sv_i
+  ELSE
+  ENDIF
+  sv_i = LOG_INFO('[STA] Waiting connection')
+  -- stmt56 stray sv_i
+  sv_i = SOCK_CONN(xsock, p0)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[STA] sock connect failed')
+  -- stmt59 stray sv_i
+  ELSE
+  ENDIF
+  sv_i = LOG_INFO('[STA] connection success')
+  -- stmt62 stray sv_i
+  IF ((1 <> 0)) THEN
+  ret_str = '200' + ','
+  data_str = ''
+  sv_i = XYZGETJNTS(data_str)
+  -- stmt67 stray sv_i
+  ret_str = ret_str + '201' + ',' + data_str
+  data_str = ''
+  sv_i = XYZGETCPOS(data_str)
+  -- stmt70 stray sv_i
+  ret_str = ret_str + '202' + ',' + data_str
+  ret_str = ret_str + '#'
+  sv_i = SOCK_SEND(p0, ret_str)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[STA] send status to ipc failed')
+  -- stmt76 stray sv_i
+  ELSE
+  ENDIF
+  temp_str = ''
+  sv_i = SOCK_RECV(p0, temp_str, 7)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[STA] recv reply from ipc failed')
+  -- stmt83 stray sv_i
+  ELSE
+  ENDIF
+  DELAY 20
+  ENDIF
+  sv_i = LOG_ERROR('[STA] Err happend will close socket')
+  -- stmt91 stray sv_i
+  sv_i = SOCK_CLOSE(xsock, p0)
+  -- stmt92 stray sv_i
+  RETURN(0)
+END XYZSTATUS
+
+ROUTINE XYZGETDINS(p0 : STRING) : INTEGER
+BEGIN
+  p0 = ''
+  RETURN(0)
+END XYZGETDINS
+
+BEGIN
+  sv_i = XYZSTATUS(SOCK_FD)
+  -- stmt36 stray sv_i
+END XYZ_STATUS
+

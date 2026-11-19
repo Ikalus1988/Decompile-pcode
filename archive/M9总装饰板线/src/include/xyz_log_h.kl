@@ -1,0 +1,99 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Clear and force the USER menu screen
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_clear FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Force the USER menu screen
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_force FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write INFO level string to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_info(msg : STRING) FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write INFO level string and 1 integer parameter to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- [in    ]  prm          : the parameter to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_info_a(msg : STRING; prm : INTEGER) FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write WARN level string to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_warn(msg : STRING) FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write WARN level string and 1 integer parameter to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- [in    ]  prm          : the parameter to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_warn_a(msg : STRING; prm : INTEGER) FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write ERROR level string to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_error(msg : STRING) FROM xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Write ERROR level string and 1 integer parameter to the logging fd
+-- 
+-- [in    ]  msg          : the msg to print
+-- [in    ]  prm          : the parameter to print
+-- 
+--------------------------------------------------------------------------------
+ROUTINE log_error_a(msg : STRING; prm : INTEGER) FROM xyz_log

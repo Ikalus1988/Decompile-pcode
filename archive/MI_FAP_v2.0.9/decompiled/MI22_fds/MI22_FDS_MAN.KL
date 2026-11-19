@@ -1,0 +1,520 @@
+-- MI22_FDS_MAN.KL (decompiled v3)
+PROGRAM MI22_FDS_MAN
+%COMMENT = 'MI22 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	GUNCFG_LST_T = STRUCTURE
+	GUNTOSYS: INTEGER
+	POINTNUMBER: INTEGER
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  ST_MANSMESS : STRING[64]
+  GUN_COUNT : INTEGER
+  I_GUNNO_EXT : INTEGER
+  L_STATE : INTEGER
+  AR_M22_CN_DI : ARRAY[64] OF INTEGER
+  GUNCFG_LST : ARRAY[64] OF GUNCFG_LST_T
+  AR_M22_CN_DO : ARRAY[64] OF INTEGER
+  I_TYPEID_EXT : INTEGER
+  I_FLSNO_EXT : INTEGER
+  AR_M22_CN_GI : ARRAY[64] OF INTEGER
+  LASTDOCKEDGUN : INTEGER
+  M22_COND_ENBL : BOOLEAN
+  M22_APPLMODE : INTEGER
+  TIMEOUTFLSSYS : INTEGER
+  TIMEOUTFLSCHECK : INTEGER
+  AR_M22_CN_GO : ARRAY[1] OF INTEGER
+  M22_B_NOPROCESS : BOOLEAN
+  M22_B_APPLSTART : BOOLEAN
+  M22_B_PROCESS_NIO : BOOLEAN
+  M22_B_PROCESS_IO : BOOLEAN
+  M22_B_NIO_ABORT : BOOLEAN
+  M22_B_NIO_REPEAT : BOOLEAN
+  M22_B_FAIL_START_PROC : BOOLEAN
+  M22_B_SKIPPROC_NOSTART : BOOLEAN
+  I_DRYRUNTIME : INTEGER
+  I_MON : INTEGER
+  GUNCFG_LST_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE MANUAL_REQOPERATOR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_STATUSREPEAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_SETTIMER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_RESETTIMER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE EXITFORM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_WAITFINISHEDMSG(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GUNPLAUSIBILITYCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKGUNNO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_SETWORKPARAMETERS(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_SETPOINTNR_24BITS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_IO_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_AUTOMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECK_APP_MODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKSYSREADY(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKFORERROR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_SETMESSAGE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_GETCOUNTMESSAGES(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_QUERY_SYSREADY(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKGUNDOCKING(p0 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE MI22_QUERY_JOINTPOINTOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_STARTPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_WAITFORPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_STATUSPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_QUERRYVALIDRESULTS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_STATUSREPEAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_PREPAREPOINT(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_SETLOGPARAM(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_REQUESTTOOLCHANGE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKDOCKCOMPLETE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKSERVICEREQ(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_ADJUSTSCREW(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_DRILL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_PREPARESCREW(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_ADJUST(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_COUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_DECOUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_CHECKINSERTCHANGE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_EJECTSCREW(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI22_FEEDSCREW(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE RESETREDMSG : INTEGER
+BEGIN
+  ST_MANSMESS = ''
+  RETURN(0)
+END RESETREDMSG
+
+ROUTINE ISVIRTUALEDIT : BOOLEAN
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+  r1_lc3 : INTEGER
+BEGIN
+  GET_VAR(r1_lc1, '*SYSTEM*', '$VIRTUALEDIT', r1_lc3, r1_lc2)
+  IF ((r1_lc3 <> 1)) THEN
+  RETURN(FALSE)
+  ELSE
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END ISVIRTUALEDIT
+
+ROUTINE CHECKGUNNO_FROMMAN(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt102 stray sv_i
+  IF ((p0 <= 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt105 stray sv_i
+  ST_MANSMESS = 'GunNo <= 0! System configuration invalid'
+  RETURN(1)
+  ELSE
+  IF ((p0 > GUN_COUNT)) THEN
+  sv_i = RESETREDMSG
+  -- stmt111 stray sv_i
+  ST_MANSMESS = 'GunNo > Max. GunNo! System configuration invalid'
+  RETURN(1)
+  ELSE
+  RETURN(0)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END CHECKGUNNO_FROMMAN
+
+ROUTINE MI22_DOWNHOLDER_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt130 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt135 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 3] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt145 stray sv_i
+  ST_MANSMESS = 'Error on FDS System!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 3] = 0)) THEN
+  ENDIF
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  -- stmt156 residue 5000
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 9] <> 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 9] = 0
+  sv_i = RESETREDMSG
+  -- stmt160 stray sv_i
+  ST_MANSMESS = 'Man. downholder finished!'
+  ELSE
+  sv_i = RESETREDMSG
+  -- stmt163 stray sv_i
+  ST_MANSMESS = 'Still downholder home position'
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 9] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt166 stray sv_i
+  ST_MANSMESS = 'Downholder not in home position!'
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI22_DOWNHOLDER_MAN
+
+ROUTINE MI22_EJECTSCREW_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt183 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt188 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 3] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt198 stray sv_i
+  ST_MANSMESS = 'Error on FDS System!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  DELAY 500
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt206 stray sv_i
+  ST_MANSMESS = 'System is not in Automode!'
+  ENDIF
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 2] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt211 stray sv_i
+  ST_MANSMESS = 'System is not ready!'
+  ELSE
+  -- stmt215 residue 1000
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 20] <> 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 20] = 0
+  sv_i = RESETREDMSG
+  -- stmt219 stray sv_i
+  ST_MANSMESS = 'Man. eject screw finished!'
+  ELSE
+  sv_i = RESETREDMSG
+  -- stmt222 stray sv_i
+  ST_MANSMESS = 'Screw is still not being ejected'
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 20] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt225 stray sv_i
+  ST_MANSMESS = 'Screw was not ejected!'
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI22_EJECTSCREW_MAN
+
+ROUTINE MI22_FEEDSCREW_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt244 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt249 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 3] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt2 stray sv_i
+  ST_MANSMESS = 'Error on FDS System!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  DELAY 500
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt10 stray sv_i
+  ST_MANSMESS = 'System is not in Automode!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 2] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt14 stray sv_i
+  ST_MANSMESS = 'System is not ready!'
+  ELSE
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Type ID', 'Please enter the Type ID (1 ~ 255)', I_TYPEID_EXT, 1, 255)
+  L_STATE = sv_i
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Point No.', 'Please enter the Point No. (1 ~ 999999)', I_FLSNO_EXT, 1, 999999)
+  L_STATE = sv_i
+  DELAY 64
+  -- stmt22 residue 1000
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 21] <> 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 21] = 0
+  sv_i = RESETREDMSG
+  -- stmt26 stray sv_i
+  ST_MANSMESS = 'Man. feed screw finished!'
+  ELSE
+  sv_i = RESETREDMSG
+  -- stmt29 stray sv_i
+  ST_MANSMESS = 'Screw is still not being fed'
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 21] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt32 stray sv_i
+  ST_MANSMESS = 'Screw was not fed!'
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI22_FEEDSCREW_MAN
+
+ROUTINE MI22_COUPLE_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt55 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt60 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 12] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt69 stray sv_i
+  ST_MANSMESS = 'Couple not allowed!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  DELAY 500
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt77 stray sv_i
+  ST_MANSMESS = 'System is not in Automode!'
+  ENDIF
+  ELSE
+  sv_i = MI22_SETLOGPARAM(1, I_GUNNO_EXT, 0, 0)
+  L_STATE = sv_i
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  -- stmt83 residue 1500
+  sv_i = RESETREDMSG
+  -- stmt84 stray sv_i
+  ST_MANSMESS = 'Man. couple finished!'
+  ENDIF
+  ENDIF
+  I_GUNNO_EXT = 0
+  sv_i = RESETREDMSG
+  -- stmt90 stray sv_i
+  ST_MANSMESS = 'No valid Gun Nr.!'
+  ENDIF
+  RETURN(0)
+END MI22_COUPLE_MAN
+
+ROUTINE MI22_DECOUPLE_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt107 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt112 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  DELAY 500
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt125 stray sv_i
+  ST_MANSMESS = 'System is not in Automode!'
+  ENDIF
+  ELSE
+  IF ((io_12[AR_M22_CN_GI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  ST_MANSMESS = 'Decouple not allowed'
+  sv_i = RESETREDMSG
+  -- stmt131 stray sv_i
+  ELSE
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 12] = 0
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 11] = 0
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 12] = 0
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 11] = 1
+  sv_i = MI22_SETLOGPARAM(0, I_GUNNO_EXT, 0, 0)
+  L_STATE = sv_i
+  I_GUNNO_EXT = 0
+  sv_i = RESETREDMSG
+  -- stmt140 stray sv_i
+  ST_MANSMESS = 'Man. decouple finished!'
+  ENDIF
+  ENDIF
+  sv_i = RESETREDMSG
+  -- stmt145 stray sv_i
+  ST_MANSMESS = 'GunNo to be undocked is zero'
+  ENDIF
+  RETURN(0)
+END MI22_DECOUPLE_MAN
+
+ROUTINE MI22_EXTERNALSTART_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt159 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] <> 0) OR (io_0e[247] <> 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt164 stray sv_i
+  ST_MANSMESS = 'Deadman switch required!'
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Type ID', 'Please enter the Type ID (1 ~ 255)', I_TYPEID_EXT, 1, 255)
+  L_STATE = sv_i
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Point No.', 'Please enter the Point No. (1 ~ 999999)', I_FLSNO_EXT, 1, 999999)
+  L_STATE = sv_i
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 3] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt177 stray sv_i
+  ST_MANSMESS = 'Error on FDS System!'
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  DELAY 500
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt185 stray sv_i
+  ST_MANSMESS = 'System is not in Automode!'
+  ENDIF
+  ELSE
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 2] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt190 stray sv_i
+  ST_MANSMESS = 'System is not ready!'
+  ELSE
+  IF ((sv_i = 0)) THEN
+  IF ((io_12[AR_M22_CN_GI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] <> 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  sv_i = MI22_SETWORKPARAMETERS(I_GUNNO_EXT, I_TYPEID_EXT, I_FLSNO_EXT)
+  L_STATE = sv_i
+  IF ((io_01[AR_M22_CN_DI[GUNCFG_LST_f00[I_GUNNO_EXT]] + 25] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt198 stray sv_i
+  ST_MANSMESS = 'Fastening Point ID not Ok!'
+  ELSE
+  -- stmt202 residue 1500
+  sv_i = MI22_SETWORKPARAMETERS(I_GUNNO_EXT, 0, 0)
+  L_STATE = sv_i
+  sv_i = RESETREDMSG
+  -- stmt205 stray sv_i
+  ST_MANSMESS = 'Man. fls process finished!'
+  ENDIF
+  ENDIF
+  sv_i = RESETREDMSG
+  -- stmt210 stray sv_i
+  ST_MANSMESS = 'GunNo not valid!'
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI22_EXTERNALSTART_MAN
+
+ROUTINE MI22_SETMANUALMODE_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt227 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 0
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 1
+  sv_i = RESETREDMSG
+  -- stmt233 stray sv_i
+  ST_MANSMESS = 'Manual mode finished!'
+  ELSE
+  sv_i = RESETREDMSG
+  -- stmt236 stray sv_i
+  ST_MANSMESS = 'Invalid gun number!'
+  ENDIF
+  RETURN(0)
+END MI22_SETMANUALMODE_MAN
+
+ROUTINE MI22_QUITERROR_MAN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt252 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT('Request for a valid Gun No.', 'Please enter the Gun No. (1 ~ 3)', I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((sv_i = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt1 stray sv_i
+  ST_MANSMESS = 'Quit error finished!'
+  ELSE
+  sv_i = RESETREDMSG
+  -- stmt4 stray sv_i
+  ST_MANSMESS = 'Invalid gun number!'
+  ENDIF
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 1] = 1
+  io_02[AR_M22_CN_DO[GUNCFG_LST_f00[I_GUNNO_EXT]] + 22] = 0
+  RETURN(0)
+END MI22_QUITERROR_MAN
+
+BEGIN
+END MI22_FDS_MAN

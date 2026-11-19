@@ -1,0 +1,17 @@
+PROGRAM  MM_INIT_SKT
+
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Init_Socket'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+--%INCLUDE KLEVCCDF
+ROUTINE Init_Skt FROM  MM_MODULE                   
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Init_Skt
+END MM_INIT_SKT
+

@@ -1,0 +1,438 @@
+-- DCP_NUT.KL (decompiled v3)
+PROGRAM DCP_NUT
+%COMMENT = 'Version 1.0'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_02 : ARRAY[512] OF INTEGER
+  PARAMTYP : INTEGER
+  INTDCPFAULT : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[64]
+  STATUS : INTEGER
+  STRDCPTEXT : STRING[64]
+  ENTRY : INTEGER
+  ROBOTNAME : STRING[64]
+  INTTOOLID : INTEGER
+  REALDUMMY : REAL
+  TOOLID : STRING[64]
+  NUTNUM : INTEGER
+  NUTNUM1 : INTEGER
+  STRNUTNUM : STRING[64]
+  STRNUTNUM1 : STRING[64]
+  DCPTEXT : ALMDCP
+  FKEY_SEL : INTEGER
+  FKEYS : ARRAY[64] OF STRING[64]
+  DCPPLCTEXT : STRING[64]
+  DCPFAULTNUM1 : STRING[64]
+  DCPFAULTNUM : STRING[64]
+  BLPLC : INTEGER
+  BLSPR : INTEGER
+  BLSPOT : INTEGER
+  BLDISPENSE : INTEGER
+  BLMH : INTEGER
+  BLSTUD : INTEGER
+  BLNUT : INTEGER
+  BLISRA : INTEGER
+  BLQUISS : INTEGER
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTPROGNUM : INTEGER
+  INTAREAINREQ : INTEGER
+  INTAREAOUTRL : INTEGER
+  INTTOOLREQ : INTEGER
+  INTJOBDONE : INTEGER
+  INTCOLREQ : INTEGER
+  INTCOLREL : INTEGER
+  REALACTTHK : REAL
+  REALREQTHK : REAL
+  STRPROGNUM : STRING[3]
+  STRAREANUM : STRING[3]
+  STRAREAINREQ : STRING[3]
+  STRAREAOUTRL : STRING[3]
+  STRTOOLREQ : STRING[3]
+  STRJOBDONE : STRING[3]
+  STRCOLREQ : STRING[3]
+  STRCOLREL : STRING[3]
+  STRDCPTEXT2 : STRING[82]
+  ACTTHKSTR : STRING[20]
+  STRREQTHK : STRING[20]
+  STRADDDCPTXT : STRING[20]
+  STRTPFUNC : ARRAY[5] OF STRING[8]
+  BLKEYPRESSED : BOOLEAN
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  DCPTEXT_f30 : STRING[64]
+  DCPTEXT_f5c : STRING[64]
+  DCPTEXT_f88 : STRING[64]
+  DCPTEXT_fb4 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE DCPDISP(p0 : ALMDCP) : INTEGER FROM MI_LIB
+ROUTINE DCPDISPALM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DCP_CLR(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE POSTSTAT(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  POST_ERR(p0, '', 0, 2)
+  ENDIF
+  FORCE_SPMENU(1, 37, 1)
+  GET_TPE_PRM(1, PARAMTYP, INTDCPFAULT, PARAMREAL, PARAMSTRING, STATUS)
+  IF ((PARAMTYP <> 1) OR (STATUS <> 0)) THEN
+  WRITE('Invalid Call to DCPFault Program on Robot!', CR, 'Check argument 1 is an integer!')
+  STRDCPTEXT = 'Invalid Call to DCPFault Program on Robot'
+  ENDIF
+  IF (UNINIT(INTDCPFAULT)) THEN
+  INTDCPFAULT = 0
+  ENDIF
+  GET_VAR(ENTRY, '*SYSTEM*', '$ROBOT_NAME', ROBOTNAME, STATUS)
+  IF (UNINIT(ROBOTNAME)) THEN
+  ROBOTNAME = 'Unit'
+  ENDIF
+  GET_REG(81, (0 <> 0), INTTOOLID, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLID, 2, 10, TOOLID)
+  GET_REG(71, (0 <> 0), NUTNUM, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  GET_REG(73, (0 <> 0), NUTNUM1, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(NUTNUM, 2, 10, STRNUTNUM)
+  CNV_INT_STR(NUTNUM1, 2, 10, STRNUTNUM1)
+  DCPTEXT_f00 = 0
+  DCPTEXT_f04 = ''
+  DCPTEXT_f30 = ''
+  DCPTEXT_f5c = ''
+  DCPTEXT_f88 = ''
+  DCPTEXT_fb4 = ''
+  FKEY_SEL = 0
+  FKEYS[1] = ''
+  FKEYS[2] = ''
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  FKEYS[5] = ''
+  FKEYS[6] = ''
+  FKEYS[7] = ''
+  FKEYS[8] = ''
+  FKEYS[9] = ''
+  FKEYS[10] = ''
+  FKEY_SEL = 0
+  DCPTEXT_f00 = INTDCPFAULT
+  SELECT DCPTEXT_f00 OF
+  CASE(8001):
+  DCPTEXT_f04 = 'TSR 1: Controller ID Out of Range'
+  DCPTEXT_f00 = 8001
+  CASE(8002):
+  DCPTEXT_f04 = 'TSR 1: Bosch Prog Number out of Range'
+  DCPTEXT_f00 = 8002
+  CASE(8003):
+  DCPTEXT_f04 = 'TSR 1:Bosch Ctrl Enbl not on from Robot'
+  DCPTEXT_f00 = 8003
+  CASE(8004):
+  DCPTEXT_f04 = 'TSR 1: Bosch Ctrl Ready is Not On'
+  DCPTEXT_f00 = 8004
+  CASE(8005):
+  DCPTEXT_f04 = 'TSR 1: Bosch Ctrl No Faults Not On'
+  DCPTEXT_f00 = 8005
+  CASE(8006):
+  DCPTEXT_f04 = 'TSR 1:Bosch Ctrl Program Number Mismatch'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8006
+  CASE(8007):
+  DCPTEXT_f04 = 'TSR 1: Bosch Ctrl In Cycle CW Not Off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8007
+  CASE(8008):
+  DCPTEXT_f04 = 'TSR 1: Bosch Ctrl In Cycle CCW Not Off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8008
+  CASE(8009):
+  DCPTEXT_f04 = 'TSR 1: Bosch Ctrl End Of Cycle Not Off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8009
+  CASE(8010):
+  DCPTEXT_f04 = 'TSR 1: Started error start from robot not ON'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8010
+  CASE(8011):
+  DCPTEXT_f04 = 'TSR 1: Started error in cycle CW not ON'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8011
+  CASE(8012):
+  DCPTEXT_f04 = 'TSR 1: Started error end of cycle not OFF'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8012
+  CASE(8013):
+  DCPTEXT_f04 = 'TSR 1: Started error quality OK not OFF'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8013
+  CASE(8014):
+  DCPTEXT_f04 = 'TSR 1: Started error quality NOK not OFF'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8014
+  CASE(8015):
+  DCPTEXT_f04 = 'Started error UNKNOWN'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8015
+  CASE(8016):
+  DCPTEXT_f04 = 'TSR 1: Ended error end of cycle not ON'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8016
+  IF ((NUTNUM <> 99)) THEN
+  FKEY_SEL = 2
+  ENDIF
+  IF ((NUTNUM = 99)) THEN
+  FKEY_SEL = 1
+  ENDIF
+  CASE(8017):
+  DCPTEXT_f04 = 'TSR 1: Ended error quality OK or NOK not ON'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8017
+  CASE(8018):
+  DCPTEXT_f04 = 'TSR 1: Quality NOK torque high'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8018
+  FKEY_SEL = 2
+  CASE(8019):
+  DCPTEXT_f04 = 'TSR 1: Quality NOK torque low'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8019
+  FKEY_SEL = 2
+  CASE(8020):
+  DCPTEXT_f04 = 'TSR 1: Quality NOK angle high'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8020
+  FKEY_SEL = 2
+  CASE(8021):
+  DCPTEXT_f04 = 'TSR 1: Quality NOK angle low'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8021
+  FKEY_SEL = 2
+  CASE(8022):
+  DCPTEXT_f04 = 'TSR 1: Quality NOK UNKNOWN'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8022
+  FKEY_SEL = 2
+  CASE(8023):
+  DCPTEXT_f04 = 'TSR 1: Process Repeat Error'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM
+  DCPTEXT_f00 = 8023
+  FKEY_SEL = 3
+  CASE(8024):
+  DCPTEXT_f04 = 'TSR 1: Nut Detected in Tool'
+  DCPTEXT_f5c = 'Please remove the bolt from Tool'
+  DCPTEXT_f88 = 'to continue with Pick cycle'
+  DCPTEXT_f00 = 8024
+  CASE(8025):
+  DCPTEXT_f04 = 'TSR 1: Bolt Sensor not On'
+  DCPTEXT_f00 = 8025
+  CASE(8102):
+  DCPTEXT_f04 = 'TSR 2: programID out of range'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8102
+  CASE(8103):
+  DCPTEXT_f04 = 'TSR 2: Enable not on from robot'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8103
+  CASE(8104):
+  DCPTEXT_f04 = 'TSR 2: Ready not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8104
+  CASE(8105):
+  DCPTEXT_f04 = 'TSR 2: No faults not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8105
+  CASE(8106):
+  DCPTEXT_f04 = 'TSR 2: Program number mis-match'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8106
+  CASE(8107):
+  DCPTEXT_f04 = 'TSR 2: In cycle Clockwise not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8107
+  CASE(8108):
+  DCPTEXT_f04 = 'TSR 2: In cycle CounterClockwise not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8108
+  CASE(8109):
+  DCPTEXT_f04 = 'TSR 2: End of Cycle not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8109
+  CASE(8110):
+  DCPTEXT_f04 = 'TSR 2: Started error robot start not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8110
+  CASE(8111):
+  DCPTEXT_f04 = 'TSR 2: Started error in cycle CW not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8111
+  CASE(8112):
+  DCPTEXT_f04 = 'TSR 2: Started error EOC not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8112
+  CASE(8113):
+  DCPTEXT_f04 = 'TSR 2: Started error quality OK not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8113
+  CASE(8114):
+  DCPTEXT_f04 = 'TSR 2: Started error quality NOK not off'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8114
+  CASE(8115):
+  DCPTEXT_f04 = 'TSR 2: Started error unknown'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8115
+  CASE(8116):
+  DCPTEXT_f04 = 'TSR 2: Ended error End of Cycle not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8116
+  IF ((NUTNUM1 <> 99)) THEN
+  FKEY_SEL = 2
+  ENDIF
+  IF ((NUTNUM1 = 99)) THEN
+  FKEY_SEL = 1
+  ENDIF
+  CASE(8117):
+  DCPTEXT_f04 = 'TSR 2: Ended error quality OK/NOK not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8117
+  CASE(8118):
+  DCPTEXT_f04 = 'TSR 2: Quality NOK torque high'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8118
+  FKEY_SEL = 2
+  CASE(8119):
+  DCPTEXT_f04 = 'TSR 2: Quality NOK torque low'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8119
+  FKEY_SEL = 2
+  CASE(8120):
+  DCPTEXT_f04 = 'TSR 2: Quality NOK angle high'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8120
+  FKEY_SEL = 2
+  CASE(8121):
+  DCPTEXT_f04 = 'TSR 2: Quality NOK angle low'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8121
+  FKEY_SEL = 2
+  CASE(8122):
+  DCPTEXT_f04 = 'TSR 2: Quality NOK unknown'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8122
+  FKEY_SEL = 2
+  CASE(8123):
+  DCPTEXT_f04 = 'TSR 2: Process repeat error'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8123
+  FKEY_SEL = 3
+  CASE(8124):
+  DCPTEXT_f04 = 'TSR 2: programID array not cleared'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8124
+  CASE(8125):
+  DCPTEXT_f04 = 'TSR 2: Bolt sensor NOT OFF'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8125
+  CASE(8126):
+  DCPTEXT_f04 = 'TSR 2: Bolt sensor not on'
+  DCPTEXT_f30 = 'Bosch Program Number:- ' + STRNUTNUM1
+  DCPTEXT_f00 = 8126
+  ELSE:
+  STRDCPTEXT = 'Undefined DCP Fault Message'
+  ENDSELECT
+  DCPPLCTEXT = ROBOTNAME + ',Tool-' + TOOLID + ',' + DCPTEXT_f04 + DCPTEXT_f30
+  SET_PORT_VAL(19, 4, INTDCPFAULT, STATUS)
+  CNV_INT_STR(DCPTEXT_f00, 5, 10, DCPFAULTNUM1)
+  sv_s = sub_str(DCPFAULTNUM1, 2, 4)
+  DCPFAULTNUM1 = sv_s
+  DCPFAULTNUM = '0' + DCPFAULTNUM1
+  SET_STR_REG(9, DCPFAULTNUM, STATUS)
+  SET_STR_REG(10, DCPPLCTEXT, STATUS)
+  IF ((INTDCPFAULT = 8023) OR (INTDCPFAULT = 8123)) THEN
+  DCPTEXT_f5c = ''
+  DCPTEXT_f88 = 'Press Skip to Skip the Bolt'
+  DCPTEXT_fb4 = 'Press Retry to Continue with Repeat Bolt'
+  ENDIF
+  IF ((INTDCPFAULT >= 8016) AND (INTDCPFAULT <= 8021) AND (NUTNUM <> 99)) THEN
+  DCPTEXT_f88 = 'Press reset to Retry Tightening'
+  DCPTEXT_fb4 = 'Press CONT force Nut Complete'
+  ENDIF
+  IF ((INTDCPFAULT >= 8116) AND (INTDCPFAULT <= 8121) AND (NUTNUM1 <> 99)) THEN
+  DCPTEXT_f88 = 'Press reset to Retry Tightening'
+  DCPTEXT_fb4 = 'Press CONT force Nut Complete'
+  ENDIF
+  IF ((INTDCPFAULT = 8016) AND (NUTNUM = 99)) THEN
+  DCPTEXT_f88 = 'Press reset to Retry Pick'
+  ENDIF
+  IF ((INTDCPFAULT = 8116) AND (NUTNUM1 = 99)) THEN
+  DCPTEXT_f88 = 'Press reset to Retry Pick'
+  ENDIF
+  BLPLC = 0
+  BLSPR = 0
+  BLSPOT = 0
+  BLDISPENSE = 0
+  BLMH = 0
+  BLSTUD = 0
+  BLNUT = 1
+  BLISRA = 0
+  BLQUISS = 0
+  IF ((FKEY_SEL = 0)) THEN
+  FKEYS[1] = 'ACK'
+  FKEYS[2] = ''
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  ENDIF
+  IF ((FKEY_SEL = 1)) THEN
+  FKEYS[1] = ''
+  FKEYS[2] = 'RESET'
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  ENDIF
+  IF ((FKEY_SEL = 2)) THEN
+  FKEYS[1] = ''
+  FKEYS[2] = ''
+  FKEYS[3] = 'RESET'
+  FKEYS[4] = 'CONT'
+  ENDIF
+  IF ((FKEY_SEL = 3)) THEN
+  FKEYS[1] = ''
+  FKEYS[2] = ''
+  FKEYS[3] = 'RETRY'
+  FKEYS[4] = 'SKIP'
+  ENDIF
+  io_02[5] = 1
+  sv_i = DCPDISP(DCPTEXT)
+  -- stmt190 stray sv_i
+  RETURN(0)
+END POSTSTAT
+
+BEGIN
+END DCP_NUT

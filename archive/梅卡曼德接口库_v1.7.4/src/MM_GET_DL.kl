@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_DL
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_DoList'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_DoList FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_DoList
+END MM_GET_DL

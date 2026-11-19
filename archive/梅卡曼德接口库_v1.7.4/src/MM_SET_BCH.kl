@@ -1,0 +1,18 @@
+PROGRAM  MM_SET_BCH
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Set_Branch'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Set_Branch FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Set_Branch
+END MM_SET_BCH

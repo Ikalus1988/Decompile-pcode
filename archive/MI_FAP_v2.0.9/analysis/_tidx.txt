@@ -1,0 +1,25 @@
+ MI_FAP v2.0.9 逻辑分析注解 
+ MI_FAP v2.0.9 反编译逻辑辅助分析注解 
+ ★ 00_架构时序与缺陷分析 ——架构分层/执行时序/缺陷/待完善/手册对照（先读这个） 
+ 来源：08_软件安装包\MI_FAP_v2.0.9.zip（118 .pc → pc2kl3 反编译）。每应用一页：定位注解、模块/例程、调用与消息、高亮源码。 
+ 应用 定位 模块数 分析页 
+ MI01_cmn CMN 公共 18 MI01_cmn.html 
+ MI02_tch ATC 换枪站 6 MI02_tch.html 
+ MI03_grp GRP 抓手群控 4 MI03_grp.html 
+ MI04_ssw SSW 点焊工位 9 MI04_ssw.html 
+ MI08_dsp DSP 涂胶 8 MI08_dsp.html 
+ MI09_dsd DSD 视觉检测 6 MI09_dsd.html 
+ MI11_apl APL 焊点调度 5 MI11_apl.html 
+ MI13_rvh RVH 焊枪管理 7 MI13_rvh.html 
+ MI14_spr SPR 自冲铆 5 MI14_spr.html 
+ MI15_spr SPR 自冲铆 5 MI15_spr.html 
+ MI17_obj OBJ 坐标/对象 11 MI17_obj.html 
+ MI19_cli CLI 信号联锁 4 MI19_cli.html 
+ MI20_swh SWH 螺柱焊 6 MI20_swh.html 
+ MI21_swh SWH 螺柱焊 5 MI21_swh.html 
+ MI22_fds FDS 流钻螺丝 6 MI22_fds.html 
+ MI24_arc ARC 弧焊 4 MI24_arc.html 
+ MI25_las LAS 激光 3 MI25_las.html 
+ MI26_few FEW 流程/位置 3 MI26_few.html 
+ core 核心库 3 core.html 
+ 

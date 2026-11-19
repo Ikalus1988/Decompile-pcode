@@ -1,0 +1,23 @@
+-- MM_SET_DL.KL (decompiled v3)
+PROGRAM MM_SET_DL
+%COMMENT = 'MM_Set_DoList'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE SET_DOLIST(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  sv_i = SET_DOLIST(0)
+  -- stmt17 stray sv_i
+END MM_SET_DL
+

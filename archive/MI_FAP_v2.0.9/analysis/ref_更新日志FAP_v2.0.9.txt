@@ -1,0 +1,1038 @@
+=== PAGE 1 ===
+小米软件更新日志 
+版本：FAP v2.0.9 
+发布日期：2026-09-24 
+ 
+FAP v2.0.9 
+MI01 CMN 
+1. 自动备份功能逻辑优化，设置的内容不覆盖机器人端口 1 的 IP； 
+2. 新增 ProgNumCheck 指令，用于检测程序号； 
+3. 针对机器人下挂站掉网后可能发生的报警，创建 MI01_ERROR 程序用于
+监控此系列 PRIO 报警， 发生报警后暂停当前机器人动作， 直至报警消失；
+相关设置页面位于 MI01 Setup 界面中； 
+4. 更新 Decision Code 功能， 加入计时等待， 并将超时时间的设置放入MI01 
+Setup 界面中； 
+5. 将 DIAG-005 提示出现时自动收集 Logbook 的功能放入 MI01_ERROR 后
+台，功能的启停及设备的选择配置位于 MI01 Setup 界面中。 
+ 
+MI02 TCH 
+1. 修复当选 Stabli 换枪盘时，运行 ChangeTool 指令发生读取信号状态失败
+的问题； 
+2. Unlock 指令功能优化， 将Walther 换枪盘 5s 后自动锁紧的功能从 condition
+放入后台。 
+ 
+MI03 GRP 
+1. 后台逻辑增加 V ACCUM配置的 DI 信号向 PLC 发送 DO 信号的映射功能； 
+2. 增加 cylinder close 信号的映射。 
+ 
+MI04 SSW 
+1. 针对 HarmsWender 和 Sunke 焊机 DO[42]在进程中的后台输出，增加
+DO[513] = OFF 作为关闭 DO[42]的一个条件； 
+2. 增加标志位 Flag[11]作为 DO[42]输出的功能开关； 
+3. 在 MI04 SETUP 界面中增加一个设定选项， 用来选择参数向导文件 （最新
+版，或者 1.0.12 版） ，更改参数向导文件需要重启机器人来生效。 
+ 
+MI08 DSP 
+1. Glue_End 指令逻辑更改； 
+2. 对于新 SCA 设备的车身码传输，新增后台映射功能，调用方法改变； 
+3. 后台删除“反馈干湿模式”功能； 
+4. Init 指令，DO ACKNOWLEDGE ERROR ，DO RETRIGGER PUMP ，DO 
+=== PAGE 2 ===
+RETRIGGER HEAT 脉冲时间从 200ms 提高到 1000ms； 
+5. 更新默认的 I/O 映射文件 （xvr） ， 以及界面文件用于根据胶机品牌进行I/O
+映射的配置； 
+6. 在 MI08 SETUP 界面中增加一个设定选项， 用来选择参数向导文件 （最新
+版，或者 1.0.12 版） ，更改参数向导文件需要重启机器人来生效。 
+ 
+MI09 DSD 
+1. 使用 Coherix 3D, Control Run Mode, ON 指令时，逻辑增加对 Automatic 
+Mode 的 DI 信号检测； 
+2. Coherix 3D  TCP 数值向 GO 输出时，优化了 TCP 数值小数部分的处理方
+式，使 GO 输出值不再溢出。； 
+3. 针对 Cohrix 3D，Run Mode ON 指令中， 在发送GO 型号与 DO RUN MDOE
+之间加入 1000ms 延迟； 将车身码传递功能按工具号分离， 使用Run Mode 
+OFF 指令后，对应工具号的车身码传递和 TCP 输出会终止，同时清空对
+应工具号的车身码所有 DO。； 
+4. 更新界面，根据涂胶视觉品牌来进行 I/O 映射的配置。； 
+5. 在 MI09 SETUP 界面中增加一个设定选项， 用来选择参数向导文件 （最新
+版，或者 1.0.12 版） ，更改参数向导文件需要重启机器人来生效。 
+ 
+MI26 FEW 
+1. 增加适用于 FEW 的应用； 
+2. 包括 Init、GunOpen、FewWeld、Feed、Dock 等指令。 
+ 
+  
+=== PAGE 3 ===
+ 
+FAP v2.0.8 
+MI01 CMN 
+1. DCS 配置更改，速度位置检查功能自动启用； 
+2. APP SETUP，修磨器 BK 模块分配 IO 需按模块品牌自动配置，选 1 不做
+分配，选 2 按照 Eclo 分配，选 3 按照 Balluff 分配； 
+3. TP 程序监控功能， 在界面中进行TP 程序选择的配置， 对修改记录进行监
+控，并上传 PLC。安装后，通过菜单 MENU-STATUS-PROG RECORD 进
+入界面进行配置； 
+4. 自动模式下按 Status 键不再产生 Servo OFF 报警； 
+5. MI08 IO 分配： 弹窗选择是否有Leoni TCP， 如有则进行IO 自动分配；选
+DMTS 时对应的 IO 长度从 80 个更改为 160 个； 
+6. MI09 IO 分配：更新 Coherix 3D 第 2 个设备的 IO 分配，并删除第 3 个设
+备的分配； 
+7. APP SETUP，安装和 IO 分配按键，完成后增加弹窗确认； 
+8. 自动备份页面，Robot IP 从输入方式改为自动读取 Host Comm-TCP/TP 页
+面中端口 2 的 IP 地址；其他设置方法不变；增加一个 Server 服务器，形
+成两个不同的 FTP 端口，用于自动备份；使用 Enable 和 Disable 来启用/
+禁用该端口；两个端口都启用的情况下，备份时先备份 Server 1，再备份
+Server2。 
+ 
+MI02 TCH 
+1. 定位抓手切换在激活第二个安士能模块时，检测 Euchner 2 信号为 ON 时
+表示正常； 
+2. DCS 工具球停放站信号自动关联； 
+3. 针对瓦尔特换枪盘，无法抓取 Tool 2 的问题，进行逻辑优化； 
+4. 针对瓦尔特换枪盘， DI[2702]为 ON 时 代 表 当 前 工 具 号 为4 ， 更 新
+ChangeTool 和 CheckToolCode 功能模块； 
+5. 信号等待处理逻辑（condition 处理）优化； 
+ 
+MI03 GRP 
+1. 抓手应用激活抓手号，解决参数未初始化问题； 
+2. 后台 IO 映射给 PLC 的 DO 信号区间保持不变，无论抓手号是多少。 
+ 
+ 
+MI04 SSW 
+1. FRES – RobotHeld – Remove 指令，删除对 DI Motor Running 的检测； 
+2. MI04 SETUP 中如激活了 Guan’s welding ，SMC 的水流量检测不再执行； 
+3. MI04 GUI 中选 Bosch 并按 F5 执行后，weld sched ack 处配置改为 DI[2648]； 
+4. Bosch 水冷焊机自动断水功能（SMC）开发，通过 DI[48]上升沿触发；断
+水后先输出关水 DO，再检测水流量为 OFF；如水流量未 OFF，再次触发
+=== PAGE 4 ===
+DI[48]无效； 
+5. 空运行模式不检测水流量（SMC）； 
+6. 在点焊时输出进程中问题， 检测Error 信号为 ON 时表示正常， 输出DO[42]； 
+7. 删除 GO[6]=39、41 的逻辑； 
+8. 针对 Bosch 焊机 DO[42]在进程中的后台输出，增加 DO[515] = OFF 作为
+关闭 DO[42]的一个条件。 
+ 
+MI08 DSP 
+1. 配置系统变量$SLSETUP[1].CONV_FACTOR1 和$SLSETUP[1]. 
+CONV_FACTOR2 为 6553.5，以及$SLSETUP[1].MAX_IO_COUNT 为
+65535； 
+2. Purge 功能修改：根据 GUI 中的品牌选择，SCA 发 Purge 信号为长 ON，
+大铭保持不变（发脉冲信号）； 
+3. End 指令，DO[CYCLE END] 置 OFF 后，加延迟 300ms，再给 GO 复位；
+先判断上下限报警， 如果没有， 发DO[893]复位， 如果再有综合报警，R28=1 
+4. Glue Init 选 T_Dsp On 时，不再对 DI[929]进行检测； 
+5. MI08 SETUP 界面中新增选项： 
+a) 当胶机品牌选择 SCA 时， 需要继续选择当前胶机是单组份胶机或者双
+组份胶机， 在TP 指令中选择 T_DSP OFF 或者 ON 进行单组份排胶或者双
+组份排胶： 
+➢ 选单组份胶机时， 指令选T_DSP OFF 或者 ON， 排胶逻辑和以前一致
+(DO[889])； 
+➢ 选双组份胶机时，指令选 T_DSP OFF 表示单组份排胶(DO[921])，指
+令选 T_DSP ON 表示双组份排胶(DO[889])； 
+b) 当胶机品牌选 DMTS 时， 指令选T_DSP OFF 或者 ON，排胶逻辑和以
+前一致(DO[889])； 
+6. 原执行 start 指令时输出 DO[42]和 End 指令时 DO[42]复位， 仅在非空循环
+模式；现更改未不区分是否在空循环模式； 
+7. Purge 指令输出 DO[42]； 
+8. 删除 GO[6]=53、63、73 的逻辑； 
+9. 加入 Leoni TCP 的 TP 程序模板和 PC 程序； 
+10. 删除 DI[UPER_LIMIT]、DI[LOWER_LIMIT] 与 DO[445]的关联。 
+ 
+MI09 DSD 
+1. 更改 Coherix 第 2 个设备的 IO 地址偏移量为 3512；新机导入时有效，已
+有程序时需手动更改变量地址。 
+ 
+ 
+MI11 APL 
+1. 针对 Arplas 焊修磨功能，创建修磨设置界面、及相关程序指令；GI 接口
+使用 GI[112]，R[32]显示本次修磨量，R[33]显示累计修磨量，TCP 使用 1
+号； 
+2. Arplasweld 和 Dimple 指令输出 DO[42]。 
+ 
+=== PAGE 5 ===
+MI14 SPR 
+1. Rivet ID 可输入的最大值从 999999 改成 9999999； 
+2. Dock 逻辑中，先发 DO1139，再等待 DI1139。 
+ 
+MI19 CLI 
+1. Start 和 End 指令输出 DO[42]。 
+ 
+MI20 SWH 
+1. MI20 SETUP 中，如选双枪，对系统中的“焊接设备数量”和“焊接控制
+器数量”配置为 2（反之单枪设为 1）； 
+2. Start 指令输出 DO[42]。 
+ 
+MI21 SWH 
+1. MI21 SETUP 中，如选双枪，对系统中的“焊接设备数量”和“焊接控制
+器数量”配置为 2（反之单枪设为 1）； 
+2. Start 指令输出 DO[42]。 
+ 
+ 
+  
+=== PAGE 6 ===
+ 
+FAP v2.0.7 
+MI01 CMN 
+1. 增加远程自动备份功能：在 MI01 SETUP 界面中新增设置页，默认通过
+DI[21]启动远程备份，操作方法详见手册； 
+2. DCS 配置更改； 
+3. IO 分配新增 Balluff 停放站，修改明珞修磨器 IO 分配规则； 
+4. 安装应用时，恢复导入 MOVE_HOME.tp 和 MOVE_POUNCE.tp。 
+ 
+MI13 RVH 
+1. 在 Rivet 指令中， 当发出rivet start 信号后， 增加逻辑 （检测枪开口是否不
+在 home 位，若不在则属于正常逻辑）； 
+ 
+MI20 SWH 
+1. 在 MI20 SETUP 界面中增加枪数量的选项，关联 Weld Interface 配置； 
+ 
+MI21 SWH 
+1. 增加适用于新 Tucker 设备的螺柱焊应用，包括界面，用于信号配置； 
+2. 软件包括 SendBSNNum，Init，Start 等三类指令，关于车身码传递、初始
+化信号、开始螺柱焊工艺； 
+  
+=== PAGE 7 ===
+FAP v2.0.6 
+MI01 CMN 
+1. 针对检测 GI 的指令（Segment，DecisionCode） ，更改等待GI 值的逻辑；
+改为在等信号后会给出提示等待 GI[i]=x，仅一次，即使收到复位信号，
+也不会再有提示；在不跳行的情况下将一直等待 GI 条件满足为止； 
+2. DCS 配置更新； 
+3. App loader 增加 4 个抓手的 IO 分配； 
+ 
+MI02 TCH 
+1. Rout 程序更新：Lock 指令，在检查工具锁紧状态时，除检查锁紧为 on，
+解锁为 off 外，增加检查气压 I2919 Air pressure 为 on； 
+2. GUI 程序更新：Air pressure 信号点位在 MI02 SETUP 中可设置，默认为
+2919； 
+3. DT 文件更新：换工具的数量扩大到 4 个； 
+ 
+MI03 GRP 
+1. DT 文件和 Mon 程序更新：抓手数量扩大到 4 个； 
+ 
+MI04 SSW 
+1. Fres-RobotHeld-Remove 指令-手持修磨，修复无法正常关闭信号的问题 ； 
+2. tipservice 里的 reset td  request 和 stepper，脉冲信号改成 no wait 形式； 
+3. Fres-RobotHeld-Remove 指令中原等待 1.2s 改成 2s； 
+4. Fres-RobotHeld-Highspeed 指令，在 chk2 程序中添加背景逻辑：
+HIGHSPEED_ON 时，修磨和吹气开始后，监控UO3，如发生下降沿，则
+关闭修磨和吹气；如检测到上升沿，打开修磨吹气；HIGHSPEED_OFF
+时，关闭修磨和吹气，同时停止监控 UO3； 
+5. Fres- Pedestal- MotorON/OFF 指令，在 chk2 程序中添加背景逻辑： 
+MotorON 时，修磨和吹气开始后，监控 UO3，如发生下降沿，则关闭修
+磨和吹气；如检测到上升沿，打开修磨吹气；MotorOFF 时，关闭修磨和
+吹气，同时停止监控 UO3； 
+6. 后台逻辑增加：机器人 TP OFF 时， 系统变量$SGSCH1[1].$USE_MANUAL
+的值置 OFF；当 GUI 界面中选择的焊机品牌为 Bosch 时，采集 DI[513]
+上升沿信号，如采到，则延迟 100ms 后给 F[1]置 ON 且 1s 后置 OFF； 
+7. 根据 GUI 界面中选择的焊机品牌， 判断焊机交互的DIO 状态， 输出DO[42]
+为 ON 或者 OFF； 
+8. 增加钢凸点焊的配置： 在MI04 SETUP 界面中进行 Guan’s welding 的选择，
+并按 F5 实现配置； 
+ 
+MI08 DSP 
+1. Init 指令中，PURGE ENABLE 输出信号置 ON； 
+2. Purge 指令中，删除“DO[PURGE ENABLE]=OFF”； 
+  
+=== PAGE 8 ===
+FAP v2.0.5 
+MI01 CMN 
+1. RIP 开水指令， 增加Reset 信号脉冲 3s， 并检测bypass 信号为 ON 时报警； 
+2. app setup，更新螺柱焊 DI 分配。 
+3. app setup 增加对 MI09 品牌的选择， 从而进行不同的IO 分配； 通过对MI08
+设备数量的选择，决定 MI09 设备的数量； 
+4. 注释工具 comment tool 增加对 R 和 PR 的注释添加； 
+5. MI01 Setup 中增加 RIP 品牌的选择， 可选SMC、FESTO、PLIEM、NONE，
+按 EXEC 键后进行水流量正常信号的配置； 增加FANUC 导轨的选择， 影
+响 DI-DO 信号的关联； 
+6. app setup 中如勾选 DCS 并进行安装，将开启位置/速度检查功能； 
+7. Segment 和 DecisionCode 指令中判断 GI 的方式从 USER 报警提示更改为
+报警栏提示； 
+8. RIPCheck – WaterOFF 指令新增检测 flow ok 信号为低电平； 
+ 
+MI04 SSW 
+1. FRES REMOVE 指令，所有 DO 输出信号从 NOWAIT 改成 WAIT； 
+2. SETUP 界面的 WeldSys 页功能更新， 选择焊机后按F5 实现 spot config 中
+压力转换系数的不同配置； 
+3. 针对 Sunke 焊机的双枪应用， 在SETUP 界面的 WeldSys页中增加可选项，
+Gun Type 选 Dual 表示双枪，默认为 Singal； 
+4. 修磨逻辑删除全部空运行逻辑，即使空运行也正常执行； 
+5. SETUP 界面的 TipDress 页，增加 Tip Dress Method 选项，可选 1-Step 或
+2-Step，按EXEC 执行后弹窗选择导入 CAP_PRESSURE 程序， 选YES 则
+覆盖现有程序，选 NO 则取消操作； 
+6. Tip Service 指令整理，删除对焊机品牌的选择，将根据 SETUP 界面中选
+好的焊机品牌，进行不同的焊机相关逻辑；TipService - Reset_TD 指令支
+持 Bosch 焊机， 其他指令功能不变；Tip Service 指令需要插入才能实现指
+令的刷新； 
+7. Fres 修磨器 RobotHeld – Remove 指令优化， 等待1.2s 后检测 Motor Running
+信号，电机停止时间可在 PulseTime 处设定，到时间自动停止电机； 
+ 
+ 
+MI08 DSP 
+1. PURGE 指令，PURGE 输出改为脉冲 2s 的形式； 
+2. GLUE_END 指令中，CYCLE END 信号发出后延迟 500ms； 检测application 
+OK 信 号 改 为 指 定 时 间 内 如 果 没 有 收 到 ， 置R[28]=1 ； 指 定 时 间 在
+MI08_dsp_var 程序变量 i_timeout_app_OK 中设定，默认为 1000，单位
+ms，同时该变量也可在 MI08 SETUP 界面中设定； 
+3. 后台程序新增信号关联 DI[882]OR[883] -> DO[445]，DI[1010]OR[1011] -> 
+DO[461]，修复 xvr 文件中的映射配置错误； 
+ 
+=== PAGE 9 ===
+MI09 DSD 
+1. 增加对设备品牌的选择， 在指令中可选BetterWay、Coherix 2D 和 Coherix 
+3D； 
+2. BetterWay 逻辑与原 MI09 指令一致； 
+3. Coherix 2D 下设 Check、Camera On、Camera Off、Reset、SendBSNNum、
+Job Start 指令； 
+4. Coherix 3D 下设 Control Run Mode 和 Control Gun 指令； 
+5. 对于已在 TP 程序中使用的 MI09 指令，需要插入才能实现指令的刷新； 
+ 
+MI14 SPR 
+1. 映射增加 DI[1147] -> DO[412]； 
+ 
+MI15 SPR 
+1. 映射增加 DI[2331] -> DO[409], DI[2332] -> DO[410], DI[2363] -> DO[412]； 
+2. 打钉逻辑增加在工艺完成后检测系统状态； 
+3. 铆模检测指令，未收到 good 信号时，关闭铆模命令，弹窗做出选择确认
+状态是否 OK： 如选YES， 结束指令； 如选NO， 继续弹窗二次确认状态，
+点 OK 后指令结束； 
+4. 车身码传递起始位置修改为第 81 点； 
+ 
+MI19 CLI 
+1. 映射增加 DI[2105] -> DO[423], DI[2111] -> DO[424]； 
+2. GO 信号偏移量从 130 更改为 180； 
+3. 增加 MI19 CLI 界面文件，可选择液压或伺服控制方式，并增加选择伺服
+控制后的 TOX 逻辑； 
+ 
+MI20 SWH 
+1. 映射增加 DI[657] -> DO[438]； 
+2. Start 指令在逻辑开始前，复位所有 start weld 信号及检测所有 weld 
+complete 信号； 
+ 
+MI22 FDS 
+1. GunState 指令中，Couple 和 Decouple 逻辑修改； 
+2. 映射 DI[1319] -> DO[428], 改成 DI[1318] -> DO[428]； 
+ 
+MI24 ARC 
+3. 增加适用于弧焊的应用，包括界面，用于信号配置； 
+4. 软件包括 TD、MOTOR、WIRE 等三类指令，关于剪丝、电机、送丝的控
+制； 
+ 
+MI25 LASER 
+3. 增加适用于激光的应用； 
+4. 包括 LASER、TRUMP、AIR 等三类指令，用于激光器、焊接头、气刀的
+控制； 
+=== PAGE 10 ===
+ 
+ 
+FAP v2.0.4 
+MI01 CMN 
+1. App Setup 在 IO 自动分配时，对 RIP 的种类进行弹窗选择，进行不同的
+IO 分配； 
+2. App Setup 修复 Fres 的 IO 分配； 
+3. FestoCheck 更名为 RIPCheck； 
+4. RIPCheck 关水指令中，增加发出 DO[2938]脉冲的逻辑；该点位配置于
+MI01 Setup 界面中更新； 
+5. 增加一个 FAP_VERSION.XML 文件用于存放 FAP 版本号，可在 FR 里查
+看，也可在全备份中查看； 
+ 
+MI02 TCH 
+1. Unlock 指令删除检测停放站在位的逻辑； 
+2. SETUP 界面中 STABLI unlock 信号默认值从 2913 改为 2925； 
+3. SETUP 界面中增加停放站品牌， 可选Murr 或者 Elco； 程序逻辑根据选择
+的品牌， 进行自动切换； 对应app setup 在 IO 分配时出现弹窗进行停放站
+品牌的选择； 
+4. 对错误工具编号、换枪盘未在锁紧位置、未锁紧、未打开、无安全信号，
+增加报警输出功能； 
+5. 根据换枪盘品牌，自动映射 IO； 
+ 
+MI04 SSW 
+1. FRES 手持式和固定式修磨逻辑重写，包括 MI04 指令程序、库函数及后
+台程序；手持式包括指令：CheckBox、Remove、HighSpeed、Check；固
+定式包括指令：MotorON、MotorOFF、SwingADV、SwingRET； 
+2. MI04 Setup 界面增加对 FRES 摆臂修磨时气缸是否使用的选择； 
+3. 加入 FRES 的 TP 模板程序； 
+4. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+MI08 DSP 
+1. 指令名称修改，SCA 替换为 Glue； 
+2. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+3. SETUP 界面中根据胶机品牌，按 F3 进行涂胶 IO 的设置； 
+ 
+MI11 APL 
+1. Dimple 信号起始位从 1681 改为 1680； 
+ 
+MI13 RVH 
+1. Init 指令检测 home 位逻辑优化； 
+=== PAGE 11 ===
+2. 各指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+MI14 SPR 
+1. Init 和 Rivet 指令分别增加了对 home、basic 位的检测； 
+2. 后台逻辑增加心跳检测； 
+3. 修复 GO[52]无法发出数值的 bug； 
+4. DT 文件修改开口值范围，xvr 文件修改最大开口值；开口值范围修改成
+0.0~200.0，输入值取小数点后第一位有效，程序内部做乘 10 处理； 
+5. Rivet RC 默认超时时间从 500ms 改为 4000ms； 
+6. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+MI15 SPR 
+1. Init 指令增加输出枪号的功能； 
+2. 增加铆模检测功能，包括铆模检测请求和铆模检测命令； 
+3. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+MI17 OBJ 
+1. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+MI20 SWH 
+2. 输入的 StudID 改为字符串形式，对应数值范围为 1~134217728； 
+3. BSN 指令运行时发出 DO[172]的 5s 脉冲； 
+ 
+  
+=== PAGE 12 ===
+ 
+FAP v2.0.3 
+MI01 CMN 
+1. 优化了库函数； 
+2. 修复 DCS 默认加载的问题； 
+3. 增加功能，在自动模式下按下 status 键，可触发 SV-OFF 报警，报警类型
+为停止，可在 MI01 Setup 界面中启用或禁用； 
+4. 创建 MI01 Setup 界面，用于参数设置； 
+ 
+MI02 TCH 
+1. Unlock 指令， 增加检测停放站状态的逻辑， 检测GI 工具号为停放站号码；
+当工具号为 0 时不检测。 
+2. 针对 Walther 换枪盘，Unlock 指令执行后信号以脉冲 5s 形式发出，5s 后
+检测该工具号对应的停放站是否占用，如非占用状态，重新 lock 
+3. MI02 Setup 界面优化，增加参数设置； 
+ 
+MI04 SSW 
+1. 在执行了 open valve 的情况下，如再收到 DI[5]，将重新开水； 
+2. 修磨检测时如果发生报错，取消 DI[5]复位报警的功能，只有在电机旋转
+自动停止时间到了以后，按示教器上的 reset 可以复位； 
+3. TD_Start 刀片旋转开始后， 检测到有一次闪烁 （ON->OFF->ON） ， 该指令
+才可以通过，并增加超时报警； 
+4. MI04 Setup 界面优化，增加参数设置； 
+5. FRES 修磨逻辑重新开发，指令中可选手持式或落地式，最大支持 2 个设
+备； 
+6. 车身码长度可选， 默认为80bits， 可在MI04 Setup 界面中选择 80bits 或者
+64bits； 
+ 
+MI08 DSP 
+1. 优化 Start 指令； 
+2. MI08 Setup 界面优化，增加参数设置； 
+3. 在 app setup 中 IO 分配增加胶机品牌选择：SCA 或者 DMTS； 
+ 
+MI09 DSD 
+1. 增加 MI09 Setup 界面，用于参数设置； 
+ 
+MI11 APL 
+1. 修改 Arplas 焊报错逻辑，超时产生黄色报警； 
+2. MI11 Setup 界面优化，增加参数设置； 
+ 
+MI13 RVH 
+=== PAGE 13 ===
+1. 优化 Rivet 指令逻辑，检测 home 位时检测 home position 或 basic position 
+2. LoadEPF 指令优化，增加充钉报错后的逻辑处理； 
+3. 优化 Couple、Decouple 指令； 
+4. 空运行模式下，保持枪开口动作； 
+5. Rivet 工艺结束后，rivet start 信号置位。 
+6. 增加 MI13 Setup 界面，用于参数设置； 
+ 
+MI14 SPR 
+1. 增加适用于新 Tucker SPR 焊机的应用，包括程序指令、后台、界面等； 
+ 
+MI15 SPR 
+1. 增加适用于固极 SPR 焊机的应用，包括程序指令、后台、界面等； 
+ 
+MI17 OBJ 
+2. 增加 MI17 Setup 界面，用于参数设置； 
+ 
+MI20 SWH 
+1. MI20 Setup 界面优化，增加参数设置； 
+2. 车身码长度可选， 默认为80bits， 可在MI20 Setup 界面中选择 80bits 或者
+64bits； 
+ 
+MI22 FDS 
+1. 增加 MI22 Setup 界面，用于参数设置； 
+ 
+  
+=== PAGE 14 ===
+ 
+FAP v2.0.2 
+MI01 CMN 
+1. IO 自动分配功能，FESTO 模块 Slot 号更改，优化商科焊机自动分配功能； 
+2. 优化了气压检测的逻辑； 
+3. USER 信号等待画面优化； 
+ 
+MI04 SSW 
+1. CHECK_TD_WEAR TP 程序模板更新； 
+2. xvr 文件增加焊枪修磨配置； 
+3. CAP_PRESSURE.TP 程序不再自动加载； 
+4. 增加博世焊机功能，可在 app setup 的 io 自动分配中选择; 
+5. MI04 Setup 界面增加博世焊机，用于 weld interface 的 IO 配置 
+6. 对 FRES 修磨换帽一体机， 在MI04 SETUP 界面中增加选择功能； 同时增
+加了 MI04_SSW 的指令 FRES-TD，用于该设备的修磨功能和换帽功能； 
+7. 修磨检测信号闪烁逻辑优化，通过 DI[5]复位后不能继续运行程序； 
+8. 换帽检测异常时输出 GO[6]； 
+ 
+MI08 DSP 
+1. xvr 文件映射配置修改，删除 DI[896]->DO[441]，DI[1024]->DO[457]； 
+2. 新增第 3 把胶枪，更新 DT、xvr 及所有 pc 文件； 
+ 
+MI09 DSD 
+1. xvr 文件 增加映射 配置 ， DI[3013]->DO[487] ， DI[3061]->DO[488] ，
+DI[3014]->DO[491]，DI[3062]->DO[492]； 
+2. Check 指令逻辑修改，检测 DI[3013]或 DI[3061]的状态； 
+ 
+MI11 APL 
+1. 删除传车身码功能； 
+2. Arplas 焊接增加弹窗，用于焊点选择确认功能； 
+ 
+MI13 RVH 
+1. 优化 Rivet 指令逻辑； 
+ 
+MI22 FDS 
+1. xvr 文件映射配置修改，删除 DI[1314]->DO[425]； 
+2. 优化 fds 工艺逻辑； 
+ 
+ 
+  
+=== PAGE 15 ===
+ 
+FAP v2.0.1 
+MI01 CMN 
+1. APP SETUP 菜单新增自动分配 IO 的按键，根据已激活的应用进行 IO 分
+配，包括 DIO，UOP 及 GIO； 
+2. 更新 APP 安装过程中的动态等待画面； 
+ 
+MI02 TCH 
+1. 增加界面，用于选择换枪盘品牌； 
+2. 兼容 Staubli 换枪盘，在 GUI 界面选择 Staubli 时，会进行后台 Euchner 检
+测； 
+ 
+MI04 SSW 
+1. TipService 命令增加选择焊机的子命令， 可选HarmsWende 和 Sunke 焊机，
+选择不同焊机后的子命令稍作调整，TipService – Sunke - Reset_TD 可选焊
+枪号码； 
+2. MI04 SETUP 菜单里增加焊机选择，将影响 I/O Weld Interface 的配置； 
+3. TipDress 指令增加 TD_Num，可选 1 或 2 号修磨器； 
+ 
+MI11 APL 
+1. Dimple 默认起始地址更改，从 1689 更改为 1681，修改相关 IO 映射； 
+ 
+MI19 CLI 
+1. IO 默认起始地址更改， 从1689 更改为 2105，删除 xvr 文件内的 IO 映射，
+改为 Init 指令中配置； 
+ 
+MI22 FDS 
+1. FDS 报错弹窗逻辑修改； 
+ 
+ 
+  
+=== PAGE 16 ===
+ 
+FAP v1.0.13 
+MI01 CMN 
+1. Xvr 配置文件更改； 
+2. 更新 TP 程序 MOVE_HOME、TIMER_START、TIMER_STOP； 
+3. DCS 配置文件更改； 
+4. APP SETUP 菜单新增 DCS 选项可由用户选择是否导入 DCS 配置； 
+ 
+MI02 TCH 
+1. ChangeTool 指令参数范围从 1~3 修改为 0~3； 
+ 
+MI04 SSW 
+1. TipService - RESET_TD 指令逻辑更改； 
+2. 增加 TP 程序模板； 
+3. IO 设定界面水流量正常的信号配置； 
+4. 增加信号映射，DI[2655]->DO[404], DI[2656]->DO[405]； 
+5. TipService - Check_Wear 指令逻辑更改； 
+ 
+MI08 DSP 
+1. SCA_Init 指令时序优化； 
+2. 删除信号映射 DI[884]->DO[443], DI[1012]->DO[459]； 
+ 
+MI09 DSD 
+1. 增加信号映射，DI[3008]->DO[485], DI[3056]->DO[486]； 
+ 
+MI11 APL 
+1. Arplas 指令增加参数 StrokePos，范围 0~2000，默认值 1000； 
+2. 信号关联配置模块逻辑更改，任意指令激活信号关联； 
+3. 修改 xvr 文件，增加 IO 映射； 
+4. Dimple 逻辑优化，增加弹窗确认； 
+5. 增加界面，用于设定 Arplas 工艺完成后的脉冲信号时间； 
+ 
+MI13 RVH 
+1. 增加后台程序变量，用于控制扫描时间； 
+2. 修改 xvr 文件，删除信号映射 DI[1203]->DO[413]； 
+ 
+MI17 OBJ 
+1. 新增 xvr 文件，增加 IO 映射； 
+ 
+MI19 CLI 
+1. 修改 xvr 文件，增加 IO 映射； 
+=== PAGE 17 ===
+2. LOAD 指令，开始送钉时 DO[42]=ON，结束送钉后复位 
+ 
+MI20 SWH 
+1. 修改 xvr 文件，增加 IO 映射； 
+2. 增加 Init 和 Start 指令，分别用于工艺的信号初始化和螺柱焊工艺流程； 
+3. 增加界面，用于设定工艺完成的超时时间； 
+ 
+MI22 FDS 
+1. 增加后台程序变量，用于控制扫描时间； 
+2. FDS 报错弹窗增加； 
+ 
+ 
+  
+=== PAGE 18 ===
+ 
+FAP v1.0.12 
+Install.cm 
+1. 增加对 IO 映射表数量的配置； 
+ 
+MI01 PLC 
+1. 更改配置，激活 0%速度倍率； 
+2. 增加 MI01_GUI 程序，接口在 MENU-TEST CYCLE-MI GUI ，用于打开
+MI03、MI04 和 MI08 的定制界面； 
+3. 删除开门暂停程序功能； 
+ 
+MI02 TCH 
+1. 增加 UnlockChk 指令，用于检测 Unlock 状态； 
+ 
+MI03 GRP 
+1. 增加 MI03 配置界面， 用于信号连续检测；指令及后台程序相应功能增加； 
+ 
+MI04 SSW 
+1. 界面程序无法正常打开的 BUG 修复； 
+2. 界面程序增加 IO Equip 菜单 Water flow OK 配置； 
+3. 删除伺服焊枪的磨损量检测配置； 
+4. 更改 CHECK_TD_WEAR.tp 程序，删除 R[36]>0.3 的的判断条件；对应
+CHECK_WEAR 指令更改； 
+5. IO 映射更改，后台新增 DO->DO 的映射； 
+ 
+MI08 DSP 
+1. 删除 TCP SPEED OUTPUT 界面配置； 
+2. 增加界面程序，用于单/双枪配置； 
+3. 更改表示进程状态的逻辑位置； 
+ 
+MI09 DSD 
+1. Application Open 和 Close 脉冲改成不等待形式； 
+2. 增加 dry run 模式判断，dry run 时不做任何逻辑； 
+ 
+MI11 APL 
+1. 区分 Arplas 和 Dimple 工艺，进行信号映射的分配； 
+ 
+ 
+MI13 RVH 
+1. 修改铆接时序； 
+2. xvr 增加 IO 映射配置； 
+=== PAGE 19 ===
+3. 更改程序逻辑； 
+ 
+MI19 CLI 
+1. 新应用 Tox Clinch 功能创建； 
+ 
+MI20 SWH 
+2. xvr 增加 I/O Weld Out 配置； 
+ 
+MI22 FDS 
+1. xvr 增加 IO 映射配置； 
+ 
+ 
+  
+=== PAGE 20 ===
+ 
+FAP v1.0.11 
+MI01 PLC 
+1. 更改配置，自动模式下不能改变 I/O 状态； 
+2. Hold 功能在 T2 模式下无效； 
+3. 更改系统配置，外部启动信号专用于 CONTINUE； 
+ 
+MI04 SSW 
+1. 增加界面程序，用于焊枪是否换枪、安装方式的配置； 
+2. DCS 的 xvr 文件增加配置； 
+3. 水流量报警复位增加 TP 按键 reset； 
+4. 增加点焊服务程序 指令 TipService，包含 3 个子指令 Check_Wear、
+RESET_TD、TWD_Ret；修改 TP 程序 TWRSMV、TWRSFX，以配合指
+令使用； 
+ 
+MI08 DSP 
+1. 更改 TCP SPEED OUTPUT 界面配置； 
+2. Xvr 文件 增加 IO 映射， DI[916]->DO[449] ，  DI[1044]->DO[465] ，
+DI[447]->DO[448]，DI[463]->DO[464]； 
+3. 车身码传递规则改变，改成逆序传递； 
+4. 后台逻辑更新，干湿模式输出给 PLC； 
+ 
+MI09 DSD 
+1. 将 RobotStart 指令中的初始化信号和开始信号分离出来，形成 Start 指令；
+原 RobotStart 指令更名为 Check 指令，只用来检测 DI 信号状态； 
+ 
+MI13 RVH 
+1. 变量初始化逻辑修改； 
+2. 弹窗 restart 前增加三次弹窗确认 RC 状态； 
+ 
+MI22 FDS 
+1. 变量初始化逻辑修改； 
+ 
+ 
+  
+=== PAGE 21 ===
+ 
+FAP v1.0.10 
+MI01 PLC 
+1. 后台逻辑增加暂停程序功能，满足 DI[37]=ON 且 DO[42]=OFF 时，暂停
+当前正在运行的程序； 
+2. Segment 指令增加弹窗，当 DO[8]为 ON 时发生弹窗确认； 
+3. 增加 MI01_cmn_init 程序，用于开机启动后台逻辑程序； 
+ 
+MI04 SSW 
+1. 开水功能修改，先检测反馈信号状态，如 OFF 则执行先关水再开水，如
+ON 则跳过； 
+2. 后台逻辑功能，添加 DO[42]状态置位和复位条件； 
+3. Xvr 文件打开 WID，并配置 GO[18]； 
+4. 修磨电机控制，5 秒后电机停止的同时，停止 DI 信号闪烁的检测； 
+ 
+MI08 DSP 
+1. Xvr 文件修改 IO 映射，DI[441]->DO[895]和 DO[896]， DI[457]->DO[1023]
+和 DO[1024]； 
+2. Xvr 文件增加 TCP SPEED OUTPUT 界面配置； 
+3. SCA_Init 指令增加参数 Purge NoCheck 和 Purger Check，用来在初始化过
+程中判断是否根据 purge request 信号执行 purge 逻辑。 
+ 
+MI09 DSD 
+1. OpenApplicator 和 CloseApplicator 发送指定时间的脉冲信号 ，默认 0.1s； 
+2. RobotStart 指令增加参数 DelayTime， 范围0.1~2s， 默认值0.5s， 用于cycle 
+start 后的延迟； 
+3. OpenApplicator，CloseApplicator，CycleEnd，等待 200ms 删除； 
+ 
+MI11 APL 
+1. 工艺结束后增加 GI[111]=1000 的判断； 
+ 
+MI13 RVH 
+1. Dry run 模式调整； 
+2. 脉冲时间发送方式调整； 
+ 
+MI17 OBJ 
+1. 增加 VISION_CAL.tp 程序； 
+ 
+ 
+  
+=== PAGE 22 ===
+ 
+FAP v1.0.9 
+MI01 PLC 
+1. Xvr 文件增加 IO 映射，DI[64]->DO[2656]，DI[64]->DO[2903]；增加维修
+位参考位置检测； 
+2. 检测 PRIO-620 报警，如发生，GO[6]=19，按 reset 后或 DI[5]为 ON 后复
+位； 
+3. 初始化逻辑顺序调整，先判断 home 或 pounce 位，再进行信号复位； 
+4. PNS00XX.TP 更新； 
+ 
+MI04 SSW 
+1. 水流量检测， 开启后延迟2 秒，开始检测相关信号；如已开启检测， 则不
+会有延迟； 
+2. 增加 gun sag compensation 相关配置； 
+3. CHECK_TD_WEAR.tp，TIPCHANGE_GUN_XX.tp 程序内容调整； 
+ 
+MI08 DSP 
+1. 新增涂胶指令； 
+2. 新增涂胶指令对应的功能； 
+3. Xvr 文件增加 IO 映射，DI[896]->DO[441]等 6 组，以及 DI[1024]->DO[457]
+等 6 组； 
+4. 指令前增加 DO[42]=ON，指令结束后 DO[42]=OFF； 
+ 
+MI09 DSD 
+1. Start 指令删除脉冲时间参数，修改对应 DT 文件； 
+2. Start 指令从脉冲模式改为先 ON 后复位模式； 
+ 
+MI13 RVH 
+1. 指令前增加 DO[42]=ON，指令结束后 DO[42]=OFF； 
+ 
+MI22 FDS 
+1. 指令前增加 DO[42]=ON，指令结束后 DO[42]=OFF； 
+ 
+ 
+  
+=== PAGE 23 ===
+ 
+FAP v1.0.8 
+MI02 TCH 
+1. 修复指令问题（T_0_DOCK 程序未找到问题）； 
+ 
+MI03 GRP 
+1. 修复指令问题（参数类型错误）； 
+2. 扩展 MH Valves 信号后台映射数组长度； 
+ 
+MI04 Spot Welding 
+1. 车身码数量从 6-byte 扩大到 8-byte； 
+2. 修改 TIPDRESS_GUN_XX.tp 程序； 
+3. 修改后台焊接辅助程序； 
+4. 更换水流量检测报警逻辑； 
+ 
+MI08 DSP 
+1. 车身码数量从 6-byte 扩大到 8-byte； 
+ 
+MI09 DSD 
+1. 新增传车身码功能，修改对应 DT 文件； 
+2. Xvr 文件增加 IO 映射，DI[3009]->DO[481]，DI[3057]->DO[482] ，
+DI[3006]->DO[483]，DI[3054]->DO[484]； 
+3. 修改指令参数，并加入脉冲时间参数作为 DO 信号打开的时间； 
+4. 删减 DI 信号的检测逻辑； 
+ 
+MI11 APL 
+1. 车身码数量从 6-byte 扩大到 8-byte； 
+ 
+MI13 RVH 
+1. 车身码数量从 6-byte 扩大到 8-byte； 
+ 
+MI17 OBJ 
+1. 新增传车身码功能，修改对应 DT 文件； 
+2. 不再安装或删除贝特威程序，用户自行安装、删除； 
+ 
+MI20 SWH 
+1. 车身码数量从 6-byte 扩大到 8-byte； 
+2. 修改螺柱焊信号配置界面的信号配置； 
+3. 增加 F[43]信号分配； 
+ 
+ 
+=== PAGE 24 ===
+  
+=== PAGE 25 ===
+ 
+FAP v1.0.7 
+Install.cm 
+1. 增加对 IO 映射表数量的配置； 
+2. UT 和 UF 数量扩展到 99； 
+3. User alarm 增加到 300 条； 
+4. 模版程序更名，仅复制到 FR 目录，不执行加载； 
+ 
+MI01 PLC 
+1. Apps_loader 程序更改 DO[2648]的配置；install 或 update 前会先删除所有
+的应用程序，再根据选择的应用来加载相应的应用程序； 
+2. MI01_cmn 的 Init 指令增加对 home 或 pounce 位的检测，并检测是否安装
+了 MI02 应用，如无则 GO[3]=1； 
+3. Segment 逻辑改回 1.0.5 的版本； 
+4. 增加参数 PressCheck，更新后台程序，用来检测气压信号，所有应用均
+可用；默认检测 DI[2649]，如需修改则调整对应相关变量；气压检测报
+警的方式为报警栏显示，并通过 GO[6]发送错误代码； 
+5. 更新 PNS00XX.TP 模版程序； 
+ 
+MI02 TCH 
+1. Xvr 文件增加 IO 映射，DI[2699]->DO[45]，DI[2700]->DO[46]； 
+2. 更改调用的 TP 程序名，改为 T_X_DOCK 和 T_X_UNDOCK，取代原来
+的 T_P_OUTX 和 T_D_OUTX；X 格式为 1,2,3，无前缀 0； 
+3. Unlock 指令，ToolNo 支持 0； 
+ 
+MI04 Spot Welding 
+1. 水流量检测报警的方式改为报警栏显示，并通过 GO[6]发送错误代码； 
+2. MI04_td_pop.pc 程序增加时间变量 pop_interval，默认值 256； 
+3. 修改后台关于干运行的逻辑； 
+4. 自动模式下加压始终有效； 
+5. 更新 CHECK_TD_WEAR.tp 程序； 
+6. Xvr 文件增加 IO 映射 ， DI[517]->DO[393] ， DI[519]->DO[396] ，
+DI[520]->DO[397] ，DI[515]->DO[398] ，DI[516]->DO[401]； 
+7. Spot config 中 Press Force Scale 改成 10.2； 
+8. 删除 PressCheck 指令，气压检测从 MI01 中调用。 
+ 
+ 
+  
+=== PAGE 26 ===
+ 
+FAP v1.0.6 
+Install.cm 
+1. 增加对用户报警数量、UT 和 UF 数量，以及参考位置数量的配置； 
+2. 删除 MOVE_POUNCE.tp 程序； 
+3. 修改 segment 指令逻辑； 
+ 
+MI01 PLC 
+1. 改变寄存器注释导入方式，由 xvr 文件加载改为 APP SETUP 时导入； 
+2. 删除 move_pounce 程序； 
+3. UOP 信号以及和 PLC 相关的 DIO 信号自动分配前， 预先清除已有配置；
+并修复完成配置后 INV ALID红字的 BUG； 
+4. 后台程序优化 On Path 信号的条件，增加 Step 模式的 DO 输出监控； 
+5. xvr 文件增加对 Pounce 位的 Ref Pos 设置； 
+6. Segment 逻辑更改； 
+ 
+MI04 Spot Welding 
+1. Spot config 中 Press Force Scale 从 0.1 改成 10，焊接完成时间从 2000ms
+改成 5000ms； 
+2. 更改后台程序中对 GI[17]非零值的记录方式； 
+3. CapChange 的 TipDress 指令，新增电机旋转后 5 秒自动停止的功能； 
+4. CapChange 的 MotorControl 指令， 删除第三级 Rotate 和 Reverse 指令，改
+为 Remove（脱下电极帽）和 Eject（松开脱下的电极帽）指令，并添加
+第四级 PulseTime 参数作为信号脉冲时间； 
+5. CapChange 的 Check 指令，修改第三级参数为 High 和 Low， 检测电极帽
+信号有无，第四级参数 ResultInRegNo 为寄存器号（默认值 100）用来存
+放检测结果，如信号状态不对，发生弹窗； 
+6. 更改 Weld Interface 中 Major Alarm 和 Weld/NoWeld stat 的信号配置； 
+7. 增加 Cell Interface 中 Weld/NO WELD 的信号配置； 
+8. 关闭 Auto retry weld 功能； 
+9. 增加 Servo Gun 中修磨功能的配置； 
+10. 删除 I/O Equip In 中的水流量 OK 的信号配置； 
+11. 调整 SwimTipDress 指令，为摆臂修磨装置增加水流量开/关的指令； 
+12. 调整 SwimTipDress 时序中的报错方式， 由USER 界面显示改为报警栏显
+示； 
+13. 后台程序中，增加干运行模式的判断； 
+14. 不再使用 TP 程序 AUXILIARYWELDING， 逻辑改为应用后台程序执行； 
+15. 增加临时程序 MI04_td_pop.pc，弹窗选 YES 则 R[100]=1，选 NO 则
+R[100]=0; 
+16. 增加 CAP_PRESSURE 等 10 个 tp 程序； 
+ 
+=== PAGE 27 ===
+MI08 DSP 
+1. 后台程序中，增加干运行模式的判断； 
+ 
+MI13 RVH 
+1. Rivet 工艺指令前增加 DI[35]判断，ON 时不执行工艺； 
+2. 更改变量初始化位置，及后台程序启动方式； 
+3. 增加传车身码功能，调用任意 MI13 指令实现后台运行； 
+4. 修复工艺逻辑，避免重复弹窗； 
+5. 弹窗时间调整为默认值 5 秒；  
+ 
+MI17 OBJ 
+1. 更新贝特威提供的 tp 和 pc 程序； 
+ 
+MI20 SWH 
+1. 增加 BG_MI_STUD .tp 程序； 
+ 
+MI22 FDS 
+1. 更新 xvr 文件，初始化变量； 
+2. Drill 工艺程序启动时，START PROCESS 信号改为 300ms 脉冲； 
+3. PointNo.范围从 1~999999 扩展到 1~16000000； 
+4. Drill 工艺指令前增加 DI[35]判断，ON 时不执行工艺； 
+5. 发生弹窗选择时，由 3 个选项减少为 2 个选项； 
+ 
+ 
+  
+=== PAGE 28 ===
+ 
+FAP v1.0.5 
+MI01 PLC 
+1. DCP_HIST 程序添加变量初始化逻辑； 
+2. DCS 配置文件更新，以防安装时造成的卡死问题； 
+3. APP SETUP 界面选择安装或更新 MI01 应用时， 会自动分配UOP 信号以
+及和 PLC 相关的 DIO 信号； 
+ 
+MI04 Spot Welding 
+1. 水流量检测功能不再自动启动。只有运行 CapChange 指令下的 Valve Open，
+才会打开水阀并启动后台监控水流量信号的程序，选择 Valve Close 后，
+关闭水阀同时停止监控水流量信号； 
+2. 关闭 WID 显示； 
+3. 增加 TP 程序 AUXILIARYWELDING.TP，作为辅助焊接的背景程序；用
+户需要手动在 BG LIGIC 界面完成背景程序配置； 
+4. 修改 xvr 文件，更改 Weld Interface 界面的信号配置； 
+5. 后台记录 Message number  GI 组信号的值，以 DT 文件的格式存储在 FR
+里； 
+ 
+MI11 Arplas Weld 
+1. 根据最新的时序表，更新 ARPLAS 指令的工艺时序； 
+ 
+MI13 RVH 
+1. 修正当工具已连接时进行初始化后的报错问题； 
+2. 修改初始化的逻辑顺序； 
+3. 移除单步模式下程序暂停的功能； 
+4. 发生弹窗选择时，由 3 个选项缩减为 2 个选项； 
+ 
+MI20 Stud 
+1. 在应用安装界面 APP SETUP 选择安装或更新 MI20 应用时，设置 fault 
+head DI 信号的极性为 INVERSE，同时建立 IO interconnect ( DI[35] -> 
+DO[647]； 
+2. 修改 xvr 文件，更改 Weld Interface 界面的信号配置； 
+3. 增加 BG_MI_STD.TP 程序。 
+ 
+ 
+  
+=== PAGE 29 ===
+ 
+FAP v1.0.4 
+MI01 PLC 
+1. 修复应用安装界面 APP SETUP 无法在实机上输入密码的 BUG； 
+ 
+MI04 Spot Welding 
+1. 优化 xvr 文件； 
+ 
+MI13 RVH 
+1. 修正手动操作界面的参数输入范围； 
+ 
+MI17 OBJ 
+1. 修正 CALL VS_ERRCHK 时的参数名称错误； 
+ 
+MI22 FDS 
+1. 修正参数向导文件中的错误； 
+2. 修改 TP 模板程序。 
+ 
+ 
+  
+=== PAGE 30 ===
+ 
+FAP v1.0.3 
+MI01 PLC 
+1. 修复无法进入应用安装界面 APP SETUP 的 BUG； 
+2. 安装界面 APP SETUP 新增 UPDATE 功能： 
+选择 UPDATE 时，不更新 TP 程序和信号配置、R/PR 注释，激活密码为
+1234； 
+选择 INSTALL 时，更新所有文件，激活密码为 1111； 
+3. 安装界面 APP SETUP 新增显示当前 FAP 版本； 
+4. MI01_cmn 程序新增 Fixture 功能，参数可选择 IN 或者 OUT，并输入夹
+具号； 
+5. COMMENT TOOL 界面，修改为仅加载注释，或仅加载配置，并提供初
+始注释 xml 文件及 PLC 相关 IO 配置 xml 文件； 
+6. 安装 PLC 应用时，自动加载数值寄存器和位置寄存器的注释； 
+7. TP 程序新增 Timer_Start 和 Timer_Stop。 
+ 
+MI03 Handling 
+1. 增加 xvr 文件，激活系统搬运功能包。 
+ 
+MI04 Spot Welding 
+1. 增加断水功能，水流量 OFF 时，关闭水阀； 
+2. 增加 xvr 文件，激活点焊功能包，导入 Weld Interface 界面的信号配置。 
+ 
+MI08 Dispensing 
+1. 增加 xvr 文件，激活涂胶功能包，导入 Weld Interface 界面的信号配置。 
+ 
+MI20 Stud 
+1. 增加 xvr 文件，激活螺柱焊功能包，导入 Weld Interface 界面的信号配置。 
+ 
+ 
+  
+=== PAGE 31 ===
+ 
+FAP v1.0.2 
+MI01 PLC 
+1. 修复 PLC 应用程序 BUG 
+2. 修复应用加载功能程序 apps_loader 的变量 
+3. 增加 TCP Check 功能 
+4. 增加 LS 和 TP 程序 
+ 
+MI02 Tool Change 
+1. 增加 LS 和 TP 程序 
+ 
+MI03 Handling 
+1. 增加 LS 和 TP 程序 
+ 
+MI04 Spot Welding 
+1. 增加视觉补焊功能 
+2. 增加 LS 和 TP 程序 
+ 
+MI08 Dispensing 
+1. 增加 LS 和 TP 程序 
+ 
+MI09 Dispensing Detection 
+1. 新增应用软件 
+ 
+MI11 Arplas Weld 
+1. 新增应用软件 
+ 
+MI13 Rivet 
+1. 增加 LS 和 TP 程序 
+ 
+MI17 Objection Detection 
+1. 新增应用软件 
+ 
+MI20 Stud 
+1. 增加 LS 和 TP 程序 
+ 
+MI22 FDS 
+1. 增加 LS 和 TP 程序 

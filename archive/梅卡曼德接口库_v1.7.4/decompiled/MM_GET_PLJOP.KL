@@ -1,0 +1,299 @@
+-- MM_GET_PLJOP.KL (decompiled v3)
+PROGRAM MM_GET_PLJOP
+%COMMENT = 'MM_Get_PlanJPS_P'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	RCV_POSE = STRUCTURE
+	POSE: T_POS
+	LABEL: INTEGER
+	SPEED: INTEGER
+	ENDSTRUCTURE
+	RCV_JPS = STRUCTURE
+	JPS: INTEGER
+	LABEL: INTEGER
+	SPEED: INTEGER
+	ENDSTRUCTURE
+	RCVVIS2_POSE = STRUCTURE
+	POSE: T_POS
+	LABEL: INTEGER
+	ENDSTRUCTURE
+	RCVVIZ2_POSE = STRUCTURE
+	POSE: T_POS
+	MOVETYPE: INTEGER
+	TOOLNUM: INTEGER
+	SPEED: INTEGER
+	ISVISPT: INTEGER
+	ENDSTRUCTURE
+	RCVVIZ2_JPS = STRUCTURE
+	JPS: INTEGER
+	MOVETYPE: INTEGER
+	TOOLNUM: INTEGER
+	SPEED: INTEGER
+	ISVISPT: INTEGER
+	ENDSTRUCTURE
+	VIZ_UDATA = STRUCTURE
+	USERDATANUM: INTEGER
+	USRDATA: ARRAY[50] OF REAL
+	ENDSTRUCTURE
+	PLAN_RESULTS = STRUCTURE
+	LABEL: ARRAY[10] OF INTEGER
+	TOTALGRABNUM: INTEGER
+	CURGRABNUM: INTEGER
+	EDGENUM: INTEGER
+	TCPOFFSET: ARRAY[3] OF REAL
+	DIRECTION: INTEGER
+	BOXSIZE: ARRAY[3] OF REAL
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : ARRAY[64] OF INTEGER
+  v8 : ARRAY[64] OF INTEGER
+  v9 : ARRAY[64] OF REAL
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : ARRAY[64] OF INTEGER
+  v16 : ARRAY[64] OF INTEGER
+  v17 : INTEGER
+  v18 : POSITION
+  v19 : POSITION
+  v20 : REAL
+  v21 : STRING[64]
+  v15_f00 : ARRAY[64] OF INTEGER
+  v15_f00_f38 : ARRAY[64] OF INTEGER
+  v16_f00 : ARRAY[64] OF INTEGER
+  v16_f00_f08 : ARRAY[64] OF INTEGER
+  v16_f00_f0c : ARRAY[64] OF INTEGER
+  v16_f00_f10 : ARRAY[64] OF INTEGER
+  v16_f00_f14 : ARRAY[64] OF INTEGER
+  v16_f00_f18 : ARRAY[64] OF INTEGER
+  v16_f00_f1c : ARRAY[64] OF INTEGER
+  v16_f00_f20 : ARRAY[64] OF INTEGER
+  v16_f24 : ARRAY[64] OF INTEGER
+  v16_f28 : ARRAY[64] OF INTEGER
+  v16_f2c : ARRAY[64] OF INTEGER
+  v16_f30 : ARRAY[64] OF INTEGER
+  v18_f20 : INTEGER
+  v19_f08 : INTEGER
+  v19_f0c : INTEGER
+  v19_f10 : INTEGER
+  v19_f14 : INTEGER
+  v19_f18 : INTEGER
+  v19_f1c : INTEGER
+  v2_f00 : ARRAY[64] OF INTEGER
+  v2_f04 : ARRAY[64] OF INTEGER
+  v7_f00 : ARRAY[64] OF INTEGER
+  v7_f2c : ARRAY[64] OF INTEGER
+  v7_f30 : ARRAY[64] OF INTEGER
+  v7_f34 : ARRAY[64] OF INTEGER
+  v7_f38 : ARRAY[64] OF INTEGER
+  v7_f48 : ARRAY[64] OF INTEGER
+  v7_f4c : ARRAY[64] OF INTEGER
+  v8_f00 : ARRAY[64] OF INTEGER
+  v8_f2c : ARRAY[64] OF INTEGER
+  v8_f30 : ARRAY[64] OF INTEGER
+  v8_f34 : ARRAY[64] OF INTEGER
+  v8_f38 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE POST_IPCERR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHK_PR_TYPE(p0, p1, p2, p3, p4 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GET_ARG(p0, p1, p2 : INTEGER; p3 : REAL; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SET_INTREG(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SET_REALREG(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE OPEN_SOCKET(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFLPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE USRDT_PLRES : INTEGER
+BEGIN
+  FOR v1 = 1 TO 3 DO
+  sv_i = SET_REALREG(v4 + v1 - 1, (v2_f04[v3][v1]))
+  -- stmt18 stray sv_i
+  v2_f04[v3][v1] = 0
+  ENDFOR
+  IF ((v5 = 3) OR (v5 = 4)) THEN
+  FOR v1 = 1 TO 3 DO
+  sv_i = SET_REALREG(v6 + v1 - 1, (v7_f00[v3][v1]))
+  -- stmt24 stray sv_i
+  v7_f00[v3][v1] = 0
+  ENDFOR
+  sv_i = SET_REALREG(v6 + 10, (v7_f2c[v3]))
+  -- stmt27 stray sv_i
+  sv_i = SET_REALREG(v6 + 11, (v7_f30[v3]))
+  -- stmt28 stray sv_i
+  sv_i = SET_REALREG(v6 + 12, (v7_f34[v3]))
+  -- stmt29 stray sv_i
+  sv_i = SET_REALREG(v6 + 16, (v7_f48[v3]))
+  -- stmt30 stray sv_i
+  v7_f2c[v3] = 0
+  v7_f30[v3] = 0
+  v7_f34[v3] = 0
+  v7_f48[v3] = 0
+  FOR v1 = 1 TO 3 DO
+  sv_i = SET_REALREG(v6 + v1 + 12, (v7_f38[v3][v1]))
+  -- stmt36 stray sv_i
+  sv_i = SET_REALREG(v6 + v1 + 16, (v7_f4c[v3][v1]))
+  -- stmt37 stray sv_i
+  v7_f38[v3][v1] = 0
+  v7_f4c[v3][v1] = 0
+  ENDFOR
+  ENDIF
+  RETURN(0)
+END USRDT_PLRES
+
+ROUTINE GET_PLANJPS : INTEGER
+BEGIN
+  cnv_jpos_rel(sv_j, v9, v10)
+  -- 弃参原式: (v8_f00[v3]) | (v8_f00[v3])
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error1', 0, 2)
+  ENDIF
+  IF ((v9[1] = 0) AND (v9[2] = 0) AND (v9[3] = 0) AND (v9[4] = 0) AND (v9[5] = 0) AND (v9[6] = 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error2', 0, 2)
+  ENDIF
+  SET_JPOS_REG(v11, sv_j, v10)
+  -- 弃参原式: (v8_f00[v3]) | (v8_f00[v3])
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error3', 0, 2)
+  ENDIF
+  sv_i = SET_REALREG(v12, (v8_f2c[v3]))
+  -- stmt63 stray sv_i
+  sv_i = SET_REALREG(v13, (v8_f30[v3]))
+  -- stmt64 stray sv_i
+  sv_i = SET_REALREG(v14, (v8_f34[v3]))
+  -- stmt65 stray sv_i
+  IF ((v8_f38[v3] <> 0)) THEN
+  sv_i = USRDT_PLRES
+  -- stmt69 stray sv_i
+  ENDIF
+  FOR v1 = 1 TO 3 DO
+  v9[v1] = 0
+  ENDFOR
+  cnv_rel_jpos(v9, sv_j, v10)
+  -- 弃参原式: (v8_f00[v3]) | (v8_f00[v3])
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error4', 0, 2)
+  ENDIF
+  v8_f2c[v3] = 0
+  v8_f30[v3] = 0
+  v8_f34[v3] = 0
+  RETURN(0)
+END GET_PLANJPS
+
+ROUTINE GET_PLANPOSE : INTEGER
+BEGIN
+  v16_f00_f20[v3] = v15_f00_f38[1]
+  IF (TRUE) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error5', 0, 2)
+  ENDIF
+  sv_i = CHK_PR_TYPE(v11, 1, v17, 2, 6)
+  -- stmt95 stray sv_i
+  IF ((v17 = 2)) THEN
+  sv_p = GET_POS_REG(v11, v10)
+  v18 = sv_p
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error6', 0, 2)
+  ENDIF
+  v16_f00_f20[v3] = v18_f20
+  SET_POS_REG(v11, sv_p, v10)
+  -- 弃参原式: (v16_f00[v3]) | (v16_f00[v3])
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error7', 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v17 = 6)) THEN
+  sv_p = GET_POS_REG(v11, v10)
+  v19 = sv_p
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error8', 0, 2)
+  ENDIF
+  v19_f08 = v16_f00_f08[v3]
+  v19_f0c = v16_f00_f0c[v3]
+  v19_f10 = v16_f00_f10[v3]
+  v19_f14 = v16_f00_f14[v3]
+  v19_f18 = v16_f00_f18[v3]
+  v19_f1c = v16_f00_f1c[v3]
+  SET_EPOS_REG(v11, v19, v10)
+  IF ((v10 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error9', 0, 2)
+  ENDIF
+  ENDIF
+  sv_i = SET_REALREG(v12, (v16_f24[v3]))
+  -- stmt128 stray sv_i
+  sv_i = SET_REALREG(v13, (v16_f28[v3]))
+  -- stmt129 stray sv_i
+  sv_i = SET_REALREG(v14, (v16_f2c[v3]))
+  -- stmt130 stray sv_i
+  IF ((v16_f30[v3] <> 0)) THEN
+  sv_i = USRDT_PLRES
+  -- stmt134 stray sv_i
+  ENDIF
+  PURGE CONDITION[1]
+  -- stmt137 stray v15_f00[1] | v16_f00[v3]
+  v16_f24[v3] = 0
+  v16_f28[v3] = 0
+  v16_f2c[v3] = 0
+  RETURN(0)
+END GET_PLANPOSE
+
+ROUTINE GET_PLJOP : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v3, v20, v21)
+  -- stmt149 stray sv_i
+  sv_i = GET_ARG(2, 1, v5, v20, v21)
+  -- stmt150 stray sv_i
+  sv_i = GET_ARG(3, 1, v11, v20, v21)
+  -- stmt151 stray sv_i
+  sv_i = GET_ARG(4, 1, v12, v20, v21)
+  -- stmt152 stray sv_i
+  sv_i = GET_ARG(5, 1, v13, v20, v21)
+  -- stmt153 stray sv_i
+  sv_i = GET_ARG(6, 1, v14, v20, v21)
+  -- stmt154 stray sv_i
+  sv_i = GET_ARG(7, 1, v4, v20, v21)
+  -- stmt155 stray sv_i
+  sv_i = GET_ARG(8, 1, v6, v20, v21)
+  -- stmt156 stray sv_i
+  IF ((v5 = 1) OR (v5 = 3)) THEN
+  sv_i = GET_PLANJPS
+  -- stmt159 stray sv_i
+  ELSE
+  IF ((v5 = 2) OR (v5 = 4)) THEN
+  sv_i = GET_PLANPOSE
+  -- stmt162 stray sv_i
+  ELSE
+  POST_ERR(38000, 'MM:Robot_Argument_Error', 0, 2)
+  ENDIF
+  ENDIF
+  sv_i = GET_PLJOP
+  -- stmt173 stray sv_i
+  RETURN(0)
+END GET_PLJOP
+
+BEGIN
+END MM_GET_PLJOP

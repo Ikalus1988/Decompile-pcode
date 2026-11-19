@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_JPS
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_Jps'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_Jps FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_Jps
+END MM_GET_JPS

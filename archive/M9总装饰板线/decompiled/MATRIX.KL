@@ -1,0 +1,175 @@
+-- MATRIX.KL (decompiled v3)
+PROGRAM MATRIX
+%COMMENT = 'multiply matrix'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : STRING[64]
+  v4 : INTEGER
+  v5 : POSITION
+  v6 : POSITION
+  v7 : ARRAY[64] OF INTEGER
+  v8 : INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v10 : REAL
+  v11 : STRING[64]
+  v14 : POSITION
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE INT2STR(p0 : INTEGER) : STRING
+VAR
+  r0_lc4 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 1, 10, r0_lc4)
+  WHILE ((sv_s = ' ')) DO
+  sv_i = str_len(r0_lc4)
+  sv_s = sub_str(r0_lc4, 2, sv_i)
+  r0_lc4 = sv_s
+  ENDWHILE
+  -- stmt97 stray r0_lc4
+  RETURN(sv_s)
+END INT2STR
+
+ROUTINE PR_CHECK(p0 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  POS_REG_TYPE(p0, v0, v1, r1_lc1, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = INT2STR(p0)
+  v3 = 'Failed to get type of PR[' + sv_s + ']'
+  v4 = 305
+  ELSE
+  IF ((v1 <> 1) AND (v1 <> 2) AND (v1 <> 6) AND (v1 <> 5)) THEN
+  sv_s = INT2STR(p0)
+  v3 = 'Wrong type of PR[' + sv_s + ']'
+  v4 = 306
+  ENDIF
+  ENDIF
+  RETURN(0)
+END PR_CHECK
+
+ROUTINE READ_POSREG(p0 : INTEGER; p1 : JOINTPOS) : INTEGER
+BEGIN
+  sv_i = PR_CHECK(p0)
+  -- stmt123 stray sv_i
+  IF ((v4 = 0)) THEN
+  sv_p = GET_POS_REG(p0, v2)
+  p1 = sv_p
+  IF ((v2 <> 0)) THEN
+  sv_s = INT2STR(p0)
+  v3 = 'Fail to get PR[' + sv_s + ']'
+  v4 = 307
+  ELSE
+  IF (UNINIT(p1)) THEN
+  sv_s = INT2STR(p0)
+  v3 = 'PR[' + sv_s + '] is uninit'
+  v4 = 308
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END READ_POSREG
+
+ROUTINE WRITE_POSREG(p0 : INTEGER; p1 : POSITION) : INTEGER
+BEGIN
+  sv_i = PR_CHECK(p0)
+  -- stmt141 stray sv_i
+  IF ((v4 = 0)) THEN
+  IF ((v1 = 6) OR (v1 = 5)) THEN
+  v5 = p1
+  SET_EPOS_REG(p0, v5, v2)
+  ELSE
+  v6 = p1
+  SET_POS_REG(p0, v6, v2)
+  ENDIF
+  IF ((v2 <> 0)) THEN
+  sv_s = INT2STR(p0)
+  v3 = 'Failed to set PR[' + sv_s + ']'
+  v4 = 309
+  ENDIF
+  ENDIF
+  v0 = 1
+  v4 = 0
+  v7[4] = 0
+  FOR v8 = 1 TO 3 DO
+  IF ((v4 = 0)) THEN
+  GET_TPE_PRM(v8, (v9[v8]), (v7[v8]), v10, v11, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = INT2STR(v8)
+  v3 = 'Parameters do not exist ' + sv_s
+  v4 = 301
+  ENDIF
+  ENDIF
+  ENDFOR
+  IF ((v4 = 0)) THEN
+  GET_TPE_PRM(4, (v9[4]), (v7[4]), v10, v11, v2)
+  IF ((v2 = 0)) THEN
+  IF ((v9[4] <> 1)) THEN
+  sv_s = INT2STR(4)
+  v3 = 'Illegal parameter input ' + sv_s
+  v4 = 302
+  ENDIF
+  ELSE
+  v7[4] = 0
+  ENDIF
+  ENDIF
+  FOR v8 = 1 TO 3 DO
+  IF ((v4 = 0)) THEN
+  IF ((v9[v8] <> 1)) THEN
+  sv_s = INT2STR(v8)
+  v3 = 'Illegal parameter input ' + sv_s
+  v4 = 303
+  ENDIF
+  ENDIF
+  ENDFOR
+  IF ((v4 = 0)) THEN
+  sv_i = READ_POSREG((v7[1]), sv_p)
+  -- 弃参原式: v12 | v12
+  -- stmt205 stray sv_i
+  ENDIF
+  IF ((v4 = 0)) THEN
+  sv_i = READ_POSREG((v7[2]), sv_p)
+  -- 弃参原式: v13 | v13
+  -- stmt208 stray sv_i
+  ENDIF
+  IF ((v4 = 0)) THEN
+  v14 = v13
+  -- stmt213 stray v12
+  sv_i = WRITE_POSREG((v7[3]), v14)
+  -- stmt219 stray sv_i
+  ENDIF
+  IF ((v7[4] = 0)) THEN
+  IF ((v4 <> 0)) THEN
+  WRITE(v3, CR)
+  WRITE(v3, CR)
+  ABORT
+  ENDIF
+  ELSE
+  IF ((v4 <> 0)) THEN
+  WRITE(v3, CR)
+  ENDIF
+  SET_INT_REG((v7[4]), v4, v2)
+  IF ((v2 <> 0)) THEN
+  v4 = 304
+  sv_s = INT2STR((v7[4]))
+  WRITE('Failed to set R[', sv_s, ']', CR)
+  ABORT
+  ENDIF
+  ENDIF
+  RETURN(0)
+END WRITE_POSREG
+
+BEGIN
+END MATRIX

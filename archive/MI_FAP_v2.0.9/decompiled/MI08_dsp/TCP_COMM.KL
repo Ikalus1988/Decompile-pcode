@@ -1,0 +1,1420 @@
+-- TCP_COMM.KL (decompiled v3)
+PROGRAM TCP_COMM
+%COMMENT = '{>'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  v1 : ARRAY[64] OF INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : STRING[64]
+  v7 : INTEGER
+  v8 : POSITION
+  v9 : INTEGER
+  v10 : ARRAY[64] OF INTEGER
+  v11 : ARRAY[64] OF INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : ARRAY[64] OF INTEGER
+  v15 : ARRAY[64] OF REAL
+  v16 : ARRAY[64] OF REAL
+  v17 : ARRAY[64] OF REAL
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : INTEGER
+  v21 : ARRAY[64] OF INTEGER
+  v22 : ARRAY[64] OF INTEGER
+  v23 : ARRAY[64] OF INTEGER
+  v24 : ARRAY[64] OF INTEGER
+  v25 : ARRAY[64] OF INTEGER
+  v26 : ARRAY[64] OF INTEGER
+  v27 : ARRAY[64] OF INTEGER
+  v28 : ARRAY[64] OF INTEGER
+  v29 : ARRAY[64] OF INTEGER
+  v30 : ARRAY[64] OF INTEGER
+  v31 : ARRAY[64] OF INTEGER
+  v32 : ARRAY[64] OF INTEGER
+  v33 : ARRAY[64] OF INTEGER
+  v34 : INTEGER
+  C_WO_PROG_NR : STRING[10]
+  MLANGUAGE : INTEGER
+  FINEADJ : BOOLEAN
+  LC1 : INTEGER
+  EXIT_ERROR : BOOLEAN
+  IO_NO_ERROR : BOOLEAN
+  CALL_TYPE : INTEGER
+  CALL_INT : INTEGER
+  CALL_REAL : REAL
+  CALL_STR : STRING[20]
+  CALL_STATUS : INTEGER
+  FUNC_STATUS : INTEGER
+  GROUP_NO : INTEGER
+  PRGSIZE : INTEGER
+  TOLERANCET : REAL
+  TOLERANCEO : REAL
+  FC_PARA01 : INTEGER
+  FC_PARA02 : INTEGER
+  FC_PARA03 : INTEGER
+  FC_PARA04 : INTEGER
+  FC_PARA05 : REAL
+  FC_PARA06 : INTEGER
+  FC_PARA07 : INTEGER
+  ABLAUF_NR : INTEGER
+  COUNTER : INTEGER
+  KUM_KORR_VAL : INTEGER
+  MEA_NOERROR : BOOLEAN
+  ERROR_PARAM : BOOLEAN
+  GLOBAL_MES : BOOLEAN
+  TDVORSYMM : INTEGER
+  TDVOROFFSET : INTEGER
+  PRG_NUMBER : INTEGER
+  WZG_MASTER : INTEGER
+  WZG_WORKING : INTEGER
+  GLB_MASTER : INTEGER
+  GLB_WORKING : INTEGER
+  FRM_MASTER : INTEGER
+  FRM_WORKING : INTEGER
+  LS_TOOL_NO : INTEGER
+  LS_FRAME_NO : INTEGER
+  NULLFRAME : INTEGER
+  SENSOR_BASE : INTEGER
+  IN_GR_NR : INTEGER
+  OUT_GR_NR : INTEGER
+  MEA_SENSOR : ARRAY[127] OF REAL
+  MEA_DST : ARRAY[127] OF REAL
+  MEA_DIM : ARRAY[127] OF REAL
+  RADIUS : ARRAY[127] OF REAL
+  PENDULUM : ARRAY[127] OF REAL
+  ORI_LENGTH : ARRAY[127] OF REAL
+  OFFSET_PEND : ARRAY[127] OF REAL
+  STICKOUT : ARRAY[127] OF REAL
+  WORKING_DIR : ARRAY[127] OF REAL
+  MEA_DIR : ARRAY[127] OF REAL
+  MEA_SPEED : ARRAY[127] OF REAL
+  CALC_METHOD : ARRAY[127] OF REAL
+  BASE_OR_TOOL : ARRAY[127] OF INTEGER
+  PARAM_128 : ARRAY[10] OF REAL
+  PARAM_129 : ARRAY[15] OF INTEGER
+  PARAM_130 : ARRAY[20] OF REAL
+  PARAM_135 : ARRAY[10] OF REAL
+  MEAPOS : ARRAY[64] OF INTEGER
+  TCPPOS : ARRAY[64] OF INTEGER
+  p0_f24 : INTEGER
+  p0_f28 : INTEGER
+  p0_f2c : INTEGER
+  r0_lc27_f24 : INTEGER
+  r0_lc27_f28 : INTEGER
+  r0_lc27_f2c : INTEGER
+  r17_lc9_f08 : REAL
+  r17_lc9_f0c : REAL
+  r17_lc9_f10 : REAL
+  r17_lc9_f14 : REAL
+  r17_lc9_f18 : REAL
+  r17_lc9_f1c : REAL
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v32_f08 : ARRAY[64] OF INTEGER
+  v32_f0c : ARRAY[64] OF INTEGER
+  v32_f10 : ARRAY[64] OF INTEGER
+  v32_f14 : ARRAY[64] OF INTEGER
+  v32_f18 : ARRAY[64] OF INTEGER
+  v32_f1c : ARRAY[64] OF INTEGER
+  v32_f20 : ARRAY[64] OF INTEGER
+  v32_f24 : ARRAY[64] OF INTEGER
+  v32_f28 : ARRAY[64] OF INTEGER
+  v32_f2c : ARRAY[64] OF INTEGER
+  v8_f08 : INTEGER
+  v8_f0c : INTEGER
+  v8_f10 : INTEGER
+  v8_f14 : INTEGER
+  v8_f18 : INTEGER
+  v8_f1c : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE EXTMSGFC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSGWRITE(p0 : INTEGER; p1 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE EXTMSGTI1CR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CR2(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CLEAR_FU(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CLEAR_FE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MENUE_SET_IO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MENUE_MAIN(p0, p1, p2 : INTEGER; p3 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE MENU_PARAADD(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CALC_POS_DK(p0, p1 : INTEGER; p2, p3 : POSITION; p4 : JOINTPOS) : INTEGER FROM MI_LIB
+ROUTINE CALC_POS_PE(p0, p1 : INTEGER; p2, p3 : POSITION; p4 : JOINTPOS) : INTEGER FROM MI_LIB
+ROUTINE CALC_POS(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE MENU_ADJPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READDATA(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEDATA(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DEFBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETMAXTOL(p0 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE ABLAUF_SETUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TC_START(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TC_GET_TD(p0 : INTEGER) : POSITION FROM MI_LIB
+ROUTINE TC_ABLAUF(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACKW_PR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_COPY_PARA(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SIX_D_DATA(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INV_MOD(p0 : JOINTPOS) : POSITION
+VAR
+  r0_lc15 : POSITION
+  r0_lc27 : POSITION
+BEGIN
+  IF ((v1[v2] = 2) OR (v1[v2] = 3)) THEN
+  r0_lc15 = p0
+  r0_lc27 = p0
+  sv_p = inv(r0_lc15)
+  r0_lc27 = sv_p
+  r0_lc27_f24 = p0_f24
+  r0_lc27_f28 = p0_f28
+  r0_lc27_f2c = p0_f2c
+  ELSE
+  r0_lc27 = p0
+  ENDIF
+  RETURN(r0_lc27)
+  RETURN(sv_p)
+END INV_MOD
+
+ROUTINE CALC_2EXP(p0 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  r1_lc2 = 1
+  FOR r1_lc1 = 1 TO 3 DO
+  r1_lc2 = r1_lc2 * 2
+  ENDFOR
+  RETURN(r1_lc2)
+  RETURN(0)
+END CALC_2EXP
+
+ROUTINE READ_GIN(p0 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  r2_lc1 = io_12[p0]
+  IF ((r2_lc1 < 0)) THEN
+  r2_lc1 = r2_lc1 + 65536
+  ENDIF
+  RETURN(r2_lc1)
+  RETURN(0)
+END READ_GIN
+
+ROUTINE READ_GOUT(p0 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  r3_lc1 = io_13[p0]
+  IF ((r3_lc1 < 0)) THEN
+  r3_lc1 = r3_lc1 + 65536
+  ENDIF
+  RETURN(r3_lc1)
+  RETURN(0)
+END READ_GOUT
+
+ROUTINE CALC_CW2G(p0 : STRING) : INTEGER
+VAR
+  r4_lc1 : INTEGER
+BEGIN
+  r4_lc1 = 0
+  sv_s = sub_str(p0, 1, 2)
+  CNV_STR_INT(sv_s, r4_lc1)
+  RETURN(r4_lc1)
+  RETURN(0)
+END CALC_CW2G
+
+ROUTINE CALC_CW2A(p0 : STRING) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  r5_lc1 = 0
+  sv_s = sub_str(p0, 4, 2)
+  CNV_STR_INT(sv_s, r5_lc1)
+  RETURN(r5_lc1)
+  RETURN(0)
+END CALC_CW2A
+
+ROUTINE CALC_CW2L(p0 : STRING) : INTEGER
+VAR
+  r6_lc1 : INTEGER
+BEGIN
+  r6_lc1 = 0
+  sv_s = sub_str(p0, 7, 2)
+  CNV_STR_INT(sv_s, r6_lc1)
+  RETURN(r6_lc1)
+  RETURN(0)
+END CALC_CW2L
+
+ROUTINE SET_BIT_OUT(p0, p1 : INTEGER; p2 : BOOLEAN) : INTEGER
+VAR
+  r7_lc1 : INTEGER
+  r7_lc2 : INTEGER
+BEGIN
+  sv_i = READ_GOUT(v3 + p0)
+  r7_lc2 = sv_i
+  IF ((p2 <> 0)) THEN
+  sv_i = CALC_2EXP(p1)
+  IF (r7_lc2 <> 0) OR (sv_i <> 0) THEN
+    r7_lc1 = 1
+  ELSE
+    r7_lc1 = 0
+  ENDIF
+  ELSE
+  sv_i = CALC_2EXP(p1)
+  IF (sv_i <> 0) AND (0 <> 0) THEN
+    r7_lc1 = 1
+  ELSE
+    r7_lc1 = 0
+  ENDIF
+  -- stmt112 stray r7_lc2
+  ENDIF
+  r7_lc1 = r7_lc1
+  io_13[v3 + p0] = r7_lc1
+  RETURN(0)
+END SET_BIT_OUT
+
+ROUTINE GET_BIT_IN(p0, p1 : INTEGER) : BOOLEAN
+VAR
+  r8_lc2 : INTEGER
+  r8_lc4 : INTEGER
+BEGIN
+  r8_lc4 = 0
+  sv_i = READ_GIN(v4 + p0)
+  r8_lc2 = sv_i
+  sv_i = CALC_2EXP(p1)
+  IF (r8_lc2 <> 0) AND (sv_i <> 0) THEN
+    r8_lc4 = 1
+  ELSE
+    r8_lc4 = 0
+  ENDIF
+  IF ((r8_lc4 > 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END GET_BIT_IN
+
+ROUTINE SET_WORD_OUT(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+BEGIN
+  FOR r9_lc1 = 0 TO 3 DO
+  IF (((p3 <> 0) AND (sv_i <> 0) >= 1)) THEN
+  r9_lc2 = 1
+  ELSE
+  r9_lc2 = 0
+  ENDIF
+  sv_i = SET_BIT_OUT(p0, p1 + r9_lc1, (r9_lc2 <> 0))
+  -- 弃参原式: r9_lc2
+  -- stmt182 stray sv_i
+  ENDFOR
+  RETURN(0)
+END SET_WORD_OUT
+
+ROUTINE SET_W_OUT_S(p0 : STRING; p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = CALC_CW2G(p0)
+  sv_i = CALC_CW2A(p0)
+  sv_i = CALC_CW2L(p0)
+  sv_i = SET_WORD_OUT(sv_i, sv_i, sv_i, p1)
+  -- stmt189 stray sv_i
+  RETURN(0)
+END SET_W_OUT_S
+
+ROUTINE WAIT_BIT_INS(p0 : INTEGER; p1 : BOOLEAN) : INTEGER
+VAR
+  r11_lc1 : INTEGER
+  r11_lc2 : INTEGER
+BEGIN
+  r11_lc1 = 0
+  r11_lc2 = 0
+  IF ((sv_b <> p1)) THEN
+  r11_lc1 = r11_lc1 + 5
+  DELAY 5
+  IF ((r11_lc1 > 1000) AND (r11_lc2 = 0)) THEN
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt220 stray sv_i
+  sv_i = MSGWRITE(2, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt221 stray sv_i
+  IF ((p1 = 0)) THEN
+  sv_i = MSGWRITE(1, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt224 stray sv_i
+  ENDIF
+  WRITE('G', v4, ' B', p0, CR)
+  r11_lc2 = 1
+  ENDIF
+  ELSE
+  IF ((r11_lc2 <> 0)) THEN
+  sv_i = MSG_CLEAR_FE(0)
+  -- stmt232 stray sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END WAIT_BIT_INS
+
+ROUTINE WAIT2BIT_INS(p0 : INTEGER; p1 : BOOLEAN; p2 : INTEGER; p3 : BOOLEAN) : INTEGER
+VAR
+  r12_lc1 : INTEGER
+  r12_lc2 : INTEGER
+BEGIN
+  r12_lc1 = 0
+  r12_lc2 = 0
+  IF ((sv_b <> p1) AND (sv_b <> p3)) THEN
+  r12_lc1 = r12_lc1 + 5
+  DELAY 5
+  IF ((r12_lc1 > 1000) AND (r12_lc2 = 0)) THEN
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt13 stray sv_i
+  sv_i = MSGWRITE(2, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt14 stray sv_i
+  IF ((p1 = 0)) THEN
+  sv_i = MSGWRITE(1, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt16 stray sv_i
+  ENDIF
+  WRITE('G', v4, ' B', p0)
+  WRITE(' or ')
+  IF ((p3 = 0)) THEN
+  sv_i = MSGWRITE(1, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt21 stray sv_i
+  ENDIF
+  WRITE('G', v4, ' B', p2, CR)
+  r12_lc2 = 1
+  ENDIF
+  ELSE
+  IF ((r12_lc2 <> 0)) THEN
+  sv_i = MSG_CLEAR_FE(0)
+  -- stmt29 stray sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END WAIT2BIT_INS
+
+ROUTINE GET_WORD_IN(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r13_lc1 : INTEGER
+  r13_lc3 : INTEGER
+BEGIN
+  r13_lc3 = 0
+  r13_lc1 = p2 - 1
+  FOR r13_lc1 = 1 TO 3 DO
+  r13_lc3 = r13_lc3 * 2
+  IF (sv_b) THEN
+  r13_lc3 = r13_lc3 + 1
+  ENDIF
+  ENDFOR
+  RETURN(r13_lc3)
+  RETURN(0)
+END GET_WORD_IN
+
+ROUTINE GET_W_IN_S(p0 : STRING) : INTEGER
+BEGIN
+  sv_i = CALC_CW2G(p0)
+  sv_i = CALC_CW2A(p0)
+  sv_i = CALC_CW2L(p0)
+  sv_i = GET_WORD_IN(sv_i, sv_i, sv_i)
+  RETURN(sv_i)
+  RETURN(0)
+END GET_W_IN_S
+
+ROUTINE G2_RESET : INTEGER
+BEGIN
+  IF (sv_b) THEN
+  sv_i = SET_BIT_OUT(0, 9, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt81 stray sv_i
+  sv_i = WAIT_BIT_INS(9, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt82 stray sv_i
+  sv_i = SET_BIT_OUT(0, 9, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt83 stray sv_i
+  ENDIF
+  RETURN(0)
+END G2_RESET
+
+ROUTINE G2_INIT(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  r16_lc11 : INTEGER
+  r16_lc12 : INTEGER
+  r16_lc13 : INTEGER
+  r16_lc14 : INTEGER
+  r16_lc4 : STRING[64]
+  r16_lc8 : ARRAY[64] OF INTEGER
+BEGIN
+  IF ((v5 < 11)) THEN
+  v6 = '00 00 05'
+  ELSE
+  v6 = '00 00 07'
+  ENDIF
+  VAR_INFO('', 'Kum_Korr_Val', (r16_lc11 <> 0), r16_lc4, r16_lc12, r16_lc8, r16_lc13, r16_lc14)
+  -- 弃参原式: r16_lc11
+  sv_p = curpos(0, 0)
+  v8 = sv_p
+  v8_f08 = 0
+  v8_f0c = 0
+  v8_f10 = 0
+  v8_f14 = 0
+  v8_f18 = 0
+  v8_f1c = 0
+  v9 = 1
+  sv_i = G2_RESET
+  -- stmt128 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt130 stray sv_i
+  sv_i = SET_W_OUT_S(v6, p0)
+  -- stmt132 stray sv_i
+  IF ((p3 = 0) OR (p3 = 1)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt135 stray v10[p4][p2] | v10[p4][p1]
+  ENDIF
+  IF ((p3 = 2) OR (p3 = 3)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt139 stray v11[p4][p2] | v11[p4][p1]
+  ENDIF
+  RETURN(0)
+END G2_INIT
+
+ROUTINE G2_KORR(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  r17_lc9 : INTEGER
+BEGIN
+  sv_i = SET_BIT_OUT(0, 8, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt157 stray sv_i
+  sv_i = WAIT2BIT_INS(8, (1 <> 0), 9, (1 <> 0))
+  -- 弃参原式: 1 | 1
+  -- stmt159 stray sv_i
+  IF (NOT (sv_b)) THEN
+  sv_i = READ_GIN(v4 + 1)
+  r17_lc9_f08 = sv_i - 30000 / 100
+  sv_i = READ_GIN(v4 + 2)
+  r17_lc9_f0c = sv_i - 30000 / 100
+  sv_i = READ_GIN(v4 + 3)
+  r17_lc9_f10 = sv_i - 30000 / 100
+  sv_i = READ_GIN(v4 + 4)
+  r17_lc9_f14 = sv_i - 30000 / 100
+  sv_i = READ_GIN(v4 + 5)
+  r17_lc9_f18 = sv_i - 30000 / 100
+  sv_i = READ_GIN(v4 + 6)
+  r17_lc9_f1c = sv_i - 30000 / 100
+  v8 = r17_lc9
+  -- stmt169 stray v8
+  IF ((p3 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt172 stray v10[p4][p1] | r17_lc9 | v10[p4][p1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt173 stray v10[p4][p1] | v0_f58[1]
+  ENDIF
+  IF ((p3 = 1)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt176 stray r17_lc9 | v10[p4][p2] | v10[p4][p1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt177 stray v10[p4][p1] | v0_f58[1]
+  ENDIF
+  IF ((p3 = 2)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt180 stray v11[p4][p1] | r17_lc9 | v11[p4][p1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt181 stray v11[p4][p1] | v0_f1c[1]
+  ENDIF
+  IF ((p3 = 3)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt184 stray r17_lc9 | v11[p4][p1] | v11[p4][p1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt185 stray v11[p4][p1] | v0_f1c[1]
+  ENDIF
+  IF ((p3 = 4)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt188 stray v10[p4][p1] | r17_lc9 | v10[p4][p1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt189 stray v10[p4][p1] | v0_f58[1]
+  ENDIF
+  ELSE
+  v9 = 0
+  ENDIF
+  sv_i = SET_BIT_OUT(0, 8, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt195 stray sv_i
+  RETURN(0)
+END G2_KORR
+
+ROUTINE G2_MSG_KORR : INTEGER
+BEGIN
+  sv_i = MSGWRITE(6, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt206 stray sv_i
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE('X : ', '  Y : ', '  Z : ', CR)
+  -- stmt207 stray v8_f08 | 7 | 2 | v8_f0c | 7 | 2 | v8_f10 | 7 | 2
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE('W : ', '  P : ', '  R : ', CR)
+  -- stmt208 stray v8_f14 | 7 | 2 | v8_f18 | 7 | 2 | v8_f1c | 7 | 2
+  RETURN(0)
+END G2_MSG_KORR
+
+ROUTINE G2_MSG_FC : INTEGER
+VAR
+  r19_lc1 : INTEGER
+BEGIN
+  IF (sv_b) THEN
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt222 stray sv_i
+  v12 = 1
+  sv_i = GET_W_IN_S('00 00 05')
+  r19_lc1 = sv_i
+  sv_i = EXTMSGFC(r19_lc1)
+  -- stmt225 stray sv_i
+  ENDIF
+  RETURN(0)
+END G2_MSG_FC
+
+ROUTINE G2_VECMEIN(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = G2_RESET
+  -- stmt240 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt241 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt243 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt244 stray sv_i
+  sv_i = SET_BIT_OUT(0, 14, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt245 stray sv_i
+  sv_i = WAIT_BIT_INS(14, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt246 stray sv_i
+  sv_i = SET_W_OUT_S(v6, p0)
+  -- stmt248 stray sv_i
+  sv_i = SET_BIT_OUT(0, 11, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt249 stray sv_i
+  sv_i = WAIT2BIT_INS(11, (1 <> 0), 9, (1 <> 0))
+  -- 弃参原式: 1 | 1
+  -- stmt250 stray sv_i
+  sv_i = SET_BIT_OUT(0, 11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt251 stray sv_i
+  sv_i = SET_W_OUT_S(v6, 0)
+  -- stmt252 stray sv_i
+  sv_i = WAIT_BIT_INS(11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt253 stray sv_i
+  sv_i = WAIT_BIT_INS(9, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt254 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt255 stray sv_i
+  RETURN(0)
+END G2_VECMEIN
+
+ROUTINE G2_VECMAUS : INTEGER
+BEGIN
+  sv_i = G2_RESET
+  -- stmt11 stray sv_i
+  sv_i = SET_BIT_OUT(0, 14, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt13 stray sv_i
+  sv_i = WAIT_BIT_INS(14, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt14 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt15 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt16 stray sv_i
+  RETURN(0)
+END G2_VECMAUS
+
+ROUTINE G2_REFMEIN(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = G2_RESET
+  -- stmt30 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt31 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt33 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt34 stray sv_i
+  sv_i = SET_BIT_OUT(0, 13, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt35 stray sv_i
+  sv_i = WAIT_BIT_INS(13, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt36 stray sv_i
+  sv_i = SET_W_OUT_S(v6, p0)
+  -- stmt38 stray sv_i
+  IF ((v5 = 10)) THEN
+  sv_i = SET_BIT_OUT(0, 5, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt40 stray sv_i
+  sv_i = SET_BIT_OUT(0, 6, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt41 stray sv_i
+  ENDIF
+  sv_i = SET_BIT_OUT(0, 11, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt43 stray sv_i
+  sv_i = WAIT2BIT_INS(11, (1 <> 0), 9, (1 <> 0))
+  -- 弃参原式: 1 | 1
+  -- stmt44 stray sv_i
+  sv_i = SET_BIT_OUT(0, 11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt45 stray sv_i
+  IF ((v5 = 10)) THEN
+  sv_i = SET_BIT_OUT(0, 5, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt47 stray sv_i
+  sv_i = SET_BIT_OUT(0, 6, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt48 stray sv_i
+  ENDIF
+  sv_i = SET_W_OUT_S(v6, 0)
+  -- stmt50 stray sv_i
+  sv_i = WAIT_BIT_INS(11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt51 stray sv_i
+  sv_i = WAIT_BIT_INS(9, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt52 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt53 stray sv_i
+  RETURN(0)
+END G2_REFMEIN
+
+ROUTINE G2_REFMAUS : INTEGER
+BEGIN
+  sv_i = G2_RESET
+  -- stmt65 stray sv_i
+  sv_i = SET_BIT_OUT(0, 13, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt67 stray sv_i
+  sv_i = WAIT_BIT_INS(13, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt68 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt69 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt70 stray sv_i
+  RETURN(0)
+END G2_REFMAUS
+
+ROUTINE G2_PARA_ON(p0 : BOOLEAN) : INTEGER
+BEGIN
+  sv_i = G2_RESET
+  -- stmt83 stray sv_i
+  sv_i = WAIT_BIT_INS(10, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt84 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt86 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt87 stray sv_i
+  sv_i = SET_BIT_OUT(0, 7, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt88 stray sv_i
+  sv_i = WAIT_BIT_INS(7, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt89 stray sv_i
+  IF ((p0 <> 0)) THEN
+  sv_i = SET_BIT_OUT(0, 5, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt92 stray sv_i
+  sv_i = WAIT_BIT_INS(5, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt93 stray sv_i
+  ELSE
+  sv_i = SET_BIT_OUT(0, 6, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt95 stray sv_i
+  sv_i = WAIT_BIT_INS(6, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt96 stray sv_i
+  ENDIF
+  RETURN(0)
+END G2_PARA_ON
+
+ROUTINE G2_PARA_OFF : INTEGER
+BEGIN
+  sv_i = SET_BIT_OUT(0, 6, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt109 stray sv_i
+  sv_i = WAIT_BIT_INS(6, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt110 stray sv_i
+  sv_i = SET_BIT_OUT(0, 5, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt111 stray sv_i
+  sv_i = WAIT_BIT_INS(5, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt112 stray sv_i
+  sv_i = SET_BIT_OUT(0, 7, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt113 stray sv_i
+  sv_i = WAIT_BIT_INS(7, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt114 stray sv_i
+  sv_i = SET_BIT_OUT(0, 15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt115 stray sv_i
+  sv_i = WAIT_BIT_INS(15, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt116 stray sv_i
+  RETURN(0)
+END G2_PARA_OFF
+
+ROUTINE G2_BACK_LESE(p0, p1 : INTEGER) : REAL
+VAR
+  r26_lc1 : INTEGER
+  r26_lc2 : INTEGER
+  r26_lc3 : REAL
+BEGIN
+  r26_lc3 = 0
+  io_13[v3 + 1] = p0 * 256 + p1
+  sv_i = SET_BIT_OUT(0, 11, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt136 stray sv_i
+  sv_i = WAIT2BIT_INS(11, (1 <> 0), 9, (1 <> 0))
+  -- 弃参原式: 1 | 1
+  -- stmt137 stray sv_i
+  IF (sv_b) THEN
+  sv_i = MSGWRITE(7, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt140 stray sv_i
+  WRITE('G2BL_IP  : ', p0, '    G2BL_PI : ', p1, CR)
+  DELAY 2000
+  v13 = 1
+  ELSE
+  sv_i = READ_GIN(v4 + 2)
+  r26_lc1 = sv_i
+  sv_i = READ_GIN(v4 + 3)
+  r26_lc2 = sv_i
+  r26_lc3 = r26_lc1 - 30000 + r26_lc2 - 30000 / 1000
+  ENDIF
+  sv_i = SET_BIT_OUT(0, 11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt149 stray sv_i
+  io_13[v3 + 1] = 0
+  sv_i = WAIT_BIT_INS(11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt153 stray sv_i
+  RETURN(r26_lc3)
+  RETURN(sv_r)
+END G2_BACK_LESE
+
+ROUTINE G2_BACKALL_L : INTEGER
+VAR
+  r27_lc4 : INTEGER
+  r27_lc5 : INTEGER
+BEGIN
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt173 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt174 stray sv_i
+  sv_i = G2_PARA_ON((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt176 stray sv_i
+  FOR r27_lc5 = 1 TO 3 DO
+  sv_i = EXTMSGTI1CR(34, r27_lc5)
+  -- stmt179 stray sv_i
+  FOR r27_lc4 = 1 TO 3 DO
+  sv_r = G2_BACK_LESE(r27_lc5, r27_lc4)
+  v15[r27_lc5][r27_lc4] = sv_r
+  ENDFOR
+  ENDFOR
+  sv_i = MSGWRITE(35, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt185 stray sv_i
+  FOR r27_lc4 = 1 TO 3 DO
+  sv_r = G2_BACK_LESE(128, r27_lc4)
+  v16[r27_lc4] = sv_r
+  ENDFOR
+  FOR r27_lc4 = 1 TO 3 DO
+  sv_r = G2_BACK_LESE(129, r27_lc4)
+  sv_i = trunc(sv_r)
+  v14[r27_lc4] = sv_i
+  ENDFOR
+  sv_i = G2_PARA_OFF
+  -- stmt194 stray sv_i
+  sv_i = MSGWRITE(12, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt196 stray sv_i
+  RETURN(0)
+END G2_BACKALL_L
+
+ROUTINE G2_BACK_PNRL(p0 : INTEGER) : INTEGER
+VAR
+  r28_lc4 : INTEGER
+BEGIN
+  sv_i = G2_PARA_ON((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt216 stray sv_i
+  IF ((p0 <> 128)) THEN
+  sv_i = EXTMSGTI1CR(32, p0)
+  -- stmt219 stray sv_i
+  FOR r28_lc4 = 1 TO 3 DO
+  sv_r = G2_BACK_LESE(p0, r28_lc4)
+  v15[p0][r28_lc4] = sv_r
+  ENDFOR
+  ELSE
+  sv_i = MSGWRITE(33, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt224 stray sv_i
+  FOR r28_lc4 = 1 TO 3 DO
+  sv_r = G2_BACK_LESE(128, r28_lc4)
+  v16[r28_lc4] = sv_r
+  ENDFOR
+  ENDIF
+  sv_i = G2_PARA_OFF
+  -- stmt230 stray sv_i
+  sv_i = MSGWRITE(12, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt232 stray sv_i
+  RETURN(0)
+END G2_BACK_PNRL
+
+ROUTINE G2_BACKREAD1(p0, p1 : INTEGER) : REAL
+VAR
+  r29_lc3 : REAL
+BEGIN
+  v13 = 0
+  IF ((p0 <> 130)) THEN
+  sv_i = G2_PARA_ON((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt254 stray sv_i
+  sv_r = G2_BACK_LESE(p0, p1)
+  r29_lc3 = sv_r
+  sv_i = G2_PARA_OFF
+  -- stmt0 stray sv_i
+  ELSE
+  IF ((p1 > 0) AND (p1 <= v14[6])) THEN
+  r29_lc3 = v17[p1]
+  ENDIF
+  ENDIF
+  RETURN(r29_lc3)
+  RETURN(sv_r)
+END G2_BACKREAD1
+
+ROUTINE G2_BACK_SCHR(p0, p1 : INTEGER; p2 : REAL) : INTEGER
+VAR
+  r30_lc1 : INTEGER
+  r30_lc2 : INTEGER
+  r30_lc3 : REAL
+BEGIN
+  io_13[v3 + 1] = p0 * 256 + p1
+  sv_i = trunc(p2)
+  r30_lc1 = sv_i + 30000
+  sv_i = trunc(p2 * 1000 - r30_lc1 - 30000 * 1000 + 30000)
+  r30_lc2 = sv_i
+  io_13[v3 + 2] = r30_lc1
+  io_13[v3 + 3] = r30_lc2
+  sv_i = SET_BIT_OUT(0, 11, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt32 stray sv_i
+  sv_i = WAIT2BIT_INS(11, (1 <> 0), 9, (1 <> 0))
+  -- 弃参原式: 1 | 1
+  -- stmt33 stray sv_i
+  IF (sv_b) THEN
+  sv_i = MSG_CR(0)
+  -- stmt35 stray sv_i
+  sv_i = MSGWRITE(5, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt36 stray sv_i
+  WRITE('G2BS_IP  : ', p0, CR, 'G2BS_PI  : ', p1, CR, CR)
+  DELAY 2000
+  v13 = 1
+  ELSE
+  sv_i = READ_GIN(v4 + 2)
+  sv_i = READ_GIN(v4 + 3)
+  r30_lc3 = sv_i - 30000 + sv_i - 30000 / 1000
+  IF ((0 > 0.002)) THEN
+  sv_i = MSGWRITE(5, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt44 stray sv_i
+  WRITE('G2BS_IP  : ', p0, '    G2BS_PI : ', p1, CR)
+  DELAY 0
+  DELAY 0
+  WRITE('Lesen    : ', CR, 'Schreiben : ', CR)
+  -- stmt46 stray r30_lc3 | 10 | 3 | p2 | 10 | 3
+  DELAY 2000
+  ENDIF
+  ENDIF
+  sv_i = SET_BIT_OUT(0, 11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt51 stray sv_i
+  io_13[v3 + 1] = 0
+  io_13[v3 + 2] = 0
+  io_13[v3 + 3] = 0
+  sv_i = WAIT_BIT_INS(11, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt55 stray sv_i
+  RETURN(0)
+END G2_BACK_SCHR
+
+ROUTINE G2_BACKALL_S : INTEGER
+VAR
+  r31_lc4 : INTEGER
+  r31_lc5 : INTEGER
+BEGIN
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt75 stray sv_i
+  sv_i = G2_PARA_ON((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt76 stray sv_i
+  FOR r31_lc5 = 1 TO 3 DO
+  sv_i = EXTMSGTI1CR(36, r31_lc5)
+  -- stmt79 stray sv_i
+  FOR r31_lc4 = 1 TO 3 DO
+  sv_i = G2_BACK_SCHR(r31_lc5, r31_lc4, (v15[r31_lc5][r31_lc4]))
+  -- stmt81 stray sv_i
+  ENDFOR
+  ENDFOR
+  sv_i = MSGWRITE(37, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt85 stray sv_i
+  FOR r31_lc4 = 1 TO 3 DO
+  sv_i = G2_BACK_SCHR(128, r31_lc4, (v16[r31_lc4]))
+  -- stmt87 stray sv_i
+  ENDFOR
+  sv_i = G2_PARA_OFF
+  -- stmt90 stray sv_i
+  sv_i = MSGWRITE(13, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt91 stray sv_i
+  RETURN(0)
+END G2_BACKALL_S
+
+ROUTINE G2_BACK_PNRS(p0 : INTEGER) : INTEGER
+VAR
+  r32_lc4 : INTEGER
+BEGIN
+  sv_i = G2_PARA_ON((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt111 stray sv_i
+  IF ((p0 <> 128)) THEN
+  sv_i = EXTMSGTI1CR(36, p0)
+  -- stmt114 stray sv_i
+  FOR r32_lc4 = 1 TO 3 DO
+  sv_i = G2_BACK_SCHR(p0, r32_lc4, (v15[p0][r32_lc4]))
+  -- stmt116 stray sv_i
+  ENDFOR
+  ELSE
+  sv_i = MSGWRITE(37, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt119 stray sv_i
+  FOR r32_lc4 = 1 TO 3 DO
+  sv_i = G2_BACK_SCHR(128, r32_lc4, (v16[r32_lc4]))
+  -- stmt121 stray sv_i
+  ENDFOR
+  ENDIF
+  sv_i = G2_PARA_OFF
+  -- stmt125 stray sv_i
+  sv_i = MSGWRITE(13, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt127 stray sv_i
+  RETURN(0)
+END G2_BACK_PNRS
+
+ROUTINE G2_BACKWRIT1(p0, p1 : INTEGER; p2 : REAL) : INTEGER
+BEGIN
+  v13 = 0
+  IF ((p0 <> 130)) THEN
+  sv_i = G2_PARA_ON((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt152 stray sv_i
+  sv_i = G2_BACK_SCHR(p0, p1, p2)
+  -- stmt153 stray sv_i
+  sv_i = G2_PARA_OFF
+  -- stmt154 stray sv_i
+  ELSE
+  IF ((p1 > 0) AND (p1 <= v14[6])) THEN
+  v17[p1] = p2
+  ENDIF
+  ENDIF
+  RETURN(0)
+END G2_BACKWRIT1
+
+ROUTINE READ_129 : INTEGER
+BEGIN
+  sv_i = G2_PARA_ON((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt171 stray sv_i
+  sv_r = G2_BACK_LESE(129, 1)
+  sv_i = round(sv_r)
+  v14[1] = sv_i
+  FOR v18 = 2 TO 3 DO
+  sv_r = G2_BACK_LESE(129, v18)
+  sv_i = round(sv_r)
+  v14[v18] = sv_i
+  ENDFOR
+  v18 = v14[1] + 1
+  FOR v18 = 1 TO 3 DO
+  v14[v18] = (0 - 1)
+  ENDFOR
+  IF ((v14[6] = (0 - 1))) THEN
+  v14[6] = 9
+  ENDIF
+  sv_i = trunc((v14[2]))
+  v5 = sv_i
+  sv_i = G2_PARA_OFF
+  -- stmt185 stray sv_i
+  RETURN(0)
+END READ_129
+
+ROUTINE CHECKIO(p0, p1 : INTEGER) : BOOLEAN
+VAR
+  r35_lc1 : INTEGER
+  r35_lc2 : INTEGER
+  r35_lc3 : REAL
+  r35_lc4 : INTEGER
+  r35_lc5 : INTEGER
+  r35_lc6 : INTEGER
+BEGIN
+  WRITE('Test Configuration Groups', CR)
+  r35_lc5 = 1
+  r35_lc6 = 0
+  v4 = p0
+  v3 = p1
+  IF ((r35_lc5 <> 0)) THEN
+  sv_b = GET_BIT_IN(0, 10)
+  IF sv_b THEN
+    r35_lc2 = 1
+  ELSE
+    r35_lc2 = 0
+  ENDIF
+  IF ((r35_lc2 = 0)) THEN
+  r35_lc6 = 1
+  sv_b = GET_BIT_IN(0, 10)
+  IF sv_b THEN
+    r35_lc2 = 1
+  ELSE
+    r35_lc2 = 0
+  ENDIF
+  ENDIF
+  IF ((r35_lc2 = 0)) THEN
+  r35_lc5 = 0
+  sv_i = MSGWRITE(17, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt220 stray sv_i
+  sv_i = MSGWRITE(14, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt221 stray sv_i
+  ENDIF
+  ENDIF
+  IF ((r35_lc6 <> 0)) THEN
+  WRITE(CR)
+  sv_i = MSGWRITE(15, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt227 stray sv_i
+  r35_lc5 = 0
+  ENDIF
+  FOR r35_lc4 = 1 TO 3 DO
+  IF ((r35_lc5 <> 0)) THEN
+  sv_i = READ_GIN(v4 + r35_lc4)
+  r35_lc1 = sv_i
+  IF ((r35_lc1 <> 30000)) THEN
+  r35_lc5 = 0
+  sv_i = MSGWRITE(46, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt237 stray sv_i
+  WRITE(r35_lc4 + 1, CR)
+  ENDIF
+  ENDIF
+  ENDFOR
+  IF ((r35_lc5 <> 0)) THEN
+  sv_r = G2_BACKREAD1(1, 1)
+  r35_lc3 = sv_r
+  IF ((r35_lc3 < 0) OR (r35_lc3 > 2)) THEN
+  r35_lc5 = 0
+  sv_i = MSGWRITE(16, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt248 stray sv_i
+  ENDIF
+  ENDIF
+  IF ((r35_lc5 <> 0)) THEN
+  sv_i = READ_129
+  -- stmt253 stray sv_i
+  ENDIF
+  RETURN(r35_lc5)
+  RETURN(sv_b)
+END CHECKIO
+
+ROUTINE RESET_OUT : INTEGER
+BEGIN
+  io_13[v3] = 0
+  io_13[v3 + 1] = 0
+  io_13[v3 + 2] = 0
+  io_13[v3 + 3] = 0
+  io_13[v3 + 4] = 0
+  io_13[v3 + 5] = 0
+  io_13[v3 + 6] = 0
+  RETURN(0)
+END RESET_OUT
+
+ROUTINE RESETBACKUP : INTEGER
+VAR
+  r37_lc1 : INTEGER
+  r37_lc2 : INTEGER
+BEGIN
+  FOR r37_lc1 = 1 TO 3 DO
+  v15[r37_lc1][1] = 1
+  v15[r37_lc1][2] = 2
+  v15[r37_lc1][3] = 15
+  v15[r37_lc1][4] = 15
+  v15[r37_lc1][5] = 0
+  v15[r37_lc1][6] = 20
+  v15[r37_lc1][7] = 1
+  v15[r37_lc1][8] = 0
+  v15[r37_lc1][9] = 0
+  v15[r37_lc1][10] = 5
+  v15[r37_lc1][11] = 5
+  v15[r37_lc1][12] = 1
+  v15[r37_lc1][13] = 1
+  v15[r37_lc1][14] = 0.1
+  v15[r37_lc1][15] = 5
+  v15[r37_lc1][16] = 0
+  v15[r37_lc1][17] = 0
+  v15[r37_lc1][18] = 10
+  v15[r37_lc1][19] = 0
+  v15[r37_lc1][20] = 0
+  v15[r37_lc1][21] = 1
+  v15[r37_lc1][22] = 0
+  v15[r37_lc1][23] = 1
+  FOR r37_lc2 = 24 TO 3 DO
+  v15[r37_lc1][r37_lc2] = 0
+  ENDFOR
+  v15[r37_lc1][45] = 2
+  v15[r37_lc1][46] = 2
+  v15[r37_lc1][47] = 0
+  v15[r37_lc1][48] = 0.5
+  v15[r37_lc1][49] = 1
+  v15[r37_lc1][50] = 1
+  v15[r37_lc1][51] = 0
+  v15[r37_lc1][52] = 0
+  v15[r37_lc1][53] = 1
+  v15[r37_lc1][54] = 0
+  v15[r37_lc1][55] = 0
+  v15[r37_lc1][56] = 10
+  v15[r37_lc1][57] = 0
+  v15[r37_lc1][58] = 0
+  v15[r37_lc1][59] = 0
+  v15[r37_lc1][60] = 0
+  ENDFOR
+  v16[1] = 10
+  v16[2] = 0
+  v16[3] = 0
+  v16[4] = 0
+  v16[5] = 0
+  v16[6] = 0
+  v16[7] = 1
+  RETURN(0)
+END RESETBACKUP
+
+ROUTINE CHECK_INI : INTEGER
+VAR
+  r38_lc10 : ARRAY[64] OF INTEGER
+  r38_lc11 : INTEGER
+  r38_lc12 : INTEGER
+  r38_lc13 : INTEGER
+  r38_lc14 : INTEGER
+  r38_lc15 : INTEGER
+  r38_lc16 : INTEGER
+  r38_lc6 : STRING[64]
+BEGIN
+  v19 = 1
+  v20 = 1
+  VAR_INFO('', 'IN_Gr_Nr', (r38_lc11 <> 0), r38_lc6, r38_lc12, r38_lc10, r38_lc14, r38_lc13)
+  -- 弃参原式: r38_lc11
+  IF ((r38_lc11 <> 0)) THEN
+  v4 = (0 - 1)
+  ENDIF
+  VAR_INFO('', 'OUT_Gr_Nr', (r38_lc11 <> 0), r38_lc6, r38_lc12, r38_lc10, r38_lc14, r38_lc13)
+  -- 弃参原式: r38_lc11
+  IF ((r38_lc11 <> 0)) THEN
+  v3 = (0 - 1)
+  ENDIF
+  IF ((v4 < 0) OR (v3 < 0)) THEN
+  sv_i = MENUE_SET_IO(0)
+  -- stmt123 stray sv_i
+  ENDIF
+  v17[1] = 10
+  v17[2] = 10
+  v17[3] = 12
+  v17[4] = 1
+  v17[5] = 0
+  v17[6] = 0.5
+  v17[7] = 0.5
+  v17[8] = 0
+  v17[9] = 0
+  v17[10] = 0
+  v17[11] = 0
+  v17[12] = 0
+  v17[13] = 0
+  v17[14] = 0
+  v17[15] = 0
+  v17[16] = 0
+  v17[17] = 0
+  v17[18] = 0
+  v17[19] = 0
+  v17[20] = 0
+  VAR_INFO('', 'PrgSize', (r38_lc11 <> 0), r38_lc6, r38_lc12, r38_lc10, r38_lc14, r38_lc13)
+  -- 弃参原式: r38_lc11
+  IF ((r38_lc11 <> 0)) THEN
+  sv_i = trunc((v14[2]))
+  v5 = sv_i
+  ENDIF
+  FOR r38_lc15 = 1 TO 3 DO
+  v21[r38_lc15] = 3
+  v22[r38_lc15] = 12
+  v23[r38_lc15] = 30
+  v24[r38_lc15] = 30
+  v25[r38_lc15] = 20
+  v26[r38_lc15] = 0
+  v27[r38_lc15] = 0
+  v28[r38_lc15] = 1
+  v29[r38_lc15] = 0
+  v30[r38_lc15] = 100
+  v1[r38_lc15] = 0
+  v31[r38_lc15] = 0
+  v32_f08[r38_lc15] = 0
+  v32_f0c[r38_lc15] = 0
+  v32_f10[r38_lc15] = 0
+  v32_f14[r38_lc15] = 0
+  v32_f18[r38_lc15] = 0
+  v32_f1c[r38_lc15] = 0
+  v32_f24[r38_lc15] = 0
+  v32_f28[r38_lc15] = 0
+  v32_f2c[r38_lc15] = 0
+  -- stmt177 stray v32_f20[r38_lc15]
+  -- stmt178 stray v32_f20[r38_lc15]
+  PAUSE
+  -- stmt179 stray v32_f20[r38_lc15]
+  -- stmt180 stray v32_f20[r38_lc15]
+  -- stmt181 stray v32_f20[r38_lc15] | io_01[0]
+  io_01[0] = v32_f20[r38_lc15]
+  -- stmt183 stray v32_f20[r38_lc15]
+  FOR r38_lc16 = 1 TO 3 DO
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  v1 = 0
+  -- stmt195 stray v33[r38_lc15][r38_lc16]_f20
+  -- stmt196 stray v33[r38_lc15][r38_lc16]_f20
+  PAUSE
+  -- stmt197 stray v33[r38_lc15][r38_lc16]_f20
+  -- stmt198 stray v33[r38_lc15][r38_lc16]_f20
+  -- stmt199 stray v33[r38_lc15][r38_lc16]_f20 | io_01[0]
+  io_01[0] = v33[r38_lc15][r38_lc16]_f20
+  -- stmt201 stray v33[r38_lc15][r38_lc16]_f20
+  ENDFOR
+  ENDFOR
+  VAR_INFO('', 'Group_No', (r38_lc11 <> 0), r38_lc6, r38_lc12, r38_lc10, r38_lc14, r38_lc13)
+  -- 弃参原式: r38_lc11
+  IF ((r38_lc11 <> 0)) THEN
+  v7 = 1
+  ENDIF
+  VAR_INFO('', 'LS_Tool_No', (r38_lc11 <> 0), r38_lc6, r38_lc12, r38_lc10, r38_lc14, r38_lc13)
+  -- 弃参原式: r38_lc11
+  IF ((r38_lc11 <> 0)) THEN
+  v34 = 1
+  ENDIF
+  IF ((v5 < 11)) THEN
+  v6 = '00 00 05'
+  ELSE
+  v6 = '00 00 07'
+  ENDIF
+  RETURN(0)
+END CHECK_INI
+
+ROUTINE G2_SETREFNUL(p0 : INTEGER; p1 : REAL) : INTEGER
+VAR
+  r39_lc1 : INTEGER
+BEGIN
+  sv_r = G2_BACKREAD1(v2, 54)
+  sv_i = round(sv_r)
+  r39_lc1 = sv_i
+  sv_i = G2_BACKWRIT1(p0, 24, 0)
+  -- stmt237 stray sv_i
+  sv_i = G2_BACKWRIT1(p0, 25, 0)
+  -- stmt238 stray sv_i
+  sv_i = G2_BACKWRIT1(p0, 26, 0)
+  -- stmt239 stray sv_i
+  IF ((r39_lc1 > 0)) THEN
+  sv_i = G2_BACKWRIT1(v2, 27, 45)
+  -- stmt241 stray sv_i
+  ELSE
+  sv_i = G2_BACKWRIT1(p0, 27, 0)
+  -- stmt243 stray sv_i
+  ENDIF
+  sv_i = G2_BACKWRIT1(p0, 28, 0)
+  -- stmt245 stray sv_i
+  sv_i = G2_BACKWRIT1(p0, 29, 0)
+  -- stmt246 stray sv_i
+  sv_i = G2_BACKWRIT1(p0, 9, 1)
+  -- stmt247 stray sv_i
+  sv_i = G2_BACKWRIT1(p0, 19, p1)
+  -- stmt248 stray sv_i
+  RETURN(0)
+END G2_SETREFNUL
+
+BEGIN
+END TCP_COMM

@@ -1,0 +1,1014 @@
+-- DCP_TUCKER_2.KL (decompiled v3)
+PROGRAM DCP_TUCKER_2
+%COMMENT = 'Version 1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  INTPROGNUM : INTEGER
+  STATUS : INTEGER
+  STRPROGNUM : STRING[64]
+  INTAREAINREQ : INTEGER
+  REALDUMMY : REAL
+  STRAREAINREQ : STRING[64]
+  INTAREAOUTRL : INTEGER
+  STRAREAOUTRL : STRING[64]
+  INTTOOLREQ : INTEGER
+  STRTOOLREQ : STRING[64]
+  INTJOBDONE : INTEGER
+  STRJOBDONE : STRING[64]
+  INTCOLREQ : INTEGER
+  STRCOLREQ : STRING[64]
+  INTCOLREL : INTEGER
+  STRCOLREL : STRING[64]
+  DCPTEXT : ALMDCP
+  FKEY_SEL : INTEGER
+  STRDCPNUM : STRING[64]
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  FKEYS : ARRAY[10] OF STRING[12]
+  BLPLC : BOOLEAN
+  BLSPR : BOOLEAN
+  BLSPOT : BOOLEAN
+  BLDISPENSE : BOOLEAN
+  BLMH : BOOLEAN
+  BLSTUD : BOOLEAN
+  BLNUT : BOOLEAN
+  BLISRA : BOOLEAN
+  BLQUISS : BOOLEAN
+  PARAMTYP : INTEGER
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTDCPFAULT : INTEGER
+  INTRIVID : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[10]
+  STRAREANUM : STRING[3]
+  STRRIVID : STRING[3]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STRADDDCPTXT : STRING[20]
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE G_DCP_SPR1_2 : INTEGER
+BEGIN
+  GET_PORT_VAL(18, 1, INTPROGNUM, STATUS)
+  CNV_INT_STR(INTPROGNUM, 3, 10, STRPROGNUM)
+  GET_REG(151, (0 <> 0), INTAREAINREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAINREQ, 3, 10, STRAREAINREQ)
+  GET_REG(152, (0 <> 0), INTAREAOUTRL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAOUTRL, 3, 10, STRAREAOUTRL)
+  GET_REG(153, (0 <> 0), INTTOOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLREQ, 3, 10, STRTOOLREQ)
+  GET_REG(154, (0 <> 0), INTJOBDONE, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTJOBDONE, 3, 10, STRJOBDONE)
+  GET_REG(156, (0 <> 0), INTCOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREQ, 3, 10, STRCOLREQ)
+  GET_REG(157, (0 <> 0), INTCOLREL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREL, 3, 10, STRCOLREL)
+  SELECT DCPTEXT_f00 OF
+  CASE(401):
+  DCPTEXT_f04 = 'Tucker is not at home'
+  DCPTEXT_f00 = 401
+  CASE(402):
+  DCPTEXT_f04 = 'Spindle is disconnected'
+  DCPTEXT_f00 = 402
+  CASE(403):
+  DCPTEXT_f04 = 'Spindle fault'
+  DCPTEXT_f00 = 403
+  CASE(404):
+  DCPTEXT_f04 = 'Spindle is not ready'
+  DCPTEXT_f00 = 404
+  CASE(405):
+  DCPTEXT_f04 = 'Reviting not complete'
+  DCPTEXT_f00 = 405
+  FKEY_SEL = 2
+  CASE(406):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 406
+  CASE(407):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 407
+  CASE(408):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 408
+  CASE(409):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 409
+  CASE(410):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 410
+  CASE(411):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 411
+  CASE(412):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 412
+  CASE(413):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 413
+  CASE(414):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 414
+  CASE(415):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 415
+  CASE(416):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 416
+  CASE(417):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 417
+  CASE(418):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 418
+  CASE(419):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 419
+  CASE(420):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 420
+  CASE(421):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 421
+  CASE(422):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 422
+  CASE(423):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 423
+  CASE(424):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 424
+  CASE(425):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 425
+  CASE(426):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 426
+  CASE(427):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 427
+  CASE(428):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 428
+  CASE(429):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 429
+  CASE(430):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 430
+  CASE(431):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 431
+  CASE(432):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 432
+  CASE(433):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 433
+  CASE(434):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 434
+  CASE(435):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 435
+  CASE(436):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 436
+  CASE(437):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 437
+  CASE(438):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 438
+  CASE(439):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 439
+  CASE(440):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 440
+  CASE(441):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 441
+  CASE(442):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 442
+  CASE(443):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 443
+  CASE(444):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 444
+  CASE(445):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 445
+  CASE(446):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 446
+  CASE(447):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 447
+  CASE(448):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 448
+  CASE(449):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 449
+  CASE(450):
+  DCPTEXT_f04 = 'Process: Feeder master - start feeding for a non-existent feeder'
+  DCPTEXT_f00 = 450
+  CASE(451):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 - start feeding for a non-existent feeder'
+  DCPTEXT_f00 = 451
+  CASE(452):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 - start feeding for a non-existent feeder'
+  DCPTEXT_f00 = 452
+  CASE(453):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 - start feeding for a non-existent feeder'
+  DCPTEXT_f00 = 453
+  CASE(454):
+  DCPTEXT_f04 = 'Feeder master: Proximity switch "Rivet in tube" is constantly high'
+  DCPTEXT_f00 = 454
+  CASE(455):
+  DCPTEXT_f04 = 'Feeder slave 1: Proximity switch "Rivet in tube" is constantly high'
+  DCPTEXT_f00 = 455
+  CASE(456):
+  DCPTEXT_f04 = 'Feeder slave 2: Proximity switch "Rivet in tube" is constantly high'
+  DCPTEXT_f00 = 456
+  CASE(457):
+  DCPTEXT_f04 = 'Feeder slave 3: Proximity switch "Rivet in tube" is constantly high'
+  DCPTEXT_f00 = 457
+  CASE(458):
+  DCPTEXT_f04 = 'Feeder master: Proximity switch "Rivet after divider" is constantly high'
+  DCPTEXT_f00 = 458
+  CASE(459):
+  DCPTEXT_f04 = 'Feeder slave 1: Proximity switch "Rivet after divider" is constantly high'
+  DCPTEXT_f00 = 459
+  CASE(460):
+  DCPTEXT_f04 = 'Feeder slave 2: Proximity switch "Rivet after divider" is constantly high'
+  DCPTEXT_f00 = 460
+  CASE(461):
+  DCPTEXT_f04 = 'Feeder slave 3: Proximity switch "Rivet after divider" is constantly high'
+  DCPTEXT_f00 = 461
+  CASE(462):
+  DCPTEXT_f04 = 'Feeder master: Proximity switch "Rivet in pre-separation" is constantly high'
+  DCPTEXT_f00 = 462
+  CASE(463):
+  DCPTEXT_f04 = 'Feeder slave 1: Proximity switch "Rivet in pre-separation" is constantly high'
+  DCPTEXT_f00 = 463
+  CASE(464):
+  DCPTEXT_f04 = 'Feeder slave 2: Proximity switch "Rivet in pre-separation" is constantly high'
+  DCPTEXT_f00 = 464
+  CASE(465):
+  DCPTEXT_f04 = 'Feeder slave 3: Proximity switch "Rivet in pre-separation" is constantly high'
+  DCPTEXT_f00 = 465
+  CASE(466):
+  DCPTEXT_f04 = 'Feeder master: No oil in atomizing device'
+  DCPTEXT_f00 = 466
+  CASE(467):
+  DCPTEXT_f04 = 'Feeder slave 1: No oil in atomizing device'
+  DCPTEXT_f00 = 467
+  CASE(468):
+  DCPTEXT_f04 = 'Feeder slave 2: No oil in atomizing device'
+  DCPTEXT_f00 = 468
+  CASE(469):
+  DCPTEXT_f04 = 'Feeder slave 3: No oil in atomizing device'
+  DCPTEXT_f00 = 469
+  CASE(470):
+  DCPTEXT_f04 = 'Feeder master: Magazine slide 1 has not reached magazine position'
+  DCPTEXT_f00 = 470
+  CASE(471):
+  DCPTEXT_f04 = 'Feeder slave 1: Magazine slide 1 has not reached magazine position'
+  DCPTEXT_f00 = 471
+  CASE(472):
+  DCPTEXT_f04 = 'Feeder slave 2: Magazine slide 1 has not reached magazine position'
+  DCPTEXT_f00 = 472
+  CASE(473):
+  DCPTEXT_f04 = 'Feeder slave 3: Magazine slide 1 has not reached magazine position'
+  DCPTEXT_f00 = 473
+  CASE(474):
+  DCPTEXT_f04 = 'Feeder master: Magazine slide 1 has not reached receiver position'
+  DCPTEXT_f00 = 474
+  CASE(475):
+  DCPTEXT_f04 = 'Feeder slave 1: Magazine slide 1 has not reached receiver position'
+  DCPTEXT_f00 = 475
+  CASE(476):
+  DCPTEXT_f04 = 'Feeder slave 2: Magazine slide 1 has not reached receiver position'
+  DCPTEXT_f00 = 476
+  CASE(477):
+  DCPTEXT_f04 = 'Feeder slave 3: Magazine slide 1 has not reached receiver position'
+  DCPTEXT_f00 = 477
+  CASE(478):
+  DCPTEXT_f04 = 'Feeder master: Fault test unit'
+  DCPTEXT_f00 = 478
+  CASE(479):
+  DCPTEXT_f04 = 'Feeder slave 1: Fault test unit'
+  DCPTEXT_f00 = 479
+  CASE(480):
+  DCPTEXT_f04 = 'Feeder slave 2: Fault test unit'
+  DCPTEXT_f00 = 480
+  CASE(481):
+  DCPTEXT_f04 = 'Feeder slave 3: Fault test unit'
+  DCPTEXT_f00 = 481
+  CASE(482):
+  DCPTEXT_f04 = 'Feeder master: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 482
+  CASE(483):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 483
+  CASE(484):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 484
+  CASE(485):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 485
+  CASE(486):
+  DCPTEXT_f04 = 'Feeder master: Rivet package separation does not reach position "Rivet"'
+  DCPTEXT_f00 = 486
+  CASE(487):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet package separation does not reach position "Rivet"'
+  DCPTEXT_f00 = 487
+  CASE(488):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet package separation does not reach position "Rivet"'
+  DCPTEXT_f00 = 488
+  CASE(489):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet package separation does not reach position "Rivet"'
+  DCPTEXT_f00 = 489
+  CASE(490):
+  DCPTEXT_f04 = 'Feeder master: Rivet package separation does not reach position "Air"'
+  DCPTEXT_f00 = 490
+  CASE(491):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet package separation does not reach position "Air"'
+  DCPTEXT_f00 = 491
+  CASE(492):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet package separation does not reach position "Air"'
+  DCPTEXT_f00 = 492
+  CASE(493):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet package separation does not reach position "Air"'
+  DCPTEXT_f00 = 493
+  CASE(494):
+  DCPTEXT_f04 = 'Feeder master: Rivets do not fall through rivet package separation'
+  DCPTEXT_f00 = 494
+  CASE(495):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivets do not fall through rivet package separation'
+  DCPTEXT_f00 = 495
+  CASE(496):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivets do not fall through rivet package separation'
+  DCPTEXT_f00 = 496
+  CASE(497):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivets do not fall through rivet package separation'
+  DCPTEXT_f00 = 497
+  CASE(498):
+  DCPTEXT_f04 = 'Feeder master: Rivet package is not fed'
+  DCPTEXT_f00 = 498
+  CASE(499):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet package is not fed'
+  DCPTEXT_f00 = 499
+  CASE(500):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet package is not fed'
+  DCPTEXT_f00 = 500
+  CASE(501):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet package is not fed'
+  DCPTEXT_f00 = 501
+  CASE(502):
+  DCPTEXT_f04 = 'Process: Feeder master - incorrect feeder assignment'
+  DCPTEXT_f00 = 502
+  CASE(503):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 - incorrect feeder assignment'
+  DCPTEXT_f00 = 503
+  CASE(504):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 - incorrect feeder assignment'
+  DCPTEXT_f00 = 504
+  CASE(505):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 - incorrect feeder assignment'
+  DCPTEXT_f00 = 505
+  CASE(506):
+  DCPTEXT_f04 = 'Process: Incorrect spindle type assignment'
+  DCPTEXT_f00 = 506
+  CASE(507):
+  DCPTEXT_f04 = 'Spindle parameter: Incorrect process type assignment'
+  DCPTEXT_f00 = 507
+  CASE(508):
+  DCPTEXT_f04 = 'Process: Feeder master does not have spindle 1 assignment'
+  DCPTEXT_f00 = 508
+  CASE(509):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 does not have spindle 1 assignment'
+  DCPTEXT_f00 = 509
+  CASE(510):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 does not have spindle 1 assignment'
+  DCPTEXT_f00 = 510
+  CASE(511):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 does not have spindle 1 assignment'
+  DCPTEXT_f00 = 511
+  CASE(512):
+  DCPTEXT_f04 = 'Process: Feeder master does not have spindle 2 assignment'
+  DCPTEXT_f00 = 512
+  CASE(513):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 does not have spindle 2 assignment'
+  DCPTEXT_f00 = 513
+  CASE(514):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 does not have spindle 2 assignment'
+  DCPTEXT_f00 = 514
+  CASE(515):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 does not have spindle 2 assignment'
+  DCPTEXT_f00 = 515
+  CASE(516):
+  DCPTEXT_f04 = 'Process: Feeder master does not have spindle 3 assignment'
+  DCPTEXT_f00 = 516
+  CASE(517):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 does not have spindle 3 assignment'
+  DCPTEXT_f00 = 517
+  CASE(518):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 does not have spindle 3 assignment'
+  DCPTEXT_f00 = 518
+  CASE(519):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 does not have spindle 3 assignment'
+  DCPTEXT_f00 = 519
+  CASE(520):
+  DCPTEXT_f04 = 'Process: Feeder master does not have spindle 4 assignment'
+  DCPTEXT_f00 = 520
+  CASE(521):
+  DCPTEXT_f04 = 'Process: Feeder slave 1 does not have spindle 4 assignment'
+  DCPTEXT_f00 = 521
+  CASE(522):
+  DCPTEXT_f04 = 'Process: Feeder slave 2 does not have spindle 4 assignment'
+  DCPTEXT_f00 = 522
+  CASE(523):
+  DCPTEXT_f04 = 'Process: Feeder slave 3 does not have spindle 4 assignment'
+  DCPTEXT_f00 = 523
+  CASE(524):
+  DCPTEXT_f04 = 'Feeder master: Atomizing device not connected anymore'
+  DCPTEXT_f00 = 524
+  CASE(525):
+  DCPTEXT_f04 = 'Feeder slave 1: Atomizing device not connected anymore'
+  DCPTEXT_f00 = 525
+  CASE(526):
+  DCPTEXT_f04 = 'Feeder slave 2: Atomizing device not connected anymore'
+  DCPTEXT_f00 = 526
+  CASE(527):
+  DCPTEXT_f04 = 'Feeder slave 3: Atomizing device not connected anymore'
+  DCPTEXT_f00 = 527
+  CASE(528):
+  DCPTEXT_f04 = 'Feeder master: Magazine not connected anymore'
+  DCPTEXT_f00 = 528
+  CASE(529):
+  DCPTEXT_f04 = 'Feeder slave 1: Magazine not connected anymore'
+  DCPTEXT_f00 = 529
+  CASE(530):
+  DCPTEXT_f04 = 'Feeder slave 2: Magazine not connected anymore'
+  DCPTEXT_f00 = 530
+  CASE(531):
+  DCPTEXT_f04 = 'Feeder slave 3: Magazine not connected anymore'
+  DCPTEXT_f00 = 531
+  CASE(532):
+  DCPTEXT_f04 = 'Feeder master: Rivet in receiver not recognized'
+  DCPTEXT_f00 = 532
+  CASE(533):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet in receiver not recognized'
+  DCPTEXT_f00 = 533
+  CASE(534):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet in receiver not recognized'
+  DCPTEXT_f00 = 534
+  CASE(535):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet in receiver not recognized'
+  DCPTEXT_f00 = 535
+  CASE(536):
+  DCPTEXT_f04 = 'Feeder master: Filling station not connected anymore'
+  DCPTEXT_f00 = 536
+  CASE(537):
+  DCPTEXT_f04 = 'Feeder slave 1: Filling station not connected anymore'
+  DCPTEXT_f00 = 537
+  CASE(538):
+  DCPTEXT_f04 = 'Feeder slave 2: Filling station not connected anymore'
+  DCPTEXT_f00 = 538
+  CASE(539):
+  DCPTEXT_f04 = 'Feeder slave 3: Filling station not connected anymore'
+  DCPTEXT_f00 = 539
+  CASE(540):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 540
+  CASE(541):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 541
+  CASE(542):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 542
+  CASE(543):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 543
+  CASE(544):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 544
+  CASE(545):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 545
+  CASE(546):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 546
+  CASE(547):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 547
+  CASE(548):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 548
+  CASE(549):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 549
+  CASE(550):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 550
+  CASE(551):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 551
+  CASE(552):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, Bunker not filled'
+  DCPTEXT_f00 = 552
+  CASE(553):
+  DCPTEXT_f04 = 'Feeder slave1: cetering pins not in alignment position'
+  DCPTEXT_f00 = 553
+  CASE(554):
+  DCPTEXT_f04 = 'Feeder slave2: cetering pins not in alignment position'
+  DCPTEXT_f00 = 554
+  CASE(555):
+  DCPTEXT_f04 = 'Feeder slave3: cetering pins not in alignment position'
+  DCPTEXT_f00 = 555
+  CASE(556):
+  DCPTEXT_f04 = 'Feeder master: cetering pins not in home position'
+  DCPTEXT_f00 = 556
+  CASE(557):
+  DCPTEXT_f04 = 'Feeder slave1: cetering pins not in home position'
+  DCPTEXT_f00 = 557
+  CASE(558):
+  DCPTEXT_f04 = 'Feeder slave2: cetering pins not in home position'
+  DCPTEXT_f00 = 558
+  CASE(559):
+  DCPTEXT_f04 = 'Feeder slave3: cetering pins not in home position'
+  DCPTEXT_f00 = 559
+  CASE(560):
+  DCPTEXT_f04 = 'Feeder master: magazine lock not sealed'
+  DCPTEXT_f00 = 560
+  CASE(561):
+  DCPTEXT_f04 = 'Feeder slave1: magazine lock not sealed'
+  DCPTEXT_f00 = 561
+  CASE(562):
+  DCPTEXT_f04 = 'Feeder slave2: magazine lock not sealed'
+  DCPTEXT_f00 = 562
+  CASE(563):
+  DCPTEXT_f04 = 'Feeder slave3: magazine lock not sealed'
+  DCPTEXT_f00 = 563
+  CASE(564):
+  DCPTEXT_f04 = 'Feeder master: magazine lock not opened'
+  DCPTEXT_f00 = 564
+  CASE(565):
+  DCPTEXT_f04 = 'Feeder slave1: magazine lock not opened'
+  DCPTEXT_f00 = 565
+  CASE(566):
+  DCPTEXT_f04 = 'Feeder slave2: magazine lock not opened'
+  DCPTEXT_f00 = 566
+  CASE(567):
+  DCPTEXT_f04 = 'Feeder slave3: magazine lock not opened'
+  DCPTEXT_f00 = 567
+  CASE(568):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 568
+  CASE(569):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 569
+  CASE(570):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 570
+  CASE(571):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 571
+  CASE(572):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 572
+  CASE(573):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 573
+  CASE(574):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 574
+  CASE(575):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 575
+  CASE(576):
+  DCPTEXT_f04 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 576
+  CASE(577):
+  DCPTEXT_f04 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 577
+  CASE(578):
+  DCPTEXT_f04 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 578
+  CASE(579):
+  DCPTEXT_f04 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 579
+  CASE(580):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 580
+  CASE(581):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 581
+  CASE(582):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 582
+  CASE(583):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 583
+  CASE(584):
+  DCPTEXT_f04 = 'Feeder master: Magazine slide 2 has not reached position magazine'
+  DCPTEXT_f00 = 584
+  CASE(585):
+  DCPTEXT_f04 = 'Feeder slave 1: Magazine slide 2 has not reached position magazine'
+  DCPTEXT_f00 = 585
+  CASE(586):
+  DCPTEXT_f04 = 'Feeder slave 2: Magazine slide 2 has not reached position magazine'
+  DCPTEXT_f00 = 586
+  CASE(587):
+  DCPTEXT_f04 = 'Feeder slave 3: Magazine slide 2 has not reached position magazine'
+  DCPTEXT_f00 = 587
+  CASE(588):
+  DCPTEXT_f04 = 'Feeder master: Magazine slide 2 has not reached position receiver'
+  DCPTEXT_f00 = 588
+  CASE(589):
+  DCPTEXT_f04 = 'Feeder slave 1: Magazine slide 2 has not reached position receiver'
+  DCPTEXT_f00 = 589
+  CASE(590):
+  DCPTEXT_f04 = 'Feeder slave 2: Magazine slide 2 has not reached position receiver'
+  DCPTEXT_f00 = 590
+  CASE(591):
+  DCPTEXT_f04 = 'Feeder slave 3: Magazine slide 2 has not reached position receiver'
+  DCPTEXT_f00 = 591
+  CASE(592):
+  DCPTEXT_f04 = 'Feeder master: Filling station could not be connected'
+  DCPTEXT_f00 = 592
+  CASE(593):
+  DCPTEXT_f04 = 'Feeder slave 1: Filling station could not be connected'
+  DCPTEXT_f00 = 593
+  CASE(594):
+  DCPTEXT_f04 = 'Feeder slave 2: Filling station could not be connected'
+  DCPTEXT_f00 = 594
+  CASE(595):
+  DCPTEXT_f04 = 'Feeder slave 3: Filling station could not be connected'
+  DCPTEXT_f00 = 595
+  CASE(596):
+  DCPTEXT_f04 = 'Feeder master: Magazine did not reach transition position'
+  DCPTEXT_f00 = 596
+  CASE(597):
+  DCPTEXT_f04 = 'Feeder slave1: Magazine did not reach transition position'
+  DCPTEXT_f00 = 597
+  CASE(598):
+  DCPTEXT_f04 = 'Feeder slave2: Magazine did not reach transition position'
+  DCPTEXT_f00 = 598
+  CASE(599):
+  DCPTEXT_f04 = 'Feeder slave3: Magazine did not reach transition position'
+  DCPTEXT_f00 = 599
+  CASE(600):
+  DCPTEXT_f04 = 'ERC: The battery of the memory module is discharged'
+  DCPTEXT_f00 = 600
+  CASE(601):
+  DCPTEXT_f04 = 'ERC: The battery of the clock on the central CCPU is discharged'
+  DCPTEXT_f00 = 601
+  CASE(602):
+  DCPTEXT_f04 = 'ERC: DIP switch S2 on central CCPU is set'
+  DCPTEXT_f00 = 602
+  CASE(603):
+  DCPTEXT_f04 = 'ERC: IP addresses in memory module (RAM module) and ethernet card not identical'
+  DCPTEXT_f00 = 603
+  CASE(604):
+  DCPTEXT_f04 = 'Feeder master: Rivet filling level too low'
+  DCPTEXT_f00 = 604
+  CASE(605):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet filling level too low'
+  DCPTEXT_f00 = 605
+  CASE(606):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet filling level too low'
+  DCPTEXT_f00 = 606
+  CASE(607):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet filling level too low'
+  DCPTEXT_f00 = 607
+  CASE(608):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 608
+  CASE(609):
+  DCPTEXT_f04 = 'Feeder master: Fault during rivet separation'
+  DCPTEXT_f00 = 609
+  CASE(610):
+  DCPTEXT_f04 = 'Feeder slave 1: Fault during rivet separation'
+  DCPTEXT_f00 = 610
+  CASE(611):
+  DCPTEXT_f04 = 'Feeder slave 2: Fault during rivet separation'
+  DCPTEXT_f00 = 611
+  CASE(612):
+  DCPTEXT_f04 = 'Feeder slave 3: Fault during rivet separation'
+  DCPTEXT_f00 = 612
+  CASE(613):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 613
+  CASE(614):
+  DCPTEXT_f04 = 'Feeder master: Maintenance feed tube necessary'
+  DCPTEXT_f00 = 614
+  CASE(615):
+  DCPTEXT_f04 = 'Spindle: Maintenance is necessary'
+  DCPTEXT_f00 = 615
+  CASE(616):
+  DCPTEXT_f04 = 'Spindle: Maintenance die is necessary'
+  DCPTEXT_f00 = 616
+  CASE(617):
+  DCPTEXT_f04 = 'Spindle: Maintenance punch is necessary'
+  DCPTEXT_f00 = 617
+  CASE(618):
+  DCPTEXT_f04 = 'Spindle: Maintenance free counter 1 is necessary'
+  DCPTEXT_f00 = 618
+  CASE(619):
+  DCPTEXT_f04 = 'Process: Tolerance exceeding tolerance curve'
+  DCPTEXT_f00 = 619
+  CASE(620):
+  DCPTEXT_f04 = 'ERC: No physical network connection available (uplink)'
+  DCPTEXT_f00 = 620
+  CASE(621):
+  DCPTEXT_f04 = 'ERC: Time synchronisation via network disturbed - Connection to time server could not be established'
+  DCPTEXT_f00 = 621
+  CASE(622):
+  DCPTEXT_f04 = 'Feeder slave 1: Maintenance feed tube necessary'
+  DCPTEXT_f00 = 622
+  CASE(623):
+  DCPTEXT_f04 = 'Feeder slave 2: Maintenance feed tube necessary'
+  DCPTEXT_f00 = 623
+  CASE(624):
+  DCPTEXT_f04 = 'Feeder slave 3: Maintenance feed tube necessary'
+  DCPTEXT_f00 = 624
+  CASE(625):
+  DCPTEXT_f04 = 'Spindle: Maintenance free counter 2 is necessary'
+  DCPTEXT_f00 = 625
+  CASE(626):
+  DCPTEXT_f04 = 'Spindle: Maintenance free counter 3 is necessary'
+  DCPTEXT_f00 = 626
+  CASE(627):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 spindle is necessary'
+  DCPTEXT_f00 = 627
+  CASE(628):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 die is necessary'
+  DCPTEXT_f00 = 628
+  CASE(629):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 punch is necessary'
+  DCPTEXT_f00 = 629
+  CASE(630):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 free counter 1 is necessary'
+  DCPTEXT_f00 = 630
+  CASE(631):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 free counter 2 is necessary'
+  DCPTEXT_f00 = 631
+  CASE(632):
+  DCPTEXT_f04 = 'Spindle: Maintenance step 2 free counter 3 is necessary'
+  DCPTEXT_f00 = 632
+  CASE(633):
+  DCPTEXT_f04 = 'Feeder master: Maintenance step 2 feed tube is necessary'
+  DCPTEXT_f00 = 633
+  CASE(634):
+  DCPTEXT_f04 = 'Feeder slave 1: Maintenance step 2 feed tube is necessary'
+  DCPTEXT_f00 = 634
+  CASE(635):
+  DCPTEXT_f04 = 'Feeder slave 2: Maintenance step 2 feed tube is necessary'
+  DCPTEXT_f00 = 635
+  CASE(636):
+  DCPTEXT_f04 = 'Feeder slave 3: Maintenance step 2 feed tube is necessary'
+  DCPTEXT_f00 = 636
+  CASE(637):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 637
+  CASE(638):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 638
+  CASE(639):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 639
+  CASE(640):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 640
+  CASE(641):
+  DCPTEXT_f04 = 'Feeder master: Rivet filling level in spindle magazine too low'
+  DCPTEXT_f00 = 641
+  CASE(642):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet filling level in spindle magazine too low'
+  DCPTEXT_f00 = 642
+  CASE(643):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet filling level in spindle magazine too low'
+  DCPTEXT_f00 = 643
+  CASE(644):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet filling level in spindle magazine too low'
+  DCPTEXT_f00 = 644
+  CASE(645):
+  DCPTEXT_f04 = 'Feeder master: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 645
+  CASE(646):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 646
+  CASE(647):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 647
+  CASE(648):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet jam in oscillating conveyor'
+  DCPTEXT_f00 = 648
+  CASE(649):
+  DCPTEXT_f04 = 'Controller: l^2T notification threshold exceeded'
+  DCPTEXT_f00 = 649
+  CASE(650):
+  DCPTEXT_f04 = 'Controller: Load notification threshold exceeded'
+  DCPTEXT_f00 = 650
+  CASE(651):
+  DCPTEXT_f04 = 'Controller: Following error'
+  DCPTEXT_f00 = 651
+  CASE(652):
+  DCPTEXT_f04 = 'Controller: Missing mains phases'
+  DCPTEXT_f00 = 652
+  CASE(653):
+  DCPTEXT_f04 = 'Controller: Referencing point not set'
+  DCPTEXT_f00 = 653
+  CASE(654):
+  DCPTEXT_f04 = 'Controller: N stop active'
+  DCPTEXT_f00 = 654
+  CASE(655):
+  DCPTEXT_f04 = 'Controller: P stop active'
+  DCPTEXT_f00 = 655
+  CASE(656):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 656
+  CASE(657):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 657
+  CASE(658):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 658
+  CASE(659):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 659
+  CASE(660):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 660
+  CASE(661):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 661
+  CASE(662):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 662
+  CASE(663):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 663
+  CASE(664):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 664
+  CASE(665):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 665
+  CASE(666):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 666
+  CASE(667):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 667
+  CASE(668):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 668
+  CASE(669):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 669
+  CASE(670):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 670
+  CASE(671):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 671
+  CASE(672):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 672
+  CASE(673):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 673
+  CASE(674):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 674
+  CASE(675):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 675
+  CASE(676):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 676
+  CASE(677):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 677
+  CASE(678):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 678
+  CASE(679):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 679
+  CASE(680):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 680
+  CASE(681):
+  DCPTEXT_f04 = 'Feeder master: Filling station not ready for docking'
+  DCPTEXT_f00 = 681
+  CASE(682):
+  DCPTEXT_f04 = 'Feeder slave 1: Filling station not ready for docking'
+  DCPTEXT_f00 = 682
+  CASE(683):
+  DCPTEXT_f04 = 'Feeder slave 2: Filling station not ready for docking'
+  DCPTEXT_f00 = 683
+  CASE(684):
+  DCPTEXT_f04 = 'Feeder slave 3: Filling station not ready for docking'
+  DCPTEXT_f00 = 684
+  CASE(685):
+  DCPTEXT_f04 = 'Feeder master: Fault at feeder'
+  DCPTEXT_f00 = 685
+  CASE(686):
+  DCPTEXT_f04 = 'Feeder slave 1: Fault at feeder'
+  DCPTEXT_f00 = 686
+  CASE(687):
+  DCPTEXT_f04 = 'Feeder slave 2: Fault at feeder'
+  DCPTEXT_f00 = 687
+  CASE(688):
+  DCPTEXT_f04 = 'Feeder slave 3: Fault at feeder'
+  DCPTEXT_f00 = 688
+  CASE(689):
+  DCPTEXT_f04 = 'Feeder master: Fault at filling station'
+  DCPTEXT_f00 = 689
+  CASE(690):
+  DCPTEXT_f04 = 'Feeder slave 1: Fault at filling station'
+  DCPTEXT_f00 = 690
+  CASE(691):
+  DCPTEXT_f04 = 'Feeder slave 2: Fault at filling station'
+  DCPTEXT_f00 = 691
+  CASE(692):
+  DCPTEXT_f04 = 'Feeder slave 3: Fault at filling station'
+  DCPTEXT_f00 = 692
+  CASE(693):
+  DCPTEXT_f04 = 'Process: JIC-spidle assigned dVall-average-value out of tolerance threshold'
+  DCPTEXT_f00 = 693
+  CASE(694):
+  DCPTEXT_f04 = 'Die changer: Station not closed'
+  DCPTEXT_f00 = 694
+  CASE(695):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 695
+  CASE(696):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 696
+  CASE(697):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 697
+  CASE(698):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 698
+  CASE(699):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 699
+  CASE(700):
+  DCPTEXT_f04 = 'Feeder master: Filling station does not reach basic position'
+  DCPTEXT_f00 = 700
+  ELSE:
+  DCPTEXT_f04 = 'Undefined SPR DCP Fault Message'
+  ENDSELECT
+  CNV_INT_STR(DCPTEXT_f00, 4, 10, STRDCPNUM)
+  SET_STR_REG(9, STRDCPNUM, STATUS)
+  RETURN(0)
+END G_DCP_SPR1_2
+
+BEGIN
+END DCP_TUCKER_2

@@ -1,0 +1,44 @@
+<!doctype html><meta charset=utf-8><title>MI_FAP v2.0.9 逻辑分析注解</title>
+<style>body{font:14px/1.6 sans-serif;max-width:900px;margin:30px auto}td,th{border:1px solid #ccc;padding:4px 12px}</style>
+<h1>MI_FAP v2.0.9 反编译逻辑辅助分析注解</h1>
+<p style="background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px"><b><a href="00_架构时序与缺陷分析.html">★ 00_架构时序与缺陷分析</a></b>——架构分层/执行时序/缺陷/待完善/手册对照（先读这个）</p>
+<p>来源：08_软件安装包\MI_FAP_v2.0.9.zip（118 .pc → pc2kl3 反编译）。每应用一页：定位注解、模块/例程、调用与消息、高亮源码。</p>
+<table><tr><th>应用</th><th>定位</th><th>模块数</th><th>分析页</th></tr>
+<tr><td>MI01_cmn</td><td>CMN 公共</td><td>18</td><td><a href=MI01_cmn.html>MI01_cmn.html</a></td></tr>
+<tr><td>MI02_tch</td><td>ATC 换枪站</td><td>6</td><td><a href=MI02_tch.html>MI02_tch.html</a></td></tr>
+<tr><td>MI03_grp</td><td>GRP 抓手群控</td><td>4</td><td><a href=MI03_grp.html>MI03_grp.html</a></td></tr>
+<tr><td>MI04_ssw</td><td>SSW 点焊工位</td><td>9</td><td><a href=MI04_ssw.html>MI04_ssw.html</a></td></tr>
+<tr><td>MI08_dsp</td><td>DSP 涂胶</td><td>8</td><td><a href=MI08_dsp.html>MI08_dsp.html</a></td></tr>
+<tr><td>MI09_dsd</td><td>DSD 视觉检测</td><td>6</td><td><a href=MI09_dsd.html>MI09_dsd.html</a></td></tr>
+<tr><td>MI11_apl</td><td>APL 焊点调度</td><td>5</td><td><a href=MI11_apl.html>MI11_apl.html</a></td></tr>
+<tr><td>MI13_rvh</td><td>RVH 焊枪管理</td><td>7</td><td><a href=MI13_rvh.html>MI13_rvh.html</a></td></tr>
+<tr><td>MI14_spr</td><td>SPR 自冲铆</td><td>5</td><td><a href=MI14_spr.html>MI14_spr.html</a></td></tr>
+<tr><td>MI15_spr</td><td>SPR 自冲铆</td><td>5</td><td><a href=MI15_spr.html>MI15_spr.html</a></td></tr>
+<tr><td>MI17_obj</td><td>OBJ 坐标/对象</td><td>11</td><td><a href=MI17_obj.html>MI17_obj.html</a></td></tr>
+<tr><td>MI19_cli</td><td>CLI 信号联锁</td><td>4</td><td><a href=MI19_cli.html>MI19_cli.html</a></td></tr>
+<tr><td>MI20_swh</td><td>SWH 螺柱焊</td><td>6</td><td><a href=MI20_swh.html>MI20_swh.html</a></td></tr>
+<tr><td>MI21_swh</td><td>SWH 螺柱焊</td><td>5</td><td><a href=MI21_swh.html>MI21_swh.html</a></td></tr>
+<tr><td>MI22_fds</td><td>FDS 流钻螺丝</td><td>6</td><td><a href=MI22_fds.html>MI22_fds.html</a></td></tr>
+<tr><td>MI24_arc</td><td>ARC 弧焊</td><td>4</td><td><a href=MI24_arc.html>MI24_arc.html</a></td></tr>
+<tr><td>MI25_las</td><td>LAS 激光</td><td>3</td><td><a href=MI25_las.html>MI25_las.html</a></td></tr>
+<tr><td>MI26_few</td><td>FEW 流程/位置</td><td>3</td><td><a href=MI26_few.html>MI26_few.html</a></td></tr>
+<tr><td>core</td><td>核心库</td><td>3</td><td><a href=core.html>core.html</a></td></tr>
+</table>
+<h2>逐应用深拆（五件套：指令级时序图 / 参数表 / GUI 流程 / 异常路径 / TP 交互）</h2>
+<p style="background:#eef7ff;border-left:4px solid #2b7cd3;padding:10px 14px"><b><a href="MI_FAP_逐应用深拆_总集.md">★ 总集与索引</a></b>（18 应用全景+系列级发现）· <b><a href="MI_FAP_手册README勘误表.md">手册/README 勘误表</a></b>（A×8 B×18 C×5 D 代码瑕疵）</p>
+<table><tr><th>深拆文档</th><th>覆盖</th></tr>
+<tr><td><a href="MI01_CMN_逐应用深拆.md">MI01_CMN</a></td><td>PLC 网关/后台框架</td></tr>
+<tr><td><a href="MI02_TCH_逐应用深拆.md">MI02_TCH</a></td><td>换枪（Walther/Staubli）</td></tr>
+<tr><td><a href="MI03_GRP_逐应用深拆.md">MI03_GRP</a></td><td>抓手群控</td></tr>
+<tr><td><a href="MI04_SSW_逐应用深拆.md">MI04_SSW</a></td><td>点焊（三焊机+ISV）</td></tr>
+<tr><td><a href="MI08_DSP_逐应用深拆.md">MI08_DSP</a></td><td>涂胶（SCA/DMTS）</td></tr>
+<tr><td><a href="MI09_DSD_逐应用深拆.md">MI09_DSD</a></td><td>涂胶视觉检测（三品牌）</td></tr>
+<tr><td><a href="MI11_APL_逐应用深拆.md">MI11_APL</a></td><td>Arplas 焊+Dimple</td></tr>
+<tr><td><a href="MI13_RVH_逐应用深拆.md">MI13_RVH</a></td><td>SPR 旧 Tucker</td></tr>
+<tr><td><a href="MI14_MI15_SPR_逐应用深拆.md">MI14_MI15_SPR</a></td><td>SPR 新 Tucker+固极（三胞胎对照）</td></tr>
+<tr><td><a href="MI17_OBJ_逐应用深拆.md">MI17_OBJ</a></td><td>视觉引导坐标（壳+贝特威）</td></tr>
+<tr><td><a href="MI19_CLI_逐应用深拆.md">MI19_CLI</a></td><td>TOX 压铆（伺服/液压）</td></tr>
+<tr><td><a href="MI20_MI21_SWH_逐应用深拆.md">MI20_MI21_SWH</a></td><td>螺柱焊双胞胎</td></tr>
+<tr><td><a href="MI22_FDS_逐应用深拆.md">MI22_FDS</a></td><td>FDS 流钻螺丝</td></tr>
+<tr><td><a href="MI24_MI25_MI26_逐应用深拆.md">MI24_MI25_MI26</a></td><td>弧焊清枪+TRUMPF 激光+FEW 收官三联</td></tr>
+</table>

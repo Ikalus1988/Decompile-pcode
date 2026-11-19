@@ -1,0 +1,63 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_s_c_pose
+-- 
+-- brief: xyz_s_c_pose,
+--        send current cartesian pose
+--------------------------------------------------------------------------------
+PROGRAM xyz_s_c_pose
+
+
+%COMMENT = 'send current cart pose'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+CONST
+    PARAM_NUM = 1
+
+VAR
+    ret       :  INTEGER
+    data_type :  INTEGER
+    cart_pose :  XYZWPR
+    reg_no    :  INTEGER
+    real_NA   :  REAL
+    str_NA    :  STRING[1]
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+GET_TPE_PRM(PARAM_NUM, data_type, reg_no, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[S_C_POSE] fail to get reg number')
+ENDIF
+ResetOutData
+cart_pose = GET_POS_REG(reg_no, ret)
+IF (ret <> 0) THEN
+    log_error('[S_C_POSE] fail to get cart pose')
+ENDIF
+ret = AddInttoArr(CMD_S_C_POSE)
+IF (ret <> 0) THEN
+    log_error('[S_C_POSE] fail to pack cmd')
+ENDIF
+ret = AddCPostoArr(cart_pose)
+IF (ret <> 0) THEN
+    log_error('[S_C_POSE] fail to pack cart pose')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_s_c_pose

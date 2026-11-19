@@ -1,0 +1,1219 @@
+PROGRAM MM_MODULE
+--------------------------------------------------------------------------------
+-- Mechmind Module
+--------------------------------------------------------------------------------
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Module'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLIOTYPS
+%INCLUDE KLEVCCDF
+%INCLUDE mm_module_h
+
+--------------------------------------------------------------------------------
+-- MAIN PROGRAM
+--------------------------------------------------------------------------------
+BEGIN
+END MM_MODULE
+
+--------------------------------------------------------------------------------
+-- Init_Skt
+--------------------------------------------------------------------------------
+ROUTINE Init_Skt
+
+BEGIN
+--Init
+    IF UNINIT(C_Tag_L) OR UNINIT( Ip_Addr_L)  OR UNINIT(Svr_Port_L) OR UNINIT( Time_Out_L) THEN
+        C_Tag_L = ' '       
+        Ip_Addr_L = ' ' 
+        Svr_Port_L = 0             
+        Time_Out_L = 0
+    ENDIF
+    Status_ = 0
+-- Get  Tp  Parameter
+    Get_Arg(1, 3, Int_Value, Real_Value, C_Tag)
+    Get_Arg(2, 3, Int_Value, Real_Value, Ip_Addr)
+    Get_Arg(3, 1, Svr_Port, Real_Value, Str_Value)
+    Get_Arg(4, 1, Time_Out, Real_Value, Str_Value)
+--Copy Arg
+    IF (C_Tag_L <> C_Tag) OR (Ip_Addr_L <> Ip_Addr) OR (Svr_Port_L <> Svr_Port) OR (Time_Out_L <> Time_Out) THEN
+        C_Tag_L = C_Tag
+        Ip_Addr_L = Ip_Addr
+        Svr_Port_L = Svr_Port
+        Time_Out_L = Time_Out
+--Cnv_Int_Str
+        Host_Cfg = '$HOSTC_CFG['+C_Tag+']'
+        C_Tag_S = 'C'+C_Tag+':'
+--Set  Sm Cfg
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$COMMENT', 'MM_CLIENT', Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$PROTOCOL','SM', Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$SERVER_PORT', Svr_Port, Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$TIMEOUT',Time_Out, Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$STRT_REMOTE', Ip_Addr, Status)
+        Status_ =  Status_ + Status 
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$REMOTE', Ip_Addr, Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$COMMENT', 'MM_CLIENT', Status) 
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$STATE', 3, Status)
+        Status_ =  Status_ + Status
+        SET_VAR (Entry, '*SYSTEM*', Host_Cfg+'.$OPER', 3, Status)
+        Status_ =  Status_ + Status
+        IF   Status_<> 0 THEN
+            POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)    
+        ENDIF  
+--Connect To Server
+        GET_VAR(Entry, '*SYSTEM*',Host_Cfg+'.$STATE', C_Status, Status)
+        IF ( Status <> 0) OR ( C_Status <> Tag_Started ) THEN
+            POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 2, ERR_ABORT)  
+        ENDIF  
+        WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green),'MM:Restart Robot',CR)
+    ENDIF
+    MSG_CONNECT(C_Tag_S,Status)
+    IF (Status = 0) OR (Status = 67215) THEN
+        WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green),'MM:Init Connection Successfully',CR)
+        DELAY 500
+        MSG_DISCO(C_Tag_S,Status)
+    ELSE
+        POST_ERR(ErrCode, 'MM:Robot_Socket_Closed', 0, ERR_ABORT)  
+    ENDIF
+END Init_Skt
+--------------------------------------------------------------------------------
+-- Start_Vis
+--------------------------------------------------------------------------------
+ROUTINE Start_Vis
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Job, Real_Value, Str_Value)
+    Get_Arg(2, 1, Pos_Num_Need, Real_Value, Str_Value)
+    Get_Arg(3, 1, SendPos_Type, Real_Value, Str_Value)
+    Get_Arg(4, 1, Pr_Num, Real_Value, Str_Value)
+--Data
+	IF (SendPos_Type < 0) OR (SendPos_Type > 3) THEN
+		POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)
+	ENDIF
+    IF (SendPos_Type = 1) OR (SendPos_Type = 3) THEN
+        IF SendPos_Type = 1 THEN
+        	ReadFLPos
+	        Cur_Jps = CURJPOS(0,0)
+        else --SendPos_Type = 3
+        	Chk_Pr_Type(Pr_Num,1,pr_type,PR_JOINTPOS,PR_JOINTPOS)
+        	Cur_Jps = GET_JPOS_REG(Pr_Num,Status)
+	        IF Status <> 0 THEN
+             	POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT) 
+	        ENDIF
+        ENDIF
+    	CNV_JPOS_REL(Cur_Jps, Rel, Status)		 
+        IF Status <> 0 THEN
+             POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT) 
+        ENDIF
+		GET_VAR(Entry, '*SYSTEM*','$SCR_GRP[1].$NUM_ROB_AXS', Axis_Num, Status)
+		IF Axis_Num=4 THEN
+		   Rel[5] =0
+		   Rel[6] =0
+		else
+		   IF Axis_Num=5 THEN
+		   		Rel[6] =0
+		   ENDIF
+		ENDIF		
+    ELSE
+	    IF SendPos_Type = 2 THEN	
+			ReadFLPos    
+	    ENDIF
+    ENDIF
+    
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_ST_VIS, Job, Pos_Num_Need, SendPos_Type)
+    SELECT SendPos_Type OF
+		CASE(0):
+			WRITE Sock_Send(0, 0, 0, 0, 0, 0,CR)
+		CASE(1):
+			WRITE Sock_Send(Rel[1], Rel[2], Rel[3], Rel[4], Rel[5], Rel[6])
+	    	WRITE Sock_Send(Cur_Pos.X, Cur_Pos.Y, Cur_Pos.Z, Cur_Pos.W, Cur_Pos.P, Cur_Pos.R,CR)
+		CASE(2):
+			WRITE Sock_Send(Cur_Pos.X, Cur_Pos.Y, Cur_Pos.Z, Cur_Pos.W, Cur_Pos.P, Cur_Pos.R,CR)
+		CASE(3):
+			WRITE Sock_Send(Rel[1], Rel[2], Rel[3], Rel[4], Rel[5], Rel[6],CR)
+	ENDSELECT
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_ST_VIS) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> TRIG_OK THEN
+    	Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Start_Vis
+--------------------------------------------------------------------------------
+-- Get_VisData
+--------------------------------------------------------------------------------
+ROUTINE Get_VisData
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Job, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Lst_Data, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Pos_Num, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_Status, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_VIS, Job)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status, Last_Data, Pos_Num, Reserve)
+    FOR i=1 TO 20 DO
+        READ Sock_Rcv(MM_Pose[i].Pose.X, MM_Pose[i].Pose.Y, MM_Pose[i].Pose.Z)
+        READ Sock_Rcv(MM_Pose[i].Pose.W, MM_Pose[i].Pose.P, MM_Pose[i].Pose.R)
+        READ Sock_Rcv(MM_Pose[i].Label, MM_Pose[i].Speed)
+    ENDFOR
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VIS) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Lst_Data, Last_Data)
+    Set_IntReg(Reg_Pos_Num, Pos_Num)
+    Set_IntReg(Reg_Status, MM_Status)
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VisData
+
+--------------------------------------------------------------------------------
+-- Get_VisData2
+--------------------------------------------------------------------------------
+ROUTINE Get_VisData2
+
+BEGIN	
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Job, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Pos_Num, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Status, Real_Value, Str_Value) 
+    Last_Data=0
+    i=0
+    Pos_Num=0
+    WHILE Last_Data=0 DO
+		Last_Data=1
+	    --Send
+	    Open_Socket
+	    OPEN FILE Sock_Send('RW',C_Tag_S)
+	    WRITE Sock_Send(CMD_GET_VIS2, Job)
+	    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+	    CLOSE FILE Sock_Send
+	    --Receive    
+	    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+	    READ Sock_Rcv(MM_CMD, MM_Status, Last_Data, UserData_Num)
+	    IF (MM_Status <> 1100) THEN
+	    	CLOSE FILE Sock_Rcv
+	        GOTO LVIS2
+	    ENDIF
+	    --Add 1 to PosNum When Recv Success
+	    i=i+1	    
+	    READ Sock_Rcv(MMvis2_Pose[i].Pose.X, MMvis2_Pose[i].Pose.Y, MMvis2_Pose[i].Pose.Z)
+	    READ Sock_Rcv(MMvis2_Pose[i].Pose.W, MMvis2_Pose[i].Pose.P, MMvis2_Pose[i].Pose.R)
+	    READ Sock_Rcv(MMvis2_Pose[i].Label)
+	    FOR j=1 TO UserData_Num DO
+	        READ Sock_Rcv(User_Data[i,j])
+	    ENDFOR
+	    CLOSE FILE Sock_Rcv
+    ENDWHILE
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VIS2) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    LVIS2::
+    Pos_Num=i
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Pos_Num, Pos_Num)
+    Set_IntReg(Reg_Status, MM_Status)
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VisData2
+--------------------------------------------------------------------------------
+-- Set Model
+--------------------------------------------------------------------------------
+ROUTINE Set_Model
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Job, Real_Value, Str_Value)
+    Get_Arg(2, 1, Model_Num, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_MOD, Job, Model_Num)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_MOD) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_MOD_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Model
+--------------------------------------------------------------------------------
+-- Start_Viz
+--------------------------------------------------------------------------------
+ROUTINE Start_Viz
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, SendPos_Type, Real_Value, Str_Value)
+    Get_Arg(2, 1, Pr_Num, Real_Value, Str_Value)
+--Data
+	IF (SendPos_Type < 0) OR (SendPos_Type > 2) THEN
+		POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)
+	ENDIF
+    IF (SendPos_Type = 1) OR (SendPos_Type = 2) THEN
+        IF SendPos_Type = 1 THEN
+        	ReadFLPos
+	        Cur_Jps = CURJPOS(0,0)
+        else --SendPos_Type = 2
+        	Chk_Pr_Type(Pr_Num,1,pr_type,PR_JOINTPOS,PR_JOINTPOS)
+        	Cur_Jps = GET_JPOS_REG(Pr_Num,Status)
+	        IF Status <> 0 THEN
+             	POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT) 
+	        ENDIF
+        ENDIF
+    	CNV_JPOS_REL(Cur_Jps, Rel, Status)	 
+        IF Status <> 0 THEN
+             POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT) 
+        ENDIF
+		GET_VAR(Entry, '*SYSTEM*','$SCR_GRP[1].$NUM_ROB_AXS', Axis_Num, Status)
+		IF Axis_Num=4 THEN
+		   Rel[5] =0
+		   Rel[6] =0
+		else
+		   IF Axis_Num=5 THEN
+		   		Rel[6] =0
+		   ENDIF
+		ENDIF
+    ENDIF
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_ST_VIZ, SendPos_Type)
+    SELECT SendPos_Type OF
+		CASE(0):
+			WRITE Sock_Send(0, 0, 0, 0, 0, 0,CR)
+		CASE(1):
+			WRITE Sock_Send(Rel[1], Rel[2], Rel[3], Rel[4], Rel[5], Rel[6])
+	    	WRITE Sock_Send(Cur_Pos.X, Cur_Pos.Y, Cur_Pos.Z, Cur_Pos.W, Cur_Pos.P, Cur_Pos.R,CR)
+		CASE(2):
+			WRITE Sock_Send(Rel[1], Rel[2], Rel[3], Rel[4], Rel[5], Rel[6],CR)
+	ENDSELECT   
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_ST_VIZ) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> VIZ_RUN_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Start_Viz
+--------------------------------------------------------------------------------
+-- Get_VizData
+--------------------------------------------------------------------------------
+ROUTINE Get_VizData
+
+BEGIN
+-- Init
+    FOR i=1 TO 9 DO
+        Rel_Jps[i]=0
+    ENDFOR    
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Jps_Pos, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Lst_Data, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Pos_Num, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_VPos_Num, Real_Value, Str_Value)
+    Get_Arg(5, 1, Reg_Status, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_VIZ, Jps_Pos)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status, Last_Data, Pos_Num, VPos_Num)
+    IF Jps_Pos = Send_Pos THEN
+        FOR i=1 TO 20 DO
+            READ Sock_Rcv(MM_Pose[i].Pose.X, MM_Pose[i].Pose.Y, MM_Pose[i].Pose.Z)
+            READ Sock_Rcv(MM_Pose[i].Pose.W, MM_Pose[i].Pose.P, MM_Pose[i].Pose.R)
+            READ Sock_Rcv(MM_Pose[i].Label, MM_Pose[i].Speed)
+        ENDFOR
+    ELSE
+    IF Jps_Pos = Send_Jps THEN
+        FOR i=1 TO 20 DO
+            READ Sock_Rcv(Rel_Jps[1], Rel_Jps[2], Rel_Jps[3], Rel_Jps[4], Rel_Jps[5], Rel_Jps[6])
+            READ Sock_Rcv(MM_Jps[i].Label, MM_Jps[i].Speed)
+            CNV_REL_JPOS(Rel_Jps,MM_Jps[i].Jps,Status)
+            IF Status <> 0 THEN 
+                POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+            ENDIF
+        ENDFOR    
+    ELSE
+        POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)	
+    ENDIF
+    ENDIF
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VIZ) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Lst_Data, Last_Data)
+    Set_IntReg(Reg_Pos_Num, Pos_Num)
+    Set_IntReg(Reg_VPos_Num, VPos_Num)
+    Set_IntReg(Reg_Status, MM_Status) 
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VizData
+
+--------------------------------------------------------------------------------
+-- Get_VizData2
+--------------------------------------------------------------------------------
+ROUTINE Get_VizData2
+
+BEGIN	
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Jps_Pos, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Pos_Num, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_VPos_Num, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_Status, Real_Value, Str_Value) 
+    Last_Data=0
+    i=0
+    VPos_Num=0
+    Pos_Num=0
+WHILE Last_Data=0 DO
+	Last_Data=1
+    --Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_VIZ2, Jps_Pos)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+    --Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status, Last_Data, Vis_Point)
+    IF (MM_Status <> 2100) THEN
+    	CLOSE FILE Sock_Rcv
+        GOTO LVIZ2
+    ENDIF
+    --Add 1 to PosNum When Recv Success
+    i=i+1
+    IF (Jps_Pos = 2) OR (Jps_Pos =4) THEN
+        READ Sock_Rcv(MMviz2_Pose[i].Pose.X, MMviz2_Pose[i].Pose.Y, MMviz2_Pose[i].Pose.Z)
+        READ Sock_Rcv(MMviz2_Pose[i].Pose.W, MMviz2_Pose[i].Pose.P, MMviz2_Pose[i].Pose.R)
+        READ Sock_Rcv(MMviz2_Pose[i].MoveType, MMviz2_Pose[i].ToolNum,MMviz2_Pose[i].Speed)
+        IF Vis_Point = 1 THEN
+        	MMviz2_Pose[i].IsVisPt = TRUE
+        else
+        	MMviz2_Pose[i].IsVisPt = FALSE
+        ENDIF
+    ELSE
+	    IF (Jps_Pos = 1) OR (Jps_Pos =3) THEN
+	       READ Sock_Rcv(Rel_Jps[1], Rel_Jps[2], Rel_Jps[3], Rel_Jps[4], Rel_Jps[5], Rel_Jps[6])
+	       READ Sock_Rcv(MMviz2_Jps[i].MoveType,MMviz2_Jps[i].ToolNum, MMviz2_Jps[i].Speed)
+	       Rel_Jps[7]=0
+	       Rel_Jps[8]=0
+	       Rel_Jps[9]=0
+	       CNV_REL_JPOS(Rel_Jps,MMviz2_Jps[i].Jps,Status)
+	       IF Status <> 0 THEN 
+	            POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+	       ENDIF
+	       IF Vis_Point = 1 THEN
+	        	MMviz2_Jps[i].IsVisPt = TRUE
+	       else
+	        	MMviz2_Jps[i].IsVisPt = FALSE
+	       ENDIF	       
+	    ELSE
+	        POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)
+	    ENDIF
+    ENDIF
+    IF Vis_Point = 1 THEN
+        VPos_Num=i
+        IF (Jps_Pos = 1) OR (Jps_Pos = 2) THEN
+    		 READ Sock_Rcv(Viz_UserData[i].UserDataNum)
+    		 FOR j=1 TO Viz_UserData[i].UserDataNum DO
+    		 	READ Sock_Rcv(Viz_UserData[i].UsrData[j])
+    		 ENDFOR 
+    	ELSE
+            IF (Jps_Pos = 3) OR (Jps_Pos = 4) THEN    	
+                FOR j=1 TO 10 DO
+                    READ Sock_Rcv(Viz_PlanRes[i].Label[j])
+                ENDFOR 
+                READ Sock_Rcv(Viz_PlanRes[i].TotalGrabNum,Viz_PlanRes[i].CurGrabNum,Viz_PlanRes[i].EdgeNum)
+
+                FOR j=1 TO 3 DO
+                    READ Sock_Rcv(Viz_PlanRes[i].TCPoffset[j])
+                ENDFOR
+                READ Sock_Rcv(Viz_PlanRes[i].Direction)
+                FOR j=1 TO 3 DO
+                    READ Sock_Rcv(Viz_PlanRes[i].BoxSize[j])
+                ENDFOR
+                READ Sock_Rcv(Viz_UserData[i].UserDataNum)
+                FOR j=1 TO Viz_UserData[i].UserDataNum DO
+    		 	    READ Sock_Rcv(Viz_UserData[i].UsrData[j])
+    		    ENDFOR 
+            ENDIF
+        ENDIF
+    ENDIF
+    CLOSE FILE Sock_Rcv
+ENDWHILE
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VIZ2) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+    
+--Check return status
+    LVIZ2::
+    Check_Status(MM_Status)
+    Pos_Num=i
+    Set_IntReg(Reg_VPos_Num, VPos_Num)
+    Set_IntReg(Reg_Pos_Num, Pos_Num)
+    Set_IntReg(Reg_Status, MM_Status)
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VizData2
+
+--------------------------------------------------------------------------------
+-- Get_VizProp
+--------------------------------------------------------------------------------
+ROUTINE Get_VizProp
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Read_id, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Status, Real_Value, Str_Value)
+	Get_Arg(3, 1, Reg_Viz_Prop, Real_Value, Str_Value)
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_VIZP,Read_id)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status, Viz_Prop)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VIZP) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Status, MM_Status) 
+    Set_RealReg(Reg_Viz_Prop, Viz_Prop) 
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VizProp
+
+--------------------------------------------------------------------------------
+-- Set_VizProp
+--------------------------------------------------------------------------------
+ROUTINE Set_VizProp
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Read_id, Real_Value, Str_Value)
+    Get_Arg(2, 1, Reg_Status, Real_Value, Str_Value)
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_VIZP,Read_id)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_VIZP) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Status, MM_Status) 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_VizProp
+--------------------------------------------------------------------------------
+-- Get_Jps
+--------------------------------------------------------------------------------
+ROUTINE Get_Jps
+BEGIN
+-- Get  TP  Parameter
+    Get_Arg(1, 1, Serial, Real_Value, Str_Value)
+    Get_Arg(2, 1, Pr_Num, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Label, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_Speed, Real_Value, Str_Value)
+--Check If All Data 0
+    CNV_JPOS_REL(MM_Jps[Serial].Jps,Rel_Jps,Status)
+    IF Status <> 0 THEN 
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error1', 0, ERR_ABORT)
+    ENDIF
+    IF ((Rel_Jps[1]=0)AND(Rel_Jps[2]=0)AND(Rel_Jps[3]=0)AND(Rel_Jps[4]=0)AND(Rel_Jps[5]=0)AND(Rel_Jps[6]=0)) THEN 
+    	POST_ERR(ErrCode, 'MM:Robot_Internal_Error2', 0, ERR_ABORT)
+    ENDIF
+--Trans Jps
+    SET_JPOS_REG(Pr_Num, MM_Jps[Serial].Jps, Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error3', 0, ERR_ABORT)
+    ENDIF
+--Trans Label&Speed
+    Set_IntReg(Reg_Label, MM_Jps[Serial].Label)
+    Set_IntReg(Reg_Speed, MM_Jps[Serial].Speed)
+--Clear Pose Data
+    FOR i=1 TO 9 DO
+    	Rel_Jps[i]=0
+    ENDFOR
+    CNV_REL_JPOS(Rel_Jps,MM_Jps[Serial].Jps,Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error4', 0, ERR_ABORT)
+    ENDIF
+    MM_Jps[Serial].Label = 0
+    MM_Jps[Serial].Speed = 0       
+END Get_Jps
+
+--------------------------------------------------------------------------------
+-- Set Branch
+--------------------------------------------------------------------------------
+ROUTINE Set_Branch
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Branch_Num, Real_Value, Str_Value) 
+    Get_Arg(2, 1, Export_Num, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_BCH, Branch_Num, Export_Num)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_BCH) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_BCH_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Branch
+--------------------------------------------------------------------------------
+-- Set Index
+--------------------------------------------------------------------------------
+ROUTINE Set_Index
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Skill_Num, Real_Value, Str_Value) 
+    Get_Arg(2, 1, Index_Num, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_IDX, Skill_Num, Index_Num)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_IDX) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_IDX_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Index
+--------------------------------------------------------------------------------
+-- Get do list
+--------------------------------------------------------------------------------
+ROUTINE Get_DoList
+BEGIN
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_DL)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    FOR i=1 TO Do_Num DO
+        READ Sock_Rcv(Do_Port[i])
+    ENDFOR
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_DL) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_DL_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Get_DoList
+--------------------------------------------------------------------------------
+-- Set do list
+--------------------------------------------------------------------------------
+ROUTINE Set_DoList
+BEGIN
+    FOR i=1 TO Do_Num DO
+        IF Do_Port[i]>0 THEN
+        SET_PORT_VAL (io_dout, Do_Port[i], 1, Status)
+            IF Status <> 0 THEN
+                POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+            ENDIF
+        ENDIF
+    ENDFOR
+END Set_DoList
+--------------------------------------------------------------------------------
+-- Set Box Size
+--------------------------------------------------------------------------------
+ROUTINE Set_Box_Size
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Job, Real_Value, Str_Value) 
+    Get_Arg(2, 2, Int_Value, Box_Size[1], Str_Value) 
+    Get_Arg(3, 2, Int_Value, Box_Size[2], Str_Value) 
+    Get_Arg(4, 2, Int_Value, Box_Size[3], Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_BS, Job, Box_Size[1], Box_Size[2], Box_Size[3])
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_BS) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_BS_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Box_Size
+--------------------------------------------------------------------------------
+-- Set Pos
+--------------------------------------------------------------------------------
+ROUTINE Set_Pos
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 2, Int_Value, OutPos.X, Str_Value) 
+    Get_Arg(2, 2, Int_Value, OutPos.Y, Str_Value) 
+    Get_Arg(3, 2, Int_Value, OutPos.Z, Str_Value) 
+    Get_Arg(4, 2, Int_Value, OutPos.W, Str_Value) 
+    Get_Arg(5, 2, Int_Value, OutPos.P, Str_Value) 
+    Get_Arg(6, 2, Int_Value, OutPos.R, Str_Value)
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_POS, OutPos.X, OutPos.Y, OutPos.Z, OutPos.W, OutPos.P, OutPos.R)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_POS) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_POS_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Pos
+--------------------------------------------------------------------------------
+-- Set Float
+--------------------------------------------------------------------------------
+ROUTINE Set_Float
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 2, Int_Value, User_Float[1], Str_Value) 
+    Get_Arg(2, 2, Int_Value, User_Float[2], Str_Value) 
+    Get_Arg(3, 2, Int_Value, User_Float[3], Str_Value) 
+    Get_Arg(4, 2, Int_Value, User_Float[4], Str_Value) 
+    Get_Arg(5, 2, Int_Value, User_Float[5], Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_FLT, User_Float[1], User_Float[2], User_Float[3], User_Float[4], User_Float[5])
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_FLT) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_FLT_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Float
+--------------------------------------------------------------------------------
+-- Set Int
+--------------------------------------------------------------------------------
+ROUTINE Set_Int
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, User_Int[1], Real_Value, Str_Value) 
+    Get_Arg(2, 1, User_Int[2], Real_Value, Str_Value) 
+    Get_Arg(3, 1, User_Int[3], Real_Value, Str_Value) 
+    Get_Arg(4, 1, User_Int[4], Real_Value, Str_Value) 
+    Get_Arg(5, 1, User_Int[5], Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_SET_INT, User_Int[1], User_Int[2], User_Int[3], User_Int[4], User_Int[5])
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_SET_INT) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> SET_INT_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    MSG_DISCO(C_Tag_S,Status)
+END Set_Int
+--------------------------------------------------------------------------------
+-- Get Float
+--------------------------------------------------------------------------------
+ROUTINE Get_Float
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Reg_Int, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_FLT)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status,Send_Float[1],Send_Float[2],Send_Float[3],Send_Float[4],Send_Float[5])
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_FLT) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> GET_FLT_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    FOR i = 0 TO 4 DO
+    Set_RealReg(Reg_Float+i, Send_Float[i+1])
+    ENDFOR
+    MSG_DISCO(C_Tag_S,Status)
+END Get_Float
+--------------------------------------------------------------------------------
+-- Get Int
+--------------------------------------------------------------------------------
+ROUTINE Get_Int
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Reg_Int, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_INT)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status,Send_Int[1],Send_Int[2],Send_Int[3],Send_Int[4],Send_Int[5])
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_INT) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    IF MM_Status <> GET_INT_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+    FOR i = 0 TO 4 DO
+    Set_IntReg(Reg_Int+i, Send_Int[i+1])
+    ENDFOR
+    MSG_DISCO(C_Tag_S,Status)
+END Get_Int
+--------------------------------------------------------------------------------
+-- Get Status
+--------------------------------------------------------------------------------
+ROUTINE Get_Status
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Reg_Status, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_STAT)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_STAT) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Status,MM_Status )
+    MSG_DISCO(C_Tag_S,Status)
+END Get_Status
+--------------------------------------------------------------------------------
+-- Stop Viz
+--------------------------------------------------------------------------------
+ROUTINE Stop_Viz
+BEGIN
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_STOP_VIZ)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status)
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_STOP_VIZ) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    MSG_DISCO(C_Tag_S,Status)
+END Stop_Viz
+--------------------------------------------------------------------------------
+-- Calibration
+--------------------------------------------------------------------------------
+ROUTINE Calibration
+
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Move_Type, Real_Value, Str_Value) 
+    Get_Arg(2, 1, PosJps, Real_Value, Str_Value) 
+    Get_Arg(3, 1, WaitTime, Real_Value, Str_Value) 
+    Get_Arg(4, 1, AxisNum, Real_Value, Str_Value) 
+    Get_Arg(5, 2, Int_Value,AxisVal, Str_Value)
+    Get_Arg(6, 1, Reg_CalibPos, Real_Value, Str_Value)
+    WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MMIND Calibration Start! ',CR)
+--Data
+    FOR i=1 TO 9 DO
+        RelSend[i] = 0
+        RelRcv[i] = 0
+    ENDFOR
+    Cur_Jps = CURJPOS(0,0)
+    CNV_JPOS_REL(Cur_Jps, RelSend, Status)
+    IF Status <> 0 THEN
+         POST_ERR(ErrCode, 'MM:Robot_Internal_Error1', 0, ERR_ABORT) 
+    ENDIF
+    ReadFLPos
+ --Get  PR Config
+     Pr_Calib=GET_POS_REG(Reg_CalibPos,Status)
+     IF Status <> 0 THEN
+         POST_ERR(ErrCode, 'MM:Robot_Internal_Error2', 0, ERR_ABORT) 
+     ENDIF
+     P_CalibPos.Config_Data=Pr_Calib.Config_Data
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_CALIB,0)
+    WRITE Sock_Send(Cur_Pos.X,Cur_Pos.Y,Cur_Pos.Z,Cur_Pos.W,Cur_Pos.P ,Cur_Pos.R)
+    WRITE Sock_Send(RelSend[1], RelSend[2], RelSend[3], RelSend[4], RelSend[5], RelSend[6], CR)
+    CLOSE FILE Sock_Send  
+L1::
+--Receive    
+    SET_FILE_ATR(Sock_Rcv,ATR_UF)
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD,MM_Status,MM_CStatus)
+    READ Sock_Rcv(P_CalibPos.X,P_CalibPos.Y,P_CalibPos.Z,P_CalibPos.W,P_CalibPos.P,P_CalibPos.R)
+    READ Sock_Rcv(RelRcv[1],RelRcv[2],RelRcv[3],RelRcv[4],RelRcv[5],RelRcv[6])
+    FOR i=1 TO 150 DO
+        READ Sock_Rcv(Null)
+    ENDFOR
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_CALIB) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+    Check_Status(MM_Status)
+    IF MM_Status <> CALIB_OK THEN
+        Post_IPCErr(MM_Status)
+    ENDIF 
+--Data
+    IF AxisNum=7 THEN
+        RelRcv[7]=AxisVal
+        P_CalibPos.EXT1 = AxisVal
+    ENDIF
+    CNV_REL_JPOS(RelRcv,P_CalibJps,Status)
+    IF Status <> 0 THEN 
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error3', 0, ERR_ABORT)
+    ENDIF
+    IF Move_Type=1 THEN
+        $MOTYPE=LINEAR
+        MOVE TO P_CalibPos
+    ELSE
+    IF Move_Type=2 THEN   
+        IF PosJps=1 THEN
+            $MOTYPE=JOINT
+            MOVE TO P_CalibPos
+        ELSE
+        IF PosJps=2 THEN
+            $MOTYPE=JOINT
+            MOVE TO P_CalibJps
+        ELSE
+            POST_ERR(ErrCode,'MM:Robot_Argument_Error1', 0, ERR_ABORT)
+        ENDIF
+        ENDIF
+    ELSE    
+        POST_ERR(ErrCode,'MM:Robot_Argument_Error2', 0, ERR_ABORT)
+    ENDIF  
+    ENDIF
+    
+    IF MM_CStatus=1 THEN
+        WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MMIND Calibration Finished! ',CR)
+        GOTO L2
+    ENDIF
+    DELAY WaitTime*1000
+--Send
+    Cur_Jps = CURJPOS(0,0)
+    CNV_JPOS_REL(Cur_Jps, RelSend, Status)
+    IF Status <> 0 THEN
+         POST_ERR(ErrCode, 'MM:Robot_Internal_Error4', 0, ERR_ABORT) 
+    ENDIF
+    ReadFLPos
+    SET_FILE_ATR(Sock_Send,ATR_UF)
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_CALIB,1)
+    WRITE Sock_Send(Cur_Pos.X,Cur_Pos.Y,Cur_Pos.Z,Cur_Pos.W,Cur_Pos.P ,Cur_Pos.R)
+    WRITE Sock_Send(RelSend[1], RelSend[2], RelSend[3], RelSend[4], RelSend[5], RelSend[6], CR)
+    CLOSE FILE Sock_Send    
+    GOTO L1    
+L2::
+    MSG_DISCO(C_Tag_S,Status)
+END Calibration
+--------------------------------------------------------------------------------
+-- Function
+--------------------------------------------------------------------------------
+ROUTINE Get_Arg--(DataNum:INTEGER;DataType:INTEGER;Int:INTEGER;Rel:REAL;Str:STRING) FROM  MM_MODULE
+BEGIN
+    GET_TPE_PRM(DataNum, Data_Type, Int, Rel, Str, Status)
+    IF (Status <> 0) THEN
+    	POST_ERR(ErrCode,'MM:Robot_Argument_Error1', 0, ERR_ABORT)
+    else
+        IF (DataType<>2) THEN       	
+        	IF (Data_Type <> DataType) THEN       
+        		POST_ERR(ErrCode,'MM:Robot_Argument_Error2', 0, ERR_ABORT)
+        	ENDIF
+        else
+	    	IF (Data_Type <> 2) THEN
+	    		IF (Data_Type = 1) THEN
+	    			Rel = Int
+	    		else
+	    			POST_ERR(ErrCode,'MM:Robot_Argument_Error3', 0, ERR_ABORT)
+	    		ENDIF
+	    	ENDIF        	
+        ENDIF     
+    ENDIF		
+END Get_Arg
+
+ROUTINE Set_IntReg--(RegNo:INTEGER; Int:INTEGER) FROM  MM_MODULE
+BEGIN
+    SET_INT_REG(RegNo, Int, Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+    ENDIF		
+END Set_IntReg
+
+ROUTINE Set_RealReg--(RegNo:INTEGER;Rel:REAL) FROM  MM_MODULE
+BEGIN
+    SET_REAL_REG(RegNo, Rel, Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+    ENDIF		
+END Set_RealReg
+
+ROUTINE Open_Socket--FROM  MM_MODULE
+BEGIN
+    MSG_DISCO(C_Tag_S,Status)
+    SET_FILE_ATR(Sock_Send,ATR_UF)
+    SET_FILE_ATR(Sock_Rcv,ATR_UF)
+    MSG_CONNECT(C_Tag_S,Status)
+    IF (Status<>0) AND (Status<>67215) THEN
+        POST_ERR(ErrCode, 'MM:Robot_Socket_Closed', 0, ERR_ABORT)  
+    ENDIF
+END Open_Socket
+
+ROUTINE ReadFLPos--FROM  MM_MODULE
+BEGIN
+    $UFRAME=$MOR_GRP[1].$NILPOS
+    $UTOOL=$MOR_GRP[1].$NILPOS
+    Cur_Pos = CURPOS(0,0)
+END ReadFLPos
+
+ROUTINE Check_Status--(Status:INTEGER)  FROM  MM_MODULE
+BEGIN
+    SELECT Status OF 
+        CASE (1001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_NOT_REGISTERED=1001 ',CR)
+        CASE (1002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_NO_POSES=1002 ',CR)
+        CASE (1003):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_NO_CLOUD=1003 ',CR)
+        CASE (1004):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_SET_PROPERTY_FAILED=1004 ',CR)
+        CASE (1005):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_POINT_TYPE_ERROR=1005 ',CR)
+        CASE (1006):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_POINT_ERROR=1006 ',CR)
+        CASE (1007):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_IN_CALCULATING=1007 ',CR)
+        CASE (1008):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_ALREADY_FINISHED=1008 ',CR)
+        CASE (1009):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_POSES_MOTION_PARAMS_UNEQUAL=1009 ',CR)
+        CASE (1010):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_POSES_LABELS_UNEQUAL=1010 ',CR)
+        CASE (1011):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_PROJECT_NOT_FOUND=1011 ',CR)
+        CASE (1012):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_INVALID_MODEL_CODE=1012 ',CR)
+        CASE (1013):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_MODEL_NOT_FOUND=1013 ',CR)
+        CASE (1014):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_SWITCH_MODEL_FAILED=1014 ',CR)
+        CASE (1017):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_LABEL_MAPPING_ERROR=1017 ',CR)
+        CASE (1018):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_POSE_COUNT_ERROR=1018 ',CR)
+        CASE (1019):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VISION_RUN_TIMEOUT=1019 ',CR)
+        CASE (1100):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VISION_HAS_POSES=1100 ',CR)
+        CASE (1101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VISION_IS_READY=1101 ',CR)
+        CASE (1102):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VISION_TRIGGERED_OK=1102 ',CR)
+        CASE (1103):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VISION_HAS_PLAN_RESULTS=1103 ',CR)
+        CASE (1107):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VISION_SET_MODEL_OK=1107 ',CR)
+        CASE (1108):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DYNAMIC_SET_BOXSIZE_OK=1108 ',CR)
+        CASE (2001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_NOT_REGISTERED=2001 ',CR)
+        CASE (2002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_IS_RUNNING=2002 ',CR)
+        CASE (2003):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_NO_VISION_POSE=2003 ',CR)
+        CASE (2004):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_VISION_POSE_NOT_REACHABLE=2004 ',CR)
+        CASE (2005):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_SELECT_JPS_ERROR=2005 ',CR)
+        CASE (2006):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_COLLISION_CHECKED=2006 ',CR)
+        CASE (2007):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_PLAN_FILED=2007 ',CR)
+        CASE (2008):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_RUN_ERROR=2008 ',CR)
+        CASE (2009):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_NO_TCP_POSE=2009 ',CR)
+        CASE (2011):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_NO_DO_LIST=2011 ',CR)
+        CASE (2012):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_POINT_TYPE_ERROR=2012 ',CR)
+        CASE (2013):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_POINT_ERROR=2013 ',CR)
+        CASE (2014):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_PROJECT_NOT_SET=2014 ',CR)
+        CASE (2015):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_POSE_NOT_SUPPORTED=2015 ',CR)
+        CASE (2016):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_SET_PROPERTY_ERROR=2016 ',CR)
+        CASE (2017):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_STOP_FAILED=2017 ',CR)
+        CASE (2018):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_BRANCH_OUTPORT_ERROR=2018 ',CR)
+        CASE (2019):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_SET_BRANCH_ERROR=2019 ',CR)
+        CASE (2022):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_NOT_RUN_YET=2022 ',CR)
+        CASE (2023):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_PROJECT_IS_BROKEN=2023 ',CR)
+        CASE (2024):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_BRANCH_NAME_ERROR=2024 ',CR)
+        CASE (2025):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_RUN_TIMEOUT=2025 ',CR)
+        CASE (2026):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_INDEX_NAME_ERROR=2026 ',CR)
+        CASE (2027):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_INDEX_ORDER_ERROR=2027 ',CR)
+        CASE (2028):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:VIZ_SET_INDEX_ERROR=2028 ',CR)
+        CASE (2100):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_FINISHED=2100 ',CR)
+        CASE (2101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_COMMAND_STOP=2101 ',CR)
+        CASE (2102):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_SEND_DO_LIST_OK=2102 ',CR)
+        CASE (2103):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_RUN_OK=2103 ',CR)
+        CASE (2104):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_STOP_OK=2104 ',CR)
+        CASE (2105):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_SET_BRANCH_OK=2105 ',CR)
+        CASE (2106):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_SET_INDEX_OK=2106 ',CR)
+        CASE (2107):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:VIZ_SET_OUTER_POSE_OK=2107 ',CR)
+        CASE (2108):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:SET_VIZ_PROP_OK=2108 ',CR)
+        CASE (2109):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:GET_VIZ_PROP_OK=2109 ',CR)
+        CASE (3001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_INVALID_COMMAND=3001 ',CR)
+        CASE (3002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_ERROR_PACKAGE=3002 ',CR)
+        CASE (3003):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_CLIENT_DISCONNECTED=3003 ',CR)
+        CASE (3004):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_SERVER_DISCONNECTED=3004 ',CR)
+        CASE (3005):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_TIMEOUT_ERROR=3005 ',CR)
+        CASE (3006):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CENTER_OTHER_ERROR=3006 ',CR)
+        CASE (3100):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CENTER_CLIENT_CONNECTED=3100 ',CR)
+        CASE (3101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CENTER_CONNECT_TO_SERVER=3101 ',CR)
+        CASE (3102):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CENTER_WAIT_FOR_CLIENT=3102 ',CR)
+        CASE (4001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:ROBOT_INVALID_ROBOT_TYPE=4001 ',CR)
+        CASE (4002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:ROBOT_EULER_NOT_SUPPORTED=4002 ',CR)
+        CASE (4003):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:ROBOT_SERVICE_NOT_REGISTERED=4003 ',CR)
+        CASE (4004):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:ROBOT_MISSING_PARAMS_ERROR=4004 ',CR)
+        CASE (4005):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CONNECT_ROBOT_FAIL=4005 ',CR)
+        CASE (4100):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:ROBOT_SERVICE_REGISTERED=4100 ',CR)
+        CASE (4101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CONNECT_ROBOT_SUCCESS=4101 ',CR)
+        CASE (4102):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DISCONNECT_ROBOT_SUCCESS=4102 ',CR)
+        CASE (5001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:DYNAMIC_DATA_SET_SIZE_NOT_SUPPORTED=5001 ',CR)
+        CASE (5002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:DYNAMIC_SET_DATA_FAILED=5002 ',CR)
+        CASE (5101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DYNAMIC_SET_FLOAT_OK=5101 ',CR)
+        CASE (5102):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DYNAMIC_SET_INT_OK=5102 ',CR)
+        CASE (5103):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DYNAMIC_GET_FLOAT_OK=5103 ',CR)
+        CASE (5104):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:DYNAMIC_GET_INT_OK=5104 ',CR)
+        CASE (7001):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CALIBRATION_PARAMS_ERROR=7001 ',CR)
+        CASE (7002):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CALIBRATION_NO_POINT=7002 ',CR)
+        CASE (7003):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:CALIBRATION_NOT_REACH_POINT=7003 ',CR)
+        CASE (7100):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CALIBRATION_MOVE_FINISHED=7100 ',CR)
+        CASE (7101):WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_green), 'MM:CALIBRATION_SEND_POINT_OK=7101 ',CR)
+    ELSE:
+        WRITE TPDISPLAY(CHR(cc_fgcolor), CHR(cc_red), 'MM:Unknow Status! Please Check',CR)
+    ENDSELECT
+END  Check_Status
+
+ROUTINE Post_IPCErr--(Status:INTEGER)  FROM  MM_MODULE
+VAR
+Status_Str:STRING[5]
+BEGIN
+	CNV_INT_STR(Status,4,10,Status_Str)
+	POST_ERR(ErrCode,'MM:IPC error,status code:'+ Status_Str, 0, ERR_ABORT)
+END Post_IPCErr
+
+ROUTINE Chk_Pr_Type--(pr_no,grp_no,pr_type,pr_type_1,pr_type_2:INTEGER) FROM  MM_MODULE
+--1:POSITION
+--2:XYZWPR
+--6:XYZWPREXT
+--9:JOINTPOS
+VAR
+num_axes:INTEGER
+
+BEGIN
+	pr_type=0
+	POS_REG_TYPE(pr_no,grp_no,pr_type,num_axes,Status)
+	IF pr_type_1 = pr_type_2 THEN 
+		IF pr_type<>pr_type_1 THEN
+			POST_ERR(ErrCode,'MM:PReg_Type_Error', 0, ERR_ABORT)
+		ENDIF
+	else
+		IF (pr_type<>pr_type_1) AND (pr_type<>pr_type_2) THEN
+			POST_ERR(ErrCode,'MM:PReg_Type_Error', 0, ERR_ABORT)
+		ENDIF
+	ENDIF
+END Chk_Pr_Type

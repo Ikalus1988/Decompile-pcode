@@ -1,0 +1,163 @@
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This program
+-- a) gets Rivet Data from the specified Schedule Number,
+-- b) copies the data to the predefined numerical registers,
+-- c) checks whether or not Rivet Data with the same Rivet ID has already been requested ("duplication check"),
+-- d) copies result of the duplication check to the predefined numerical register.
+-- This program
+-- e) must be called from a TPE program,
+-- f) has following parameters:
+--    Parameter 1, integer: Schedule Number of a Rivet Data. Valid range: 1 ... MAXSCHEDULES
+
+-- Current situation:
+-- arrRivID is used to keep in memory the IDs of all previously requested Rivet Data Sets.
+-- If specified Rivet Data Set hasn't been requsted yet (this is checked by comparing the Rivet ID with all IDs in arrRivID),
+--  - the Rivet ID is added to arrRivID,
+--  - the duplication check returns "Rivet Set OK".
+-- Potential issues:
+-- - arrRivID and intRivCount are not initialized! --> Before a new program version is loaded, the old one incl. the var file should be removed!
+-- - arrRivID is filled with IDs one way! Once a Rivet ID is requested, duplication check will fail next time for this ID. Is this OK?
+-- - Rivet IDs must be unique! How is this garanteed?
+--------------------------------------------------------------------------------------------------------------------------------------------
+PROGRAM SetRivetData
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TRANSLATOR DIRECTIVES (except %INCLUDE)
+--------------------------------------------------------------------------------------------------------------------------------------------
+%COMMENT = 'Version 1.6'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOABORT = ERROR
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 CONSTANT DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_constants
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_types
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+VAR
+  status      : INTEGER
+  paramTyp    : INTEGER
+  paramInt    : INTEGER
+  paramReal   : REAL
+  paramString : STRING[10]
+  intOpen     : INTEGER
+  intRivSetOK : INTEGER
+  rivDat      : rivetData
+  intSchedule : INTEGER
+  arrRivID    IN CMOS: ARRAY[MAXSCHEDULES] OF INTEGER
+  intRivCount IN CMOS: INTEGER
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_routines
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 PROGRAM BODY
+--------------------------------------------------------------------------------------------------------------------------------------------
+BEGIN
+  WRITE(CHR(128)) -- clear TPUSER screen
+  ----------------------------------------------------------------------
+  -- Get Rivet Schedule Number
+  ----------------------------------------------------------------------
+  GET_TPE_PRM(1,paramTyp,paramInt,paramReal,paramString,status)
+
+  -- If data is in wrong format or does not exist, show error!
+  IF ((paramTyp = 1) AND (status = 0)) THEN
+    intSchedule = paramInt
+  ELSE
+    FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+    WRITE('Invalid Argument Type for parameter 1:', CR, 'Schedule Number must be Integer.',CR)
+    PostStat(status)
+  ENDIF
+
+  -- Ensure Schedule Number is Between 1 and MAXSCHEDULES
+  IF ((intSchedule < 1) OR  (intSchedule > MAXSCHEDULES)) THEN
+    FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+    WRITE('Invalid Schedule Number:',CR, 'Must be between 1 and ', MAXSCHEDULES, '.' ,CR)
+    ABORT
+  ENDIF
+
+  ----------------------------------------------------------------------
+  -- Get Rivet Data
+  ----------------------------------------------------------------------
+  rivDat = GetRivdata(intSchedule)
+
+  ----------------------------------------------------------------------
+  -- Set Numeric Registers with Schedule Data
+  ----------------------------------------------------------------------
+  -- Controller ID
+  SET_INT_REG(IREG_CONTID, rivDat.ContID,STATUS); PostStat(STATUS)
+
+  -- Tool ID
+  SET_INT_REG(IREG_TOOLID, rivDat.ToolID,STATUS); PostStat(STATUS)
+
+  -- Rivet Type
+  SET_INT_REG(IREG_RIVTYP, rivDat.RivType,STATUS); PostStat(STATUS)
+
+  -- Post Move Offset
+  SET_INT_REG(IREG_PMOFFS, rivDat.PMOffset,STATUS); PostStat(STATUS)
+
+  -- Post Move Open
+  -- Determine the actual value from the item number in the choice menu in DATA > RIVET DATA > DETAIL. F4 [CHOICE] for Post move open
+  IF (rivDat.PMOpen >= 1) AND (rivDat.PMOpen <= 7) THEN
+    intOpen = 20 * rivDat.PMOpen
+  ENDIF
+  IF (rivDat.PMOpen = 8) THEN
+  	intOpen = 0
+  ENDIF
+  IF (rivDat.PMOpen > 8) OR (rivDat.PMOpen < 1) THEN
+    FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+    WRITE('Invalid Index for Post Move Open!', CR)
+    WRITE('Index: ', rivDat.PMOpen, CR)
+    ABORT
+  ENDIF
+  -- If running the Robot in normal Auto Mode through program Reg 84 needs the opening values
+  SET_INT_REG(IREG_PMOPENA, intOpen,status); PostStat(status)
+  -- If running the robot in T1/T2 Reg 94 also needs the opening values
+  SET_INT_REG(IREG_PMOPENT, intOpen,status); PostStat(status)
+
+  -- Set Rivet ID. This is also used in PMC Internal IO Assg. It is mapped F52
+  SET_INT_REG(IREG_RIVETID,rivDat.RivetID,status); PostStat(status)
+
+  ----------------------------------------------------------------------
+  -- Check Rivet ID has not already been called, otherwise do not add it
+  -- to the table, display message and return 0 for Rivet Set OK.
+  ----------------------------------------------------------------------
+  intRivSetOK = -1  -- Set intRivSetOK to -1 (Undetermined state)
+
+  -- Check to see if Rivet ID has been requested before...
+  FOR intSchedule = 1 TO MAXSCHEDULES DO
+    IF NOT (UNINIT(arrRivID[intSchedule])) THEN
+      IF (arrRivID[intSchedule] = rivDat.RivetID) THEN
+        intRivSetOK = 0
+      ENDIF
+    ENDIF
+  ENDFOR
+
+  -- If Rivet Count is uninit, set it to a value of 1.
+  IF (UNINIT(intRivCount)) THEN
+    intRivCount = 1
+  ELSE
+    intRivCount = intRivCount + 1
+  ENDIF
+  IF (intRivsetOK = -1) THEN
+    -- Add Rivet ID to RivID Array
+    arrRivID[intRivCount] = rivDat.RivetID
+    -- set Rivet Set OK to 1 (OK)
+    intRivSetOK = 1
+  ENDIF
+
+  ---------------------------------------------------------
+  -- Rivet Set OK
+  ----------------------------------------------------------
+  SET_INT_REG(IREG_RIVETOK, intRivSetOK,status); PostStat(status)
+END SetRivetData

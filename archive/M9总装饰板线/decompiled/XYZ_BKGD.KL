@@ -1,0 +1,1037 @@
+-- XYZ_BKGD.KL (decompiled v3)
+PROGRAM XYZ_BKGD
+%COMMENT = 'backgroud'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	XYZ_MSG_T = STRUCTURE
+	MSG_QUOT_: INTEGER
+	MSG_REMA_: INTEGER
+	MSG_ARRAY_: ARRAY[6] OF STRING[200]
+	ENDSTRUCTURE
+	XYZ_DATA_T = STRUCTURE
+	DATA_NUM_: INTEGER
+	DATA_ARRAY_: ARRAY[70] OF STRING[20]
+	ENDSTRUCTURE
+	XYZ_SOCK_T = STRUCTURE
+	TYPE_: STRING[1]
+	CONNECTED_: INTEGER
+	STATUS_: INTEGER
+	TAG_IDX_: INTEGER
+	TAG_STR_: STRING[3]
+	PORT_: INTEGER
+	HOST_: STRING[30]
+	ENDSTRUCTURE
+VAR
+  io_23 : ARRAY[512] OF INTEGER
+  SOCK_FD : FILE
+  GOUTDATA : XYZ_DATA_T
+  GINDATA : XYZ_DATA_T
+  GINDATA_f04 : ARRAY[64] OF INTEGER
+  GOUTDATA_f00 : INTEGER
+  GOUTDATA_f04 : ARRAY[64] OF STRING[64]
+  err_code_f08 : REAL
+  err_code_f0c : REAL
+  err_code_f10 : REAL
+  err_code_f14 : REAL
+  err_code_f18 : REAL
+  err_code_f1c : REAL
+  err_code_f20 : INTEGER
+  ints_f08 : REAL
+  ints_f0c : REAL
+  ints_f10 : REAL
+  ints_f14 : REAL
+  ints_f18 : REAL
+  ints_f1c : REAL
+  ints_f20 : INTEGER
+  joints_f20 : INTEGER
+  p0_f08 : INTEGER
+  p0_f0c : INTEGER
+  p0_f10 : INTEGER
+  p0_f14 : INTEGER
+  p0_f18 : INTEGER
+  p0_f1c : INTEGER
+  reg_num_f20 : INTEGER
+  state__f20 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE PKT_CTOR_MSG(p0 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_CTOR_DAT(p0 : XYZ_DATA_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_GET_MLEN(p0 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_ADD_MSG(p0 : XYZ_MSG_T; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE PKT_CNV_MTD(p0 : XYZ_MSG_T; p1 : XYZ_DATA_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_ADD_DAT(p0 : XYZ_DATA_T; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE PKT_CNV_DTM(p0 : XYZ_DATA_T; p1 : XYZ_MSG_T) : INTEGER FROM MI_LIB
+ROUTINE PKT_RECV_SM(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE PKT_SEND_ALL(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE PKT_RECV_UT(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CTOR(p0 : XYZ_SOCK_T; p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CONN(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLOSE(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SET_RT(p0 : FILE; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SOCK_OPFD(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLFD(p0 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SEND(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_RECV(p0 : FILE; p1 : STRING; p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_CLEAR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_FORCE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE GETCMD : INTEGER
+VAR
+  CMD : INTEGER
+BEGIN
+  CNV_STR_INT('', CMD)
+  -- 弃参原式: (GOUTDATA_f04[1])
+  RETURN(CMD)
+  RETURN(0)
+END GETCMD
+
+ROUTINE PACKANDSEND : INTEGER
+VAR
+  i : INTEGER
+  packed_data : STRING[64]
+  s_state_ : INTEGER
+  state_ : INTEGER
+  tem_len : INTEGER
+BEGIN
+  packed_data = ''
+  tem_len = 0
+  state_ = 0
+  FOR i = 1 TO 3 DO
+  packed_data = GOUTDATA_f04[i] + '' + ','
+  -- stmt125 stray packed_data
+  sv_i = str_len(packed_data)
+  tem_len = sv_i
+  IF ((tem_len >= 200)) THEN
+  sv_i = SOCK_SEND(SOCK_FD, packed_data)
+  s_state_ = sv_i
+  IF ((s_state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] send reply to ipc failed')
+  -- stmt130 stray sv_i
+  SET_INT_REG(38, 0, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] failed to set state code')
+  -- stmt133 stray sv_i
+  ENDIF
+  RETURN(s_state_)
+  ENDIF
+  packed_data = ''
+  tem_len = 0
+  ENDIF
+  ENDFOR
+  packed_data = packed_data + '#'
+  sv_i = SOCK_SEND(SOCK_FD, packed_data)
+  s_state_ = sv_i
+  IF ((s_state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] send reply to ipc failed')
+  -- stmt145 stray sv_i
+  SET_INT_REG(38, 0, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] failed to set state code')
+  -- stmt148 stray sv_i
+  ENDIF
+  RETURN(s_state_)
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PACKANDSEND
+
+ROUTINE RECVANDPARSE(p0 : XYZ_SOCK_T; p1 : INTEGER) : INTEGER
+VAR
+  s_state_ : INTEGER
+  state_ : INTEGER
+  temp_data : XYZ_MSG_T
+BEGIN
+  state_ = 0
+  sv_i = PKT_CTOR_MSG(temp_data)
+  -- stmt91 stray sv_i
+  sv_i = PKT_CTOR_DAT(GINDATA)
+  -- stmt92 stray sv_i
+  sv_i = PKT_RECV_UT(temp_data, p0, SOCK_FD)
+  s_state_ = sv_i
+  IF ((s_state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] recv msg failed')
+  -- stmt95 stray sv_i
+  SET_INT_REG(38, 0, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] failed to set state code')
+  -- stmt98 stray sv_i
+  ENDIF
+  RETURN(s_state_)
+  ENDIF
+  sv_i = PKT_CNV_MTD(temp_data, GINDATA)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] cnv msg to data failed')
+  -- stmt104 stray sv_i
+  RETURN(state_)
+  ENDIF
+  CNV_STR_INT('', p1)
+  -- 弃参原式: (GINDATA_f04[1])
+  RETURN(0)
+  RETURN(0)
+END RECVANDPARSE
+
+ROUTINE XYZHEARTBEAT(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  err_code : INTEGER
+  packed_data : STRING[64]
+  r13_lc9 : INTEGER
+  state_ : INTEGER
+BEGIN
+  packed_data = '500' + ',' + '#'
+  sv_i = SOCK_SEND(SOCK_FD, packed_data)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] send heartbeat failed')
+  -- stmt167 stray sv_i
+  SET_INT_REG(38, 0, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] failed to set state code')
+  -- stmt170 stray sv_i
+  ENDIF
+  RETURN(state_)
+  ENDIF
+  sv_i = RECVANDPARSE(p0, err_code)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  SET_INT_REG(39, 0, r13_lc9)
+  ELSE
+  SET_INT_REG(39, err_code, r13_lc9)
+  ENDIF
+  RETURN(state_)
+  RETURN(0)
+END XYZHEARTBEAT
+
+ROUTINE PARSEERRCODE(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  err_code : INTEGER
+  state_ : INTEGER
+BEGIN
+  err_code = 0
+  sv_i = RECVANDPARSE(p0, err_code)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  RETURN(state_)
+  ENDIF
+  SET_INT_REG(40, err_code, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt198 stray sv_i
+  RETURN(state_)
+  ENDIF
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+END PARSEERRCODE
+
+ROUTINE PARSEINT(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  err_code : INTEGER
+  int_ : INTEGER
+  state_ : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, err_code)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  RETURN(state_)
+  ENDIF
+  SET_INT_REG(40, err_code, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt218 stray sv_i
+  RETURN(state_)
+  ENDIF
+  CNV_STR_INT('', int_)
+  -- 弃参原式: (GINDATA_f04[2])
+  SET_INT_REG(41, int_, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to parse token')
+  -- stmt224 stray sv_i
+  RETURN(state_)
+  ENDIF
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+END PARSEINT
+
+ROUTINE PARSEPOSE(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  cart_pose : INTEGER
+  err_code : INTEGER
+  idx : INTEGER
+  pose_num : INTEGER
+  pose_type : INTEGER
+  state_ : POSITION
+  tmp_pose : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, cart_pose)
+  tmp_pose = sv_i
+  IF ((tmp_pose <> 0)) THEN
+  RETURN(tmp_pose)
+  ENDIF
+  SET_INT_REG(40, cart_pose, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt249 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_REAL('', err_code_f08)
+  -- 弃参原式: (GINDATA_f04[2])
+  CNV_STR_REAL('', err_code_f0c)
+  -- 弃参原式: (GINDATA_f04[3])
+  CNV_STR_REAL('', err_code_f10)
+  -- 弃参原式: (GINDATA_f04[4])
+  CNV_STR_REAL('', err_code_f14)
+  -- 弃参原式: (GINDATA_f04[5])
+  CNV_STR_REAL('', err_code_f18)
+  -- 弃参原式: (GINDATA_f04[6])
+  CNV_STR_REAL('', err_code_f1c)
+  -- 弃参原式: (GINDATA_f04[7])
+  sv_p = GET_POS_REG(15, tmp_pose)
+  state_ = sv_p
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get obj pose cfg')
+  -- stmt4 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  err_code_f20 = state__f20
+  SET_POS_REG(15, sv_p, tmp_pose)
+  -- 弃参原式: err_code | err_code
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get obj pose')
+  -- stmt10 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_INT('', pose_type)
+  -- 弃参原式: (GINDATA_f04[9])
+  SET_INT_REG(42, pose_type, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get obj pose num')
+  -- stmt16 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  SET_STR_REG(8, '', tmp_pose)
+  -- 弃参原式: (GINDATA_f04[10])
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get obj name')
+  -- stmt22 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  FOR pose_num = 1 TO 3 DO
+  CNV_STR_INT('', idx)
+  -- 弃参原式: (GINDATA_f04[10 + pose_num])
+  SET_INT_REG(70 + pose_num - 1, idx, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get obj int vals')
+  -- stmt30 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  ENDFOR
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+END PARSEPOSE
+
+ROUTINE PARSEPIPE(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  cart_pose : INTEGER
+  err_code : INTEGER
+  idx : INTEGER
+  int_temp : INTEGER
+  pipe_num : INTEGER
+  pose_num : INTEGER
+  reg_num : INTEGER
+  state_ : POSITION
+  tmp_pose : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, cart_pose)
+  tmp_pose = sv_i
+  IF ((tmp_pose <> 0)) THEN
+  RETURN(tmp_pose)
+  ENDIF
+  SET_INT_REG(40, cart_pose, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt56 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_REAL('', err_code_f08)
+  -- 弃参原式: (GINDATA_f04[2])
+  CNV_STR_REAL('', err_code_f0c)
+  -- 弃参原式: (GINDATA_f04[3])
+  CNV_STR_REAL('', err_code_f10)
+  -- 弃参原式: (GINDATA_f04[4])
+  CNV_STR_REAL('', err_code_f14)
+  -- 弃参原式: (GINDATA_f04[5])
+  CNV_STR_REAL('', err_code_f18)
+  -- 弃参原式: (GINDATA_f04[6])
+  CNV_STR_REAL('', err_code_f1c)
+  -- 弃参原式: (GINDATA_f04[7])
+  sv_p = GET_POS_REG(15, tmp_pose)
+  state_ = sv_p
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get grasp pose cfg')
+  -- stmt67 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  err_code_f20 = state__f20
+  SET_POS_REG(15, sv_p, tmp_pose)
+  -- 弃参原式: err_code | err_code
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get grasp pose')
+  -- stmt73 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_INT('', pose_num)
+  -- 弃参原式: (GINDATA_f04[9])
+  SET_INT_REG(42, pose_num, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get grasp pose num')
+  -- stmt80 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_INT('', pipe_num)
+  -- 弃参原式: (GINDATA_f04[10])
+  SET_INT_REG(43, pipe_num, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get pipeline_num')
+  -- stmt87 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_INT('', reg_num)
+  -- 弃参原式: (GINDATA_f04[11])
+  SET_INT_REG(44, reg_num, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get register_num')
+  -- stmt94 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  FOR idx = 1 TO 3 DO
+  CNV_STR_INT('', int_temp)
+  -- 弃参原式: (GINDATA_f04[11 + idx])
+  SET_INT_REG(70 + idx - 1, int_temp, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get grasp_pose int vals')
+  -- stmt102 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  ENDFOR
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+END PARSEPIPE
+
+ROUTINE PARSEIHPOSE(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  cart_pose : INTEGER
+  err_code : INTEGER
+  state_ : POSITION
+  tmp_pose : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, cart_pose)
+  tmp_pose = sv_i
+  IF ((tmp_pose <> 0)) THEN
+  RETURN(tmp_pose)
+  ENDIF
+  SET_INT_REG(40, cart_pose, tmp_pose)
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt123 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  CNV_STR_REAL('', err_code_f08)
+  -- 弃参原式: (GINDATA_f04[2])
+  CNV_STR_REAL('', err_code_f0c)
+  -- 弃参原式: (GINDATA_f04[3])
+  CNV_STR_REAL('', err_code_f10)
+  -- 弃参原式: (GINDATA_f04[4])
+  CNV_STR_REAL('', err_code_f14)
+  -- 弃参原式: (GINDATA_f04[5])
+  CNV_STR_REAL('', err_code_f18)
+  -- 弃参原式: (GINDATA_f04[6])
+  CNV_STR_REAL('', err_code_f1c)
+  -- 弃参原式: (GINDATA_f04[7])
+  sv_p = GET_POS_REG(15, tmp_pose)
+  state_ = sv_p
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get in-hand obj pose cfg')
+  -- stmt134 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  err_code_f20 = state__f20
+  SET_POS_REG(15, sv_p, tmp_pose)
+  -- 弃参原式: err_code | err_code
+  IF ((tmp_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get cart pose')
+  -- stmt140 stray sv_i
+  RETURN(tmp_pose)
+  ENDIF
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+END PARSEIHPOSE
+
+ROUTINE PARSETRAJ(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  cart_pose : INTEGER
+  err_code : INTEGER
+  i : INTEGER
+  j : INTEGER
+  joint_pose : INTEGER
+  joints : INTEGER
+  pipe_num : INTEGER
+  pose_num : INTEGER
+  reg_num : POSITION
+  state_ : ARRAY[64] OF REAL
+  tmp_pose : INTEGER
+  wp_type : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, pose_num)
+  i = sv_i
+  IF ((i <> 0)) THEN
+  RETURN(i)
+  ENDIF
+  SET_INT_REG(40, pose_num, i)
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt169 stray sv_i
+  RETURN(i)
+  ENDIF
+  CNV_STR_INT('', j)
+  -- 弃参原式: (GINDATA_f04[2])
+  SET_INT_REG(43, j, i)
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get pipeline_num')
+  -- stmt175 stray sv_i
+  RETURN(i)
+  ENDIF
+  CNV_STR_INT('', wp_type)
+  -- 弃参原式: (GINDATA_f04[3])
+  SET_INT_REG(44, wp_type, i)
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get register_num')
+  -- stmt181 stray sv_i
+  RETURN(i)
+  ENDIF
+  CNV_STR_INT('', cart_pose)
+  -- 弃参原式: (GINDATA_f04[4])
+  SET_INT_REG(42, cart_pose, i)
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get pose num')
+  -- stmt187 stray sv_i
+  RETURN(i)
+  ENDIF
+  FOR joints = 1 TO 3 DO
+  state_[joints] = 0
+  ENDFOR
+  FOR joints = 1 TO 3 DO
+  CNV_STR_INT('', tmp_pose)
+  -- 弃参原式: (GINDATA_f04[7 * joints - 2])
+  SET_INT_REG(45 + joints - 1, tmp_pose, i)
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get wp type')
+  -- stmt197 stray sv_i
+  RETURN(i)
+  ENDIF
+  SELECT tmp_pose OF
+  CASE(11):
+  CASE(12):
+  FOR joint_pose = 1 TO 3 DO
+  CNV_STR_REAL('', (state_[joint_pose]))
+  -- 弃参原式: (GINDATA_f04[7 * joints - 2 + joint_pose])
+  ENDFOR
+  state_[3] = state_[3] - state_[2]
+  cnv_rel_jpos(state_, sv_j, i)
+  -- 弃参原式: pipe_num | pipe_num
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get joint pose')
+  -- stmt209 stray sv_i
+  RETURN(i)
+  ENDIF
+  SET_JPOS_REG(20 + joints - 1, sv_j, i)
+  -- 弃参原式: pipe_num | pipe_num
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get joint pose')
+  -- stmt214 stray sv_i
+  RETURN(i)
+  ENDIF
+  CASE(21):
+  CASE(22):
+  CNV_STR_REAL('', err_code_f08)
+  -- 弃参原式: (GINDATA_f04[7 * joints - 1])
+  CNV_STR_REAL('', err_code_f0c)
+  -- 弃参原式: (GINDATA_f04[7 * joints])
+  CNV_STR_REAL('', err_code_f10)
+  -- 弃参原式: (GINDATA_f04[7 * joints + 1])
+  CNV_STR_REAL('', err_code_f14)
+  -- 弃参原式: (GINDATA_f04[7 * joints + 2])
+  CNV_STR_REAL('', err_code_f18)
+  -- 弃参原式: (GINDATA_f04[7 * joints + 3])
+  CNV_STR_REAL('', err_code_f1c)
+  -- 弃参原式: (GINDATA_f04[7 * joints + 4])
+  sv_p = GET_POS_REG(14, i)
+  reg_num = sv_p
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] failed to get ref config for PR[4]')
+  -- stmt226 stray sv_i
+  RETURN(i)
+  ENDIF
+  err_code_f20 = reg_num_f20
+  SET_POS_REG(20 + joints - 1, sv_p, i)
+  -- 弃参原式: err_code | err_code
+  IF ((i <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get cart pose')
+  -- stmt235 stray sv_i
+  RETURN(i)
+  ENDIF
+  ELSE:
+  sv_i = LOG_ERROR('[BKGD] wrong waypoint type')
+  -- stmt239 stray sv_i
+  RETURN((0 - 100))
+  ENDFOR
+  io_23[15] = 0
+  RETURN(0)
+  RETURN(0)
+  ENDSELECT
+END PARSETRAJ
+
+ROUTINE PARSECUSTOM(p0 : XYZ_SOCK_T) : INTEGER
+VAR
+  cart_pose : INTEGER
+  err_code : ARRAY[64] OF INTEGER
+  floats : INTEGER
+  i : ARRAY[64] OF REAL
+  ints : INTEGER
+  joint_pose : INTEGER
+  joints : POSITION
+  state_ : ARRAY[64] OF INTEGER
+  tmp_pose : INTEGER
+BEGIN
+  sv_i = RECVANDPARSE(p0, cart_pose)
+  joint_pose = sv_i
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt5 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  SET_INT_REG(40, cart_pose, joint_pose)
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get error code')
+  -- stmt10 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  FOR tmp_pose = 1 TO 3 DO
+  SET_STR_REG(16 + tmp_pose - 1, '', joint_pose)
+  -- 弃参原式: (GINDATA_f04[tmp_pose + 1])
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to parse string')
+  -- stmt16 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  ENDFOR
+  FOR tmp_pose = 1 TO 3 DO
+  CNV_STR_INT('', (err_code[tmp_pose]))
+  -- 弃参原式: (GINDATA_f04[tmp_pose + 6])
+  SET_INT_REG(152 + tmp_pose - 1, (err_code[tmp_pose]), joint_pose)
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to parse int')
+  -- stmt24 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  ENDFOR
+  FOR tmp_pose = 1 TO 3 DO
+  CNV_STR_REAL('', (state_[tmp_pose]))
+  -- 弃参原式: (GINDATA_f04[tmp_pose + 16])
+  SET_REAL_REG(153 + tmp_pose - 1, (state_[tmp_pose]), joint_pose)
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to parse float')
+  -- stmt32 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  ENDFOR
+  CNV_STR_REAL('', ints_f08)
+  -- 弃参原式: (GINDATA_f04[27])
+  CNV_STR_REAL('', ints_f0c)
+  -- 弃参原式: (GINDATA_f04[28])
+  CNV_STR_REAL('', ints_f10)
+  -- 弃参原式: (GINDATA_f04[29])
+  CNV_STR_REAL('', ints_f14)
+  -- 弃参原式: (GINDATA_f04[30])
+  CNV_STR_REAL('', ints_f18)
+  -- 弃参原式: (GINDATA_f04[31])
+  CNV_STR_REAL('', ints_f1c)
+  -- 弃参原式: (GINDATA_f04[32])
+  sv_p = GET_POS_REG(198, joint_pose)
+  joints = sv_p
+  ints_f20 = joints_f20
+  SET_POS_REG(198, sv_p, joint_pose)
+  -- 弃参原式: ints | ints
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get cart pose')
+  -- stmt46 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  FOR tmp_pose = 1 TO 3 DO
+  CNV_STR_REAL('', (i[tmp_pose]))
+  -- 弃参原式: (GINDATA_f04[tmp_pose + 33])
+  ENDFOR
+  i[3] = i[3] - i[2]
+  cnv_rel_jpos(i, sv_j, joint_pose)
+  -- 弃参原式: floats | floats
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get joint pose')
+  -- stmt56 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  SET_JPOS_REG(196, sv_j, joint_pose)
+  -- 弃参原式: floats | floats
+  IF ((joint_pose <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get joint pose')
+  -- stmt61 stray sv_i
+  RETURN(joint_pose)
+  ENDIF
+  io_23[15] = 0
+  RETURN(joint_pose)
+  RETURN(0)
+END PARSECUSTOM
+
+ROUTINE XYZBKGD(p0 : FILE) : INTEGER
+VAR
+  CMD : INTEGER
+  comm_error : INTEGER
+  comm_state : INTEGER
+  err_code : INTEGER
+  hb_interval : INTEGER
+  real_NA : REAL
+  state_ : INTEGER
+  temp_str : STRING[64]
+  xsock : XYZ_SOCK_T
+BEGIN
+  sv_i = LOG_CLEAR(0)
+  -- stmt61 stray sv_i
+  sv_i = LOG_INFO('[BKGD] Version is ' + '1.1.8')
+  -- stmt62 stray sv_i
+  io_23[15] = 0
+  sv_i = SOCK_CTOR(xsock, 2, 'C')
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] init sock failed')
+  -- stmt67 stray sv_i
+  ELSE
+  ENDIF
+  sv_i = SOCK_SET_RT(p0, 10000)
+  -- stmt72 stray sv_i
+  sv_i = SOCK_CONN(xsock, p0)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] sock connect failed')
+  -- stmt77 stray sv_i
+  SET_INT_REG(38, 0, state_)
+  SET_INT_REG(39, 0, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to set state code')
+  -- stmt81 stray sv_i
+  ENDIF
+  ELSE
+  ENDIF
+  sv_i = LOG_INFO('[BKGD] connection success')
+  -- stmt86 stray sv_i
+  SET_INT_REG(38, 1, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to set state code')
+  -- stmt89 stray sv_i
+  ELSE
+  ENDIF
+  GET_REG(37, (0 <> 0), comm_error, real_NA, state_)
+  -- 弃参原式: 0
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to get heart_beat interval')
+  -- stmt95 stray sv_i
+  ELSE
+  ENDIF
+  GET_TIME(CMD)
+  IF ((1 <> 0)) THEN
+  GET_TIME(err_code)
+  hb_interval = err_code - CMD
+  hb_interval = hb_interval * 2
+  IF ((hb_interval > comm_error)) THEN
+  GET_TIME(CMD)
+  sv_i = XYZHEARTBEAT(xsock)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  ELSE
+  ENDIF
+  ENDIF
+  IF ((io_23[15] = 1)) THEN
+  sv_i = GETCMD
+  comm_state = sv_i
+  sv_i = PACKANDSEND
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  ELSE
+  ENDIF
+  SELECT comm_state OF
+  CASE(502):
+  CASE(503):
+  CASE(504):
+  CASE(528):
+  CASE(511):
+  CASE(512):
+  CASE(514):
+  CASE(513):
+  CASE(517):
+  CASE(523):
+  CASE(711):
+  CASE(712):
+  CASE(700):
+  CASE(705):
+  sv_i = PARSEERRCODE(xsock)
+  state_ = sv_i
+  CASE(507):
+  CASE(509):
+  CASE(710):
+  sv_i = PARSEINT(xsock)
+  state_ = sv_i
+  CASE(510):
+  CASE(530):
+  sv_i = PARSEPOSE(xsock)
+  state_ = sv_i
+  CASE(508):
+  CASE(529):
+  sv_i = PARSEPIPE(xsock)
+  state_ = sv_i
+  CASE(524):
+  sv_i = PARSEIHPOSE(xsock)
+  state_ = sv_i
+  CASE(518):
+  CASE(519):
+  CASE(520):
+  CASE(521):
+  sv_i = PARSETRAJ(xsock)
+  state_ = sv_i
+  CASE(600):
+  sv_i = PARSECUSTOM(xsock)
+  state_ = sv_i
+  ELSE:
+  CNV_INT_STR(comm_state, 1, 10, temp_str)
+  sv_i = LOG_ERROR('[BKGD] invalid command id: ' + temp_str)
+  -- stmt144 stray sv_i
+  ENDIF
+  IF ((state_ <> 0)) THEN
+  SET_INT_REG(39, 0, state_)
+  sv_i = LOG_ERROR('[BKGD] fail to recv and parse messages')
+  -- stmt149 stray sv_i
+  ELSE
+  ENDIF
+  SET_INT_REG(39, 1, state_)
+  ENDIF
+  DELAY 10
+  ENDSELECT
+  sv_i = LOG_ERROR('[BKGD] close connect')
+  -- stmt160 stray sv_i
+  sv_i = SOCK_CLOSE(xsock, p0)
+  -- stmt161 stray sv_i
+  DELAY 200
+  RETURN(0)
+END XYZBKGD
+
+ROUTINE WAITCOMM(p0 : INTEGER) : INTEGER
+VAR
+  ctr : INTEGER
+  hb_dur : INTEGER
+  max_ctr : INTEGER
+BEGIN
+  ctr = 0
+  hb_dur = p0
+  IF ((p0 < 10)) THEN
+  hb_dur = 600
+  ENDIF
+  max_ctr = hb_dur * 100
+  IF ((1 <> 0)) THEN
+  IF ((io_23[15] = 0)) THEN
+  DELAY 10
+  ctr = ctr + 1
+  IF ((ctr > max_ctr)) THEN
+  sv_i = LOG_INFO('[BKGD] sending heartbeat signal to server')
+  -- stmt193 stray sv_i
+  ctr = 0
+  RETURN(1)
+  ENDIF
+  ELSE
+  RETURN(0)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END WAITCOMM
+
+ROUTINE RESETOUTDATA : INTEGER
+BEGIN
+  sv_i = PKT_CTOR_DAT(GOUTDATA)
+  -- stmt215 stray sv_i
+  RETURN(0)
+END RESETOUTDATA
+
+ROUTINE ADDINTTOARR(p0 : INTEGER) : INTEGER
+VAR
+  temp_str : STRING[64]
+BEGIN
+  IF ((GOUTDATA_f00 + 1 > 70)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add int, data array is full')
+  -- stmt224 stray sv_i
+  RETURN(1)
+  ENDIF
+  CNV_INT_STR(0, 1, 10, temp_str)
+  -- 弃参原式: p0
+  GOUTDATA_f04[GOUTDATA_f00 + 1] = temp_str
+  GOUTDATA_f00 = GOUTDATA_f00 + 1
+  RETURN(0)
+  RETURN(0)
+END ADDINTTOARR
+
+ROUTINE ADDREALTOARR(p0 : REAL) : INTEGER
+VAR
+  temp_str : STRING[64]
+BEGIN
+  IF ((GOUTDATA_f00 + 1 > 70)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add real, data array is full')
+  -- stmt239 stray sv_i
+  RETURN(1)
+  ENDIF
+  CNV_REAL_STR(p0, 1, 4, temp_str)
+  GOUTDATA_f04[GOUTDATA_f00 + 1] = temp_str
+  GOUTDATA_f00 = GOUTDATA_f00 + 1
+  RETURN(0)
+  RETURN(0)
+END ADDREALTOARR
+
+ROUTINE ADDARRTOARR(p0 : ARRAY OF REAL) : INTEGER
+VAR
+  i : INTEGER
+  ret : INTEGER
+BEGIN
+  FOR i = 1 TO 3 DO
+  sv_i = ADDREALTOARR((p0[i]))
+  ret = sv_i
+  IF ((ret <> 0)) THEN
+  sv_i = LOG_ERROR_A('[BKGD] fail to add the ith real num to array', i)
+  -- stmt1 stray sv_i
+  RETURN(ret)
+  ENDIF
+  ENDFOR
+  RETURN(0)
+  RETURN(0)
+END ADDARRTOARR
+
+ROUTINE ADDSTRTOARR(p0 : STRING) : INTEGER
+BEGIN
+  IF ((GOUTDATA_f00 + 1 > 70)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add string, data array is full')
+  -- stmt12 stray sv_i
+  RETURN(1)
+  ENDIF
+  GOUTDATA_f04[GOUTDATA_f00 + 1] = p0
+  GOUTDATA_f00 = GOUTDATA_f00 + 1
+  RETURN(0)
+  RETURN(0)
+END ADDSTRTOARR
+
+ROUTINE ADDJPOSTOARR(p0 : JOINTPOS) : INTEGER
+VAR
+  joints : ARRAY[64] OF INTEGER
+  state_ : INTEGER
+BEGIN
+  cnv_jpos_rel(sv_j, sv_a, 0)
+  -- 弃参原式: p0 | p0 | p0 | p0 | joints
+  joints[3] = joints[3] + joints[2]
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to convert jointpos')
+  -- stmt30 stray sv_i
+  ENDIF
+  sv_i = ADDARRTOARR(joints)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add joint pose')
+  -- stmt34 stray sv_i
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END ADDJPOSTOARR
+
+ROUTINE ADDCPOSTOARR(p0 : POSITION) : INTEGER
+VAR
+  pose : ARRAY[64] OF INTEGER
+  state_ : INTEGER
+BEGIN
+  pose[1] = p0_f08
+  pose[2] = p0_f0c
+  pose[3] = p0_f10
+  pose[4] = p0_f14
+  pose[5] = p0_f18
+  pose[6] = p0_f1c
+  pose[7] = 0
+  sv_i = ADDARRTOARR(pose)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add cart pose')
+  -- stmt54 stray sv_i
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END ADDCPOSTOARR
+
+ROUTINE ADDEXTJTOARR(p0 : JOINTPOS) : INTEGER
+VAR
+  joints : ARRAY[64] OF INTEGER
+  out_joints : INTEGER
+  state_ : ARRAY[64] OF INTEGER
+BEGIN
+  cnv_jpos_rel(sv_j, sv_a, 0)
+  -- 弃参原式: p0 | p0 | p0 | p0 | joints
+  IF ((out_joints <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to convert jointpos')
+  -- stmt68 stray sv_i
+  ENDIF
+  state_[1] = joints[7]
+  state_[2] = joints[8]
+  state_[3] = joints[9]
+  state_[4] = 0
+  state_[5] = 0
+  state_[6] = 0
+  sv_i = ADDARRTOARR(state_)
+  out_joints = sv_i
+  IF ((out_joints <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] fail to add external joints')
+  -- stmt78 stray sv_i
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END ADDEXTJTOARR
+
+BEGIN
+  sv_i = XYZBKGD(SOCK_FD)
+  -- stmt42 stray sv_i
+END XYZ_BKGD
+

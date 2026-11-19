@@ -1,0 +1,1080 @@
+-- TCP_MSG.KL (decompiled v3)
+PROGRAM TCP_MSG
+%COMMENT = 'decompiled v3'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_45 : ARRAY[512] OF INTEGER
+  v1 : REAL
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : ARRAY[64] OF INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  pp12 : INTEGER
+  pp45 : INTEGER
+  pp46 : INTEGER
+  pp50 : INTEGER
+  pp63 : INTEGER
+  pp65 : INTEGER
+  pp66 : INTEGER
+  pp6e : INTEGER
+  pp75 : INTEGER
+  ppaa : INTEGER
+  ppe4 : INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v4_f98 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE G2_BACKREAD1(p0, p1 : INTEGER) : REAL FROM MI_LIB
+ROUTINE G2_BACKWRIT1(p0, p1 : INTEGER; p2 : REAL) : INTEGER FROM MI_LIB
+ROUTINE RESET_OUT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_RESET(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_PARA_ON(p0 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE G2_PARA_OFF(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKIO(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE RESETBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACK_LESE(p0, p1 : INTEGER) : REAL FROM MI_LIB
+ROUTINE G2_BACK_PNRL(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CALC_POS(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE WRITEDATA(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DEFBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MENU_PARAADD(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKEXIT(p0 : REAL) : BOOLEAN FROM MI_LIB
+ROUTINE MENUE_PARA(p0 : INTEGER; p1 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE MENU_TEACH(p0, p1 : INTEGER; p2 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE MENUE_MAIN(p0, p1, p2 : INTEGER; p3 : BOOLEAN) : INTEGER FROM MI_LIB
+
+ROUTINE MSG_CLEAR_FU : INTEGER
+BEGIN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  RETURN(0)
+END MSG_CLEAR_FU
+
+ROUTINE MSG_WRITE(p0 : STRING) : INTEGER
+BEGIN
+  WRITE(p0)
+  RETURN(0)
+END MSG_WRITE
+
+ROUTINE MSG_WRITE_CR(p0 : STRING) : INTEGER
+BEGIN
+  WRITE(p0, CR)
+  RETURN(0)
+END MSG_WRITE_CR
+
+ROUTINE MSG_CR : INTEGER
+BEGIN
+  WRITE(CR)
+  RETURN(0)
+END MSG_CR
+
+ROUTINE MSG_CR2 : INTEGER
+BEGIN
+  WRITE(CR, CR)
+  RETURN(0)
+END MSG_CR2
+
+ROUTINE MSGWRITE(p0 : INTEGER; p1 : BOOLEAN) : INTEGER
+BEGIN
+  IF ((v1 = 2)) THEN
+  p0 = p0 + 200
+  ENDIF
+  SELECT p0 OF
+  CASE(1):
+  sv_i = MSG_WRITE('nicht ')
+  CASE(2):
+  sv_i = MSG_WRITE('Warte auf ')
+  CASE(3):
+  sv_i = MSG_WRITE('Prog. Nr TCP Controller : ')
+  CASE(4):
+  v1 = 0
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(5):
+  sv_i = MSG_WRITE('TCP Fehler Param. schreiben')
+  CASE(6):
+  sv_i = MSG_WRITE('Korrektur : ')
+  CASE(7):
+  sv_i = MSG_WRITE('TCP Fehler Param. lesen')
+  CASE(8):
+  sv_i = MSG_WRITE('Controller Backup:')
+  CASE(9):
+  sv_i = MSG_WRITE('Vom TCP Controller auf Roboter')
+  CASE(10):
+  sv_i = MSG_WRITE('(0 : Nein ; 1 : Ja): ')
+  CASE(11):
+  sv_i = MSG_WRITE('Vom Roboter auf TCP Controller')
+  CASE(12):
+  sv_i = MSG_WRITE('TCP Lesen fertig')
+  CASE(13):
+  sv_i = MSG_WRITE('TCP Schreiben fertig')
+  CASE(14):
+  sv_i = MSG_WRITE('TCP Controller Bereit Signal')
+  CASE(15):
+  sv_i = MSG_WRITE('TCP Controller Einst. BYTE SWAP falsch')
+  CASE(16):
+  sv_i = MSG_WRITE('TCP Fehler Konfig Word Out 1 oder 2')
+  CASE(17):
+  sv_i = MSG_WRITE('TCP Fehler Konfig Word IN 1')
+  CASE(18):
+  sv_i = MSG_WRITE('Setze Controller Parameter')
+  CASE(19):
+  sv_i = MSG_WRITE('Parameter Index (0 : Exit) :')
+  CASE(20):
+  sv_i = MSG_WRITE('TCP in die Mitte des Sensors ')
+  CASE(21):
+  sv_i = MSG_WRITE('verfahren')
+  CASE(22):
+  sv_i = MSG_WRITE('FWD druecken wenn in Position')
+  CASE(23):
+  sv_i = MSG_WRITE('TCP in die Mitte der offenen ')
+  CASE(24):
+  sv_i = MSG_WRITE('Seite verfahren')
+  CASE(25):
+  sv_i = MSG_WRITE(' (0) : Exit')
+  CASE(26):
+  sv_i = MSG_WRITE(' (1) : Backup')
+  CASE(27):
+  sv_i = MSG_WRITE(' (2) : Teach Ibn Positionen')
+  CASE(28):
+  sv_i = MSG_WRITE(' (3) : Set Main Parameter')
+  CASE(29):
+  ABORT
+  pp50 = ppe4
+  v1 = 0
+  CASE(30):
+  sv_i = MSG_WRITE(' (5) : Berechne Pos.')
+  CASE(31):
+  RESUME
+  CASE(32):
+  sv_i = MSG_WRITE('Lese Prog-Nr.')
+  CASE(33):
+  sv_i = MSG_WRITE('Lese Parameter')
+  CASE(34):
+  sv_i = MSG_WRITE('Lese Prog-Nr.')
+  CASE(35):
+  sv_i = MSG_WRITE('Lese Parameter')
+  CASE(36):
+  sv_i = MSG_WRITE('Schreibe Prog-Nr.')
+  CASE(37):
+  sv_i = MSG_WRITE('Schreibe Parameter')
+  CASE(38):
+  sv_i = MSG_WRITE('(Alter Wert : ')
+  CASE(39):
+  sv_i = MSG_WRITE(' ) : ')
+  CASE(40):
+  sv_i = MSG_WRITE('Fehler lesen P1')
+  CASE(41):
+  sv_i = MSG_WRITE('Fehler lesen P2')
+  CASE(42):
+  sv_i = MSG_WRITE('Fehler teachen P1 P2')
+  CASE(43):
+  sv_i = MSG_WRITE('Fehler Datei schliessen')
+  CASE(44):
+  sv_i = MSG_WRITE('Positionen berechnet')
+  CASE(45):
+  sv_i = MSG_WRITE('Reset_Backup')
+  CASE(46):
+  sv_i = MSG_WRITE('Fehler Konfiguration Word IN ')
+  CASE(47):
+  sv_i = MSG_WRITE('Fehler : IN Group Nr.')
+  CASE(48):
+  sv_i = MSG_WRITE(' nicht zugewiesen.')
+  CASE(49):
+  sv_i = MSG_WRITE('TCP : Fehler : OUT Group Nr.')
+  CASE(50):
+  sv_i = MSG_WRITE('Eingabe erster Group Input')
+  CASE(51):
+  sv_i = MSG_WRITE('(Letzter Wert : NaN) : ')
+  CASE(52):
+  sv_i = MSG_WRITE('(Letzter Wert : ')
+  CASE(53):
+  sv_i = MSG_WRITE(') : ')
+  CASE(54):
+  sv_i = MSG_WRITE('Eingabe erster Group Output')
+  CASE(55):
+  sv_i = MSG_WRITE('IO Check beendet')
+  CASE(56):
+  sv_i = MSG_WRITE('Fehler : Konfig Group In-/Output')
+  CASE(57):
+  sv_i = MSG_WRITE('Set to (Letzter Wert : ')
+  CASE(58):
+  sv_i = MSG_WRITE(') :')
+  CASE(59):
+  sv_i = MSG_WRITE('Fehler Wert setzen')
+  CASE(60):
+  sv_i = MSG_WRITE('Eingabe Messdimensionen : 2,3 or 5')
+  CASE(61):
+  sv_i = MSG_WRITE('Eingabe Radius Doppelkreis')
+  CASE(62):
+  io_45[0] = <ARG>
+  IF (0 + <ARG>) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  STOP
+  sv_i = MSG_WRITE('')
+  CASE(63):
+  IF (0 <> 0 + 0) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(64):
+  sv_i = MSG_WRITE('Eingabe Stossrichtung')
+  CASE(65):
+  sv_i = MSG_WRITE('0 : X Stossrichtung')
+  CASE(66):
+  sv_i = MSG_WRITE('1 : Z Stossrichtung')
+  CASE(67):
+  sv_i = MSG_WRITE('Eingabe TCP Tiefe : ')
+  CASE(68):
+  sv_i = MSG_WRITE('Eingabe max. Translation bei')
+  CASE(69):
+  sv_i = MSG_WRITE('Erstvermessung : ')
+  CASE(70):
+  sv_i = MSG_WRITE('Eingabe max. Rotation bei')
+  CASE(71):
+  sv_i = MSG_WRITE('Erstvermessung : ')
+  CASE(72):
+  sv_i = MSG_WRITE('Eingabe Abstand zwischen Doppelkreis')
+  CASE(73):
+  sv_i = MSG_WRITE('und Pendeln : ')
+  CASE(74):
+  sv_i = MSG_WRITE('Eingabe Berechnung Werkzeug-')
+  CASE(75):
+  sv_i = MSG_WRITE('orientierung : ')
+  CASE(76):
+  sv_i = MSG_WRITE('(0) : 6D-Methode ')
+  CASE(77):
+  sv_i = MSG_WRITE('(1) : 5D-Methode ')
+  CASE(78):
+  IF (0 <> 0 + 0) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(79):
+  sv_i = MSG_WRITE('um Werkzeugachse : ')
+  CASE(80):
+  IF (0 <> 0 + 0) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  sv_i = MSG_WRITE('')
+  CASE(81):
+  sv_i = MSG_WRITE('Translation : ')
+  CASE(82):
+  sv_i = MSG_WRITE('Rotation : ')
+  CASE(83):
+  sv_i = MSG_WRITE('Programm Nr.        : ')
+  CASE(84):
+  sv_i = MSG_WRITE(' (0)   : Nein')
+  CASE(85):
+  sv_i = MSG_WRITE(' (1)   : Ja')
+  CASE(86):
+  ABORT
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: <ARG> + 0
+  CASE(87):
+  sv_i = MSG_WRITE(' : weiter   0 : EXIT')
+  CASE(88):
+  IF <ARG> THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  sv_i = MSG_WRITE('')
+  CASE(89):
+  sv_i = MSG_WRITE('Tool Frame Nr.')
+  CASE(90):
+  sv_i = MSG_WRITE('User Frame Nr.')
+  CASE(91):
+  sv_i = MSG_WRITE(' (0)   : Nein')
+  CASE(92):
+  sv_i = MSG_WRITE(' (1)   : Ja')
+  CASE(93):
+  ABORT
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: <ARG> + 0
+  CASE(94):
+  sv_i = MSG_WRITE('Kopiere Tool Frame ')
+  CASE(95):
+  sv_i = MSG_WRITE(' nach')
+  CASE(96):
+  sv_i = MSG_WRITE('Kopiere User Frame ')
+  CASE(97):
+  sv_i = MSG_WRITE('(1-20) : Schritte')
+  CASE(98):
+  sv_i = MSG_WRITE('Messung vom Sensor ')
+  CASE(99):
+  sv_i = MSG_WRITE('Option lange Werkzeug :')
+  CASE(100):
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(101):
+  sv_i = MSG_WRITE('Offset Ergebnis in X ')
+  CASE(102):
+  sv_i = MSG_WRITE('Offset Ergebnis in Y ')
+  CASE(103):
+  sv_i = MSG_WRITE('Offset Ergebnis in Z ')
+  CASE(104):
+  sv_i = MSG_WRITE('Offset Ergebnis um RX ')
+  CASE(105):
+  sv_i = MSG_WRITE('Offset Ergebnis um RY ')
+  CASE(106):
+  sv_i = MSG_WRITE('Offset Ergebnis um RZ ')
+  CASE(107):
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: ((0 < 0)) + 0 + (0 <> 541422183)
+  CASE(108):
+  sv_i = MSG_WRITE(' (0) : default (nur Erg.)')
+  CASE(109):
+  sv_i = MSG_WRITE(' (1) : Erg. + Erg. vor Symm.')
+  CASE(110):
+  sv_i = MSG_WRITE(' (2) : Erg. + Erg. vor Offset')
+  CASE(111):
+  sv_i = MSG_WRITE(' (3) : Erg. + Erg. vor Symm. und Offset')
+  CASE(112):
+  sv_i = MSG_WRITE('Messung von unten :')
+  CASE(113):
+  sv_i = MSG_WRITE('Eingabe Messgeschwindigkeit in mm/s ')
+  CASE(114):
+  sv_i = MSG_WRITE('Eingabe Pendeln Offset in mm')
+  CASE(115):
+  sv_i = MSG_WRITE('Eingabe Stickout Offset in mm')
+  CASE(116):
+  sv_i = MSG_WRITE('              Erstvermessung')
+  CASE(117):
+  sv_i = MSG_WRITE('               Vektor Fahrt')
+  CASE(118):
+  sv_i = MSG_WRITE('             Justage Fahrt 2D')
+  CASE(119):
+  sv_i = MSG_WRITE('             Justage Fahrt 3D')
+  CASE(120):
+  sv_i = MSG_WRITE('             Justage Fahrt 5D')
+  CASE(121):
+  sv_i = MSG_WRITE('             Referenz Fahrt 2D')
+  CASE(122):
+  sv_i = MSG_WRITE('             Referenz Fahrt 3D')
+  CASE(123):
+  sv_i = MSG_WRITE('             Referenz Fahrt 5D')
+  CASE(124):
+  sv_i = MSG_WRITE('                Messung 2D')
+  CASE(125):
+  sv_i = MSG_WRITE('                Messung 3D')
+  CASE(126):
+  sv_i = MSG_WRITE('                Messung 5D')
+  CASE(127):
+  sv_i = MSG_WRITE('Fehler Erstvermessung!')
+  CASE(128):
+  sv_i = MSG_WRITE('Erstvermessung Erfolgreich!')
+  CASE(129):
+  sv_i = MSG_WRITE('Messgeschwindigkeit :')
+  CASE(130):
+  sv_i = MSG_WRITE('mm/s')
+  CASE(131):
+  sv_i = MSG_WRITE('Schritt Nr.         :')
+  CASE(132):
+  sv_i = MSG_WRITE('Tool Frame          :')
+  CASE(133):
+  sv_i = MSG_WRITE('User Frame          :')
+  CASE(134):
+  sv_i = MSG_WRITE('         Sensor Erstvermessung')
+  CASE(135):
+  sv_i = MSG_WRITE('Eingabe Lichtschranke Tool Frame')
+  CASE(136):
+  IF (0 = 0) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  RESUME
+  v1 = 544896365
+  sv_i = MSG_WRITE('')
+  CASE(137):
+  v1 = 0
+  RESUME
+  sv_i = MSG_WRITE('')
+  CASE(138):
+  sv_i = MSG_WRITE('(0): Alle Nummern')
+  CASE(139):
+  sv_i = MSG_WRITE('(999): Exit')
+  CASE(140):
+  sv_i = MSG_WRITE('(1-120): Winkel')
+  CASE(141):
+  IF ((0 <> 0 DIV 0) <> 0 / 0 + pp45) THEN
+    v1 = 1
+  ELSE
+    v1 = 0
+  ENDIF
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(142):
+  sv_i = MSG_WRITE('2 : Y Stossrichtung')
+  CASE(143):
+  PAUSE
+  sv_i = MSG_WRITE('')
+  CASE(144):
+  ENABLE CONDITION[1]
+  sv_i = MSG_WRITE('')
+  CASE(145):
+  sv_i = MSG_WRITE('(1): Weiter')
+  CASE(146):
+  sv_i = MSG_WRITE('(0): Exit')
+  CASE(147):
+  sv_i = MSG_WRITE('Slave Nr.           : ')
+  CASE(148):
+  sv_i = MSG_WRITE('Master Programm Nr. : ')
+  CASE(149):
+  sv_i = MSG_WRITE('')
+  -- 弃参原式: 0
+  CASE(150):
+  CASE(151):
+  sv_i = MSG_WRITE('(0): Roboter -> TCP Kontroller')
+  CASE(152):
+  sv_i = MSG_WRITE('(1): TCP Kontroller -> Roboter')
+  CASE(153):
+  sv_i = MSG_WRITE('(2): Reset Backup(Default Werte)')
+  CASE(154):
+  sv_i = MSG_WRITE('(3): Exit')
+  CASE(155):
+  sv_i = MSG_WRITE('Backup Detei Fehlt')
+  CASE(156):
+  sv_i = MSG_WRITE('Default Backup wird erstellt')
+  CASE(157):
+  sv_i = MSG_WRITE('Der Wert muss kleiner als TCP-Tiefe')
+  CASE(158):
+  sv_i = MSG_WRITE('User Screen aktivieren ?')
+  CASE(201):
+  sv_i = MSG_WRITE('Not ')
+  CASE(202):
+  sv_i = MSG_WRITE('Wait for ')
+  CASE(203):
+  sv_i = MSG_WRITE('Prog. no. TCP controller : ')
+  CASE(204):
+  sv_i = MSG_WRITE('TCP Error - file opening ')
+  CASE(205):
+  sv_i = MSG_WRITE('TCP Error - param. writing ')
+  CASE(206):
+  sv_i = MSG_WRITE('Correction : ')
+  CASE(207):
+  sv_i = MSG_WRITE('TCP Error - param. reading')
+  CASE(208):
+  sv_i = MSG_WRITE('Controller Backup')
+  CASE(209):
+  sv_i = MSG_WRITE('From TCP controller to robot')
+  CASE(210):
+  sv_i = MSG_WRITE('(0 : No ; 1 : Yes): ')
+  CASE(211):
+  sv_i = MSG_WRITE('From Robot to TCP controller')
+  CASE(212):
+  sv_i = MSG_WRITE('End of TCP reading')
+  CASE(213):
+  sv_i = MSG_WRITE('End of TCP writing')
+  CASE(214):
+  sv_i = MSG_WRITE('TCP Controller ready signal')
+  CASE(215):
+  sv_i = MSG_WRITE('TCP Controller wrong setting BYTE SWAP ')
+  CASE(216):
+  sv_i = MSG_WRITE('TCP Error - Config. Word Out 1 or 2')
+  CASE(217):
+  sv_i = MSG_WRITE('TCP Error - Config. Word IN 1')
+  CASE(218):
+  sv_i = MSG_WRITE('Set controller parameter')
+  CASE(219):
+  sv_i = MSG_WRITE('Parameter Index (0 : Exit) :')
+  CASE(220):
+  sv_i = MSG_WRITE('Move ')
+  CASE(221):
+  sv_i = MSG_WRITE('TCP in the center of sensor')
+  CASE(222):
+  sv_i = MSG_WRITE('Press FWD after position is reached')
+  CASE(223):
+  sv_i = MSG_WRITE('Move TCP in the middle of the open ')
+  CASE(224):
+  sv_i = MSG_WRITE('side of the sensor')
+  CASE(225):
+  sv_i = MSG_WRITE(' (0) : Exit')
+  CASE(226):
+  sv_i = MSG_WRITE(' (1) : Backup')
+  CASE(227):
+  sv_i = MSG_WRITE(' (2) : Teach Commissioning Positions')
+  CASE(228):
+  sv_i = MSG_WRITE(' (3) : Set Main Parameters')
+  CASE(229):
+  sv_i = MSG_WRITE(' (4) : Set Additional Parameters')
+  CASE(230):
+  sv_i = MSG_WRITE(' (5) : Calculate Position')
+  CASE(231):
+  sv_i = MSG_WRITE('Number of the next step : ')
+  CASE(232):
+  sv_i = MSG_WRITE('TCP : Reading prog-no.')
+  CASE(233):
+  sv_i = MSG_WRITE('TCP : Reading parameter')
+  CASE(234):
+  sv_i = MSG_WRITE('TCP : Reading prog-no.')
+  CASE(235):
+  sv_i = MSG_WRITE('TCP : Reading parameter')
+  CASE(236):
+  sv_i = MSG_WRITE('TCP : Writing prog-no.')
+  CASE(237):
+  sv_i = MSG_WRITE('TCP : Writing parameter')
+  CASE(238):
+  sv_i = MSG_WRITE('(Current value : ')
+  CASE(239):
+  sv_i = MSG_WRITE(' ) : ')
+  CASE(240):
+  sv_i = MSG_WRITE('TCP : Error reading P1')
+  CASE(241):
+  sv_i = MSG_WRITE('TCP : Error reading P2')
+  CASE(242):
+  sv_i = MSG_WRITE('TCP : Error teaching P1 P2')
+  CASE(243):
+  sv_i = MSG_WRITE('TCP : Error closing the file')
+  CASE(244):
+  sv_i = MSG_WRITE('Positions are calculated')
+  CASE(245):
+  sv_i = MSG_WRITE('TCP : Reset Backup')
+  CASE(246):
+  sv_i = MSG_WRITE('TCP : Error configuration Word IN ')
+  CASE(247):
+  sv_i = MSG_WRITE('TCP : Error IN group no.')
+  CASE(248):
+  sv_i = MSG_WRITE(' Unallocated.')
+  CASE(249):
+  sv_i = MSG_WRITE('TCP : Error OUT group no.')
+  CASE(250):
+  sv_i = MSG_WRITE('Enter first group input')
+  CASE(251):
+  sv_i = MSG_WRITE('(Current value : NaN) : ')
+  CASE(252):
+  sv_i = MSG_WRITE('(Current value : ')
+  CASE(253):
+  sv_i = MSG_WRITE(') : ')
+  CASE(254):
+  sv_i = MSG_WRITE('Enter first group output')
+  CASE(255):
+  sv_i = MSG_WRITE('IO check finished')
+  CASE(256):
+  sv_i = MSG_WRITE('Error : Config group In-/Output')
+  CASE(257):
+  sv_i = MSG_WRITE('Set to (Current value : ')
+  CASE(258):
+  sv_i = MSG_WRITE(') :')
+  CASE(259):
+  sv_i = MSG_WRITE('Error - Setting value')
+  CASE(260):
+  sv_i = MSG_WRITE('Enter measurement dimensions : 2,3 or 5')
+  CASE(261):
+  sv_i = MSG_WRITE('Enter radius of double circle')
+  CASE(262):
+  sv_i = MSG_WRITE('Enter orientation length')
+  CASE(263):
+  sv_i = MSG_WRITE('Enter pendulum length')
+  CASE(264):
+  sv_i = MSG_WRITE('Enter working direction')
+  CASE(265):
+  sv_i = MSG_WRITE('0 : X - Direction')
+  CASE(266):
+  sv_i = MSG_WRITE('1 : Z - Direction')
+  CASE(267):
+  sv_i = MSG_WRITE('Enter TCP depth : ')
+  CASE(268):
+  sv_i = MSG_WRITE('Enter max. translation for')
+  CASE(269):
+  sv_i = MSG_WRITE('tool calculation : ')
+  CASE(270):
+  sv_i = MSG_WRITE('Enter max. rotation for')
+  CASE(271):
+  sv_i = MSG_WRITE('tool calculation : ')
+  CASE(272):
+  sv_i = MSG_WRITE('Enter length between circles')
+  CASE(273):
+  sv_i = MSG_WRITE('and pendulum: ')
+  CASE(274):
+  sv_i = MSG_WRITE('Enter tool calculation ')
+  CASE(275):
+  sv_i = MSG_WRITE('orientation : ')
+  CASE(276):
+  sv_i = MSG_WRITE('(0) : 6D-Method ')
+  CASE(277):
+  sv_i = MSG_WRITE('(1) : 5D-Method ')
+  CASE(278):
+  sv_i = MSG_WRITE('Enter additional rotation')
+  CASE(279):
+  sv_i = MSG_WRITE('about working axis of the tool : ')
+  CASE(280):
+  sv_i = MSG_WRITE('Enter a limit for')
+  CASE(281):
+  sv_i = MSG_WRITE('Translation : ')
+  CASE(282):
+  sv_i = MSG_WRITE('Rotation : ')
+  CASE(283):
+  sv_i = MSG_WRITE('Program No.          : ')
+  CASE(284):
+  sv_i = MSG_WRITE(' (0) : No')
+  CASE(285):
+  sv_i = MSG_WRITE(' (1) : Yes')
+  CASE(286):
+  sv_i = MSG_WRITE(' Please select : ')
+  CASE(287):
+  sv_i = MSG_WRITE(' : Continue   0 : EXIT')
+  CASE(288):
+  sv_i = MSG_WRITE('Choose a program for pos. calculation :')
+  CASE(289):
+  sv_i = MSG_WRITE('Tool Frame No.')
+  CASE(290):
+  sv_i = MSG_WRITE('User Frame Nr.')
+  CASE(291):
+  sv_i = MSG_WRITE(' (0)   : No')
+  CASE(292):
+  sv_i = MSG_WRITE(' (1)   : Yes')
+  CASE(293):
+  sv_i = MSG_WRITE(' Please select : ')
+  CASE(294):
+  sv_i = MSG_WRITE('Copy toolframe No. ')
+  CASE(295):
+  sv_i = MSG_WRITE(' to')
+  CASE(296):
+  sv_i = MSG_WRITE('Copy user frame No. ')
+  CASE(297):
+  sv_i = MSG_WRITE('(1-20) : Steps')
+  CASE(298):
+  sv_i = MSG_WRITE('Sensor measurement :')
+  CASE(299):
+  sv_i = MSG_WRITE('Option long tool :')
+  CASE(300):
+  sv_i = MSG_WRITE('              Centricity Check')
+  CASE(301):
+  sv_i = MSG_WRITE('Offset result in X :')
+  CASE(302):
+  sv_i = MSG_WRITE('Offset result in Y :')
+  CASE(303):
+  sv_i = MSG_WRITE('Offset result in Z :')
+  CASE(304):
+  sv_i = MSG_WRITE('Offset result about RX :')
+  CASE(305):
+  sv_i = MSG_WRITE('Offset result about RY :')
+  CASE(306):
+  sv_i = MSG_WRITE('Offset result about RZ :')
+  CASE(307):
+  sv_i = MSG_WRITE('Config. res. transmission : ')
+  CASE(308):
+  sv_i = MSG_WRITE(' (0) : Just result(Default)')
+  CASE(309):
+  sv_i = MSG_WRITE(' (1) : Res. + Res. before symm.')
+  CASE(310):
+  sv_i = MSG_WRITE(' (2) : Res. + Res. before offset')
+  CASE(311):
+  sv_i = MSG_WRITE(' (3) : Res. + Res. before symm. and offset')
+  CASE(312):
+  sv_i = MSG_WRITE('Measurement from beneath :')
+  CASE(313):
+  sv_i = MSG_WRITE('Enter measurement velocity in mm/s ')
+  CASE(314):
+  sv_i = MSG_WRITE('Enter pendulum offset in mm')
+  CASE(315):
+  sv_i = MSG_WRITE('Enter stickout offset in mm')
+  CASE(316):
+  sv_i = MSG_WRITE('             Tool Calculation')
+  CASE(317):
+  sv_i = MSG_WRITE('                Vector Move')
+  CASE(318):
+  sv_i = MSG_WRITE('            Adjustment Move 2D')
+  CASE(319):
+  sv_i = MSG_WRITE('            Adjustment Move 3D')
+  CASE(320):
+  sv_i = MSG_WRITE('            Adjustment Move 5D')
+  CASE(321):
+  sv_i = MSG_WRITE('            Reference Move 2D')
+  CASE(322):
+  sv_i = MSG_WRITE('            Reference Move 3D')
+  CASE(323):
+  sv_i = MSG_WRITE('            Reference Move 5D')
+  CASE(324):
+  sv_i = MSG_WRITE('              Measurement 2D')
+  CASE(325):
+  sv_i = MSG_WRITE('              Measurement 3D')
+  CASE(326):
+  sv_i = MSG_WRITE('              Measurement 5D')
+  CASE(327):
+  sv_i = MSG_WRITE('Tool Calculation Error!')
+  CASE(328):
+  sv_i = MSG_WRITE('Tool Calculation successful!')
+  CASE(329):
+  sv_i = MSG_WRITE('Measurement Velocity :')
+  CASE(330):
+  sv_i = MSG_WRITE('mm/s')
+  CASE(331):
+  sv_i = MSG_WRITE('Step No.             :')
+  CASE(332):
+  sv_i = MSG_WRITE('Tool Frame           :')
+  CASE(333):
+  sv_i = MSG_WRITE('User Frame           :')
+  CASE(334):
+  sv_i = MSG_WRITE('           Sensor Tool Calculation')
+  CASE(335):
+  sv_i = MSG_WRITE('Enter sensor tool frame')
+  CASE(336):
+  sv_i = MSG_WRITE('Select Program No. to Upload')
+  CASE(337):
+  sv_i = MSG_WRITE('Select Program No. to Save')
+  CASE(338):
+  sv_i = MSG_WRITE('(0): All Numbers')
+  CASE(339):
+  sv_i = MSG_WRITE('(999): Exit')
+  CASE(340):
+  sv_i = MSG_WRITE('(1-120): Angle')
+  CASE(341):
+  sv_i = MSG_WRITE('                Wrong Entry!')
+  CASE(342):
+  sv_i = MSG_WRITE('2 : Y - Direction')
+  CASE(343):
+  sv_i = MSG_WRITE('Centricity Check')
+  CASE(344):
+  sv_i = MSG_WRITE('will be erased')
+  CASE(345):
+  sv_i = MSG_WRITE('(1): Next')
+  CASE(346):
+  sv_i = MSG_WRITE('(0): Exit')
+  CASE(347):
+  sv_i = MSG_WRITE('Slave No.            : ')
+  CASE(348):
+  sv_i = MSG_WRITE('Master Program No.   : ')
+  CASE(349):
+  sv_i = MSG_WRITE('Tool Calculation not possible!')
+  CASE(350):
+  sv_i = MSG_WRITE('Transferring data...')
+  CASE(351):
+  sv_i = MSG_WRITE('(0): Robot -> TCP Controller')
+  CASE(352):
+  sv_i = MSG_WRITE('(1): TCP Controller -> Robot')
+  CASE(353):
+  sv_i = MSG_WRITE('(2): Reset Backup(Default values)')
+  CASE(354):
+  sv_i = MSG_WRITE('(3): Exit')
+  CASE(355):
+  sv_i = MSG_WRITE('Backup file is missing')
+  CASE(356):
+  sv_i = MSG_WRITE('Default Backup file is created')
+  CASE(357):
+  sv_i = MSG_WRITE('Value must be smaller than TCP depth')
+  CASE(358):
+  sv_i = MSG_WRITE('User Screen activation?')
+  -- stmt229 stray sv_i
+  ENDSELECT
+  IF ((p1 = 1)) THEN
+  sv_i = MSG_CR
+  -- stmt234 stray sv_i
+  ENDIF
+  RETURN(0)
+END MSGWRITE
+
+ROUTINE MSG_CLEAR_FE : INTEGER
+BEGIN
+  sv_s = chr(128)
+  WRITE(sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  RETURN(0)
+END MSG_CLEAR_FE
+
+ROUTINE EXTMSGFC(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MSG_CLEAR_FU
+  -- stmt252 stray sv_i
+  sv_i = MSG_CR2
+  -- stmt254 stray sv_i
+  sv_i = MSG_CR
+  -- stmt255 stray sv_i
+  IF ((v1 = 2)) THEN
+  sv_i = MSG_WRITE('TCP Error Code : ')
+  -- stmt2 stray sv_i
+  WRITE(p0)
+  p0 = p0 + 50
+  ELSE
+  sv_i = MSG_WRITE('TCP Fehlercode : ')
+  -- stmt6 stray sv_i
+  ENDIF
+  sv_i = MSG_CR
+  -- stmt9 stray sv_i
+  SELECT p0 OF
+  CASE(1):
+  sv_i = MSG_WRITE_CR('TCP Time Out')
+  CASE(2):
+  sv_i = MSG_WRITE_CR('TCP max. Toleranz')
+  CASE(3):
+  sv_i = MSG_WRITE_CR('TCP max. ori. Toleranz')
+  CASE(4):
+  sv_i = MSG_WRITE_CR('TCP Redundanz')
+  CASE(5):
+  sv_i = MSG_WRITE_CR('TCP falsche Drehrichtung')
+  CASE(6):
+  sv_i = MSG_WRITE_CR('TCP ung. Wzg.')
+  CASE(7):
+  sv_i = MSG_WRITE_CR('TCP Ref.Fahrt fehlt')
+  CASE(8):
+  sv_i = MSG_WRITE_CR('TCP ung. Ref-Fahrt')
+  CASE(9):
+  sv_i = MSG_WRITE_CR('TCP Reset Bit aktiv')
+  CASE(10):
+  sv_i = MSG_WRITE_CR('TCP Erg. Bit aktiv')
+  CASE(11):
+  sv_i = MSG_WRITE_CR('TCP Keine LS durchbr.')
+  CASE(12):
+  sv_i = MSG_WRITE_CR('TCP Vekt. Kreis Distanz')
+  CASE(14):
+  sv_i = MSG_WRITE_CR('TCP Max. Werkz. Durchmesser')
+  CASE(15):
+  sv_i = MSG_WRITE_CR('TCP Vektor Fahrt fehlt')
+  CASE(16):
+  sv_i = MSG_WRITE_CR('TCP Komm. Time Out')
+  CASE(17):
+  sv_i = MSG_WRITE_CR('TCP Slave fehlt')
+  CASE(18):
+  sv_i = MSG_WRITE_CR('TCP Ung. Dimension')
+  CASE(19):
+  sv_i = MSG_WRITE_CR('TCP Ist Master Tool')
+  CASE(20):
+  sv_i = MSG_WRITE_CR('TCP Frame Verkettung')
+  CASE(21):
+  sv_i = MSG_WRITE_CR('TCP Bus Fehler')
+  CASE(22):
+  sv_i = MSG_WRITE_CR('TCP Slave Sequenz')
+  CASE(23):
+  sv_i = MSG_WRITE_CR('TCP Dim. Master')
+  CASE(24):
+  sv_i = MSG_WRITE_CR('TCP Dim. Slave')
+  CASE(25):
+  sv_i = MSG_WRITE_CR('TCP Ung. Slave')
+  CASE(26):
+  sv_i = MSG_WRITE_CR('TCP Slave Konf.')
+  CASE(27):
+  sv_i = MSG_WRITE_CR('TCP Master Konf.')
+  CASE(51):
+  sv_i = MSG_WRITE_CR('TCP Time Out')
+  CASE(52):
+  sv_i = MSG_WRITE_CR('TCP max. Tolerance')
+  CASE(53):
+  sv_i = MSG_WRITE_CR('TCP max. ori. Tolerance')
+  CASE(54):
+  sv_i = MSG_WRITE_CR('TCP Redundancy')
+  CASE(55):
+  sv_i = MSG_WRITE_CR('TCP Wrong Rotational Direction')
+  CASE(56):
+  sv_i = MSG_WRITE_CR('TCP Invalid Tool')
+  CASE(57):
+  sv_i = MSG_WRITE_CR('TCP Ref. Move Missing')
+  CASE(58):
+  sv_i = MSG_WRITE_CR('TCP Invalid Ref. Move')
+  CASE(59):
+  sv_i = MSG_WRITE_CR('TCP Reset Bit active')
+  CASE(60):
+  sv_i = MSG_WRITE_CR('TCP Erg. Bit active')
+  CASE(61):
+  sv_i = MSG_WRITE_CR('TCP No LB Cutoff')
+  CASE(62):
+  sv_i = MSG_WRITE_CR('TCP Vector Circle Distance')
+  CASE(64):
+  sv_i = MSG_WRITE_CR('TCP Max. Tool Diameter')
+  CASE(65):
+  sv_i = MSG_WRITE_CR('TCP Vector Move Missing')
+  CASE(66):
+  sv_i = MSG_WRITE_CR('TCP Communication Time Out')
+  CASE(67):
+  sv_i = MSG_WRITE_CR('TCP Slave Missing')
+  CASE(68):
+  sv_i = MSG_WRITE_CR('TCP Invalid Dimension')
+  CASE(69):
+  sv_i = MSG_WRITE_CR('TCP Actual Master Tool')
+  CASE(70):
+  sv_i = MSG_WRITE_CR('TCP Frame Linkage')
+  CASE(71):
+  sv_i = MSG_WRITE_CR('TCP Bus Error')
+  CASE(72):
+  sv_i = MSG_WRITE_CR('TCP Slave Sequence')
+  CASE(73):
+  sv_i = MSG_WRITE_CR('TCP Dim. Master')
+  CASE(74):
+  sv_i = MSG_WRITE_CR('TCP Dim. Slave')
+  CASE(75):
+  sv_i = MSG_WRITE_CR('TCP Invalid Slave')
+  CASE(76):
+  sv_i = MSG_WRITE_CR('TCP Slave Conf.')
+  CASE(77):
+  sv_i = MSG_WRITE_CR('TCP Master Conf.')
+  -- stmt115 stray sv_i
+  ENDSELECT
+  RETURN(0)
+END EXTMSGFC
+
+ROUTINE EXTMSGTI1CR(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MSGWRITE(p0, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt124 stray sv_i
+  WRITE(p1, CR)
+  RETURN(0)
+END EXTMSGTI1CR
+
+ROUTINE MSGTR1T(p0 : INTEGER; p1 : REAL; p2, p3, p4 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MSGWRITE(p0, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt131 stray sv_i
+  DELAY 0
+  -- stmt132 stray p1 | p2 | p3
+  sv_i = MSGWRITE(p4, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt133 stray sv_i
+  RETURN(0)
+END MSGTR1T
+
+ROUTINE MSGTI1T(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MSGWRITE(p0, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt139 stray sv_i
+  WRITE(p1)
+  sv_i = MSGWRITE(p2, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt141 stray sv_i
+  RETURN(0)
+END MSGTI1T
+
+ROUTINE INFO_MSG(p0 : BOOLEAN; p1 : INTEGER) : INTEGER
+BEGIN
+  IF ((p1 = 2) OR (p1 = 3)) THEN
+  sv_i = MSGWRITE(133, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt151 stray sv_i
+  ELSE
+  sv_i = MSGWRITE(132, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt153 stray sv_i
+  ENDIF
+  IF ((p0 <> 0)) THEN
+  WRITE(v2, CR)
+  ELSE
+  WRITE(v3, CR)
+  ENDIF
+  sv_i = MSGWRITE(129, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt162 stray sv_i
+  sv_i = trunc(v4_f98 * v5[v6] / 100)
+  WRITE(sv_i)
+  sv_i = MSGWRITE(130, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt165 stray sv_i
+  IF ((p0 <> 0)) THEN
+  v7 = v7 + 1
+  sv_i = MSGWRITE(131, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt169 stray sv_i
+  WRITE(v7)
+  sv_i = MSG_CR2
+  -- stmt171 stray sv_i
+  IF ((p1 = 2) OR (p1 = 3)) THEN
+  PURGE CONDITION[1]
+  WRITE('User Frame', CR)
+  -- stmt173 stray v0_f1c[1]
+  ELSE
+  PURGE CONDITION[1]
+  WRITE('Tool Frame', CR)
+  -- stmt175 stray v0_f58[1]
+  ENDIF
+  ENDIF
+  RETURN(0)
+END INFO_MSG
+
+ROUTINE SHOW_FRAME(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 = 2) OR (p0 = 3)) THEN
+  sv_i = MSGWRITE(133, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt191 stray sv_i
+  PURGE CONDITION[1]
+  -- stmt192 stray v0_f1c[1]
+  ELSE
+  sv_i = MSGWRITE(132, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt194 stray sv_i
+  PURGE CONDITION[1]
+  -- stmt195 stray v0_f58[1]
+  ENDIF
+  RETURN(0)
+END SHOW_FRAME
+
+ROUTINE KM_GR_CHECK(p0, p1 : INTEGER; p2 : BOOLEAN) : BOOLEAN
+VAR
+  r13_lc1 : INTEGER
+  r13_lc2 : INTEGER
+  r13_lc3 : INTEGER
+  r13_lc4 : INTEGER
+  r13_lc5 : INTEGER
+  r13_lc6 : INTEGER
+BEGIN
+  IF ((p2 <> 0)) THEN
+  GET_PORT_ASG(p0, p1, r13_lc1, r13_lc2, r13_lc3, r13_lc4, r13_lc5, r13_lc6)
+  IF ((r13_lc6 <> 0)) THEN
+  IF ((p0 = 18)) THEN
+  sv_i = MSGWRITE(47, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt220 stray sv_i
+  WRITE(p1)
+  sv_i = MSGWRITE(48, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt222 stray sv_i
+  ELSE
+  sv_i = MSGWRITE(49, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt224 stray sv_i
+  WRITE(p1)
+  sv_i = MSGWRITE(48, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt226 stray sv_i
+  ENDIF
+  p2 = 0
+  ENDIF
+  ENDIF
+  RETURN(p2)
+  RETURN(sv_b)
+END KM_GR_CHECK
+
+ROUTINE MENUE_SET_IO : INTEGER
+VAR
+  r14_lc3 : INTEGER
+BEGIN
+  r14_lc3 = 1
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = MSG_CLEAR_FU
+  -- stmt253 stray sv_i
+  WRITE(CR)
+  RETURN(0)
+END MENUE_SET_IO
+
+BEGIN
+END TCP_MSG

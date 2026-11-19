@@ -1,0 +1,43 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_reset_ta
+-- 
+-- brief: xyz_reset_ta,
+--        reset task
+--------------------------------------------------------------------------------
+PROGRAM xyz_reset_ta
+
+
+%COMMENT = 'reset task'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+VAR
+    ret      : INTEGER
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+ResetOutData
+ret = AddInttoArr(CMD_RESET_TA)
+IF (ret <> 0) THEN
+    log_error('[RESET_TA] fail to pack cmd')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_reset_ta

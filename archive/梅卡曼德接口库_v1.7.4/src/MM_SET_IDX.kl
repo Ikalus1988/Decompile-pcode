@@ -1,0 +1,18 @@
+PROGRAM  MM_SET_IDX
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Set_Index'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Set_Index FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+   Set_Index
+END MM_SET_IDX

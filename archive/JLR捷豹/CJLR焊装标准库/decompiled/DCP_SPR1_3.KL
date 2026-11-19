@@ -1,0 +1,1114 @@
+-- DCP_SPR1_3.KL (decompiled v3)
+PROGRAM DCP_SPR1_3
+%COMMENT = 'Version 1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : STRING[64]
+  v3 : REAL
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : REAL
+  v7 : INTEGER
+  v8 : REAL
+  v9 : INTEGER
+  v10 : REAL
+  v11 : INTEGER
+  v12 : REAL
+  v13 : INTEGER
+  v14 : REAL
+  v15 : INTEGER
+  v16 : REAL
+  v17 : INTEGER
+  v18 : STRING[64]
+  v19 : INTEGER
+  v20 : INTEGER
+  v21 : REAL
+  DCPTEXT : REAL
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  FKEYS : ARRAY[10] OF STRING[12]
+  FKEY_SEL : INTEGER
+  BLPLC : BOOLEAN
+  BLSPR : BOOLEAN
+  BLSPOT : BOOLEAN
+  BLDISPENSE : BOOLEAN
+  BLMH : BOOLEAN
+  BLSTUD : BOOLEAN
+  BLNUT : BOOLEAN
+  BLISRA : BOOLEAN
+  BLQUISS : BOOLEAN
+  STATUS : INTEGER
+  PARAMTYP : INTEGER
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTDCPFAULT : INTEGER
+  INTPROGNUM : INTEGER
+  INTAREAINREQ : INTEGER
+  INTAREAOUTRL : INTEGER
+  INTTOOLREQ : INTEGER
+  INTJOBDONE : INTEGER
+  INTCOLREQ : INTEGER
+  INTCOLREL : INTEGER
+  INTRIVID : INTEGER
+  PARAMREAL : REAL
+  REALDUMMY : REAL
+  PARAMSTRING : STRING[10]
+  STRDCPNUM : STRING[4]
+  STRPROGNUM : STRING[3]
+  STRAREANUM : STRING[3]
+  STRAREAINREQ : STRING[3]
+  STRAREAOUTRL : STRING[3]
+  STRTOOLREQ : STRING[3]
+  STRJOBDONE : STRING[3]
+  STRCOLREQ : STRING[3]
+  STRCOLREL : STRING[3]
+  STRRIVID : STRING[3]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STRADDDCPTXT : STRING[20]
+  v19_f00 : INTEGER
+  v19_f04 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE imp5(p0 : INTEGER; p1 : REAL; p2 : STRING) : INTEGER FROM MI_LIB
+
+BEGIN
+  CNV_INT_STR(18, 1, v1, v2)
+  GET_REG(v1, (3 <> 0), 10, v3, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(151, '', v4)
+  -- 弃参原式: 0
+  GET_REG(v4, (3 <> 0), 10, v6, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(152, '', v7)
+  -- 弃参原式: 0
+  GET_REG(v7, (3 <> 0), 10, v8, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(153, '', v9)
+  -- 弃参原式: 0
+  GET_REG(v9, (3 <> 0), 10, v10, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(154, '', v11)
+  -- 弃参原式: 0
+  GET_REG(v11, (3 <> 0), 10, v12, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(156, '', v13)
+  -- 弃参原式: 0
+  GET_REG(v13, (3 <> 0), 10, v14, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(157, '', v15)
+  -- 弃参原式: 0
+  GET_REG(v15, (3 <> 0), 10, v16, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(86, '', v17)
+  -- 弃参原式: 0
+  GET_REG(v17, (3 <> 0), 0, 0.0, 0)
+  -- 弃参原式: 3 | v18 | v18
+  SELECT v19_f00 OF
+  CASE(1221):
+  v19_f04 = 'Bus Tool 1 Cube A'
+  v19_f00 = 1221
+  CASE(1222):
+  v19_f04 = 'Bus Tool 1 Cube B'
+  v19_f00 = 1222
+  CASE(1223):
+  v19_f04 = 'Bus Tool 2 Cube A'
+  v19_f00 = 1223
+  CASE(1224):
+  v19_f04 = 'Bus Tool 2 Cube B'
+  v19_f00 = 1224
+  CASE(1225):
+  v19_f04 = 'Bus Tool 3 Cube A'
+  v19_f00 = 1225
+  CASE(1226):
+  v19_f04 = 'Bus Stand Tool 1'
+  v19_f00 = 1226
+  CASE(1227):
+  v19_f04 = 'Bus Stand Tool 2'
+  v19_f00 = 1227
+  CASE(1228):
+  v19_f04 = 'Bus Stand Tool 3'
+  v19_f00 = 1228
+  CASE(1229):
+  v19_f04 = 'Bus BL20toDrive'
+  v19_f00 = 1229
+  CASE(1230):
+  v19_f04 = 'Bus Tool 3 Cube B'
+  v19_f00 = 1230
+  CASE(1231):
+  v19_f04 = 'Bus Tool'
+  v19_f00 = 1231
+  CASE(1232):
+  v19_f04 = 'Bus Selector'
+  v19_f00 = 1232
+  CASE(1233):
+  v19_f04 = 'Bus IBUS Gateway'
+  v19_f00 = 1233
+  CASE(1234):
+  v19_f04 = 'Spare'
+  v19_f00 = 1234
+  CASE(1235):
+  v19_f04 = 'Spare'
+  v19_f00 = 1235
+  CASE(1236):
+  v19_f04 = 'Spare'
+  v19_f00 = 1236
+  CASE(1237):
+  v19_f04 = 'Following Error'
+  v19_f00 = 1237
+  CASE(1238):
+  v19_f04 = 'Encoder HW'
+  v19_f00 = 1238
+  CASE(1239):
+  v19_f04 = 'Drive Over Temp'
+  v19_f00 = 1239
+  CASE(1240):
+  v19_f04 = 'Drive UnderVoltage'
+  v19_f00 = 1240
+  CASE(1241):
+  v19_f04 = 'Control Voltage'
+  v19_f00 = 1241
+  CASE(1242):
+  v19_f04 = 'Motor OverTemp'
+  v19_f00 = 1242
+  CASE(1243):
+  v19_f04 = 'Drive OverCurrent'
+  v19_f00 = 1243
+  CASE(1244):
+  v19_f04 = 'Home Failed'
+  v19_f00 = 1244
+  CASE(1245):
+  v19_f04 = 'Cannot Verify Home'
+  v19_f00 = 1245
+  CASE(1246):
+  v19_f04 = 'Home Required'
+  v19_f00 = 1246
+  CASE(1247):
+  v19_f04 = 'Over Travel'
+  v19_f00 = 1247
+  CASE(1248):
+  v19_f04 = 'Under Travel'
+  v19_f00 = 1248
+  CASE(1249):
+  v19_f04 = 'Compliant Pressure Low'
+  v19_f00 = 1249
+  CASE(1250):
+  v19_f04 = 'Spare'
+  v19_f00 = 1250
+  CASE(1251):
+  v19_f04 = 'Invalid Partial'
+  v19_f00 = 1251
+  CASE(1252):
+  v19_f04 = 'Drive'
+  v19_f00 = 1252
+  CASE(1253):
+  v19_f04 = 'No App Sel'
+  v19_f00 = 1253
+  CASE(1254):
+  v19_f04 = 'Invalid Force'
+  v19_f00 = 1254
+  CASE(1255):
+  v19_f04 = 'No Tool Sel'
+  v19_f00 = 1255
+  CASE(1256):
+  v19_f04 = 'Feed Nose Switch'
+  v19_f00 = 1256
+  CASE(1257):
+  v19_f04 = 'No Riv Type Sel'
+  v19_f00 = 1257
+  CASE(1258):
+  v19_f04 = 'Cab Disabled'
+  v19_f00 = 1258
+  CASE(1259):
+  v19_f04 = 'Excessive Cycle Time'
+  v19_f00 = 1259
+  CASE(1260):
+  v19_f04 = 'Unable To Power Down'
+  v19_f00 = 1260
+  CASE(1261):
+  v19_f04 = 'Remove Rivets B4'
+  v19_f00 = 1261
+  CASE(1262):
+  v19_f04 = 'Incorrect Cal'
+  v19_f00 = 1262
+  CASE(1263):
+  v19_f04 = 'CB F1 Tripped'
+  v19_f00 = 1263
+  CASE(1264):
+  v19_f04 = 'CB F4 Tripped'
+  v19_f00 = 1264
+  CASE(1265):
+  v19_f04 = 'System Fault'
+  v19_f00 = 1265
+  CASE(1266):
+  v19_f04 = 'RivMon Not Triggered'
+  v19_f00 = 1266
+  CASE(1267):
+  v19_f04 = 'RivMon Not Ready'
+  v19_f00 = 1267
+  CASE(1268):
+  v19_f04 = 'RivMon Comms'
+  v19_f00 = 1268
+  CASE(1269):
+  v19_f04 = 'Transfer Fail 1'
+  v19_f00 = 1269
+  CASE(1270):
+  v19_f04 = 'Transfer Fail 2'
+  v19_f00 = 1270
+  CASE(1271):
+  v19_f04 = 'Transfer Fail 3'
+  v19_f00 = 1271
+  CASE(1272):
+  v19_f04 = 'Selector Not At A'
+  v19_f00 = 1272
+  CASE(1273):
+  v19_f04 = 'Selector Not At B'
+  v19_f00 = 1273
+  CASE(1274):
+  v19_f04 = 'SelRivDetectSenMissed'
+  v19_f00 = 1274
+  CASE(1275):
+  v19_f04 = 'Selector Not At AorB'
+  v19_f00 = 1275
+  CASE(1276):
+  v19_f04 = 'RLC Wrong Rivet 1A'
+  v19_f00 = 1276
+  CASE(1277):
+  v19_f04 = 'RLC Incorrect Fixed Limits 1A'
+  v19_f00 = 1277
+  CASE(1278):
+  v19_f04 = 'RLC No Rivet To Measure 1A'
+  v19_f00 = 1278
+  CASE(1279):
+  v19_f04 = 'RLC Probe Failed 1A'
+  v19_f00 = 1279
+  CASE(1280):
+  v19_f04 = 'Feed Riv Not Esc'
+  v19_f00 = 1280
+  CASE(1281):
+  v19_f04 = 'Feed RIF'
+  v19_f00 = 1281
+  CASE(1282):
+  v19_f04 = 'Feed MRIN'
+  v19_f00 = 1282
+  CASE(1283):
+  v19_f04 = 'Feed Probe Back'
+  v19_f00 = 1283
+  CASE(1284):
+  v19_f04 = 'Feed Probe Not Back'
+  v19_f00 = 1284
+  CASE(1285):
+  v19_f04 = 'Feed RIT'
+  v19_f00 = 1285
+  CASE(1286):
+  v19_f04 = 'Unknown Rivet IN Nose'
+  v19_f00 = 1286
+  CASE(1287):
+  v19_f04 = 'Feed Wrong Riv In Nose'
+  v19_f00 = 1287
+  CASE(1288):
+  v19_f04 = 'Cube 1A Riv Not Escaped'
+  v19_f00 = 1288
+  CASE(1289):
+  v19_f04 = 'Cube 1A Bowl Run'
+  v19_f00 = 1289
+  CASE(1290):
+  v19_f04 = 'Cube 1A Esc Sensor'
+  v19_f00 = 1290
+  CASE(1291):
+  v19_f04 = 'Cube 1B Riv Not Escaped'
+  v19_f00 = 1291
+  CASE(1292):
+  v19_f04 = 'Cube 1B Bowl Run'
+  v19_f00 = 1292
+  CASE(1293):
+  v19_f04 = 'Cube 1B Esc Sensor'
+  v19_f00 = 1293
+  CASE(1294):
+  v19_f04 = 'Cube 2A Riv Not Escaped'
+  v19_f00 = 1294
+  CASE(1295):
+  v19_f04 = 'Cube 2A Bowl Run'
+  v19_f00 = 1295
+  CASE(1296):
+  v19_f04 = 'Cube 2A Esc Sensor'
+  v19_f00 = 1296
+  CASE(1297):
+  v19_f04 = 'Cube 2B Riv Not Escaped'
+  v19_f00 = 1297
+  CASE(1298):
+  v19_f04 = 'Cube 2B Bowl Run'
+  v19_f00 = 1298
+  CASE(1299):
+  v19_f04 = 'Cube 2B Esc Sensor'
+  v19_f00 = 1299
+  CASE(1300):
+  v19_f04 = 'Cube 3A Riv Not Escaped'
+  v19_f00 = 1300
+  CASE(1301):
+  v19_f04 = 'Cube 3A Bowl Run'
+  v19_f00 = 1301
+  CASE(1302):
+  v19_f04 = 'Cube 3A Esc Sensor'
+  v19_f00 = 1302
+  CASE(1303):
+  v19_f04 = 'Stand1 Gate Not Closed'
+  v19_f00 = 1303
+  CASE(1304):
+  v19_f04 = 'Stand1 Gate Not Open'
+  v19_f00 = 1304
+  CASE(1305):
+  v19_f04 = 'Stand1 Dock Sensor On B4'
+  v19_f00 = 1305
+  CASE(1306):
+  v19_f04 = 'Mag1 Mag Gate Wrong B4'
+  v19_f00 = 1306
+  CASE(1307):
+  v19_f04 = 'Mag1 Stand Gate Wrong B4'
+  v19_f00 = 1307
+  CASE(1308):
+  v19_f04 = 'Mag1 Probe Not Back A'
+  v19_f00 = 1308
+  CASE(1309):
+  v19_f04 = 'Mag1 Probe Not Back B'
+  v19_f00 = 1309
+  CASE(1310):
+  v19_f04 = 'Mag1 Shuttle Not Closed'
+  v19_f00 = 1310
+  CASE(1311):
+  v19_f04 = 'Mag1 Shuttle Not Open'
+  v19_f00 = 1311
+  CASE(1312):
+  v19_f04 = 'Stand1 Probe Not Back'
+  v19_f00 = 1312
+  CASE(1313):
+  v19_f04 = 'Mag2 Gate Not Closed'
+  v19_f00 = 1313
+  CASE(1314):
+  v19_f04 = 'Mag2 Gate Not Open'
+  v19_f00 = 1314
+  CASE(1315):
+  v19_f04 = 'Stand2 Dock Sensor On B4'
+  v19_f00 = 1315
+  CASE(1316):
+  v19_f04 = 'Mag2 Mag Gate Wrong B4'
+  v19_f00 = 1316
+  CASE(1317):
+  v19_f04 = 'Mag2 Stand Gate Wrong B4'
+  v19_f00 = 1317
+  CASE(1318):
+  v19_f04 = 'Mag2 Probe Not Back A'
+  v19_f00 = 1318
+  CASE(1319):
+  v19_f04 = 'Mag2 Probe Not Back B'
+  v19_f00 = 1319
+  CASE(1320):
+  v19_f04 = 'Mag2 Shuttle Not Closed'
+  v19_f00 = 1320
+  CASE(1321):
+  v19_f04 = 'Mag2 Shuttle Not Open'
+  v19_f00 = 1321
+  CASE(1322):
+  v19_f04 = 'Stand2 Probe Not Back'
+  v19_f00 = 1322
+  CASE(1323):
+  v19_f04 = 'Mag3 Gate Not Closed'
+  v19_f00 = 1323
+  CASE(1324):
+  v19_f04 = 'Mag3 Gate Not Open'
+  v19_f00 = 1324
+  CASE(1325):
+  v19_f04 = 'Stand3 Dock Sensor On B4'
+  v19_f00 = 1325
+  CASE(1326):
+  v19_f04 = 'Mag3 Mag Gate Wrong B4'
+  v19_f00 = 1326
+  CASE(1327):
+  v19_f04 = 'Mag3 Stand Gate Wrong B4'
+  v19_f00 = 1327
+  CASE(1328):
+  v19_f04 = 'Mag3 Probe Back A'
+  v19_f00 = 1328
+  CASE(1329):
+  v19_f04 = 'Mag3 Shuttle Not Closed'
+  v19_f00 = 1329
+  CASE(1330):
+  v19_f04 = 'Mag3 Shuttle Not Open'
+  v19_f00 = 1330
+  CASE(1331):
+  v19_f04 = 'Stand3 Probe Not Back'
+  v19_f00 = 1331
+  CASE(1332):
+  v19_f04 = 'Tape Cut Fault'
+  v19_f00 = 1332
+  CASE(1333):
+  v19_f04 = 'Sprocket Nose Switch Fault'
+  v19_f00 = 1333
+  CASE(1334):
+  v19_f04 = 'Sprocket Feed Fault'
+  v19_f00 = 1334
+  CASE(1335):
+  v19_f04 = 'Sprocket Cont Feed Fault'
+  v19_f00 = 1335
+  CASE(1336):
+  v19_f04 = 'RIN Dry Cycle Mode'
+  v19_f00 = 1336
+  CASE(1337):
+  v19_f04 = 'RLC Track Fail 1A'
+  v19_f00 = 1337
+  CASE(1338):
+  v19_f04 = 'RLC Wrong Rivet 1B'
+  v19_f00 = 1338
+  CASE(1339):
+  v19_f04 = 'RLC Incorrect Fixed Limits 1B'
+  v19_f00 = 1339
+  CASE(1340):
+  v19_f04 = 'RLC No Rivet to Measure 1B'
+  v19_f00 = 1340
+  CASE(1341):
+  v19_f04 = 'RLC Probe Failed 1B'
+  v19_f00 = 1341
+  CASE(1342):
+  v19_f04 = 'RLC Track Fail 1B'
+  v19_f00 = 1342
+  CASE(1343):
+  v19_f04 = 'Stand FOPD Adv Sens Stuck ON'
+  v19_f00 = 1343
+  CASE(1344):
+  v19_f04 = 'Stand1 FOPD Cyl Stuck Fwd'
+  v19_f00 = 1344
+  CASE(1345):
+  v19_f04 = 'Stand1 FOPD Ret Sens Stuck ON'
+  v19_f00 = 1345
+  CASE(1346):
+  v19_f04 = 'Stand1 FOPD Adv Sens Not ON'
+  v19_f00 = 1346
+  CASE(1347):
+  v19_f04 = 'Stand1 No Robot Clear Sig'
+  v19_f00 = 1347
+  CASE(1348):
+  v19_f04 = 'Unknown Rivet IN Nose Track'
+  v19_f00 = 1348
+  CASE(1349):
+  v19_f04 = 'Process Missing Rivet'
+  v19_f00 = 1349
+  CASE(1350):
+  v19_f04 = 'Process Double Rivet'
+  v19_f00 = 1350
+  CASE(1351):
+  v19_f04 = 'Process Velocity Too Fast'
+  v19_f00 = 1351
+  CASE(1352):
+  v19_f04 = 'Process Velocity Too Slow'
+  v19_f00 = 1352
+  CASE(1353):
+  v19_f04 = 'Process Material Too Thin'
+  v19_f00 = 1353
+  CASE(1354):
+  v19_f04 = 'Process Material Too Thick'
+  v19_f00 = 1354
+  CASE(1355):
+  v19_f04 = 'Process Rivet Too Long'
+  v19_f00 = 1355
+  CASE(1356):
+  v19_f04 = 'Process Rivet Too Short'
+  v19_f00 = 1356
+  CASE(1357):
+  v19_f04 = 'Process Head Height Too High'
+  v19_f00 = 1357
+  CASE(1358):
+  v19_f04 = 'Process Head Height Too Low'
+  v19_f00 = 1358
+  CASE(1359):
+  v19_f04 = 'Process Insertion Time'
+  v19_f00 = 1359
+  CASE(1360):
+  v19_f04 = 'Process Material Too Hard'
+  v19_f00 = 1360
+  CASE(1361):
+  v19_f04 = 'Process Material Too Soft'
+  v19_f00 = 1361
+  CASE(1362):
+  v19_f04 = 'Process Wrong Material 1'
+  v19_f00 = 1362
+  CASE(1363):
+  v19_f04 = 'Process Wrong Material 2'
+  v19_f00 = 1363
+  CASE(1364):
+  v19_f04 = 'Process Tol Error'
+  v19_f00 = 1364
+  CASE(1365):
+  v19_f04 = 'RLC Wrong Rivet 2A'
+  v19_f00 = 1365
+  CASE(1366):
+  v19_f04 = 'RLC Incorrect Fixed Limits 2A'
+  v19_f00 = 1366
+  CASE(1367):
+  v19_f04 = 'RLC No Rivet to Measure 2A'
+  v19_f00 = 1367
+  CASE(1368):
+  v19_f04 = 'RLC Probe Failed 2A'
+  v19_f00 = 1368
+  CASE(1369):
+  v19_f04 = 'RLC Track Fail 2A'
+  v19_f00 = 1369
+  CASE(1370):
+  v19_f04 = 'RLC Wrong Rivet 2B'
+  v19_f00 = 1370
+  CASE(1371):
+  v19_f04 = 'RLC Incorrect Fixed Limits 2B'
+  v19_f00 = 1371
+  CASE(1372):
+  v19_f04 = 'RLC No Rivet to Measure 2B'
+  v19_f00 = 1372
+  CASE(1373):
+  v19_f04 = 'RLC Probe Failed 2B'
+  v19_f00 = 1373
+  CASE(1374):
+  v19_f04 = 'RLC Track Fail 2B'
+  v19_f00 = 1374
+  CASE(1375):
+  v19_f04 = 'RLC Wrong Rivet 3A'
+  v19_f00 = 1375
+  CASE(1376):
+  v19_f04 = 'RLC Incorrect Fixed Limits 3A'
+  v19_f00 = 1376
+  CASE(1377):
+  v19_f04 = 'RLC No Rivet to Measure 3A'
+  v19_f00 = 1377
+  CASE(1378):
+  v19_f04 = 'RLC Probe Failed 3A'
+  v19_f00 = 1378
+  CASE(1379):
+  v19_f04 = 'RLC Track Fail 3A'
+  v19_f00 = 1379
+  CASE(1380):
+  v19_f04 = 'RLC Wrong Rivet 3B'
+  v19_f00 = 1380
+  CASE(1381):
+  v19_f04 = 'RLC Incorrect Fixed Limits 3B'
+  v19_f00 = 1381
+  CASE(1382):
+  v19_f04 = 'RLC No Rivet to Measure 3B'
+  v19_f00 = 1382
+  CASE(1383):
+  v19_f04 = 'Cube 1A Rivet In Tube '
+  v19_f00 = 1383
+  CASE(1384):
+  v19_f04 = 'Cube 1B Rivet In Tube'
+  v19_f00 = 1384
+  CASE(1385):
+  v19_f04 = 'Feed No Riv In Gate'
+  v19_f00 = 1385
+  CASE(1386):
+  v19_f04 = 'Feed RIMT'
+  v19_f00 = 1386
+  CASE(1387):
+  v19_f04 = 'Stand1 Dock Sensor OFF'
+  v19_f00 = 1387
+  CASE(1388):
+  v19_f04 = 'Stand2 Dock Sensor OFF'
+  v19_f00 = 1388
+  CASE(1389):
+  v19_f04 = 'Stand3 Dock Sensor OFF'
+  v19_f00 = 1389
+  CASE(1390):
+  v19_f04 = 'Mag Gate Not At Mid'
+  v19_f00 = 1390
+  CASE(1391):
+  v19_f04 = 'Mag Probe A Stuck Back'
+  v19_f00 = 1391
+  CASE(1392):
+  v19_f04 = 'Mag Probe B Stuck Back'
+  v19_f00 = 1392
+  CASE(1393):
+  v19_f04 = 'Feed Riv In Gate B4'
+  v19_f00 = 1393
+  CASE(1394):
+  v19_f04 = 'Cube1ARivInTubeSen'
+  v19_f00 = 1394
+  CASE(1395):
+  v19_f04 = 'Cube1AEscGateNotATtrack'
+  v19_f00 = 1395
+  CASE(1396):
+  v19_f04 = 'Cube1AEscGateNotATtube'
+  v19_f00 = 1396
+  CASE(1397):
+  v19_f04 = 'Cube1ARivStuckInGate'
+  v19_f00 = 1397
+  CASE(1398):
+  v19_f04 = 'Cube1BRivInTubeSen'
+  v19_f00 = 1398
+  CASE(1399):
+  v19_f04 = 'Cube1BEscGateNotATtrack'
+  v19_f00 = 1399
+  CASE(1400):
+  v19_f04 = 'Cube1BEscGateNotATtube'
+  v19_f00 = 1400
+  CASE(1401):
+  v19_f04 = 'Cube1BRivStuckInGate'
+  v19_f00 = 1401
+  CASE(1402):
+  v19_f04 = 'ToolRivDetectSenMissed'
+  v19_f00 = 1402
+  CASE(1403):
+  v19_f04 = 'PY 1A: Platform failed to vent'
+  v19_f00 = 1403
+  CASE(1404):
+  v19_f04 = 'PY 1A: UDP Communication Error'
+  v19_f00 = 1404
+  CASE(1405):
+  v19_f04 = 'PY 1B: Incorrect Tag detected'
+  v19_f00 = 1405
+  CASE(1406):
+  v19_f04 = 'PY 1B: Cylinder not at Ready position'
+  v19_f00 = 1406
+  CASE(1407):
+  v19_f04 = 'PY 1B: Cylinder not at Locked position'
+  v19_f00 = 1407
+  CASE(1408):
+  v19_f04 = 'PY 1B: RFID Reader Error'
+  v19_f00 = 1408
+  CASE(1409):
+  v19_f04 = 'PY 1B: Low Level Sensor Error'
+  v19_f00 = 1409
+  CASE(1410):
+  v19_f04 = 'PY 1B: Rivets failed to enter Hopper'
+  v19_f00 = 1410
+  CASE(1411):
+  v19_f04 = 'PY 1B: Platform failed to vent'
+  v19_f00 = 1411
+  CASE(1412):
+  v19_f04 = 'PY 1B: UDP Communication Error'
+  v19_f00 = 1412
+  CASE(1413):
+  v19_f04 = 'PY 2A: Incorrect Tag detected'
+  v19_f00 = 1413
+  CASE(1414):
+  v19_f04 = 'PY 2A: Cylinder not at Ready position'
+  v19_f00 = 1414
+  CASE(1415):
+  v19_f04 = 'PY 2A: Cylinder not at Locked position'
+  v19_f00 = 1415
+  CASE(1416):
+  v19_f04 = 'PY 2A: RFID Reader Error'
+  v19_f00 = 1416
+  CASE(1417):
+  v19_f04 = 'PY 2A: Low Level Sensor Error'
+  v19_f00 = 1417
+  CASE(1418):
+  v19_f04 = 'PY 2A: Rivets failed to enter Hopper'
+  v19_f00 = 1418
+  CASE(1419):
+  v19_f04 = 'PY 2A: Platform failed to vent'
+  v19_f00 = 1419
+  CASE(1420):
+  v19_f04 = 'PY 2A: UDP Communication Error'
+  v19_f00 = 1420
+  CASE(1421):
+  v19_f04 = 'PY 2B: Incorrect Tag detected'
+  v19_f00 = 1421
+  CASE(1422):
+  v19_f04 = 'PY 2B: Cylinder not at Ready position'
+  v19_f00 = 1422
+  CASE(1423):
+  v19_f04 = 'PY 2B: Cylinder not at Locked position'
+  v19_f00 = 1423
+  CASE(1424):
+  v19_f04 = 'PY 2B: RFID Reader Error'
+  v19_f00 = 1424
+  CASE(1425):
+  v19_f04 = 'PY 2B: Low Level Sensor Error'
+  v19_f00 = 1425
+  CASE(1426):
+  v19_f04 = 'PY 2B: Rivets failed to enter Hopper'
+  v19_f00 = 1426
+  CASE(1427):
+  v19_f04 = 'PY 2B: Platform failed to vent'
+  v19_f00 = 1427
+  CASE(1428):
+  v19_f04 = 'PY 2B: UDP Communication Error'
+  v19_f00 = 1428
+  CASE(1429):
+  v19_f04 = 'PY 3A: Incorrect Tag detected'
+  v19_f00 = 1429
+  CASE(1430):
+  v19_f04 = 'PY 3A: Cylinder not at Ready position'
+  v19_f00 = 1430
+  CASE(1431):
+  v19_f04 = 'PY 3A: Cylinder not at Locked position'
+  v19_f00 = 1431
+  CASE(1432):
+  v19_f04 = 'PY 3A: RFID Reader Error'
+  v19_f00 = 1432
+  CASE(1433):
+  v19_f04 = 'PY 3A: Low Level Sensor Error'
+  v19_f00 = 1433
+  CASE(1434):
+  v19_f04 = 'PY 3A: Rivets failed to enter Hopper'
+  v19_f00 = 1434
+  CASE(1435):
+  v19_f04 = 'PY 3A: Platform failed to vent'
+  v19_f00 = 1435
+  CASE(1436):
+  v19_f04 = 'PY 3A: UDP Communication Error'
+  v19_f00 = 1436
+  CASE(1437):
+  v19_f04 = 'PY 3B: Incorrect Tag detected'
+  v19_f00 = 1437
+  CASE(1438):
+  v19_f04 = 'PY 3B: Cylinder not at Ready position'
+  v19_f00 = 1438
+  CASE(1439):
+  v19_f04 = 'PY 3B: Cylinder not at Locked position'
+  v19_f00 = 1439
+  CASE(1440):
+  v19_f04 = 'PY 3B: RFID Reader Error'
+  v19_f00 = 1440
+  CASE(1441):
+  v19_f04 = 'PY 3B: Low Level Sensor Error'
+  v19_f00 = 1441
+  CASE(1442):
+  v19_f04 = 'PY 3B: Rivets failed to enter Hopper'
+  v19_f00 = 1442
+  CASE(1443):
+  v19_f04 = 'PY 3B: Platform failed to vent'
+  v19_f00 = 1443
+  CASE(1444):
+  v19_f04 = 'PY 3B: UDP Communication Error'
+  v19_f00 = 1444
+  CASE(1445):
+  v19_f04 = 'Robot Mode Selection Error'
+  v19_f00 = 1445
+  CASE(1446):
+  v19_f04 = 'Selector not at A or B'
+  v19_f00 = 1446
+  CASE(1447):
+  v19_f04 = 'Spare'
+  v19_f00 = 1447
+  CASE(1448):
+  v19_f04 = 'Spare'
+  v19_f00 = 1448
+  CASE(1449):
+  v19_f04 = 'Spare'
+  v19_f00 = 1449
+  CASE(1450):
+  v19_f04 = 'Spare'
+  v19_f00 = 1450
+  CASE(1451):
+  v19_f04 = 'Spare'
+  v19_f00 = 1451
+  CASE(1452):
+  v19_f04 = 'Spare'
+  v19_f00 = 1452
+  CASE(1453):
+  v19_f04 = 'Spare'
+  v19_f00 = 1453
+  CASE(1454):
+  v19_f04 = 'Spare'
+  v19_f00 = 1454
+  CASE(1455):
+  v19_f04 = 'Spare'
+  v19_f00 = 1455
+  CASE(1456):
+  v19_f04 = 'Spare'
+  v19_f00 = 1456
+  CASE(1457):
+  v19_f04 = 'Spare'
+  v19_f00 = 1457
+  CASE(1458):
+  v19_f04 = 'Spare'
+  v19_f00 = 1458
+  CASE(1459):
+  v19_f04 = 'Spare'
+  v19_f00 = 1459
+  CASE(1460):
+  v19_f04 = 'Spare'
+  v19_f00 = 1460
+  CASE(1461):
+  v19_f04 = 'Spare'
+  v19_f00 = 1461
+  CASE(1462):
+  v19_f04 = 'Spare'
+  v19_f00 = 1462
+  CASE(1463):
+  v19_f04 = 'Spare'
+  v19_f00 = 1463
+  CASE(1464):
+  v19_f04 = 'Spare'
+  v19_f00 = 1464
+  CASE(1465):
+  v19_f04 = 'Spare'
+  v19_f00 = 1465
+  CASE(1466):
+  v19_f04 = 'Spare'
+  v19_f00 = 1466
+  CASE(1467):
+  v19_f04 = 'Spare'
+  v19_f00 = 1467
+  CASE(1468):
+  v19_f04 = 'Spare'
+  v19_f00 = 1468
+  CASE(1469):
+  v19_f04 = 'Spare'
+  v19_f00 = 1469
+  CASE(1470):
+  v19_f04 = 'Spare'
+  v19_f00 = 1470
+  CASE(1471):
+  v19_f04 = 'Spare'
+  v19_f00 = 1471
+  CASE(1472):
+  v19_f04 = 'Spare'
+  v19_f00 = 1472
+  CASE(1473):
+  v19_f04 = 'Spare'
+  v19_f00 = 1473
+  CASE(1474):
+  v19_f04 = 'Spare'
+  v19_f00 = 1474
+  CASE(1475):
+  v19_f04 = 'E-Stop Active, Robot Fault Reset Required'
+  v19_f00 = 1475
+  CASE(1476):
+  v19_f04 = ''
+  v19_f00 = 1476
+  CASE(1477):
+  v19_f04 = ''
+  v19_f00 = 1477
+  CASE(1478):
+  v19_f04 = ''
+  v19_f00 = 1478
+  CASE(1479):
+  v19_f04 = ''
+  v19_f00 = 1479
+  CASE(1480):
+  v19_f04 = 'This SPR tool out of range : 1 to MAX'
+  v19_f00 = 1480
+  CASE(1481):
+  v19_f04 = 'Select toolID out of range : 1 to MAX'
+  v19_f00 = 1481
+  CASE(1482):
+  v19_f04 = 'This SPR rivetID < 1 or > MAX'
+  v19_f00 = 1482
+  CASE(1483):
+  v19_f04 = 'This SPR rivet type invalid'
+  v19_f00 = 1483
+  CASE(1484):
+  v19_f04 = 'Equalization type not valid'
+  v19_f00 = 1484
+  CASE(1485):
+  v19_f04 = ''
+  v19_f00 = 1485
+  CASE(1486):
+  v19_f04 = ''
+  v19_f00 = 1486
+  CASE(1487):
+  v19_f04 = ''
+  v19_f00 = 1487
+  CASE(1488):
+  v19_f04 = ''
+  v19_f00 = 1488
+  CASE(1489):
+  v19_f04 = ''
+  v19_f00 = 1489
+  CASE(1490):
+  v19_f04 = 'This pre opening < MIN'
+  v19_f00 = 1490
+  CASE(1491):
+  v19_f04 = 'This pre opening > MAX'
+  v19_f00 = 1491
+  CASE(1492):
+  v19_f04 = 'This pre opening is INVALID'
+  v19_f00 = 1492
+  CASE(1493):
+  v19_f04 = 'This post opening < MIN'
+  v19_f00 = 1493
+  CASE(1494):
+  v19_f04 = 'This post opening > MAX'
+  v19_f00 = 1494
+  CASE(1495):
+  v19_f04 = 'This post opening is INVALID'
+  v19_f00 = 1495
+  CASE(1496):
+  v19_f04 = 'Next post opening < MIN'
+  v19_f00 = 1496
+  CASE(1497):
+  v19_f04 = 'Next post opening > MAX'
+  v19_f00 = 1497
+  CASE(1498):
+  v19_f04 = 'Next post opening is INVALID'
+  v19_f00 = 1498
+  CASE(1499):
+  v19_f04 = 'This ControllerID <> Next ControllerID'
+  v19_f00 = 1499
+  CASE(1500):
+  v19_f04 = 'This TooID <> Next ToolID'
+  v19_f00 = 1500
+  CASE(1501):
+  v19_f04 = 'This post <> Next pre'
+  v19_f00 = 1501
+  CASE(1502):
+  v19_f04 = 'Selected pre opening < MIN'
+  v19_f00 = 1502
+  CASE(1503):
+  v19_f04 = 'Selected pre opening > MAX'
+  v19_f00 = 1503
+  CASE(1504):
+  v19_f04 = 'Selected pre opening is INVALID'
+  v19_f00 = 1504
+  CASE(1505):
+  v19_f04 = 'Fill Station < 1'
+  v19_f00 = 1505
+  CASE(1506):
+  v19_f04 = 'Fill Station > MAX'
+  v19_f00 = 1506
+  CASE(1507):
+  v19_f04 = 'Error out of range'
+  v19_f00 = 1507
+  CASE(1508):
+  v19_f04 = 'Tool still POWERED DOWN'
+  v19_f00 = 1508
+  CASE(1509):
+  v19_f04 = 'Controller not OK'
+  v19_f00 = 1509
+  CASE(1510):
+  v19_f04 = 'Controller not READY'
+  v19_f00 = 1510
+  CASE(1511):
+  v19_f04 = 'Rivet Type A not selected'
+  v19_f00 = 1511
+  v20 = 1
+  CASE(1512):
+  v19_f04 = 'Rivet Type B not selected'
+  v19_f00 = 1512
+  v20 = 1
+  CASE(1513):
+  v19_f04 = 'Rivet Type C not selected'
+  v19_f00 = 1513
+  v20 = 1
+  CASE(1514):
+  v19_f04 = 'Rivet Type D not selected'
+  v19_f00 = 1514
+  v20 = 1
+  CASE(1515):
+  v19_f04 = 'Anti repeat rivet, Rivet ID' + v18
+  v19_f00 = 1515
+  v20 = 2
+  CASE(1516):
+  v19_f04 = 'Rivet array dnHenRivetNum not cleared'
+  v19_f00 = 1516
+  CASE(1517):
+  v19_f04 = 'EOS timed out.'
+  v19_f00 = 1517
+  CASE(1518):
+  v19_f04 = 'Tool NOT at PARTIAL'
+  v19_f00 = 1518
+  CASE(1519):
+  v19_f04 = 'Rivet quality is UNKNOWN'
+  v19_f00 = 1519
+  CASE(1520):
+  v19_f04 = 'Soft Move not tuned'
+  v19_f00 = 1520
+  CASE(1521):
+  v19_f04 = 'Soft Move tuned failed'
+  v19_f00 = 1521
+  CASE(1522):
+  v19_f04 = 'Rivet quality NOT OK'
+  v19_f00 = 1522
+  CASE(1523):
+  v19_f04 = 'Tool NOT at HOME'
+  v19_f00 = 1523
+  CASE(1524):
+  v19_f04 = 'Waiting Ready to Dock to be ON'
+  v19_f00 = 1524
+  CASE(1525):
+  v19_f04 = 'Waiting Ready to Dock to be OFF'
+  v19_f00 = 1525
+  CASE(1526):
+  v19_f04 = 'Waiting End of Dock to be ON'
+  v19_f00 = 1526
+  CASE(1527):
+  v19_f04 = 'Waiting End of Dock to be OFF'
+  v19_f00 = 1527
+  CASE(1534):
+  v19_f04 = 'Die check signals not OFF'
+  v19_f00 = 1534
+  CASE(1531):
+  v19_f04 = 'Henrob not in auto to move tool HOME'
+  v19_f00 = 1531
+  CASE(1535):
+  v19_f04 = 'Die check signals not ON'
+  v19_f00 = 1535
+  CASE(1532):
+  v19_f04 = 'Henrob not in auto to move tool PARTIAL'
+  v19_f00 = 1532
+  CASE(1533):
+  v19_f04 = 'Tool not POWERED DOWN'
+  v19_f00 = 1533
+  CASE(1528):
+  v19_f04 = 'Tool Stand 1 is not OK to dock on'
+  v19_f00 = 1528
+  CASE(1529):
+  v19_f04 = 'Tool Stand 2 is not OK to dock on'
+  v19_f00 = 1529
+  CASE(1530):
+  v19_f04 = 'Tool Stand 3 is not OK to dock on'
+  v19_f00 = 1530
+  CASE(1536):
+  v19_f04 = 'Die check tool 1 not OK'
+  v19_f00 = 1536
+  v20 = 4
+  CASE(1537):
+  v19_f04 = 'Die check tool 2 not OK'
+  v19_f00 = 1537
+  v20 = 4
+  CASE(1538):
+  v19_f04 = 'Die check tool 3 not OK'
+  v19_f00 = 1538
+  v20 = 4
+  CASE(1539):
+  v19_f04 = ''
+  v19_f00 = 1539
+  CASE(1540):
+  v19_f04 = 'E-STOP Active During Rivet, '
+  v19_f04 = 'Choose Re-Rivet or Skip'
+  v19_f00 = 1540
+  v20 = 2
+  ELSE:
+  v19_f04 = 'Undefined SPR DCP Fault Message'
+  ENDSELECT
+  GET_REG(v19_f00, (4 <> 0), 10, v21, 0)
+  -- 弃参原式: 4
+  sv_i = imp5(9, v21, v2)
+  -- stmt96 stray sv_i
+END DCP_SPR1_3
+

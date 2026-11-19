@@ -1,0 +1,386 @@
+PROGRAM ISRA_AV
+--Program to keep a running average of the ISRA Offsets off the last 10 Cars
+
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+%INCLUDE kliotyps
+
+%INCLUDE ISRA_CONST
+
+%INCLUDE ISRA_Type
+
+--Variables
+VAR
+%INCLUDE ISRA_Vars
+STATUS				: INTEGER
+paramTyp			: INTEGER
+paramNo				: INTEGER
+paramInt				: INTEGER
+UseAv					: INTEGER
+ProgNum				: INTEGER
+paramString		: STRING[10]
+paramReal			: REAL
+Count					: INTEGER
+
+ROUTINE INIT
+BEGIN
+	Count = 1
+	--Initilise Array's
+	FOR Count = 1 TO MaxArrSize DO
+		--Initilise X Array
+		IF UNINIT(X260_ISRA.arrX[Count]) THEN
+			X260_ISRA.arrX[Count] = 0
+		ENDIF
+		--Initilise Y Array
+		IF UNINIT(X260_ISRA.arrY[Count]) THEN
+			X260_ISRA.arrY[Count] = 0
+		ENDIF
+		--Initilise Z Array
+		IF UNINIT(X260_ISRA.arrZ[Count]) THEN
+			X260_ISRA.arrZ[Count] = 0
+		ENDIF
+		--Initilise W Array
+		IF UNINIT(X260_ISRA.arrW[Count]) THEN
+			X260_ISRA.arrW[Count] = 0
+		ENDIF
+		--Initilise P Array
+		IF UNINIT(X260_ISRA.arrP[Count]) THEN
+			X260_ISRA.arrP[Count] = 0
+		ENDIF
+		--Initilise R Array
+		IF UNINIT(X260_ISRA.arrR[Count]) THEN
+			X260_ISRA.arrR[Count] = 0
+		ENDIF
+	ENDFOR
+	
+	FOR Count = 1 TO MaxArrSize DO
+		--Initilise X Array
+		IF UNINIT(X760_ISRA.arrX[Count]) THEN
+			X760_ISRA.arrX[Count] = 0
+		ENDIF
+		--Initilise Y Array
+		IF UNINIT(X760_ISRA.arrY[Count]) THEN
+			X760_ISRA.arrY[Count] = 0
+		ENDIF
+		--Initilise Z Array
+		IF UNINIT(X760_ISRA.arrZ[Count]) THEN
+			X760_ISRA.arrZ[Count] = 0
+		ENDIF
+		--Initilise W Array
+		IF UNINIT(X760_ISRA.arrW[Count]) THEN
+			X760_ISRA.arrW[Count] = 0
+		ENDIF
+		--Initilise P Array
+		IF UNINIT(X760_ISRA.arrP[Count]) THEN
+			X760_ISRA.arrP[Count] = 0
+		ENDIF
+		--Initilise R Array
+		IF UNINIT(X760_ISRA.arrR[Count]) THEN
+			X760_ISRA.arrR[Count] = 0
+		ENDIF
+	ENDFOR
+	
+	FOR Count = 1 TO MaxArrSize DO
+		--Initilise X Array
+		IF UNINIT(X260SB_ISRA.arrX[Count]) THEN
+			X260SB_ISRA.arrX[Count] = 0
+		ENDIF
+		--Initilise Y Array
+		IF UNINIT(X260SB_ISRA.arrY[Count]) THEN
+			X260SB_ISRA.arrY[Count] = 0
+		ENDIF
+		--Initilise Z Array
+		IF UNINIT(X260SB_ISRA.arrZ[Count]) THEN
+			X260SB_ISRA.arrZ[Count] = 0
+		ENDIF
+		--Initilise W Array
+		IF UNINIT(X260SB_ISRA.arrW[Count]) THEN
+			X260SB_ISRA.arrW[Count] = 0
+		ENDIF
+		--Initilise P Array
+		IF UNINIT(X260SB_ISRA.arrP[Count]) THEN
+			X260SB_ISRA.arrP[Count] = 0
+		ENDIF
+		--Initilise R Array
+		IF UNINIT(X260SB_ISRA.arrR[Count]) THEN
+			X260SB_ISRA.arrR[Count] = 0
+		ENDIF
+	ENDFOR	
+
+	FOR Count = 1 TO MaxArrSize DO
+		--Initilise X Array
+		IF UNINIT(X360_ISRA.arrX[Count]) THEN
+			X360_ISRA.arrX[Count] = 0
+		ENDIF
+		--Initilise Y Array
+		IF UNINIT(X360_ISRA.arrY[Count]) THEN
+			X360_ISRA.arrY[Count] = 0
+		ENDIF
+		--Initilise Z Array
+		IF UNINIT(X360_ISRA.arrZ[Count]) THEN
+			X360_ISRA.arrZ[Count] = 0
+		ENDIF
+		--Initilise W Array
+		IF UNINIT(X360_ISRA.arrW[Count]) THEN
+			X360_ISRA.arrW[Count] = 0
+		ENDIF
+		--Initilise P Array
+		IF UNINIT(X360_ISRA.arrP[Count]) THEN
+			X360_ISRA.arrP[Count] = 0
+		ENDIF
+		--Initilise R Array
+		IF UNINIT(X360_ISRA.arrR[Count]) THEN
+			X360_ISRA.arrR[Count] = 0
+		ENDIF
+	ENDFOR	
+
+	CalcX = 0
+	CalcY = 0
+	CalcZ = 0
+	CalcW = 0
+	CalcP = 0
+	CalcR = 0
+
+END INIT
+
+BEGIN
+	--Run Init Routine
+	--X260_ISRA = INIT(X260_ISRA)
+	-- Check whether the Offset is to be used
+	INIT
+	GET_TPE_PRM(1,paramTyp,UseAv,paramReal,paramString,STATUS)
+	GET_REG(160, FALSE, ProgNum, paramReal, STATUS)
+	IF UseAv = 0  THEN	
+		--Read in the latest Offsets from the ISRA System
+		--Get Current X Value
+		GET_REG(40, TRUE,paramInt,CurrentX, STATUS)
+		--Get Current Y Value
+		GET_REG(41, TRUE,paramInt,CurrentY, STATUS)
+		--Get Current Z Value
+		GET_REG(42, TRUE,paramInt,CurrentZ, STATUS)
+		--Get Current W Value
+		GET_REG(43, TRUE,paramInt,CurrentW, STATUS)
+		--Get Current P Value
+		GET_REG(44, TRUE,paramInt,CurrentP, STATUS)
+		--Get Current R Value
+		GET_REG(45, TRUE,paramInt,CurrentR, STATUS)
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X260-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		--Move all Data in the X260 Array along one position to make room for the new data
+		IF ((ProgNum >= 1) AND (ProgNum <= 20)) THEN
+			FOR IntArrNum = MaxArrSize DOWNTO 2  DO
+				X260_ISRA.arrX[IntArrNum] = X260_ISRA.arrX[IntArrNum - 1]
+				X260_ISRA.arrY[IntArrNum] = X260_ISRA.arrY[IntArrNum - 1]
+				X260_ISRA.arrZ[IntArrNum] = X260_ISRA.arrZ[IntArrNum - 1]
+				X260_ISRA.arrW[IntArrNum] = X260_ISRA.arrW[IntArrNum - 1]
+				X260_ISRA.arrP[IntArrNum] = X260_ISRA.arrP[IntArrNum - 1]
+				X260_ISRA.arrR[IntArrNum] = X260_ISRA.arrR[IntArrNum - 1]
+			ENDFOR
+			--Populate current Offset into Position 1 of the Array
+			X260_ISRA.arrX[1] = CurrentX
+			X260_ISRA.arrY[1] = CurrentY
+			X260_ISRA.arrZ[1] = CurrentZ
+			X260_ISRA.arrW[1] = CurrentW
+			X260_ISRA.arrP[1] = CurrentP
+			X260_ISRA.arrR[1] = CurrentR
+
+			--Calculate Average Offset
+			FOR IntArrNum = 1 TO MaxArrSize DO
+				CalcX = CalcX + X260_ISRA.ArrX[IntArrNum]
+				CalcY = CalcY + X260_ISRA.ArrY[IntArrNum]
+				CalcZ = CalcZ + X260_ISRA.ArrZ[IntArrNum]
+				CalcW = CalcW + X260_ISRA.ArrW[IntArrNum]
+				CalcP = CalcP + X260_ISRA.ArrP[IntArrNum]
+				CalcR = CalcR + X260_ISRA.ArrR[IntArrNum]
+			ENDFOR
+			--Average
+			X260_ISRA.AvX = CalcX / MaxArrSize
+			X260_ISRA.AvY = CalcY / MaxArrSize
+			X260_ISRA.AvZ = CalcZ / MaxArrSize
+			X260_ISRA.AvW = CalcW / MaxArrSize
+			X260_ISRA.AvP = CalcP / MaxArrSize
+			X260_ISRA.AvR = CalcR / MaxArrSize
+			--Generate Average Position
+			X260_ISRA.Average = GET_POS_REG(40,STATUS)
+			X260_ISRA.Average.X = X260_ISRA.AvX
+			X260_ISRA.Average.Y = X260_ISRA.AvY
+			X260_ISRA.Average.Z = X260_ISRA.AvZ
+			X260_ISRA.Average.W = X260_ISRA.AvW
+			X260_ISRA.Average.P = X260_ISRA.AvP
+			X260_ISRA.Average.R = X260_ISRA.AvR
+		ENDIF			
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X760-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		--Move all Data in the X260 Array along one position to make room for the new data
+		IF ((ProgNum >= 21) AND (ProgNum <= 40)) THEN
+			FOR IntArrNum = MaxArrSize DOWNTO 2  DO
+				X760_ISRA.arrX[IntArrNum] = X760_ISRA.arrX[IntArrNum - 1]
+				X760_ISRA.arrY[IntArrNum] = X760_ISRA.arrY[IntArrNum - 1]
+				X760_ISRA.arrZ[IntArrNum] = X760_ISRA.arrZ[IntArrNum - 1]
+				X760_ISRA.arrW[IntArrNum] = X760_ISRA.arrW[IntArrNum - 1]
+				X760_ISRA.arrP[IntArrNum] = X760_ISRA.arrP[IntArrNum - 1]
+				X760_ISRA.arrR[IntArrNum] = X760_ISRA.arrR[IntArrNum - 1]
+			ENDFOR
+			--Populate current Offset into Position 1 of the Array
+			X760_ISRA.arrX[1] = CurrentX
+			X760_ISRA.arrY[1] = CurrentY
+			X760_ISRA.arrZ[1] = CurrentZ
+			X760_ISRA.arrW[1] = CurrentW
+			X760_ISRA.arrP[1] = CurrentP
+			X760_ISRA.arrR[1] = CurrentR
+
+			--Calculate Average Offset
+			FOR IntArrNum = 1 TO MaxArrSize DO
+				CalcX = CalcX + X760_ISRA.ArrX[IntArrNum]
+				CalcY = CalcY + X760_ISRA.ArrY[IntArrNum]
+				CalcZ = CalcZ + X760_ISRA.ArrZ[IntArrNum]
+				CalcW = CalcW + X760_ISRA.ArrW[IntArrNum]
+				CalcP = CalcP + X760_ISRA.ArrP[IntArrNum]
+				CalcR = CalcR + X760_ISRA.ArrR[IntArrNum]
+			ENDFOR
+			--Average
+			X760_ISRA.AvX = CalcX / MaxArrSize
+			X760_ISRA.AvY = CalcY / MaxArrSize
+			X760_ISRA.AvZ = CalcZ / MaxArrSize
+			X760_ISRA.AvW = CalcW / MaxArrSize
+			X760_ISRA.AvP = CalcP / MaxArrSize
+			X760_ISRA.AvR = CalcR / MaxArrSize
+			--Generate Average Position
+			X760_ISRA.Average = GET_POS_REG(40,STATUS)
+			X760_ISRA.Average.X = X760_ISRA.AvX
+			X760_ISRA.Average.Y = X760_ISRA.AvY
+			X760_ISRA.Average.Z = X760_ISRA.AvZ
+			X760_ISRA.Average.W = X760_ISRA.AvW
+			X760_ISRA.Average.P = X760_ISRA.AvP
+			X760_ISRA.Average.R = X760_ISRA.AvR
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X260 SB--------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		--Move all Data in the X260 Array along one position to make room for the new data
+		IF ((ProgNum >= 41) AND (ProgNum <= 60)) THEN
+			FOR IntArrNum = MaxArrSize DOWNTO 2  DO
+				X260SB_ISRA.arrX[IntArrNum] = X260SB_ISRA.arrX[IntArrNum - 1]
+				X260SB_ISRA.arrY[IntArrNum] = X260SB_ISRA.arrY[IntArrNum - 1]
+				X260SB_ISRA.arrZ[IntArrNum] = X260SB_ISRA.arrZ[IntArrNum - 1]
+				X260SB_ISRA.arrW[IntArrNum] = X260SB_ISRA.arrW[IntArrNum - 1]
+				X260SB_ISRA.arrP[IntArrNum] = X260SB_ISRA.arrP[IntArrNum - 1]
+				X260SB_ISRA.arrR[IntArrNum] = X260SB_ISRA.arrR[IntArrNum - 1]
+			ENDFOR
+			--Populate current Offset into Position 1 of the Array
+			X260SB_ISRA.arrX[1] = CurrentX
+			X260SB_ISRA.arrY[1] = CurrentY
+			X260SB_ISRA.arrZ[1] = CurrentZ
+			X260SB_ISRA.arrW[1] = CurrentW
+			X260SB_ISRA.arrP[1] = CurrentP
+			X260SB_ISRA.arrR[1] = CurrentR
+
+			--Calculate Average Offset
+			FOR IntArrNum = 1 TO MaxArrSize DO
+				CalcX = CalcX + X260SB_ISRA.ArrX[IntArrNum]
+				CalcY = CalcY + X260SB_ISRA.ArrY[IntArrNum]
+				CalcZ = CalcZ + X260SB_ISRA.ArrZ[IntArrNum]
+				CalcW = CalcW + X260SB_ISRA.ArrW[IntArrNum]
+				CalcP = CalcP + X260SB_ISRA.ArrP[IntArrNum]
+				CalcR = CalcR + X260SB_ISRA.ArrR[IntArrNum]
+			ENDFOR
+			--Average
+			X260SB_ISRA.AvX = CalcX / MaxArrSize
+			X260SB_ISRA.AvY = CalcY / MaxArrSize
+			X260SB_ISRA.AvZ = CalcZ / MaxArrSize
+			X260SB_ISRA.AvW = CalcW / MaxArrSize
+			X260SB_ISRA.AvP = CalcP / MaxArrSize
+			X260SB_ISRA.AvR = CalcR / MaxArrSize
+			--Generate Average Position
+			X260SB_ISRA.Average = GET_POS_REG(40,STATUS)
+			X260SB_ISRA.Average.X = X260SB_ISRA.AvX
+			X260SB_ISRA.Average.Y = X260SB_ISRA.AvY
+			X260SB_ISRA.Average.Z = X260SB_ISRA.AvZ
+			X260SB_ISRA.Average.W = X260SB_ISRA.AvW
+			X260SB_ISRA.Average.P = X260SB_ISRA.AvP
+			X260SB_ISRA.Average.R = X260SB_ISRA.AvR
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X360-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		--Move all Data in the X260 Array along one position to make room for the new data
+		IF ((ProgNum >= 61) AND (ProgNum <= 80)) THEN
+			FOR IntArrNum = MaxArrSize DOWNTO 2  DO
+				X360_ISRA.arrX[IntArrNum] = X360_ISRA.arrX[IntArrNum - 1]
+				X360_ISRA.arrY[IntArrNum] = X360_ISRA.arrY[IntArrNum - 1]
+				X360_ISRA.arrZ[IntArrNum] = X360_ISRA.arrZ[IntArrNum - 1]
+				X360_ISRA.arrW[IntArrNum] = X360_ISRA.arrW[IntArrNum - 1]
+				X360_ISRA.arrP[IntArrNum] = X360_ISRA.arrP[IntArrNum - 1]
+				X360_ISRA.arrR[IntArrNum] = X360_ISRA.arrR[IntArrNum - 1]
+			ENDFOR
+			--Populate current Offset into Position 1 of the Array
+			X360_ISRA.arrX[1] = CurrentX
+			X360_ISRA.arrY[1] = CurrentY
+			X360_ISRA.arrZ[1] = CurrentZ
+			X360_ISRA.arrW[1] = CurrentW
+			X360_ISRA.arrP[1] = CurrentP
+			X360_ISRA.arrR[1] = CurrentR
+
+			--Calculate Average Offset
+			FOR IntArrNum = 1 TO MaxArrSize DO
+				CalcX = CalcX + X360_ISRA.ArrX[IntArrNum]
+				CalcY = CalcY + X360_ISRA.ArrY[IntArrNum]
+				CalcZ = CalcZ + X360_ISRA.ArrZ[IntArrNum]
+				CalcW = CalcW + X360_ISRA.ArrW[IntArrNum]
+				CalcP = CalcP + X360_ISRA.ArrP[IntArrNum]
+				CalcR = CalcR + X360_ISRA.ArrR[IntArrNum]
+			ENDFOR
+			--Average
+			X360_ISRA.AvX = CalcX / MaxArrSize
+			X360_ISRA.AvY = CalcY / MaxArrSize
+			X360_ISRA.AvZ = CalcZ / MaxArrSize
+			X360_ISRA.AvW = CalcW / MaxArrSize
+			X360_ISRA.AvP = CalcP / MaxArrSize
+			X360_ISRA.AvR = CalcR / MaxArrSize
+			--Generate Average Position
+			X360_ISRA.Average = GET_POS_REG(40,STATUS)
+			X360_ISRA.Average.X = X360_ISRA.AvX
+			X360_ISRA.Average.Y = X360_ISRA.AvY
+			X360_ISRA.Average.Z = X360_ISRA.AvZ
+			X360_ISRA.Average.W = X360_ISRA.AvW
+			X360_ISRA.Average.P = X360_ISRA.AvP
+			X360_ISRA.Average.R = X360_ISRA.AvR
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+	ENDIF
+-- If UseAv = 1 Then Populate PR[40] which the Average Offset
+	IF UseAv = 1 THEN
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X260-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		IF ((ProgNum >= 1) AND (ProgNum <= 20)) THEN
+			SET_POS_REG(40, X260_ISRA.Average, STATUS)
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X760-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		IF ((ProgNum >= 21) AND (ProgNum <= 40)) THEN
+			SET_POS_REG(40, X760_ISRA.Average, STATUS)
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X260 SB--------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		IF ((ProgNum >= 41) AND (ProgNum <= 60)) THEN
+			SET_POS_REG(40, X260SB_ISRA.Average, STATUS)
+		ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------X360-------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------		
+		IF ((ProgNum >= 61) AND (ProgNum <= 80)) THEN
+			SET_POS_REG(40, X360_ISRA.Average, STATUS)
+		ENDIF
+	ENDIF
+----------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+END ISRA_AV

@@ -1,0 +1,23 @@
+-- MM_INIT_SKT.KL (decompiled v3)
+PROGRAM MM_INIT_SKT
+%COMMENT = 'MM_Init_Socket'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE INIT_SKT(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  sv_i = INIT_SKT(0)
+  -- stmt15 stray sv_i
+END MM_INIT_SKT
+

@@ -1,0 +1,381 @@
+-- CMT_GUI.KL (decompiled v3)
+PROGRAM CMT_GUI
+%COMMENT = 'CMT 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : ARRAY[64] OF STRING[64]
+  v5 : INTEGER
+  v6 : ARRAY[64] OF BOOLEAN
+  v7 : ARRAY[64] OF BOOLEAN
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : STRING[64]
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : STRING[64]
+  v21 : INTEGER
+  v22 : ARRAY[64] OF STRING[64]
+  v23 : STRING[64]
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : INTEGER
+  v27 : STRING[64]
+  v28 : ARRAY[64] OF STRING[64]
+  v29 : STRING[64]
+  v30 : INTEGER
+  v31 : INTEGER
+  v32 : INTEGER
+  v33 : INTEGER
+  v34 : INTEGER
+  v35 : INTEGER
+  v36 : INTEGER
+  v37 : INTEGER
+  v38 : ARRAY[64] OF INTEGER
+  v39 : INTEGER
+  v38_f04 : ARRAY[64] OF INTEGER
+  v38_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+
+ROUTINE IS_DEV(p0 : STRING) : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(v1, '*SYSTEM*', '$VIRTUALEDIT', r0_lc1, v2)
+  IF ((r0_lc1 <> 1)) THEN
+  MOUNT_DEV(p0, v2)
+  IF ((v2 <> 0) AND (v2 <> 2006) AND (v2 <> 67131)) THEN
+  POST_ERR(38100, 'Device ' + p0 + ' not ready', 0, 1)
+  RETURN(FALSE)
+  ENDIF
+  RETURN(TRUE)
+  ELSE
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END IS_DEV
+
+ROUTINE LOAD_CMD : INTEGER
+BEGIN
+  FOR v3 = 1 TO 3 DO
+  v4[v3] = ''
+  ENDFOR
+  v4[1] = '[CMT_GUI]choice_dev'
+  v4[2] = '[CMT_GUI]n_choice1_file'
+  v4[3] = '[CMT_GUI]n_choice2_file'
+  v5 = 1
+  DISCTRL_FORM('SETP', 0, v4, v6, v7, 2 + 2048, v8, v5, v2)
+  SELECT v5 OF
+  CASE(128):
+  FORCE_SPMENU(1, v9, v10)
+  v11 = 1
+  CASE(131):
+  IF ((v2 = 0)) THEN
+  v12 = 7
+  v8 = 1
+  ELSE
+  v11 = 1
+  ENDIF
+  CASE(232):
+  CASE(0):
+  v11 = 1
+  CASE(134):
+  IF ((v13 <> 0)) THEN
+  IF ((v14 <> 0) AND (v15 <> 0) OR (v14 = 0) AND (v15 = 0)) THEN
+  IF ((v14 = 0) AND (v15 = 0)) THEN
+  POST_ERR(38100, 'No file selected', 0, 1)
+  ENDIF
+  ENDIF
+  IF ((v14 <> 0) AND (v15 <> 0)) THEN
+  POST_ERR(38100, 'Cancle invalid file', 0, 1)
+  v14 = 0
+  v15 = 0
+  ENDIF
+  ELSE
+  IF ((v14 <> 0) AND (v15 = 0)) THEN
+  IF ((v14 <> 0)) THEN
+  IF ((v16 <> '')) THEN
+  v17 = 1
+  v18 = 1
+  v19 = 0
+  RUN_TASK('CMT_PORT', 0, (0 <> 0), (0 <> 0), 1, v2)
+  -- 弃参原式: 0 | 0
+  v14 = 0
+  v15 = 0
+  ELSE
+  POST_ERR(38100, 'Invalid file selected1', 0, 1)
+  ENDIF
+  POST_ERR(38100, 'No file selected', 0, 1)
+  ENDIF
+  ENDIF
+  IF ((v15 <> 0) AND (v14 = 0)) THEN
+  IF ((v15 <> 0)) THEN
+  IF ((v20 <> '')) THEN
+  v17 = 1
+  v18 = 0
+  v19 = 1
+  RUN_TASK('CMT_PORT', 0, (0 <> 0), (0 <> 0), 1, v2)
+  -- 弃参原式: 0 | 0
+  v14 = 0
+  v15 = 0
+  ELSE
+  POST_ERR(38100, 'Invalid file selected2', 0, 1)
+  ENDIF
+  POST_ERR(38100, 'No file selected', 0, 1)
+  ENDIF
+  ENDIF
+  ENDIF
+  POST_ERR(38100, 'No device selected', 0, 1)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END LOAD_CMD
+
+ROUTINE SAVE_CMD : INTEGER
+BEGIN
+  FOR v3 = 1 TO 3 DO
+  v4[v3] = ''
+  ENDFOR
+  v4[1] = '[CMT_GUI]choice_dev'
+  v4[2] = '[CMT_GUI]port_type'
+  v4[3] = '[CMT_GUI]port_no'
+  v4[4] = '[CMT_GUI]n_port_no'
+  IF (8192 <> 0) OR (2 <> 0) OR (2048 <> 0) THEN
+    v21 = 1
+  ELSE
+    v21 = 0
+  ENDIF
+  v5 = 1
+  DISCTRL_FORM('SETP', 7, v4, v6, v7, v21, v8, v5, v2)
+  SELECT v5 OF
+  CASE(128):
+  FORCE_SPMENU(1, v9, v10)
+  v11 = 1
+  CASE(131):
+  IF ((v2 = 0)) THEN
+  v12 = 0
+  v8 = 1
+  ELSE
+  v11 = 1
+  ENDIF
+  CASE(0):
+  v11 = 1
+  CASE(134):
+  IF ((v13 <> 0)) THEN
+  ENDIF
+  CASE(1):
+  v23 = ''
+  CASE(2):
+  v23 = ''
+  CASE(3):
+  v23 = ''
+  ELSE:
+  POST_ERR(38100, 'Invalid device interface', 0, 1)
+  ENDSELECT
+  POST_ERR(38100, 'Please choice device interface', 0, 1)
+  IF (sv_b) THEN
+  IF (UNINIT(v24)) THEN
+  POST_ERR(38100, 'I/O port type undefined', 0, 1)
+  ELSE
+  IF ((v24 <> 5)) THEN
+  IF (UNINIT(v25) OR UNINIT(v26)) THEN
+  POST_ERR(38100, 'I/O port address undefined', 0, 1)
+  ENDIF
+  ENDIF
+  ENDIF
+  v17 = 2
+  v27 = v23 + '\'
+  -- stmt14 residue '\\'
+  RUN_TASK('CMT_PORT', 0, (0 <> 0), (0 <> 0), 1, v2)
+  -- 弃参原式: 0 | 0
+  ENDIF
+  RETURN(0)
+END SAVE_CMD
+
+ROUTINE INIT_CHECK : INTEGER
+BEGIN
+  IF (UNINIT(v2)) THEN
+  v2 = 0
+  ENDIF
+  IF ((v2 <> 0) OR UNINIT(v12) OR UNINIT(v8)) THEN
+  v12 = 0
+  v8 = 1
+  ENDIF
+  IF (NOT ((v12 = 0) OR (v12 = 7))) THEN
+  v12 = 0
+  ENDIF
+  SELECT v12 OF
+  CASE(0):
+  IF (NOT ((v8 >= 1))) THEN
+  v8 = 1
+  ENDIF
+  CASE(7):
+  IF (NOT ((v8 >= 1))) THEN
+  v8 = 1
+  ELSE
+  ENDIF
+  ENDSELECT
+  RETURN(0)
+END INIT_CHECK
+
+ROUTINE CURR_LANG : STRING
+VAR
+  r4_lc10 : INTEGER
+  r4_lc4 : STRING[64]
+  r4_lc8 : STRING[64]
+  r4_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, '*SYSTEM*', '$LANGUAGE', r4_lc8, r4_lc10)
+  sv_i = index(r4_lc8, ' ')
+  r4_lc9 = sv_i
+  sv_s = sub_str(r4_lc8, 1, r4_lc9 - 1)
+  r4_lc4 = sv_s
+  IF ((r4_lc4 <> 'DEFAULT')) THEN
+  -- stmt68 stray r4_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG('ENGLISH     ', r4_lc10)
+  -- stmt74 stray 'ENGLISH     '
+  ELSE
+  -- stmt76 stray 'DEFAULT     '
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURR_LANG
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r5_lc10 : INTEGER
+  r5_lc9 : STRING[64]
+BEGIN
+  r5_lc9 = 'FR:\' + p1
+  -- stmt94 residue 'FR:\\'
+  IF ((sv_s = 'ENGLISH     ')) THEN
+  ADD_DICT(r5_lc9, p0, 'ENGLISH     ', 4, r5_lc10)
+  ELSE
+  IF ((sv_s = 'CHINESE     ')) THEN
+  ADD_DICT(r5_lc9, p0, 'CHINESE     ', 4, r5_lc10)
+  ELSE
+  ADD_DICT(r5_lc9, p0, 'DEFAULT     ', 4, r5_lc10)
+  ENDIF
+  ENDIF
+  IF ((r5_lc10 <> 0)) THEN
+  POST_ERR(38100, 'Failed to load dict ' + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE GET_LIST : INTEGER
+BEGIN
+  IF ((v13 <> 0)) THEN
+  SELECT v13 OF
+  CASE(1):
+  v23 = ''
+  CASE(2):
+  v23 = ''
+  CASE(3):
+  v23 = ''
+  ELSE:
+  POST_ERR(38100, 'Invalid device interface', 0, 1)
+  ENDSELECT
+  ENDIF
+  IF (sv_b) THEN
+  FOR v3 = 1 TO 3 DO
+  v28[v3] = ''
+  ENDFOR
+  v16 = ''
+  v20 = ''
+  v29 = v23 + '\' + '*.xml'
+  -- stmt137 residue '\\'
+  v30 = 0
+  v31 = 3
+  ENDIF
+  REPEAT
+  FILE_LIST(v29, v30, v31, v28, v32, v2)
+  IF ((v2 <> 0)) THEN
+  POST_ERR(v2, '', 0, 0)
+  ELSE
+  v30 = v30 + v32
+  ENDIF
+  UNTIL((0 <> v32))
+  FOR v3 = 32 TO 3 DO
+  v28[v3] = ''
+  -- stmt149 stray v28[v3 - 1]
+  ENDFOR
+  v28[1] = ''
+  v16 = ''
+  -- stmt153 stray v28[v14 + 1]
+  v20 = ''
+  -- stmt154 stray v28[v15 + 1]
+  v27 = v23 + '\'
+  -- stmt155 residue '\\'
+  ENABLE CONDITION[1]
+  v22[1] = 'MC:'
+  v22[2] = 'UD1:'
+  v22[3] = 'UT1:'
+  v13 = 0
+  v14 = 0
+  v15 = 0
+  v11 = 0
+  sv_i = LOAD_TX('setp', 'iosetpeg')
+  -- stmt178 stray sv_i
+  sv_i = INIT_CHECK
+  -- stmt181 stray sv_i
+  GET_VAR(v1, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', v9, v2)
+  GET_VAR(v1, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', v10, v2)
+  GET_DEV_INFO(v33, v34, v35, v36, v37, v2)
+  v9 = v38_f04[v34]
+  v10 = v38_f08[v34]
+  PURGE CONDITION[1]
+  -- stmt196 stray 99 | 128 | v11
+  ENABLE CONDITION[1]
+  SELECT v34 OF
+  CASE(1):
+  v39 = 1
+  CASE(2):
+  v39 = 2
+  CASE(3):
+  v39 = 3
+  ELSE:
+  v39 = 1
+  ENDSELECT
+  FORCE_SPMENU(v39, 190, 1)
+  SELECT v12 OF
+  CASE(0):
+  sv_i = LOAD_CMD
+  CASE(7):
+  sv_i = SAVE_CMD
+  ELSE:
+  v11 = 1
+  ENDSELECT
+  DELAY 8
+  IF ((v11 <> 0)) THEN
+  -- stmt227 stray 99
+  ENDIF
+  RETURN(0)
+END GET_LIST
+
+BEGIN
+END CMT_GUI
+-- module-residue 'H521', 'H538'

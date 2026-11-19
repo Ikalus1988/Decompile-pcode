@@ -1,0 +1,110 @@
+PROGRAM SETUP_JLR
+%NOLOCKGROUP
+%NOPAUSE  = ERROR + TPENABLE +COMMAND
+%NOPAUSESHFT
+%NOBUSYLAMP
+%INCLUDE SETP -- Form Dictionary File
+%INCLUDE klevkmsk
+%INCLUDE KLEVKEYS
+CONST
+	NUM_ELEM = 4
+VAR
+	paramInt																: INTEGER
+	paramTyp															: INTEGER
+	paramReal															: REAL
+	paramString														: STRING[80]
+	value_array															: ARRAY[NUM_ELEM] OF STRING[40]
+	inact_array															: ARRAY[NUM_ELEM] OF BOOLEAN	
+	change_array														: ARRAY[NUM_ELEM] OF BOOLEAN
+	term_mask															: INTEGER
+	def_item																: INTEGER
+	term_char															: INTEGER
+	STATUS																: INTEGER
+	device_stat															: INTEGER
+	prev_menu   														: INTEGER
+	prev_screen														: INTEGER
+	debugEnable IN CMOS FROM JLRSETUP		: BOOLEAN
+	debugForm IN CMOS FROM JLRSETUP			: INTEGER
+	YamEnable IN CMOS FROM JLRSETUP			: BOOLEAN
+	YamForm IN CMOS FROM JLRSETUP			: INTEGER
+	ToolPresent	 IN CMOS FROM JLRSETUP			: BOOLEAN
+	ToolForm IN CMOS FROM JLRSETUP				: INTEGER 
+	blDone																	: BOOLEAN
+	entry																	: INTEGER
+
+ROUTINE INIT
+	BEGIN
+		IF (UNINIT(debugForm)) THEN
+			debugForm = 5
+			FLG[10] = OFF
+			SET_PORT_CMT(35, 10, 'Disable Debug Text', STATUS)
+		ENDIF
+		IF (UNINIT(YamForm)) THEN
+			YamForm = 5
+			DOUT[3094] = OFF
+			SET_PORT_CMT(2, 3094, 'Enable Yamazumi', STATUS)
+		ENDIF
+		IF (UNINIT(ToolForm)) THEN
+			ToolForm = 5
+			DOUT[3095] = OFF
+			SET_PORT_CMT(2, 3095, 'Enable Tool Changer', STATUS)
+		ENDIF
+		WRITE(CHR(128))
+END INIT	
+	
+BEGIN
+	--Init Data
+	INIT
+	blDone = FALSE
+	--Get the Previous Menu and Previous screen so you can return to it after the Form is Quit
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', prev_menu, STATUS)
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', prev_screen, STATUS)
+	
+	REPEAT
+	--Populate the Value Array
+	value_array[1] = '[JLRSETUP]debugForm'
+	value_array[2] = '[JLRSETUP]YamForm'
+	value_array[3] = '[JLRSETUP]ToolForm'
+	value_array[4] = '[*SYSTEM*]$ROBOT_NAME'
+	term_mask =kc_prev_key OR kc_func_key OR kc_item_chng
+	FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+	DISCTRL_FORM('SETP', JLRSETUP, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+	SELECT term_char OF
+		CASE (KY_PREV):
+				--Return to the Previous Screen Before Manual Prompt was Displayed
+				FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)
+				blDone = TRUE
+		CASE (KY_NEW_MENU):   -- user selected another menu
+   				blDone = TRUE
+		ELSE:
+				blDone = FALSE
+				 --Check for Disbale Debug Text
+			 	WRITE('Test',CR)
+				IF debugForm = 4 THEN
+					FLG[10] = ON
+				ELSE
+					FLG[10] = OFF
+				ENDIF
+				--Check for Disbale Debug Text
+				IF YamForm = 4 THEN
+					DOUT[3094] = ON
+				ELSE
+					DOUT[3094] = OFF
+				ENDIF
+				--Check for Disbale Debug Text
+				IF ToolForm = 4 THEN
+					DOUT[3095] = ON
+				ELSE
+					DOUT[3095] = OFF
+				ENDIF	
+				blDone = FALSE
+	ENDSELECT
+
+
+	--IF (term_char <> kc_func_key)THEN
+		--blDone = TRUE
+	--ENDIF
+	
+	UNTIL blDone	
+
+END SETUP_JLR

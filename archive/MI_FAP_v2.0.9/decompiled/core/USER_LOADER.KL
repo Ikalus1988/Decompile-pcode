@@ -1,0 +1,34 @@
+-- USER_LOADER.KL (decompiled v3)
+PROGRAM USER_LOADER
+%COMMENT = 'karel 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_0e : ARRAY[512] OF INTEGER
+  L_STATE : INTEGER
+  BG_PRG : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+  L_STATE = 0
+  IF (UNINIT(BG_PRG)) THEN
+  BG_PRG = 'UserAutoExec'
+  ENDIF
+  IF ((io_0e[128] = 0)) THEN
+  RUN_TASK(BG_PRG, 0, (0 <> 0), (0 <> 0), 1, L_STATE)
+  -- Æú²ÎÔ­Ê½: 0 | 0
+  IF ((L_STATE <> 0)) THEN
+  POST_ERR(38100, 'User task run failed', 0, 1)
+  ENDIF
+  ENDIF
+END USER_LOADER
+

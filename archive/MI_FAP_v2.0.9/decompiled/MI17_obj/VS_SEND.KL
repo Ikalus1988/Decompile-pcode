@@ -1,0 +1,371 @@
+-- VS_SEND.KL (decompiled v3)
+PROGRAM VS_SEND
+%COMMENT = 'Vs Send Pos V1.8'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+	UFRAME_DAT = STRUCTURE
+	UFRAME_NO: INTEGER
+	UFRAME_POS: INTEGER
+	ENDSTRUCTURE
+	UTOOL_DAT = STRUCTURE
+	UTOOL_NO: INTEGER
+	UTOOL_POS: INTEGER
+	ENDSTRUCTURE
+	POS_DAT = STRUCTURE
+	INT_VAL: INTEGER
+	DECI_VAL: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : STRING[64]
+  v3 : STRING[64]
+  v4 : STRING[64]
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : ARRAY[64] OF INTEGER
+  v8 : ARRAY[64] OF INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : SIGNAL_DEF
+  v15 : SIGNAL_DEF
+  v16 : SIGNAL_DEF
+  v17 : INTEGER
+  v18 : SIGNAL_DEF
+  v19 : SIGNAL_DEF
+  v20 : POSITION
+  v21 : INTEGER
+  v22 : INTEGER
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : INTEGER
+  v27 : SIGNAL_DEF
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  v30 : SIGNAL_DEF
+  v31 : SIGNAL_DEF
+  v32 : SIGNAL_DEF
+  v33 : SIGNAL_DEF
+  v34 : SIGNAL_DEF
+  v35 : SIGNAL_DEF
+  v36 : SIGNAL_DEF
+  v37 : SIGNAL_DEF
+  v38 : SIGNAL_DEF
+  v39 : INTEGER
+  v40 : SIGNAL_DEF
+  v41 : SIGNAL_DEF
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v20_f08 : REAL
+  v20_f0c : REAL
+  v20_f10 : REAL
+  v20_f14 : REAL
+  v20_f18 : REAL
+  v20_f1c : REAL
+  v21_f00 : INTEGER
+  v21_f04 : INTEGER
+  v22_f00 : INTEGER
+  v22_f04 : INTEGER
+  v23_f00 : INTEGER
+  v23_f04 : INTEGER
+  v24_f00 : INTEGER
+  v24_f04 : INTEGER
+  v25_f00 : INTEGER
+  v25_f04 : INTEGER
+  v26_f00 : INTEGER
+  v26_f04 : INTEGER
+  v5_f00 : INTEGER
+  v5_f04 : INTEGER
+  v6_f00 : INTEGER
+  v6_f04 : INTEGER
+  v7_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE TP_CLS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_START(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TIMER_STOP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r0_lc2 : STRING[64]
+  r0_lc3 : INTEGER
+  r0_lc4 : INTEGER
+  r0_lc5 : REAL
+BEGIN
+  GET_TPE_PRM(p0, r0_lc3, r0_lc4, r0_lc5, r0_lc2, v1)
+  IF ((r0_lc3 <> 1) OR (v1 <> 0)) THEN
+  p2 = 282
+  ENDIF
+  p1 = r0_lc4
+  p2 = 0
+  RETURN(0)
+END GET_PARM
+
+ROUTINE GET_REAL(p0 : REAL; p1 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  r1_lc1 = p1 - 0
+  -- stmt85 stray p0
+  sv_i = trunc(r1_lc1 * 10000)
+  r1_lc2 = sv_i
+  IF ((p0 >= 0)) THEN
+  RETURN(r1_lc2)
+  ELSE
+  RETURN(r1_lc2 * (0 - 1))
+  ENDIF
+  RETURN(0)
+END GET_REAL
+
+ROUTINE CNV_INT(p0 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  IF ((p0 < 0)) THEN
+  r2_lc1 = p0 + 65536
+  RETURN(r2_lc1)
+  ELSE
+  RETURN(p0)
+  ENDIF
+  v3 = v2
+  v4 = 'Modification Data : 2020-01-16'
+  sv_i = GET_PARM(1, v5_f00, v1)
+  -- stmt126 stray sv_i
+  IF ((v5_f00 < 0) OR (v5_f00 > 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt128 stray sv_i
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('       Invalid Uframe No. (0 - 99)', CR)
+  WRITE('       Abort', CR)
+  ABORT
+  ENDIF
+  sv_i = GET_PARM(2, v6_f00, v1)
+  -- stmt134 stray sv_i
+  IF ((v6_f00 < 0) OR (v6_f00 > 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt136 stray sv_i
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('       Invalid Tool No. (0 - 99)', CR)
+  WRITE('       Abort', CR)
+  ABORT
+  ENDIF
+  IF ((v5_f00 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt143 stray v7_f00[1] | v5_f04
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt145 stray v8[1][v5_f00] | v5_f04
+  ENDIF
+  IF ((v6_f00 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt148 stray v7_f00[1] | v6_f04
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt150 stray v9[1][v6_f00] | v6_f04
+  ENDIF
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt153 stray v5_f04 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt153 stray v6_f04 | v0_f58[1]
+  sv_i = GET_PARM(3, v10, v1)
+  -- stmt155 stray sv_i
+  sv_i = GET_PARM(6, v11, v1)
+  -- stmt164 stray sv_i
+  IF ((v11 < 0) OR (v11 > 99)) THEN
+  sv_i = TP_CLS(0)
+  -- stmt166 stray sv_i
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('       Invalid uframe_fix No. (0 - 99)', CR)
+  WRITE('       Abort', CR)
+  ABORT
+  ENDIF
+  SELECT v10 OF
+  CASE(2):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt185 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt186 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt187 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  -- stmt188 stray sv_i
+  sv_i = WRITE_DATA(v13, v16)
+  CASE(28):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt202 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt203 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt204 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  -- stmt205 stray sv_i
+  sv_i = WRITE_DATA(v13, v16)
+  CASE(20):
+  sv_i = GET_PARM(4, v17, v1)
+  -- stmt216 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt217 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt218 stray sv_i
+  sv_i = WRITE_DATA(v17, v18)
+  -- stmt219 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  CASE(26):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt230 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt231 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  -- stmt232 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt233 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  CASE(10):
+  sv_i = GET_PARM(4, v12, v1)
+  -- stmt244 stray sv_i
+  sv_i = GET_PARM(5, v13, v1)
+  -- stmt245 stray sv_i
+  sv_i = WRITE_DATA(v13, v19)
+  -- stmt246 stray sv_i
+  sv_i = WRITE_DATA(v10, v14)
+  -- stmt247 stray sv_i
+  sv_i = WRITE_DATA(v12, v15)
+  ELSE:
+  sv_i = TP_CLS(0)
+  -- stmt250 stray sv_i
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('       Mode_id Must Be (2 or 10 or 20 or 26 or 28)', CR)
+  WRITE('       Abort', CR)
+  ABORT
+  ENDSELECT
+  IF ((v10 <> 2)) THEN
+  sv_p = curpos(0, 0)
+  v20 = sv_p
+  IF ((v10 = 28)) THEN
+  PURGE CONDITION[1]
+  v20 = v8[1][v11]
+  ENDIF
+  sv_i = trunc(v20_f08)
+  v21_f00 = sv_i
+  sv_i = GET_REAL(v20_f08, v21_f00)
+  v21_f04 = sv_i
+  sv_i = trunc(v20_f0c)
+  v22_f00 = sv_i
+  sv_i = GET_REAL(v20_f0c, v22_f00)
+  v22_f04 = sv_i
+  sv_i = trunc(v20_f10)
+  v23_f00 = sv_i
+  sv_i = GET_REAL(v20_f10, v23_f00)
+  v23_f04 = sv_i
+  sv_i = trunc(v20_f14)
+  v24_f00 = sv_i
+  sv_i = GET_REAL(v20_f14, v24_f00)
+  v24_f04 = sv_i
+  sv_i = trunc(v20_f18)
+  v25_f00 = sv_i
+  sv_i = GET_REAL(v20_f18, v25_f00)
+  v25_f04 = sv_i
+  sv_i = trunc(v20_f1c)
+  v26_f00 = sv_i
+  sv_i = GET_REAL(v20_f1c, v26_f00)
+  v26_f04 = sv_i
+  WRITE('Sent Current Position', CR)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(' X=', '  Y=', '  Z=', CR)
+  -- stmt28 stray v20_f08 | 8 | 3 | v20_f0c | 8 | 3 | v20_f10 | 8 | 3
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(' W=', '  P=', '  R=', CR)
+  -- stmt29 stray v20_f14 | 8 | 3 | v20_f18 | 8 | 3 | v20_f1c | 8 | 3
+  sv_i = CNV_INT(v21_f00)
+  sv_i = WRITE_DATA(sv_i, v27)
+  -- stmt30 stray sv_i
+  sv_i = CNV_INT(v21_f04)
+  sv_i = WRITE_DATA(sv_i, v28)
+  -- stmt31 stray sv_i
+  sv_i = CNV_INT(v22_f00)
+  sv_i = WRITE_DATA(sv_i, v29)
+  -- stmt32 stray sv_i
+  sv_i = CNV_INT(v22_f04)
+  sv_i = WRITE_DATA(sv_i, v30)
+  -- stmt33 stray sv_i
+  sv_i = CNV_INT(v23_f00)
+  sv_i = WRITE_DATA(sv_i, v31)
+  -- stmt34 stray sv_i
+  sv_i = CNV_INT(v23_f04)
+  sv_i = WRITE_DATA(sv_i, v32)
+  -- stmt35 stray sv_i
+  sv_i = CNV_INT(v24_f00)
+  sv_i = WRITE_DATA(sv_i, v33)
+  -- stmt36 stray sv_i
+  sv_i = CNV_INT(v24_f04)
+  sv_i = WRITE_DATA(sv_i, v34)
+  -- stmt37 stray sv_i
+  sv_i = CNV_INT(v25_f00)
+  sv_i = WRITE_DATA(sv_i, v35)
+  -- stmt38 stray sv_i
+  sv_i = CNV_INT(v25_f04)
+  sv_i = WRITE_DATA(sv_i, v36)
+  -- stmt39 stray sv_i
+  sv_i = CNV_INT(v26_f00)
+  sv_i = WRITE_DATA(sv_i, v37)
+  -- stmt40 stray sv_i
+  sv_i = CNV_INT(v26_f04)
+  sv_i = WRITE_DATA(sv_i, v38)
+  -- stmt41 stray sv_i
+  ENDIF
+  WRITE('Trigger Pictures', CR)
+  v39 = v39 + 1
+  sv_i = WRITE_DATA(v39, v40)
+  -- stmt46 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START(0)
+  -- stmt49 stray sv_i
+  sv_i = WAITDATA(v41, v39)
+  -- stmt50 stray sv_i
+  sv_i = TIMER_STOP(0)
+  -- stmt55 stray sv_i
+  -- stmt56 stray 1
+  WRITE('Trigger Pictures Successful', CR)
+  RETURN(0)
+END CNV_INT
+
+BEGIN
+END VS_SEND

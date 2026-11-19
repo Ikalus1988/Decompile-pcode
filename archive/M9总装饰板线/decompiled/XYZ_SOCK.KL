@@ -1,0 +1,201 @@
+-- XYZ_SOCK.KL (decompiled v3)
+PROGRAM XYZ_SOCK
+%COMMENT = 'socket'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	XYZ_SOCK_T = STRUCTURE
+	TYPE_: STRING[1]
+	CONNECTED_: INTEGER
+	STATUS_: INTEGER
+	TAG_IDX_: INTEGER
+	TAG_STR_: STRING[3]
+	PORT_: INTEGER
+	HOST_: STRING[30]
+	ENDSTRUCTURE
+VAR
+  p0_f04 : INTEGER
+  p0_f08 : INTEGER
+  p0_f0c : INTEGER
+  p0_f10 : STRING[64]
+  p0_f16 : INTEGER
+  p0_f1a : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE LOG_CLEAR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_FORCE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE SOCK_CTOR(p0 : XYZ_SOCK_T; p1 : INTEGER; p2 : STRING) : INTEGER
+VAR
+  entry : INTEGER
+  host_cfg_ : STRING[64]
+  state_ : INTEGER
+  tag_stat_ : INTEGER
+  tmp_str_ : STRING[64]
+BEGIN
+  p0.TYPE_ = p2
+  p0_f04 = 0
+  p0_f08 = 0
+  p0_f0c = 0
+  p0_f10 = ''
+  p0_f16 = 0
+  p0_f1a = ''
+  host_cfg_ = ''
+  IF ((p1 < 1) OR (p1 > 8)) THEN
+  sv_i = LOG_ERROR_A('[SOCK] invalid tag id ', p1)
+  -- stmt51 stray sv_i
+  RETURN(1)
+  ENDIF
+  p0_f0c = p1
+  sv_i = ord('0', 1)
+  sv_s = chr(p0_f0c + sv_i)
+  tmp_str_ = sv_s
+  p0_f10 = '' + ':'
+  host_cfg_ = '$HOST' + p0.TYPE_ + '_CFG[' + tmp_str_ + ']'
+  GET_VAR(entry, '*SYSTEM*', host_cfg_ + '.$STATE', tag_stat_, state_)
+  IF ((state_ <> 0) OR (tag_stat_ <> 3)) THEN
+  sv_i = LOG_ERROR('[SOCK] tag conf error')
+  -- stmt63 stray sv_i
+  RETURN(1)
+  ENDIF
+  GET_VAR(entry, '*SYSTEM*', host_cfg_ + '.$SERVER_PORT', p0_f16, state_)
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[SOCK] cannot get $SERVER_PORT')
+  -- stmt69 stray sv_i
+  RETURN(state_)
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END SOCK_CTOR
+
+ROUTINE SOCK_OPFD(p0 : FILE; p1 : STRING) : INTEGER
+VAR
+  state_ : INTEGER
+BEGIN
+  SET_FILE_ATR(p0, 1, 1)
+  SET_FILE_ATR(p0, 7, 2)
+  OPEN FILE p0('RW', p1)
+  sv_i = IO_STATUS(p0)
+  state_ = sv_i
+  RETURN(state_)
+  RETURN(0)
+END SOCK_OPFD
+
+ROUTINE SOCK_CONN(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER
+VAR
+  state_ : INTEGER
+BEGIN
+  MSG_DISCO(p0_f10, state_)
+  DELAY 500
+  IF ((p0_f04 = 0)) THEN
+  MSG_CONNECT(p0_f10, state_)
+  IF ((state_ = 0)) THEN
+  p0_f04 = 1
+  sv_i = SOCK_OPFD(p1, p0_f10)
+  state_ = sv_i
+  RETURN(state_)
+  ELSE
+  p0_f04 = 0
+  sv_i = LOG_ERROR('[SOCK] connect failed')
+  -- stmt99 stray sv_i
+  RETURN(state_)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END SOCK_CONN
+
+ROUTINE SOCK_CLFD(p0 : FILE) : INTEGER
+VAR
+  state_ : INTEGER
+BEGIN
+  -- stmt158 stray p0
+  sv_i = IO_STATUS(p0)
+  state_ = sv_i
+  RETURN(state_)
+  RETURN(0)
+END SOCK_CLFD
+
+ROUTINE SOCK_CLOSE(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER
+VAR
+  state_ : INTEGER
+BEGIN
+  sv_i = SOCK_CLFD(p1)
+  state_ = sv_i
+  IF ((state_ <> 0)) THEN
+  sv_i = LOG_ERROR('[SOCK] close sock_fd failed')
+  -- stmt114 stray sv_i
+  ENDIF
+  MSG_DISCO(p0_f10, state_)
+  IF ((state_ = 0)) THEN
+  p0_f04 = 0
+  ELSE
+  sv_i = LOG_ERROR('[SOCK] disconnect failed')
+  -- stmt122 stray sv_i
+  ENDIF
+  RETURN(0)
+END SOCK_CLOSE
+
+ROUTINE SOCK_SET_RT(p0 : FILE; p1 : INTEGER) : INTEGER
+BEGIN
+  IF ((p1 > 0)) THEN
+  SET_FILE_ATR(p0, 5, p1)
+  ENDIF
+  RETURN(0)
+END SOCK_SET_RT
+
+ROUTINE SOCK_SEND(p0 : FILE; p1 : STRING) : INTEGER
+VAR
+  state_ : INTEGER
+BEGIN
+  WRITE(p1)
+  -- stmt168 stray p0
+  sv_i = IO_STATUS(p0)
+  state_ = sv_i
+  RETURN(state_)
+  RETURN(0)
+END SOCK_SEND
+
+ROUTINE SOCK_RECV(p0 : FILE; p1 : STRING; p2 : INTEGER) : INTEGER
+VAR
+  buff_len_ : INTEGER
+  state_ : INTEGER
+BEGIN
+  buff_len_ = 0
+  WHILE ((buff_len_ = 0)) DO
+  BYTES_AHEAD(p0, buff_len_, state_)
+  IF ((state_ <> 0)) THEN
+  RETURN(state_)
+  ENDIF
+  DELAY 20
+  ENDWHILE
+  -- stmt189 stray p0 | p1 | p2
+  sv_i = IO_STATUS(p0)
+  state_ = sv_i
+  RETURN(state_)
+  RETURN(0)
+END SOCK_RECV
+
+BEGIN
+END XYZ_SOCK

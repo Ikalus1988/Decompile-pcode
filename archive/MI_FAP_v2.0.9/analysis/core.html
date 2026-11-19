@@ -1,0 +1,1621 @@
+<!doctype html><meta charset=utf-8><title>核心库</title>
+<style>
+body{font:14px/1.55 ui-monospace,Consolas,monospace;margin:24px auto;max-width:1100px;
+ background:#fafafa;color:#222}
+h1{font-size:20px} h2{font-size:16px;border-bottom:1px solid #ccc;padding-bottom:4px}
+.note{background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;margin:8px 0} td,th{border:1px solid #ccc;padding:3px 10px;font-size:12px}
+pre{background:#fff;border:1px solid #ddd;padding:10px;overflow:auto;font-size:12px;line-height:1.45}
+.k{color:#7a3;font-weight:600}.s{color:#c39}.c{color:#888}.n{color:#36c}
+details{margin:10px 0} summary{cursor:pointer;font-weight:600}
+</style>
+<h1>MI_FAP v2.0.9 · 核心库</h1>
+<div class=note><b>应用定位</b>：安装包自带的核心支撑模块（lib_misc/lib_rout/user_loader）：装载器与通用例程库。</div>
+
+<h2>模块与例程</h2>
+<table><tr><th>模块</th><th>例程</th><th>SELECT</th><th>例程名</th><th>IO</th></tr><tr><td>LIB_MISC.KL</td><td>36</td><td>6</td><td>FEATURE, MSG_WRITE, WAIT_SIGNAL, KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR</td><td>DIN, DOUT, GIN, GOUT, io_0b</td></tr><tr><td>LIB_ROUT.KL</td><td>49</td><td>11</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02, io_03, io_04, io_0c, io_0e, io_12, io_13</td></tr><tr><td>USER_LOADER.KL</td><td>0</td><td>0</td><td></td><td>io_0e</td></tr></table>
+<h2>调用与消息</h2>
+<table><tr><th>模块</th><th>外部调用/消息</th></tr><tr><td>LIB_MISC.KL</td><td>ABORT_TASK, CALL_PROG, CNV_CONF_STR, CNV_REAL_STR, CNV_STR_INT, COPY_FILE, DB_PROMPT, FILE_LIST, FORCE_SPMENU, GET_ATTR_PRG, GET_JPOS_REG, GET_TPE_PRM, IO_STATUS, PAUSE_TASK, SET_LANG, SET_PORT_CMT, UNINIT</td></tr><tr><td>LIB_MISC.KL 消息</td><td>LIB 2.0.9 | , p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3( | , p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3( | , p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3( | , p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3( | , 0, 0)
+  -- ����ԭʽ: 2
+  -- stmt50 stray  |  + sv_s +  | 
+  -- stmt50 residue </td></tr><tr><td>LIB_ROUT.KL</td><td>CNV_TIME_STR, FORCE_MENU, FORCE_SPMENU, GET_PORT_CMT, GET_TIME, SET_CURSOR, UNINIT</td></tr><tr><td>LIB_ROUT.KL 消息</td><td>LIB 2.0.9 | *SYSTEM* | $UI_CONFIG.$ICON_EDIT[1] | Could not disable Icon editor |          | Selection not allowed in automatic mode | Selection not allowed in automatic mode | Option not available</td></tr><tr><td>USER_LOADER.KL</td><td>RUN_TASK, UNINIT</td></tr><tr><td>USER_LOADER.KL 消息</td><td>karel 2.0.9 | UserAutoExec | User task run failed</td></tr></table>
+<h2>源码（反编译 .KL）</h2>
+<details><summary>LIB_MISC.KL（36 例程）</summary><pre><span class=c>-- LIB_MISC.KL (decompiled v3)
+PROGRAM LIB_MISC
+%COMMENT = &#x27;LIB 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_0b : ARRAY[512] OF INTEGER
+  v1 : FILE
+  v2 : INTEGER
+  v3 : FILE
+  v4 : INTEGER
+  v5 : ARRAY[64] OF INTEGER
+  v6 : STRING[64]
+  v7 : STRING[64]
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : REAL
+  v11 : STRING[64]
+  p0_f20 : INTEGER
+  v5_f04 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : INTEGER
+BEGIN
+  sv_i = str_len(p0)
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i &lt;&gt; sv_i) AND (sv_i &lt;&gt; 9)) THEN
+  r0_lc2 = r0_lc1
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  ENDIF
+  ENDFOR
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i &lt;&gt; sv_i) AND (sv_i &lt;&gt; 9)) THEN
+  r0_lc3 = r0_lc1
+  r0_lc1 = 1
+  ENDIF
+  ENDFOR
+  sv_s = sub_str(p0, r0_lc2, r0_lc3 - r0_lc2 + 1)
+  -- stmt74 stray sv_s
+  RETURN(sv_s)
+END KILLBLANKS
+
+ROUTINE STRTOINT(p0 : STRING) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  CNV_STR_INT(p0, r1_lc1)
+  RETURN(r1_lc1)
+  RETURN(0)
+END STRTOINT
+
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING
+VAR
+  r2_lc17 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 0, 0, r2_lc17)
+  sv_s = KILLBLANKS(r2_lc17)
+  -- stmt104 stray sv_s
+  RETURN(sv_s)
+END INTTOSTR
+
+ROUTINE REALTOSTR(p0 : REAL) : STRING
+VAR
+  r3_lc17 : STRING[64]
+BEGIN
+  CNV_REAL_STR(p0, 0, 3, r3_lc17)
+  -- stmt119 stray r3_lc17
+  RETURN(sv_s)
+END REALTOSTR
+
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING
+VAR
+  r4_lc17 : STRING[64]
+BEGIN
+  CNV_CONF_STR(p0_f20, r4_lc17)
+  -- stmt134 stray r4_lc17
+  RETURN(sv_s)
+END CONFTOSTR
+
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  IF (NOT (UNINIT(p0))) THEN
+  sv_i = str_len(p0)
+  FOR r5_lc1 = 1 TO 3 DO
+  IF ((sv_s = p1)) THEN
+  RETURN(r5_lc1)
+  ENDIF
+  ENDFOR
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END RETPOSINSTR
+
+ROUTINE UPPERCASE(p0 : STRING) : STRING
+VAR
+  r6_lc11 : STRING[64]
+  r6_lc12 : INTEGER
+  r6_lc13 : INTEGER
+  r6_lc14 : INTEGER
+BEGIN
+  r6_lc11 = &#x27;&#x27;
+  sv_i = str_len(p0)
+  r6_lc12 = sv_i
+  IF ((r6_lc12 &gt; 38)) THEN
+  r6_lc12 = 38
+  ENDIF
+  FOR r6_lc14 = 1 TO 3 DO
+  sv_i = ord(p0, r6_lc14)
+  r6_lc13 = sv_i
+  IF ((r6_lc13 &gt; 96) AND (r6_lc13 &lt; 123) OR (r6_lc13 &gt; 223) AND (r6_lc13 &lt; 254)) THEN
+  r6_lc13 = r6_lc13 - 32
+  ENDIF
+  sv_s = chr(r6_lc13)
+  r6_lc11 = &#x27;&#x27;
+  ENDFOR
+  -- stmt184 stray r6_lc11
+  RETURN(sv_s)
+END UPPERCASE
+
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN
+BEGIN
+  IF ((sv_i &gt; sv_i)) THEN
+  sv_i = str_len(p1)
+  sv_s = sub_str(p0, 1, sv_i)
+  p0 = sv_s
+  IF ((sv_s = sv_s)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END STARTSWITH
+
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN
+BEGIN
+  IF ((sv_i &gt; sv_i)) THEN
+  sv_i = str_len(p0)
+  sv_i = str_len(p0)
+  sv_i = str_len(p1)
+  sv_s = sub_str(&#x27;&#x27;, 0, 0)
+  p0 = sv_s
+  -- stmt218 stray 0 - sv_i + 1 | sv_i
+  IF ((sv_s = sv_s)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END ENDSWITH
+
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN
+VAR
+  r9_lc10 : INTEGER
+  r9_lc9 : STRING[64]
+BEGIN
+  IF ((sv_i &gt;= sv_i)) THEN
+  r9_lc10 = 1
+  ENDIF
+  REPEAT
+  sv_i = str_len(p1)
+  sv_s = sub_str(p0, r9_lc10, sv_i)
+  r9_lc9 = sv_s
+  DELAY 8
+  r9_lc10 = r9_lc10 + 1
+  UNTIL((r9_lc9 = p1) OR (r9_lc10 &gt; sv_i - sv_i))
+  IF ((r9_lc9 = p1)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END CONTAINS
+
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 = 0)) THEN
+  -- stmt67 stray v1
+  ELSE
+  -- stmt69 stray v3
+  ENDIF
+  RETURN(0)
+END CLOSEFILE
+
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN
+BEGIN
+  sv_i = CLOSEFILE(p2)
+  -- stmt11 stray sv_i
+  SELECT p1 OF
+  CASE(1):
+  IF ((p2 = 0)) THEN
+  OPEN FILE v1(&#x27;RW&#x27;, p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3(&#x27;RW&#x27;, p0)
+  sv_i = IO_STATUS(v3)
+  v2 = sv_i
+  ENDIF
+  CASE(2):
+  IF ((p2 = 0)) THEN
+  OPEN FILE v1(&#x27;RO&#x27;, p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3(&#x27;RO&#x27;, p0)
+  sv_i = IO_STATUS(v3)
+  v2 = sv_i
+  ENDIF
+  CASE(3):
+  IF ((p2 = 0)) THEN
+  OPEN FILE v1(&#x27;AP&#x27;, p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3(&#x27;AP&#x27;, p0)
+  sv_i = IO_STATUS(v3)
+  v2 = sv_i
+  ENDIF
+  CASE(4):
+  IF ((p2 = 0)) THEN
+  OPEN FILE v1(&#x27;UD&#x27;, p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  ELSE
+  OPEN FILE v3(&#x27;UD&#x27;, p0)
+  sv_i = IO_STATUS(v3)
+  v2 = sv_i
+  ENDIF
+  ELSE:
+  ENDSELECT
+  IF ((v2 &lt;&gt; 0)) THEN
+  sv_i = CLOSEFILE(p2)
+  -- stmt49 stray sv_i
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 2
+  -- stmt50 stray &#x27;&#x27; + sv_s + &#x27;]&#x27;
+  -- stmt50 residue &#x27;File.Open[&#x27;
+  RETURN(FALSE)
+  ELSE
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END OPENFILE
+
+ROUTINE READFILELINE(p0 : INTEGER) : STRING
+VAR
+  r12_lc65 : INTEGER
+BEGIN
+  IF ((p0 = 0)) THEN
+  -- stmt85 stray v1 | r12_lc65
+  ELSE
+  -- stmt87 stray v3 | r12_lc65
+  ENDIF
+  -- stmt89 stray r12_lc65
+  RETURN(sv_s)
+END READFILELINE
+
+ROUTINE HOLDMOTION : INTEGER
+VAR
+  r13_lc1 : INTEGER
+  r13_lc2 : INTEGER
+  r13_lc3 : INTEGER
+BEGIN
+  GET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$NUM_GROUP&#x27;, r13_lc3, v2)
+  FOR r13_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(v4)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt109 residue &#x27;*SYSTEM*&#x27;, &#x27;$MCR_GRP[&#x27;, &#x27;].$HOLD2&#x27;
+  IF (r13_lc2 &lt;&gt; 0) OR (256 &lt;&gt; 0) THEN
+    r13_lc2 = 1
+  ELSE
+    r13_lc2 = 0
+  ENDIF
+  sv_s = INTTOSTR(v4)
+  SET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt111 residue &#x27;*SYSTEM*&#x27;, &#x27;$MCR_GRP[&#x27;, &#x27;].$HOLD2&#x27;
+  sv_s = chr(129)
+  WRITE(CR, &#x27;USER: $MCR_GRP[group].$HOLD2 expect 0&#x27; + sv_s)
+  ENDFOR
+  RETURN(0)
+END HOLDMOTION
+
+ROUTINE UNHOLDMOTION : INTEGER
+VAR
+  r14_lc1 : INTEGER
+  r14_lc2 : INTEGER
+  r14_lc3 : INTEGER
+  r14_lc4 : INTEGER
+BEGIN
+  GET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$NUM_GROUP&#x27;, r14_lc3, v2)
+  FOR r14_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(v4)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt133 residue &#x27;*SYSTEM*&#x27;, &#x27;$MCR_GRP[&#x27;, &#x27;].$HOLD2&#x27;
+  IF (((r14_lc2 &lt;&gt; 0) AND (256 &lt;&gt; 0) = 256)) THEN
+  IF (256 &lt;&gt; 0) AND (0 &lt;&gt; 0) THEN
+    r14_lc2 = 1
+  ELSE
+    r14_lc2 = 0
+  ENDIF
+  -- stmt136 stray r14_lc2
+  sv_s = INTTOSTR(v4)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt137 residue &#x27;*SYSTEM*&#x27;, &#x27;$MOR_GRP[&#x27;, &#x27;].$ROB_MOVE&#x27;
+  IF ((r14_lc4 &lt;&gt; 0)) THEN
+  sv_s = INTTOSTR(v4)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt140 residue &#x27;*SYSTEM*&#x27;, &#x27;$MOR_GRP[&#x27;, &#x27;].$ROB_MOVE&#x27;
+  DELAY 150
+  ELSE
+  sv_s = INTTOSTR(v4)
+  SET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt144 residue &#x27;*SYSTEM*&#x27;, &#x27;$MCR_GRP[&#x27;, &#x27;].$HOLD2&#x27;
+  ENDIF
+  ENDIF
+  ENDFOR
+  sv_s = chr(129)
+  WRITE(sv_s + &#x27;&#x27;)
+  RETURN(0)
+END UNHOLDMOTION
+
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 &lt;&gt; 0)) THEN
+  POST_ERR(p0, &#x27;&#x27;, 0, 0)
+  PAUSE
+  ENDIF
+  RETURN(0)
+END CHECK_STATUS
+
+ROUTINE GETMODE : INTEGER
+VAR
+  r16_lc1 : INTEGER
+BEGIN
+  r16_lc1 = 0
+  IF ((io_0b[8] = 0) AND (io_0b[9] = 0)) THEN
+  r16_lc1 = 2
+  ENDIF
+  IF ((io_0b[8] = 1) AND (io_0b[9] = 0)) THEN
+  r16_lc1 = 1
+  ENDIF
+  IF ((io_0b[8] = 1) AND (io_0b[9] = 1)) THEN
+  r16_lc1 = 3
+  ENDIF
+  RETURN(r16_lc1)
+  RETURN(0)
+END GETMODE
+
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER
+BEGIN
+  sv_s = chr(128)
+  WRITE(sv_s)
+  IF ((p0 &lt;&gt; &#x27;&#x27;)) THEN
+  SELECT p1 OF
+  CASE(0):
+  sv_s = chr(143)
+  sv_s = chr(155)
+  sv_s = chr(48)
+  sv_s = chr(156)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, sv_s, sv_s, sv_s, p0)
+  CASE(1):
+  sv_s = chr(143)
+  sv_s = chr(155)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, sv_s, sv_s, sv_s, &#x27;&gt;&gt;&gt; &#x27; + p0 + &#x27; &lt;&lt;&lt;&#x27;)
+  CASE(2):
+  WRITE(p0)
+  CASE(12):
+  OPEN FILE v1(&#x27;RW&#x27;, &#x27;WD:prmp/&#x27;)
+  sv_s = chr(143)
+  sv_s = chr(155)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, sv_s, sv_s, sv_s, &#x27;&gt;&gt;&gt; &#x27; + p0 + &#x27; &lt;&lt;&lt;&#x27;)
+  -- stmt218 stray v1
+  ELSE:
+  ENDSELECT
+  ENDIF
+  RETURN(0)
+END PROMPTMESSAGE
+
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  IF (NOT ((v5_f04[1] = 37))) THEN
+  FORCE_SPMENU(1, 37, 1)
+  ENDIF
+  CASE(2):
+  IF (NOT ((v5_f04[1] = 190))) THEN
+  FORCE_SPMENU(1, 190, 1)
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END SETTPUSERSCREEN
+
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER
+VAR
+  r19_lc1 : INTEGER
+  r19_lc2 : INTEGER
+  r19_lc3 : INTEGER
+BEGIN
+  IF ((io_0b[8] = 0) OR (io_0b[9] = 0)) THEN
+  SET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ICON_EDIT[1]&#x27;, 0, v2)
+  IF ((v2 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Could not disable Icon editor&#x27;, 0, 0)
+  POST_ERR(v2, &#x27;&#x27;, 0, 0)
+  ENDIF
+  DELAY 64
+  ENDIF
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  r19_lc1 = 55
+  r19_lc2 = 48
+  IF ((p0 &lt;&gt; &#x27;&#x27;)) THEN
+  sv_s = chr(155)
+  sv_s = chr(r19_lc1)
+  sv_s = chr(156)
+  sv_s = chr(r19_lc2)
+  WRITE(sv_s, sv_s, sv_s, sv_s, p0, CR)
+  ENDIF
+  FOR r19_lc3 = 1 TO 3 DO
+  IF ((&#x27;&#x27; &lt;&gt; &#x27;&#x27;)) THEN
+  sv_s = chr(155)
+  sv_s = chr(127)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt31 stray p1[r19_lc3]
+  ENDIF
+  ENDFOR
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt36 stray sv_i
+  RETURN(0)
+END WRITEUSERSCREEN
+
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN
+VAR
+  r20_lc4 : STRING[64]
+  r20_lc5 : INTEGER
+BEGIN
+  GET_ATTR_PRG(p0, 4, r20_lc5, r20_lc4, v2)
+  IF ((v2 = 7073)) THEN
+  RETURN(FALSE)
+  ELSE
+  sv_i = CHECK_STATUS(v2)
+  -- stmt56 stray sv_i
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END TPEPROGEXIST
+
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER
+BEGIN
+  IF ((p0 &lt;&gt; &#x27;PAUSE&#x27;) AND (p0 &lt;&gt; &#x27;ABORT&#x27;)) THEN
+  RETURN(0)
+  ENDIF
+  IF ((p0 = &#x27;PAUSE&#x27;)) THEN
+  POST_ERR(38100, &#x27;A01: Pausing &#x27; + v6 + &#x27;.tp&#x27;, 0, 0)
+  PAUSE_TASK(v6, (1 &lt;&gt; 0), (1 &lt;&gt; 0), v2)
+  -- ����ԭʽ: 1 | 1
+  POST_ERR(38100, &#x27;A01: Paused &#x27; + v6 + &#x27;.tp&#x27;, 0, 0)
+  ELSE
+  POST_ERR(38100, &#x27;A01: Pausing &#x27; + v6 + &#x27;.tp&#x27;, 0, 0)
+  ABORT_TASK(v6, (1 &lt;&gt; 0), (1 &lt;&gt; 0), v2)
+  -- ����ԭʽ: 1 | 1
+  POST_ERR(38100, &#x27;A01: Paused &#x27; + v6 + &#x27;.tp&#x27;, 0, 0)
+  ENDIF
+  IF ((v2 = 3017) OR (v2 = 3016)) THEN
+  v2 = 0
+  ENDIF
+  RETURN(v2)
+  RETURN(0)
+END CTRLACTPROGTPE
+
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN
+VAR
+  r22_lc11 : ARRAY[64] OF STRING[64]
+  r22_lc12 : INTEGER
+BEGIN
+  r22_lc12 = 0
+  FILE_LIST(&#x27;&#x27;, 0, 3, r22_lc11, r22_lc12, v2)
+  -- ����ԭʽ: p0 + p1
+  IF ((v2 &lt;&gt; 0) AND (v2 &lt;&gt; 2014)) THEN
+  POST_ERR(38100, &#x27;FAILED FILE_LIST for &#x27; + p0 + p1, v2, 0)
+  ENDIF
+  IF (r22_lc12 &lt;&gt; 0) THEN
+    RETURN(TRUE)
+  ELSE
+    RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END FILEEXISTS
+
+ROUTINE GETCURLINE : INTEGER
+VAR
+  r23_lc1 : INTEGER
+BEGIN
+  GET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$SHELL_WRK.$CURR_LINE&#x27;, r23_lc1, v2)
+  IF ((v2 &lt;&gt; 0)) THEN
+  RETURN((0 - 1))
+  ELSE
+  RETURN(r23_lc1)
+  ENDIF
+  RETURN(0)
+END GETCURLINE
+
+ROUTINE GETCURPROG : STRING
+VAR
+  r24_lc17 : INTEGER
+BEGIN
+  GET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$SHELL_WRK.$ROUT_NAME&#x27;, r24_lc17, v2)
+  IF ((v2 &lt;&gt; 0)) THEN
+  -- stmt156 stray &#x27;-1&#x27;
+  ELSE
+  -- stmt158 stray r24_lc17
+  ENDIF
+  RETURN(sv_s)
+END GETCURPROG
+
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER
+BEGIN
+  SET_PORT_CMT(p0, 0, p2, v2)
+  -- ����ԭʽ: p1
+  sv_i = CHECK_STATUS(v2)
+  -- stmt172 stray sv_i
+  RETURN(0)
+END SET_CMT
+
+ROUTINE CHECKHOMEPOS : INTEGER
+VAR
+  r26_lc11 : JOINTPOS
+  r26_lc22 : JOINTPOS
+  r26_lc23 : INTEGER
+  r26_lc24 : INTEGER
+  r26_lc25 : INTEGER
+  r26_lc26 : INTEGER
+  r26_lc27 : INTEGER
+BEGIN
+  r26_lc26 = 1
+  r26_lc27 = 0
+  IF ((r26_lc26 &lt;&gt; 0)) THEN
+  GET_VAR(v4, &#x27;*SYSTEM*&#x27;, &#x27;$REFPOS1[1].$ATPERCH&#x27;, r26_lc25, v2)
+  sv_j = GET_JPOS_REG(1, v2)
+  r26_lc11 = sv_j
+  IF ((v2 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;PR[1] XYZPOS type or uninit&#x27;, 0, 2)
+  ENDIF
+  sv_j = curjpos(0, 0)
+  r26_lc22 = sv_j
+  IF ((r26_lc25 &lt;&gt; 0)) THEN
+  IF (TRUE) THEN
+  POST_ERR(38100, &#x27;USER: Robot at HOME Pos.&#x27;, 0, 0)
+  r26_lc26 = 0
+  ELSE
+  r26_lc26 = 0
+  POST_ERR(38100, &#x27;USER: HOME Pos. mismatch&#x27;, 0, 2)
+  ENDIF
+  IF ((r26_lc27 &lt;&gt; 0)) THEN
+  r26_lc26 = 0
+  POST_ERR(38100, &#x27;USER: HOME Pos. mismatch&#x27;, 0, 2)
+  ENDIF
+  DELAY 32
+  sv_i = DB_PROMPT(2, &#x27;ROBOT NOT AT HOME POSITION.&#x27;, &#x27;Do you want to move robot to HOME POS.?\nPlease select YES or NO.               &#x27;, 4)
+  r26_lc23 = sv_i
+  -- stmt218 residue &#x27;Do you want to move robot to HOME POS.?\\nPlease select YES or NO.               &#x27;
+  SELECT r26_lc23 OF
+  CASE(3):
+  sv_i = DB_PROMPT(2, &#x27;ROBOT NOT AT HOME POSITION.&#x27;, &#x27;Are you sure to move robot to HOME POS.?\nPLEASE CONFIRM YOUR SELECTION.          &#x27;, 4)
+  r26_lc24 = sv_i
+  -- stmt226 residue &#x27;Are you sure to move robot to HOME POS.?\\nPLEASE CONFIRM YOUR SELECTION.          &#x27;
+  CASE(3):
+  POST_ERR(38100, &#x27;USER: MoveTo (PRG)&#x27;, 0, 0)
+  CALL_PROG(&#x27;MOV_HOME&#x27;, 1)
+  POST_ERR(38100, &#x27;USER: MoveTo PR[1] Complete&#x27;, 0, 0)
+  r26_lc27 = 1
+  CASE(4):
+  r26_lc26 = 0
+  POST_ERR(38100, &#x27;USER: MoveTo HOME POSITION(JOG)&#x27;, 0, 2)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(4):
+  r26_lc26 = 0
+  POST_ERR(38100, &#x27;USER: MoveTo HOME Pos.(JOG)&#x27;, 0, 1)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  ENDIF
+  RETURN(0)
+END CHECKHOMEPOS
+
+ROUTINE CURR_LANG : STRING
+VAR
+  r27_lc4 : STRING[64]
+  r27_lc8 : STRING[64]
+  r27_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$LANGUAGE&#x27;, r27_lc8, v2)
+  sv_i = index(r27_lc8, &#x27; &#x27;)
+  r27_lc9 = sv_i
+  sv_s = sub_str(v7, 1, r27_lc9 - 1)
+  r27_lc4 = sv_s
+  IF ((r27_lc4 &lt;&gt; &#x27;DEFAULT&#x27;)) THEN
+  -- stmt21 stray r27_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG(&#x27;ENGLISH     &#x27;, v2)
+  -- stmt27 stray &#x27;ENGLISH     &#x27;
+  ELSE
+  IF (sv_b) THEN
+  SET_LANG(&#x27;CHINESE     &#x27;, v2)
+  -- stmt31 stray &#x27;CHINESE     &#x27;
+  ELSE
+  SET_LANG(&#x27;ENGLISH     &#x27;, v2)
+  -- stmt34 stray &#x27;ENGLISH     &#x27;
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURR_LANG
+
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER
+VAR
+  r28_lc17 : STRING[64]
+  r28_lc34 : STRING[64]
+BEGIN
+  r28_lc17 = &#x27;&#x27;
+  r28_lc34 = &#x27;&#x27;
+  sv_s = chr(128)
+  WRITE(sv_s)
+  COPY_FILE(r28_lc17, r28_lc34, (1 &lt;&gt; 0), (0 &lt;&gt; 0), v2)
+  -- ����ԭʽ: 1 | 0
+  IF ((v2 &lt;&gt; 0)) THEN
+  POST_ERR(v2, &#x27;&#x27;, 0, 0)
+  POST_ERR(38100, &#x27;Failed to copy &#x27; + p0, 0, 0)
+  WRITE(CR, &#x27;Failed to copy &#x27; + p0)
+  ELSE
+  POST_ERR(38100, &#x27;Copied File &#x27; + p0 + &#x27; Complete&#x27;, 0, 0)
+  WRITE(CR, &#x27;Copied File &#x27; + p0 + &#x27; Complete&#x27;)
+  DELAY 500
+  ENDIF
+  RETURN(0)
+END DO_COPY
+
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN
+VAR
+  r29_lc1 : INTEGER
+  r29_lc2 : INTEGER
+BEGIN
+  IF (((v8 = 0))) THEN
+  FORCE_SPMENU(1, 37, 1)
+  -- stmt81 stray v8 | 1
+  ENDIF
+  sv_s = chr(129)
+  WRITE(CR, p0 + &#x27;(0=N,1=Y)&#x27; + sv_s)
+  r29_lc2 = 0
+  PAUSE
+  -- stmt85 stray r29_lc2
+  IF ((r29_lc2 = 1)) THEN
+  r29_lc1 = 1
+  ELSE
+  r29_lc1 = 0
+  ENDIF
+  sv_s = chr(129)
+  WRITE(sv_s + &#x27;&#x27;)
+  RETURN(r29_lc1)
+  RETURN(sv_b)
+END GET_YN
+
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER
+BEGIN
+  IF ((p0 = &#x27;DIN&#x27;)) THEN
+  RETURN(1)
+  ENDIF
+  IF ((p0 = &#x27;DOUT&#x27;)) THEN
+  RETURN(2)
+  ENDIF
+  IF ((p0 = &#x27;GIN&#x27;)) THEN
+  RETURN(18)
+  ENDIF
+  IF ((p0 = &#x27;GOUT&#x27;)) THEN
+  RETURN(19)
+  ENDIF
+  IF ((p0 = &#x27;AIN&#x27;)) THEN
+  RETURN(3)
+  ENDIF
+  IF ((p0 = &#x27;AOUT&#x27;)) THEN
+  RETURN(4)
+  ENDIF
+  IF ((p0 = &#x27;UOPIN&#x27;)) THEN
+  RETURN(20)
+  ENDIF
+  IF ((p0 = &#x27;UOPOUT&#x27;)) THEN
+  RETURN(21)
+  ENDIF
+  IF ((p0 = &#x27;RDI&#x27;)) THEN
+  RETURN(8)
+  ENDIF
+  IF ((p0 = &#x27;RDO&#x27;)) THEN
+  RETURN(9)
+  ENDIF
+  RETURN(0)
+END CONV_P_LTYP
+
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN
+BEGIN
+  IF ((p0 &lt;&gt; p1)) THEN
+  RETURN(FALSE)
+  ELSE
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END CHECKARGTYPE
+
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER
+VAR
+  r32_lc17 : STRING[64]
+  r32_lc18 : INTEGER
+  r32_lc19 : INTEGER
+  r32_lc20 : REAL
+BEGIN
+  GET_TPE_PRM(p0, r32_lc18, r32_lc19, r32_lc20, r32_lc17, v2)
+  sv_i = CHECK_STATUS(v2)
+  -- stmt149 stray sv_i
+  IF (sv_b) THEN
+  SELECT r32_lc18 OF
+  CASE(1):
+  v9 = r32_lc19
+  CASE(2):
+  v10 = r32_lc20
+  CASE(3):
+  v11 = r32_lc17
+  ELSE:
+  ENDSELECT
+  ENDIF
+  v9 = 2147483646
+  v10 = 2147483646
+  v11 = &#x27;MAXINT&#x27;
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 2
+  -- stmt162 stray &#x27;&#x27; + sv_s + &#x27;] invalid data type&#x27;
+  -- stmt162 residue &#x27;TPE-PRM[&#x27;
+  RETURN(0)
+END GETTPEPARAM
+
+BEGIN
+END LIB_MISC
+-- module-residue &#x27; &#x27;, &#x27; &#x27;, &#x27;H521&#x27;, &#x27;H538&#x27;, &#x27;H538&#x27;
+</span></pre></details><details><summary>LIB_ROUT.KL（49 例程）</summary><pre><span class=c>-- LIB_ROUT.KL (decompiled v3)
+PROGRAM LIB_ROUT
+%COMMENT = &#x27;LIB 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_03 : ARRAY[512] OF INTEGER
+  io_04 : ARRAY[512] OF INTEGER
+  io_0c : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : ARRAY[64] OF STRING[64]
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v10 : INTEGER
+  v11 : ARRAY[64] OF INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : ARRAY[64] OF STRING[64]
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : ARRAY[64] OF STRING[64]
+  v11_f00 : ARRAY[64] OF STRING[64]
+  v11_f10 : ARRAY[64] OF INTEGER
+  v11_f14 : ARRAY[64] OF STRING[64]
+  v11_f38 : ARRAY[64] OF STRING[64]
+  v19_f0c : INTEGER
+  v6_f00 : STRING[64]
+  v9_f04 : ARRAY[64] OF INTEGER
+  v9_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+
+ROUTINE APPL_ERROR(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(2):
+  CASE(4):
+  CASE(14):
+  CASE(15):
+  CASE(2):
+  CASE(14):
+  CASE(1):
+  CASE(12):
+  CASE(13):
+  CASE(1):
+  CASE(12):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END APPL_ERROR
+
+ROUTINE RESET_APPLERROR : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END RESET_APPLERROR
+
+ROUTINE WRITEUSERSCRN(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+  r2_lc3 : INTEGER
+BEGIN
+  IF ((sv_i &lt;&gt; 3)) THEN
+  SET_VAR(v2, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ICON_EDIT[1]&#x27;, 0, v3)
+  IF ((v3 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Could not disable Icon editor&#x27;, 0, 0)
+  POST_ERR(v3, &#x27;&#x27;, 0, 0)
+  ENDIF
+  DELAY 64
+  ENDIF
+  SELECT p2 OF
+  CASE(3):
+  CASE(1):
+  CASE(12):
+  CASE(13):
+  CASE(1):
+  CASE(12):
+  r2_lc2 = 55
+  r2_lc3 = 48
+  CASE(2):
+  CASE(4):
+  CASE(14):
+  CASE(15):
+  CASE(2):
+  CASE(14):
+  r2_lc2 = 48
+  r2_lc3 = 49
+  CASE(10):
+  CASE(11):
+  CASE(0):
+  CASE(10):
+  r2_lc2 = 55
+  r2_lc3 = 52
+  ELSE:
+  r2_lc2 = 55
+  r2_lc3 = 48
+  ENDSELECT
+  IF ((&#x27;&#x27; &lt;&gt; &#x27;&#x27;)) THEN
+  sv_s = chr(155)
+  sv_s = chr(r2_lc2)
+  sv_s = chr(156)
+  sv_s = chr(r2_lc3)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt178 stray p0[1]
+  sv_s = chr(155)
+  sv_s = chr(127)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt181 stray p0[2]
+  ELSE
+  sv_s = chr(155)
+  sv_s = chr(r2_lc2)
+  sv_s = chr(156)
+  sv_s = chr(r2_lc3)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt186 stray p0[1]
+  ENDIF
+  FOR r2_lc1 = 1 TO 3 DO
+  IF ((&#x27;&#x27; &lt;&gt; &#x27;&#x27;)) THEN
+  WRITE(0, CR)
+  -- stmt193 stray p1[r2_lc1]
+  ENDIF
+  ENDFOR
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt198 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt200 stray sv_i
+  RETURN(0)
+END WRITEUSERSCRN
+
+ROUTINE CLEARFUNCKEYSUSERSCRN : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v4[r3_lc1] = &#x27;        &#x27;
+  ENDFOR
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt223 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  RETURN(0)
+END CLEARFUNCKEYSUSERSCRN
+
+ROUTINE WAITFORFKEY(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(129):
+  IF ((io_0e[129] = 1)) THEN
+  IF ((sv_i = 3)) THEN
+  POST_ERR(38100, &#x27;Selection not allowed in automatic mode&#x27;, 0, 0)
+  v5 = 0
+  ELSE
+  sv_i = UNHOLDMOTION(0)
+  -- stmt253 stray sv_i
+  v5 = 129
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt0 stray sv_i
+  ENDIF
+  ENDIF
+  v5 = 0
+  CASE(138):
+  IF ((io_0e[138] = 1)) THEN
+  IF ((sv_i = 3)) THEN
+  POST_ERR(38100, &#x27;Selection not allowed in automatic mode&#x27;, 0, 0)
+  v5 = 0
+  ELSE
+  sv_i = UNHOLDMOTION(0)
+  -- stmt16 stray sv_i
+  v5 = 138
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt19 stray sv_i
+  ENDIF
+  v5 = 0
+  ENDIF
+  ELSE:
+  POST_ERR(38100, &#x27;Option not available&#x27;, 0, 0)
+  v5 = 0
+  ENDSELECT
+  RETURN(v5)
+  RETURN(0)
+END WAITFORFKEY
+
+ROUTINE INLOGBOOK(p0, p1 : INTEGER) : INTEGER
+VAR
+  r5_lc10 : STRING[64]
+  r5_lc11 : INTEGER
+  r5_lc12 : INTEGER
+  r5_lc6 : STRING[64]
+BEGIN
+  GET_TIME(r5_lc12)
+  CNV_TIME_STR(r5_lc12, r5_lc6)
+  IF (UNINIT(v6_f00)) THEN
+  r5_lc10 = &#x27;No user&#x27;
+  ELSE
+  r5_lc10 = v6_f00
+  ENDIF
+  FOR r5_lc11 = 0 TO 3 DO
+  IF ((&#x27;&#x27; &lt;&gt; &#x27;&#x27;)) THEN
+  POST_ERR(38100, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: (p1[9 - r5_lc11])
+  ENDIF
+  ENDFOR
+  IF ((&#x27;&#x27; &lt;&gt; &#x27;&#x27;)) THEN
+  POST_ERR(38100, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: (p0[2])
+  ENDIF
+  POST_ERR(38100, &#x27;[UserMsg]&#x27;, p0[1] + 0, 0)
+  RETURN(0)
+END INLOGBOOK
+
+ROUTINE RESET_WAIT : INTEGER
+BEGIN
+  v7 = 0
+  v8 = 0
+  sv_i = RESET_APPLERROR
+  -- stmt84 stray sv_i
+  FORCE_MENU(1, 252)
+  IF ((v9_f04[1] = 190) OR (v9_f04[1] = 37)) THEN
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  RETURN(0)
+END RESET_WAIT
+
+ROUTINE GETWAITSTATE(p0 : BOOLEAN) : STRING
+BEGIN
+  IF ((p0 &lt;&gt; 0)) THEN
+  -- stmt105 stray &#x27;ON&#x27;
+  ELSE
+  -- stmt107 stray &#x27;OFF&#x27;
+  ENDIF
+  RETURN(sv_s)
+END GETWAITSTATE
+
+ROUTINE LASTLINEMSG(p0, p1, p2 : INTEGER; p3 : BOOLEAN) : STRING
+VAR
+  r8_lc1 : STRING[64]
+  r8_lc13 : STRING[64]
+  r8_lc27 : STRING[64]
+  r8_lc28 : INTEGER
+  r8_lc4 : STRING[64]
+  r8_lc6 : STRING[64]
+BEGIN
+  r8_lc1 = &#x27;=&#x27;
+  SELECT p0 OF
+  CASE(2):
+  sv_s = GETWAITSTATE((p3 &lt;&gt; 0))
+  -- ����ԭʽ: p3
+  r8_lc4 = sv_s
+  r8_lc28 = 2
+  r8_lc6 = &#x27;DO&#x27;
+  CASE(1):
+  sv_s = GETWAITSTATE((p3 &lt;&gt; 0))
+  -- ����ԭʽ: p3
+  r8_lc4 = sv_s
+  r8_lc28 = 1
+  r8_lc6 = &#x27;DI&#x27;
+  CASE(4):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 19
+  r8_lc6 = &#x27;GO&#x27;
+  CASE(3):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 18
+  r8_lc6 = &#x27;GI&#x27;
+  CASE(6):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 4
+  r8_lc6 = &#x27;AO&#x27;
+  CASE(5):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 3
+  r8_lc6 = &#x27;AI&#x27;
+  ELSE:
+  POST_ERR(38100, &#x27;Invalid signal type&#x27;, 0, 1)
+  ENDSELECT
+  GET_PORT_CMT(r8_lc28, 0, r8_lc13, v3)
+  -- ����ԭʽ: p1
+  IF ((v3 &lt;&gt; 0)) THEN
+  r8_lc13 = &#x27;&#x27;
+  ENDIF
+  sv_s = INTTOSTR(0)
+  -- ����ԭʽ: p1
+  r8_lc27 = &#x27;[&#x27; + sv_s + &#x27;]&#x27;
+  -- stmt166 stray &#x27;&#x27; + &#x27; &#x27; + r8_lc1 + &#x27; &#x27; + r8_lc4 + &#x27;;&#x27; + &#x27; (&#x27; + r8_lc13 + &#x27;)&#x27;
+  RETURN(sv_s)
+END LASTLINEMSG
+
+ROUTINE SETWAITTIME(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 &lt; 0)) THEN
+  IF ((sv_i = 3)) THEN
+  v10 = 5000
+  ELSE
+  v10 = 500
+  ENDIF
+  v10 = p0
+  ENDIF
+  RETURN(v10)
+  RETURN(0)
+END SETWAITTIME
+
+ROUTINE MSGPARSE(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r10_lc1 : INTEGER
+BEGIN
+  FOR r10_lc1 = 1 TO 3 DO
+  IF (UNINIT(v11_f00[r10_lc1])) THEN
+  v11_f00[r10_lc1] = &#x27;0000&#x27;
+  ENDIF
+  IF (UNINIT(v11_f10[r10_lc1])) THEN
+  v11_f10[r10_lc1] = 0
+  ENDIF
+  IF (UNINIT(v11_f14[r10_lc1])) THEN
+  v11_f14[r10_lc1] = &#x27;0000&#x27;
+  ENDIF
+  IF (UNINIT(v11_f38[r10_lc1])) THEN
+  v11_f38[r10_lc1] = &#x27;******************&#x27;
+  ENDIF
+  ENDFOR
+  IF (NOT (UNINIT(p0))) THEN
+  IF ((p0 &gt; 256) OR (p0 &lt; 0)) THEN
+  p1[1] = &#x27;000|000|0000|Error index not found&#x27;
+  p1[2] = &#x27;000|000|0000|Please check error number&#x27;
+  ELSE
+  sv_s = INTTOSTR((v11_f10[p0]))
+  p1[1] = v11_f00[p0] + &#x27;|&#x27; + sv_s + &#x27;|&#x27; + v11_f14[p0]
+  p1[2] = v11_f38[p0]
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MSGPARSE
+
+ROUTINE CHECKPORTSTATE(p0, p1 : INTEGER; p2 : BOOLEAN; p3 : INTEGER) : BOOLEAN
+VAR
+  r11_lc1 : INTEGER
+BEGIN
+  r11_lc1 = 0
+  SELECT p0 OF
+  CASE(1):
+  IF ((io_01[p1] = p2)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(2):
+  IF ((io_02[p1] = p2)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(3):
+  IF ((io_12[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(4):
+  IF ((io_13[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(5):
+  IF ((io_03[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(6):
+  IF ((io_04[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  ELSE:
+  POST_ERR(38100, &#x27;Invalid signal type choice to be wait for&#x27;, 0, 2)
+  ENDSELECT
+  RETURN(r11_lc1)
+  RETURN(sv_b)
+END CHECKPORTSTATE
+
+ROUTINE PORTCONDMONITOR(p0, p1, p2 : INTEGER; p3 : BOOLEAN; p4 : INTEGER) : INTEGER
+BEGIN
+  IF (NOT (UNINIT(p3))) THEN
+  v12 = p3
+  ENDIF
+  IF (NOT (UNINIT(p4))) THEN
+  v13 = p4
+  ENDIF
+  PURGE CONDITION[1]
+  SELECT v14 OF
+  CASE(1):
+  CASE(2):
+  CASE(3):
+  ENABLE CONDITION[1]
+  CASE(4):
+  ENABLE CONDITION[1]
+  CASE(5):
+  CASE(6):
+  ELSE:
+  ENDSELECT
+  ENABLE CONDITION[1]
+  RETURN(0)
+END PORTCONDMONITOR
+
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER
+VAR
+  r13_lc15 : STRING[64]
+  r13_lc16 : INTEGER
+  r13_lc17 : INTEGER
+  r13_lc18 : INTEGER
+  r13_lc19 : INTEGER
+  r13_lc20 : INTEGER
+BEGIN
+  FOR r13_lc20 = 1 TO 3 DO
+  v16[r13_lc20] = &#x27;&#x27;
+  ENDFOR
+  -- stmt134 stray 2
+  PURGE CONDITION[1]
+  -- stmt137 stray 1
+  PURGE CONDITION[1]
+  -- stmt140 stray 4
+  PURGE CONDITION[1]
+  -- stmt143 stray 3
+  PURGE CONDITION[1]
+  -- stmt146 stray 6
+  PURGE CONDITION[1]
+  -- stmt148 stray 5
+  PURGE CONDITION[1]
+  v17 = v9_f04[1]
+  v18 = v9_f08[1]
+  IF (UNINIT(p2)) THEN
+  POST_ERR(38100, &#x27;CMN: Signal number uninitialized&#x27;, 0, 0)
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt156 stray &#x27;&#x27; + sv_s
+  -- stmt156 residue &#x27;CMN: Signal Type = &#x27;
+  ABORT
+  ENDIF
+  v14 = p1
+  SELECT p1 OF
+  CASE(1):
+  CASE(2):
+  IF ((p3 = 0)) THEN
+  r13_lc18 = 0
+  ELSE
+  r13_lc18 = 1
+  ENDIF
+  CASE(3):
+  CASE(4):
+  CASE(5):
+  CASE(6):
+  ELSE:
+  ENDSELECT
+  IF (sv_b) THEN
+  RETURN(1)
+  ENDIF
+  v1 = 0
+  SELECT p5 OF
+  CASE(0):
+  CASE(1):
+  CASE(2):
+  r13_lc16 = 1
+  CASE(10):
+  CASE(12):
+  CASE(14):
+  r13_lc16 = 0
+  ELSE:
+  POST_ERR(38100, &#x27;Invalid option for message type&#x27;, 0, 2)
+  ENDSELECT
+  v15 = 0
+  v8 = 0
+  v7 = 0
+  r13_lc17 = 2 * v19_f0c
+  IF (NOT (sv_b)) THEN
+  sv_i = PORTCONDMONITOR(0, p2, r13_lc17, (r13_lc18 &lt;&gt; 0), p3)
+  -- ����ԭʽ: p1 | r13_lc18
+  -- stmt201 stray sv_i
+  IF ((v8 &lt;&gt; 0)) THEN
+  DELAY 10
+  ELSE
+  IF ((v15 = 0)) THEN
+  IF ((v15 = 0) AND (v7 &gt; sv_i)) THEN
+  v15 = 2
+  ENDIF
+  DELAY 1 * v19_f0c
+  ELSE
+  v15 = 1
+  ENDIF
+  SELECT v15 OF
+  CASE(1):
+  CASE(2):
+  v8 = 1
+  r13_lc19 = 0
+  sv_s = LASTLINEMSG(0, p2, p3, (r13_lc18 &lt;&gt; 0))
+  -- ����ԭʽ: p1 | r13_lc18
+  r13_lc15 = sv_s
+  v16[8] = &#x27;WAITING FOR:&#x27;
+  v16[9] = r13_lc15
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt235 stray sv_i
+  CASE(1):
+  IF ((sv_i &lt;&gt; 3)) THEN
+  sv_s = chr(156)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  v4[2] = &#x27;&#x27; + &#x27;SIMULATE&#x27; + sv_s + sv_s
+  ENDIF
+  v1 = 1
+  CASE(2):
+  v4[2] = &#x27;  LIST  &#x27;
+  ELSE:
+  ENDSELECT
+  ENDIF
+  sv_i = MSGPARSE(0, 0, 0)
+  -- ����ԭʽ: p0 | v20 | v16
+  -- stmt253 stray sv_i
+  IF ((io_0c[7] &lt;&gt; 0)) THEN
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt3 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  ENDIF
+  sv_i = WRITEUSERSCRN(0, 0, p5)
+  -- ����ԭʽ: v20 | v16
+  -- stmt7 stray sv_i
+  ENDIF
+  REPEAT
+  sv_i = PORTCONDMONITOR(0, p2, r13_lc17, (r13_lc18 &lt;&gt; 0), p3)
+  -- ����ԭʽ: p1 | r13_lc18
+  -- stmt13 stray sv_i
+  ENABLE CONDITION[1]
+  SELECT r13_lc16 OF
+  CASE(1):
+  IF ((sv_i = 138)) THEN
+  FOR r13_lc20 = 1 TO 3 DO
+  v16[r13_lc20] = &#x27;&#x27;
+  ENDFOR
+  v16[1] = &#x27;Signal SIMULATED to :&#x27; + r13_lc15
+  sv_i = INLOGBOOK(0, 0)
+  -- ����ԭʽ: v20 | v16
+  -- stmt25 stray sv_i
+  v15 = 5
+  v8 = 0
+  ENDIF
+  CASE(2):
+  v15 = 6
+  r13_lc19 = 1
+  ELSE:
+  v8 = 1
+  r13_lc19 = 0
+  ENDSELECT
+  DELAY 16
+  sv_i = APPL_ERROR(p5)
+  -- stmt45 stray sv_i
+  UNTIL((v8 = 0) OR (r13_lc19 &lt;&gt; 0))
+  FORCE_SPMENU(1, 64, 1)
+  sv_i = RESET_APPLERROR
+  -- stmt53 stray sv_i
+  IF (UNINIT(r13_lc15)) THEN
+  r13_lc15 = &#x27; &#x27;
+  ENDIF
+  IF (UNINIT(v20[1])) THEN
+  v20[1] = &#x27;&#x27;
+  v20[2] = &#x27;&#x27;
+  ENDIF
+  v16[1] = &#x27;Signal OK &#x27; + r13_lc15
+  sv_i = INLOGBOOK(0, 0)
+  -- ����ԭʽ: v20 | v16
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt67 stray &#x27;&#x27; + sv_s
+  -- stmt67 residue &#x27;Wrong exit -&gt; Reason: &#x27;
+  ABORT
+  -- stmt72 stray p1
+  PURGE CONDITION[1]
+  sv_i = UNHOLDMOTION(0)
+  -- stmt76 stray sv_i
+  RETURN(v15)
+  RETURN(0)
+END WAIT_SIGNAL
+
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER
+VAR
+  r14_lc1 : STRING[64]
+  r14_lc2 : INTEGER
+BEGIN
+  FOR r14_lc2 = 1 TO 3 DO
+  v16[r14_lc2] = &#x27;&#x27;
+  ENDFOR
+  v1 = 0
+  r14_lc1 = &#x27;&#x27;
+  sv_i = RESET_APPLERROR
+  -- stmt122 stray sv_i
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt124 stray sv_i
+  IF ((p1 = 3) OR (p1 = 11) OR (p1 = 13) OR (p1 = 15)) THEN
+  IF ((sv_i &lt;&gt; 3)) THEN
+  sv_s = chr(156)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  v4[1] = &#x27;&#x27; + &#x27; ACKN   &#x27; + sv_s + sv_s
+  ENDIF
+  v1 = 129
+  ENDIF
+  sv_i = MSGPARSE(0, 0, 0)
+  -- ����ԭʽ: p0 | v20 | v16
+  -- stmt134 stray sv_i
+  v17 = v9_f04[1]
+  v18 = v9_f08[1]
+  IF ((io_0c[7] &lt;&gt; 0)) THEN
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt144 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  ENDIF
+  IF (NOT ((p1 = 0))) THEN
+  sv_i = WRITEUSERSCRN(0, 0, 0)
+  -- ����ԭʽ: v20 | v16 | p1
+  -- stmt149 stray sv_i
+  ENDIF
+  SELECT p1 OF
+  CASE(0):
+  v5 = 129
+  CASE(2):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt157 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt158 stray sv_i
+  sv_i = CTRLACTPROGTPE(&#x27;ABORT&#x27;)
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt159 stray sv_i
+  v5 = 129
+  CASE(4):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt162 stray sv_i
+  sv_i = CTRLACTPROGTPE(&#x27;NO_ABORT&#x27;)
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt163 stray sv_i
+  v5 = 129
+  CASE(1):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt166 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt167 stray sv_i
+  sv_i = CTRLACTPROGTPE(&#x27;PAUSE&#x27;)
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt168 stray sv_i
+  DELAY 10
+  sv_i = UNHOLDMOTION(0)
+  -- stmt170 stray sv_i
+  v5 = 129
+  CASE(3):
+  CASE(11):
+  CASE(13):
+  CASE(15):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt173 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt174 stray sv_i
+  sv_i = WAITFORFKEY(129)
+  v5 = sv_i
+  CASE(10):
+  CASE(12):
+  CASE(14):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt177 stray sv_i
+  v5 = 129
+  ELSE:
+  v5 = 129
+  ENDSELECT
+  DELAY 8
+  sv_i = APPL_ERROR(0)
+  -- ����ԭʽ: p1
+  -- stmt185 stray sv_i
+  IF ((v5 = 129) OR (v5 = 129)) THEN
+  IF (NOT ((p1 = 0) OR (p1 = 10) OR (p1 = 12) OR (p1 = 14))) THEN
+  FORCE_SPMENU(1, 64, 1)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = UNHOLDMOTION(0)
+  -- stmt195 stray sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MSG_WRITE
+
+BEGIN
+END LIB_ROUT
+</span></pre></details><details><summary>USER_LOADER.KL（0 例程）</summary><pre><span class=c>-- USER_LOADER.KL (decompiled v3)
+PROGRAM USER_LOADER
+%COMMENT = &#x27;karel 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_0e : ARRAY[512] OF INTEGER
+  L_STATE : INTEGER
+  BG_PRG : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+  L_STATE = 0
+  IF (UNINIT(BG_PRG)) THEN
+  BG_PRG = &#x27;UserAutoExec&#x27;
+  ENDIF
+  IF ((io_0e[128] = 0)) THEN
+  RUN_TASK(BG_PRG, 0, (0 &lt;&gt; 0), (0 &lt;&gt; 0), 1, L_STATE)
+  -- ����ԭʽ: 0 | 0
+  IF ((L_STATE &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;User task run failed&#x27;, 0, 1)
+  ENDIF
+  ENDIF
+END USER_LOADER
+
+</span></pre></details>

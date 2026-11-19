@@ -1,0 +1,228 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzMotion
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzMotion(sock_fd : FILE) FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Get motion command
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           : cmd id
+-- 
+--------------------------------------------------------------------------------
+ROUTINE getMotCmd(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetVersion
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [out   ]  ret_str  : version with delimiter string result
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetVer(xdat : xyz_data_t; ret_str : STRING) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetSpeed
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]          :    0 on no error
+--                     != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzSetSpd(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetAcc
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]          :    0 on no error
+--                     != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzSetAcc(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetZone
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]          :    0 on no error
+--                     != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzSetZone(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetTool
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]          :    0 on no error
+--                     != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzSetTool(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetDigitalOutput
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzSetDout(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetJointsMovej
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE setJntsMovJ(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzSetJointsMovel
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE setJntsMovL(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzMovelUntil
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzMovlUtl(xdat : xyz_data_t) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetDigitalInput
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [out   ]  ret_str  : digital input state string with delimiter
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetDin(xdat : xyz_data_t; ret_str : STRING) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetDigitalOutput
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [out   ]  ret_str  : digital output state string with delimiter
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetDout(xdat : xyz_data_t; ret_str : STRING) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetJoints
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [out   ]  ret_str  : joint angles string with delimiter
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetJnts(xdat : xyz_data_t; ret_str : STRING) : INTEGER FROM xyz_motion
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzGetCartPose
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [out   ]  ret_str  : Cartesian pose string with delimiter
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzGetCpos(xdat : xyz_data_t; ret_str : STRING) : INTEGER FROM xyz_motion
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyzMovejSequence
+-- 
+-- [in    ]  xdat     : xyz_data_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzMovjSeq(xdat : xyz_data_t) : INTEGER FROM xyz_motion

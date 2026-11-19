@@ -1,0 +1,98 @@
+PROGRAM DCP_HIST
+%NOLOCKGROUP
+%NOPAUSE  = ERROR + TPENABLE +COMMAND
+%NOPAUSESHFT
+%NOBUSYLAMP
+%INCLUDE HIST
+%INCLUDE klevkmsk
+%INCLUDE KLEVKEYS
+
+CONST
+	NUM_ELEM = 20
+	
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables
+
+VAR
+	value_array			: ARRAY[160] OF STRING[40]
+	inact_array			: ARRAY[160] OF BOOLEAN	
+	change_array		: ARRAY[160] OF BOOLEAN
+	term_mask			: INTEGER
+	def_item				: INTEGER
+	term_char			: INTEGER
+	boxid					: INTEGER
+	STATUS				: INTEGER
+	bldone					: BOOLEAN
+	intFaultNum			: INTEGER
+	prev_menu   		: INTEGER
+	prev_screen		: INTEGER
+	entry       				: INTEGER
+	dummyReal			: REAL
+	DCPReg				: INTEGER
+	strSchedule			: STRING[4]
+	schedule_idx		: INTEGER
+	tree						: ARRAY[NUM_ELEM] OF BOOLEAN
+	count					: INTEGER
+BEGIN
+	
+		schedule_idx = 1
+	--Check for Uninitialised Data in the DCP History Array
+	FOR schedule_idx =1 TO NUM_ELEM DO
+		IF UNINIT(DCPTextHist[schedule_idx].DCPFaultNum) THEN
+			DCPTextHist[schedule_idx].DCPFaultNum = 0
+		ENDIF
+		IF UNINIT(DCPTextHist[schedule_idx].DCPLine1) THEN
+			DCPTextHist[schedule_idx].DCPLine1 = 'No History Data'
+		ENDIF
+		IF UNINIT(DCPTextHist[schedule_idx].DCPLine2) THEN
+			DCPTextHist[schedule_idx].DCPLine2 = 'No History Data'
+		ENDIF
+		IF UNINIT(DCPTextHist[schedule_idx].DCPLine3) THEN
+			DCPTextHist[schedule_idx].DCPLine3 = 'No History Data'
+		ENDIF
+		IF UNINIT(DCPTextHist[schedule_idx].DCPLine4) THEN
+			DCPTextHist[schedule_idx].DCPLine4 = 'No History Data'
+		ENDIF
+		IF UNINIT(DCPTextHist[schedule_idx].DCPLine5) THEN
+			DCPTextHist[schedule_idx].DCPLine5 = 'No History Data'
+		ENDIF
+		IF UNINIT(DCPTimeHist[schedule_idx]) THEN
+			DCPTimeHist[schedule_idx] = ''
+		ENDIF
+	ENDFOR
+
+	--Get the Previous Menu and Previous screen so you can return to it after the Form is Quit
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', prev_menu, STATUS)
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', prev_screen, STATUS)
+
+
+	Count = 0
+	FOR schedule_idx =1 TO 20 DO
+	    CNV_INT_STR(schedule_idx,3,10,strSchedule)
+		--Populate the Value Array to be passed into the Form DCPFault
+		value_array[(count + 1)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPFaultNum'
+		value_array[(count + 2)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPLine1'
+		value_array[(count + 3)] = 'tree['+strSchedule+']'
+		value_array[(count + 4)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPLine2'
+		value_array[(count + 5)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPLine3'
+		value_array[(count + 6)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPLine4'
+		value_array[(count + 7)] = '[DCP_Form]DCPTextHist['+strSchedule+'].DCPLine5'
+		value_array[(count + 8)] = '[DCP_Form]DCPTimeHist['+strSchedule+']'
+		tree[schedule_idx] = FALSE
+		term_mask = kc_func_key
+		count = (count +8)
+	ENDFOR
+	--Cursor Position to First Alarm History
+	def_item = 1
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('HIST',DCPHist, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+END DCP_HIST

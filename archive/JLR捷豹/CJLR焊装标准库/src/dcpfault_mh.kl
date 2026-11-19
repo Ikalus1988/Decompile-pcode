@@ -1,0 +1,1480 @@
+PROGRAM DCPFAULT_MH
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+%COMMENT = 'Version 1.1'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID, EplanIO :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum, DCPFaultNum1, EplanPage,strEplanIO: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+DCPPLCText, strHis1, strHis2,strHis3, str11,str12,str13: STRING[82]
+EplanRef, EplanType:STRING[40]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Delcare  External Routines
+ROUTINE GET_EPLANREF (IORef:INTEGER):STRING FROM ReadEplan
+
+--Begin Prog
+BEGIN
+
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	DCPText.DCPLine1 = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+ 
+  --Get IO Number
+ GET_TPE_PRM(2,1,EplanIO,paramReal,EplanRef,STATUS)
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	CASE(6351):
+	DCPText.DCPLine1 = 'Gripper 1 : Number of cylinders is out of range'
+	DCPText.DCPFaultNum = 06351
+	
+	CASE(6352):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 1 at work not on'
+	DCPText.DCPFaultNum = 06352
+	
+	CASE(6353):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 2 at work not on'
+	DCPText.DCPFaultNum = 06353
+	
+	CASE(6354):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 3 at work not on'
+	DCPText.DCPFaultNum = 06354
+	
+	CASE(6355):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 4 at work not on'
+	DCPText.DCPFaultNum = 06355
+	
+	CASE(6356):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 5 at work not on'
+	DCPText.DCPFaultNum = 06356
+	
+	CASE(6357):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 6 at work not on'
+	DCPText.DCPFaultNum = 06357
+	
+	CASE(6358):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 7 at work not on'
+	DCPText.DCPFaultNum = 06358
+	
+	CASE(6359):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 8 at work not on'
+	DCPText.DCPFaultNum = 06359
+	
+	CASE(6362):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 1 at work not off'
+	DCPText.DCPFaultNum = 06362
+	
+	CASE(6363):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 2 at work not off'
+	DCPText.DCPFaultNum = 06363
+	
+	CASE(6364):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 3 at work not off'
+	DCPText.DCPFaultNum = 06364
+	
+	CASE(6365):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 4 at work not off'
+	DCPText.DCPFaultNum = 06365
+	
+	CASE(6366):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 5 at work not off'
+	DCPText.DCPFaultNum = 06366
+	
+	CASE(6367):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 6 at work not off'
+	DCPText.DCPFaultNum = 06367
+	
+	CASE(6368):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 7 at work not off'
+	DCPText.DCPFaultNum = 06368
+	
+	CASE(6369):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 8 at work not off'
+	DCPText.DCPFaultNum = 06369
+	
+	CASE(6372):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 1 at rest not on'
+	DCPText.DCPFaultNum = 06372
+	
+	CASE(6373):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 2 at rest not on'
+	DCPText.DCPFaultNum = 06373
+	
+	CASE(6374):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 3 at rest not on'
+	DCPText.DCPFaultNum = 06374
+	
+	CASE(6375):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 4 at rest not on'
+	DCPText.DCPFaultNum = 06375
+	
+	CASE(6376):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 5 at rest not on'
+	DCPText.DCPFaultNum = 06376
+	
+	CASE(6377):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 6 at rest not on'
+	DCPText.DCPFaultNum = 06377
+	
+	CASE(6378):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 7 at rest not on'
+	DCPText.DCPFaultNum = 06378
+	
+	CASE(6379):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 8 at rest not on'
+	DCPText.DCPFaultNum = 06379
+	
+	CASE(6382):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 1 at rest not off'
+	DCPText.DCPFaultNum = 06382
+	
+	CASE(6383):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 2 at rest not off'
+	DCPText.DCPFaultNum = 06383
+	
+	CASE(6384):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 3 at rest not off'
+	DCPText.DCPFaultNum = 06384
+	
+	CASE(6385):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 4 at rest not off'
+	DCPText.DCPFaultNum = 06385
+	
+	CASE(6386):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 5 at rest not off'
+	DCPText.DCPFaultNum = 06386
+	
+	CASE(6387):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 6 at rest not off'
+	DCPText.DCPFaultNum = 06387
+	
+	CASE(6388):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 7 at rest not off'
+	DCPText.DCPFaultNum = 06388
+	
+	CASE(6389):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 8 at rest not off'
+	DCPText.DCPFaultNum = 06389
+	
+	CASE(6400):
+	DCPText.DCPLine1 = 'Gripper 1 : Number of PP is out of range'
+	DCPText.DCPFaultNum = 06400
+	
+	CASE(6401):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 1 not off'
+	DCPText.DCPFaultNum = 06401
+	
+	CASE(6402):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 2 not off'
+	DCPText.DCPFaultNum = 06402
+	
+	CASE(6403):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 3 not off'
+	DCPText.DCPFaultNum = 06403
+	
+	CASE(6404):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 4 not off'
+	DCPText.DCPFaultNum = 06404
+	
+	CASE(6405):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 5 not off'
+	DCPText.DCPFaultNum = 06405
+	
+	CASE(6406):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 6 not off'
+	DCPText.DCPFaultNum = 06406
+	
+	CASE(6407):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 7 not off'
+	DCPText.DCPFaultNum = 06407
+	
+	CASE(6408):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 8 not off'
+	DCPText.DCPFaultNum = 06408
+	
+	CASE(6409):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 9 not off'
+	DCPText.DCPFaultNum = 06409
+	
+	CASE(6410):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 10 not off'
+	DCPText.DCPFaultNum = 06410
+	
+	CASE(6411):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 1 not on'
+	DCPText.DCPFaultNum = 06411
+	
+	CASE(6412):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 2 not on'
+	DCPText.DCPFaultNum = 06412
+	
+	CASE(6413):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 3 not on'
+	DCPText.DCPFaultNum = 06413
+	
+	CASE(6414):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 4 not on'
+	DCPText.DCPFaultNum = 06414
+	
+	CASE(6415):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 5 not on'
+	DCPText.DCPFaultNum = 06415
+	
+	CASE(6416):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 6 not on'
+	DCPText.DCPFaultNum = 06416
+	
+	CASE(6417):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 7 not on'
+	DCPText.DCPFaultNum = 06417
+	
+	CASE(6418):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 8 not on'
+	DCPText.DCPFaultNum = 06418
+	
+	CASE(6419):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 9 not on'
+	DCPText.DCPFaultNum = 06419
+	
+	CASE(6420):
+	DCPText.DCPLine1 = 'Gripper 1 : Part Present 10 not on'
+	DCPText.DCPFaultNum = 06420
+	
+	CASE(6422):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 1 off signal not off'
+	DCPText.DCPFaultNum = 06422
+	
+	CASE(6423):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 1 on signal not on'
+	DCPText.DCPFaultNum = 06423
+	
+	CASE(6424):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 1 off signal not on'
+	DCPText.DCPFaultNum = 06424
+	
+	CASE(6425):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 1 on singal not off'
+	DCPText.DCPFaultNum = 06425
+	
+	CASE(6426):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 2 off singal not off'
+	DCPText.DCPFaultNum = 06426
+	
+	CASE(6427):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 2 on signal not on'
+	DCPText.DCPFaultNum = 06427
+	
+	CASE(6428):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 2 off singal not on'
+	DCPText.DCPFaultNum = 06428
+	
+	CASE(6429):
+	DCPText.DCPLine1 = 'Gripper 1 : Vacuum 2 on signal not off'
+	DCPText.DCPFaultNum = 06429
+	
+	CASE(6431):
+	DCPText.DCPLine1 = 'Gripper 1 : Not all PPs off'
+	DCPText.DCPFaultNum = 06431
+	
+	CASE(6432):
+	DCPText.DCPLine1 = 'Gripper 1 : Not all PPs on'
+	DCPText.DCPFaultNum = 06432
+	
+	CASE(6433):
+	DCPText.DCPLine1 = 'Gripper 1 : Not all cylinders at rest'
+	DCPText.DCPFaultNum = 06433
+	
+	CASE(6434):
+	DCPText.DCPLine1 = 'Gripper 1 : Not all cylinders at work'
+	DCPText.DCPFaultNum = 06434
+	
+	CASE(6451):
+	DCPText.DCPLine1 = 'Gripper 2 : Number of cylinders is out of range'
+	DCPText.DCPFaultNum = 06451
+	
+	CASE(6452):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 1 at work not on'
+	DCPText.DCPFaultNum = 06452
+	
+	CASE(6453):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 2 at work not on'
+	DCPText.DCPFaultNum = 06453
+	
+	CASE(6454):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 3 at work not on'
+	DCPText.DCPFaultNum = 06454
+	
+	CASE(6455):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 4 at work not on'
+	DCPText.DCPFaultNum = 06455
+	
+	CASE(6456):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 5 at work not on'
+	DCPText.DCPFaultNum = 06456
+	
+	CASE(6457):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 6 at work not on'
+	DCPText.DCPFaultNum = 06457
+	
+	CASE(6458):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 7 at work not on'
+	DCPText.DCPFaultNum = 06458
+	
+	CASE(6459):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 8 at work not on'
+	DCPText.DCPFaultNum = 06459
+	
+	CASE(6462):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 1 at work not off'
+	DCPText.DCPFaultNum = 06462
+	
+	CASE(6463):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 2 at work not off'
+	DCPText.DCPFaultNum = 06463
+	
+	CASE(6464):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 3 at work not off'
+	DCPText.DCPFaultNum = 06464
+	
+	CASE(6465):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 4 at work not off'
+	DCPText.DCPFaultNum = 06465
+	
+	CASE(6466):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 5 at work not off'
+	DCPText.DCPFaultNum = 06466
+	
+	CASE(6467):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 6 at work not off'
+	DCPText.DCPFaultNum = 06467
+	
+	CASE(6468):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 7 at work not off'
+	DCPText.DCPFaultNum = 06468
+	
+	CASE(6469):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 8 at work not off'
+	DCPText.DCPFaultNum = 06469
+	
+	CASE(6472):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 1 at rest not on'
+	DCPText.DCPFaultNum = 06472
+	
+	CASE(6473):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 2 at rest not on'
+	DCPText.DCPFaultNum = 06473
+	
+	CASE(6474):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 3 at rest not on'
+	DCPText.DCPFaultNum = 06474
+	
+	CASE(6475):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 4 at rest not on'
+	DCPText.DCPFaultNum = 06475
+	
+	CASE(6476):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 5 at rest not on'
+	DCPText.DCPFaultNum = 06476
+	
+	CASE(6477):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 6 at rest not on'
+	DCPText.DCPFaultNum = 06477
+	
+	CASE(6478):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 7 at rest not on'
+	DCPText.DCPFaultNum = 06478
+	
+	CASE(6479):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 8 at rest not on'
+	DCPText.DCPFaultNum = 06479
+	
+	CASE(6482):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 1 at rest not off'
+	DCPText.DCPFaultNum = 06482
+	
+	CASE(6483):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 2 at rest not off'
+	DCPText.DCPFaultNum = 06483
+	
+	CASE(6484):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 3 at rest not off'
+	DCPText.DCPFaultNum = 06484
+	
+	CASE(6485):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 4 at rest not off'
+	DCPText.DCPFaultNum = 06485
+	
+	CASE(6486):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 5 at rest not off'
+	DCPText.DCPFaultNum = 06486
+	
+	CASE(6487):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 6 at rest not off'
+	DCPText.DCPFaultNum = 06487
+	
+	CASE(6488):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 7 at rest not off'
+	DCPText.DCPFaultNum = 06488
+	
+	CASE(6489):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 8 at rest not off'
+	DCPText.DCPFaultNum = 06489
+	
+	CASE(6500):
+	DCPText.DCPLine1 = 'Gripper 2 : Number of PP is out of range'
+	DCPText.DCPFaultNum = 06500
+	
+	CASE(6501):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 1 not off'
+	DCPText.DCPFaultNum = 06501
+	
+	CASE(6502):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 2 not off'
+	DCPText.DCPFaultNum = 06502
+	
+	CASE(6503):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 3 not off'
+	DCPText.DCPFaultNum = 06503
+	
+	CASE(6504):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 4 not off'
+	DCPText.DCPFaultNum = 06504
+	
+	CASE(6505):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 5 not off'
+	DCPText.DCPFaultNum = 06505
+	
+	CASE(6506):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 6 not off'
+	DCPText.DCPFaultNum = 06506
+	
+	CASE(6507):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 7 not off'
+	DCPText.DCPFaultNum = 06507
+	
+	CASE(6508):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 8 not off'
+	DCPText.DCPFaultNum = 06508
+	
+	CASE(6509):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 9 not off'
+	DCPText.DCPFaultNum = 06509
+	
+	CASE(6510):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 10 not off'
+	DCPText.DCPFaultNum = 06510
+	
+	CASE(6511):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 1 not on'
+	DCPText.DCPFaultNum = 06511
+	
+	CASE(6512):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 2 not on'
+	DCPText.DCPFaultNum = 06512
+	
+	CASE(6513):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 3 not on'
+	DCPText.DCPFaultNum = 06513
+	
+	CASE(6514):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 4 not on'
+	DCPText.DCPFaultNum = 06514
+	
+	CASE(6515):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 5 not on'
+	DCPText.DCPFaultNum = 06515
+	
+	CASE(6516):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 6 not on'
+	DCPText.DCPFaultNum = 06516
+	
+	CASE(6517):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 7 not on'
+	DCPText.DCPFaultNum = 06517
+	
+	CASE(6518):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 8 not on'
+	DCPText.DCPFaultNum = 06518
+	
+	CASE(6519):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 9 not on'
+	DCPText.DCPFaultNum = 06519
+	
+	CASE(6520):
+	DCPText.DCPLine1 = 'Gripper 2 : Part Present 10 not on'
+	DCPText.DCPFaultNum = 06520
+	
+	CASE(6521):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 06521
+	
+	CASE(6522):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 1 not off'
+	DCPText.DCPFaultNum = 06522
+	
+	CASE(6523):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 2 not off'
+	DCPText.DCPFaultNum = 06523
+	
+	CASE(6524):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 1 not on'
+	DCPText.DCPFaultNum = 06524
+	
+	CASE(6525):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 2 not on'
+	DCPText.DCPFaultNum = 06525
+	
+	CASE(6526):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 3 not off'
+	DCPText.DCPFaultNum = 06526
+	
+	CASE(6527):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 4 not off'
+	DCPText.DCPFaultNum = 06527
+	
+	CASE(6528):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 3 not on'
+	DCPText.DCPFaultNum = 06528
+	
+	CASE(6529):
+	DCPText.DCPLine1 = 'Gripper 2 : Vacuum 4 not on'
+	DCPText.DCPFaultNum = 06529
+	
+	CASE(6531):
+	DCPText.DCPLine1 = 'Gripper 2 : Not all PPs off'
+	DCPText.DCPFaultNum = 06531
+	
+	CASE(6532):
+	DCPText.DCPLine1 = 'Gripper 2 : Not all PPs on'
+	DCPText.DCPFaultNum = 06532
+	
+	CASE(6533):
+	DCPText.DCPLine1 = 'Gripper 2 : Not all cylinders at rest'
+	DCPText.DCPFaultNum = 06533
+	
+	CASE(6534):
+	DCPText.DCPLine1 = 'Gripper 2 : Not all cylinders at work'
+	DCPText.DCPFaultNum = 06534
+	
+	CASE(6551):
+	DCPText.DCPLine1 = 'Gripper 3 : Number of cylinders is out of range'
+	DCPText.DCPFaultNum = 06551
+	
+	CASE(6552):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 1 at work not on'
+	DCPText.DCPFaultNum = 06552
+	
+	CASE(6553):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 2 at work not on'
+	DCPText.DCPFaultNum = 06553
+	
+	CASE(6554):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 3 at work not on'
+	DCPText.DCPFaultNum = 06554
+	
+	CASE(6555):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 4 at work not on'
+	DCPText.DCPFaultNum = 06555
+	
+	CASE(6556):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 5 at work not on'
+	DCPText.DCPFaultNum = 06556
+	
+	CASE(6557):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 6 at work not on'
+	DCPText.DCPFaultNum = 06557
+	
+	CASE(6558):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 7 at work not on'
+	DCPText.DCPFaultNum = 06558
+	
+	CASE(6559):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 8 at work not on'
+	DCPText.DCPFaultNum = 06559
+	
+	CASE(6562):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 1 at work not off'
+	DCPText.DCPFaultNum = 06562
+	
+	CASE(6563):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 2 at work not off'
+	DCPText.DCPFaultNum = 06563
+	
+	CASE(6564):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 3 at work not off'
+	DCPText.DCPFaultNum = 06564
+	
+	CASE(6565):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 4 at work not off'
+	DCPText.DCPFaultNum = 06565
+	
+	CASE(6566):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 5 at work not off'
+	DCPText.DCPFaultNum = 06566
+	
+	CASE(6567):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 6 at work not off'
+	DCPText.DCPFaultNum = 06567
+	
+	CASE(6568):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 7 at work not off'
+	DCPText.DCPFaultNum = 06568
+	
+	CASE(6569):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 8 at work not off'
+	DCPText.DCPFaultNum = 06569
+	
+	CASE(6572):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 1 at rest not on'
+	DCPText.DCPFaultNum = 06572
+	
+	CASE(6573):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 2 at rest not on'
+	DCPText.DCPFaultNum = 06573
+	
+	CASE(6574):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 3 at rest not on'
+	DCPText.DCPFaultNum = 06574
+	
+	CASE(6575):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 4 at rest not on'
+	DCPText.DCPFaultNum = 06575
+	
+	CASE(6576):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 5 at rest not on'
+	DCPText.DCPFaultNum = 06576
+	
+	CASE(6577):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 6 at rest not on'
+	DCPText.DCPFaultNum = 06577
+	
+	CASE(6578):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 7 at rest not on'
+	DCPText.DCPFaultNum = 06578
+	
+	CASE(6579):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 8 at rest not on'
+	DCPText.DCPFaultNum = 06579
+	
+	CASE(6582):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 1 at rest not off'
+	DCPText.DCPFaultNum = 06582
+	
+	CASE(6583):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 2 at rest not off'
+	DCPText.DCPFaultNum = 06583
+	
+	CASE(6584):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 3 at rest not off'
+	DCPText.DCPFaultNum = 06584
+	
+	CASE(6585):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 4 at rest not off'
+	DCPText.DCPFaultNum = 06585
+	
+	CASE(6586):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 5 at rest not off'
+	DCPText.DCPFaultNum = 06586
+	
+	CASE(6587):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 6 at rest not off'
+	DCPText.DCPFaultNum = 06587
+	
+	CASE(6588):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 7 at rest not off'
+	DCPText.DCPFaultNum = 06588
+	
+	CASE(6589):
+	DCPText.DCPLine1 = 'Gripper 3 : Cylinder 8 at rest not off'
+	DCPText.DCPFaultNum = 06589
+	
+	CASE(6600):
+	DCPText.DCPLine1 = 'Gripper 3 : Number of PP is out of range'
+	DCPText.DCPFaultNum = 06600
+	
+	CASE(6601):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 1 not off'
+	DCPText.DCPFaultNum = 06601
+	
+	CASE(6602):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 2 not off'
+	DCPText.DCPFaultNum = 06602
+	
+	CASE(6603):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 3 not off'
+	DCPText.DCPFaultNum = 06603
+	
+	CASE(6604):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 4 not off'
+	DCPText.DCPFaultNum = 06604
+	
+	CASE(6605):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 5 not off'
+	DCPText.DCPFaultNum = 06605
+	
+	CASE(6606):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 6 not off'
+	DCPText.DCPFaultNum = 06606
+	
+	CASE(6607):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 7 not off'
+	DCPText.DCPFaultNum = 06607
+	
+	CASE(6608):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 8 not off'
+	DCPText.DCPFaultNum = 06608
+	
+	CASE(6609):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 9 not off'
+	DCPText.DCPFaultNum = 06609
+	
+	CASE(6610):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 10 not off'
+	DCPText.DCPFaultNum = 06610
+	
+	CASE(6611):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 1 not on'
+	DCPText.DCPFaultNum = 06611
+	
+	CASE(6612):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 2 not on'
+	DCPText.DCPFaultNum = 06612
+	
+	CASE(6613):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 3 not on'
+	DCPText.DCPFaultNum = 06613
+	
+	CASE(6614):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 4 not on'
+	DCPText.DCPFaultNum = 06614
+	
+	CASE(6615):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 5 not on'
+	DCPText.DCPFaultNum = 06615
+	
+	CASE(6616):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 6 not on'
+	DCPText.DCPFaultNum = 06616
+	
+	CASE(6617):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 7 not on'
+	DCPText.DCPFaultNum = 06617
+	
+	CASE(6618):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 8 not on'
+	DCPText.DCPFaultNum = 06618
+	
+	CASE(6619):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 9 not on'
+	DCPText.DCPFaultNum = 06619
+	
+	CASE(6620):
+	DCPText.DCPLine1 = 'Gripper 3 : Part Present 10 not on'
+	DCPText.DCPFaultNum = 06620
+	
+	CASE(6622):
+	DCPText.DCPLine1 = 'Gripper 3 : Vacuum 1 not off'
+	DCPText.DCPFaultNum = 06622
+	
+	CASE(6623):
+	DCPText.DCPLine1 = 'Gripper 3 : Vacuum 2 not off'
+	DCPText.DCPFaultNum = 06623
+	
+	CASE(6624):
+	DCPText.DCPLine1 = 'Gripper 3 : Vacuum 1 not on'
+	DCPText.DCPFaultNum = 06624
+	
+	CASE(6625):
+	DCPText.DCPLine1 = 'Gripper 3 : Vacuum 2 not on'
+	DCPText.DCPFaultNum = 06625
+	
+	CASE(6631):
+	DCPText.DCPLine1 = 'Gripper 3 : Not all PPs off'
+	DCPText.DCPFaultNum = 06631
+	
+	CASE(6632):
+	DCPText.DCPLine1 = 'Gripper 3 : Not all PPs on'
+	DCPText.DCPFaultNum = 06632
+	
+	CASE(6633):
+	DCPText.DCPLine1 = 'Gripper 3 : Not all cylinders at rest'
+	DCPText.DCPFaultNum = 06633
+	
+	CASE(6634):
+	DCPText.DCPLine1 = 'Gripper 3 : Not all cylinders at work'
+	DCPText.DCPFaultNum = 06634
+
+	CASE(7352):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 9 at work not on'
+	DCPText.DCPFaultNum = 07352
+	
+	CASE(7353):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 10 at work not on'
+	DCPText.DCPFaultNum = 07353
+	
+	CASE(7354):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 11 at work not on'
+	DCPText.DCPFaultNum = 07354
+	
+	CASE(7355):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 12 at work not on'
+	DCPText.DCPFaultNum = 07355
+	
+	CASE(7356):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 13 at work not on'
+	DCPText.DCPFaultNum = 07356
+	
+	CASE(7357):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 14 at work not on'
+	DCPText.DCPFaultNum = 07357
+	
+	CASE(7358):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 15 at work not on'
+	DCPText.DCPFaultNum = 07358
+	
+	CASE(7359):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 16 at work not on'
+	DCPText.DCPFaultNum = 07359
+	
+	CASE(7362):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 9 at work not off'
+	DCPText.DCPFaultNum = 07362
+	
+	CASE(7363):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 10 at work not off'
+	DCPText.DCPFaultNum = 07363
+	
+	CASE(7364):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 11 at work not off'
+	DCPText.DCPFaultNum = 07364
+	
+	CASE(7365):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 12 at work not off'
+	DCPText.DCPFaultNum = 07365
+	
+	CASE(7366):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 13 at work not off'
+	DCPText.DCPFaultNum = 07366
+	
+	CASE(7367):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 14 at work not off'
+	DCPText.DCPFaultNum = 07367
+	
+	CASE(7368):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 15 at work not off'
+	DCPText.DCPFaultNum = 07368
+	
+	CASE(7369):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 16 at work not off'
+	DCPText.DCPFaultNum = 07369
+	
+	CASE(7372):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 9 at rest not on'
+	DCPText.DCPFaultNum = 07372
+	
+	CASE(7373):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 10 at rest not on'
+	DCPText.DCPFaultNum = 07373
+	
+	CASE(7374):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 11 at rest not on'
+	DCPText.DCPFaultNum = 07374
+	
+	CASE(7375):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 12 at rest not on'
+	DCPText.DCPFaultNum = 07375
+	
+	CASE(7376):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 13 at rest not on'
+	DCPText.DCPFaultNum = 07376
+	
+	CASE(7377):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 14 at rest not on'
+	DCPText.DCPFaultNum = 07377
+	
+	CASE(7378):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 15 at rest not on'
+	DCPText.DCPFaultNum = 07378
+	
+	CASE(7379):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 16 at rest not on'
+	DCPText.DCPFaultNum = 07379
+	
+	CASE(7382):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 9 at rest not off'
+	DCPText.DCPFaultNum = 07382
+	
+	CASE(7383):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 10 at rest not off'
+	DCPText.DCPFaultNum = 07383
+	
+	CASE(7384):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 11 at rest not off'
+	DCPText.DCPFaultNum = 07384
+	
+	CASE(7385):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 12 at rest not off'
+	DCPText.DCPFaultNum = 07385
+	
+	CASE(7386):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 13 at rest not off'
+	DCPText.DCPFaultNum = 07386
+	
+	CASE(7387):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 14 at rest not off'
+	DCPText.DCPFaultNum = 07387
+	
+	CASE(7388):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 15 at rest not off'
+	DCPText.DCPFaultNum = 07388
+	
+	CASE(7389):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 16 at rest not off'
+	DCPText.DCPFaultNum = 07389	
+	
+	CASE(7452):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 9 at work not on'
+	DCPText.DCPFaultNum = 07452
+	
+	CASE(7453):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 10 at work not on'
+	DCPText.DCPFaultNum = 07453
+	
+	CASE(7454):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 11 at work not on'
+	DCPText.DCPFaultNum = 07454
+	
+	CASE(7455):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 12 at work not on'
+	DCPText.DCPFaultNum = 07455
+	
+	CASE(7456):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 13 at work not on'
+	DCPText.DCPFaultNum = 07456
+	
+	CASE(7457):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 14 at work not on'
+	DCPText.DCPFaultNum = 07457
+	
+	CASE(7458):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 15 at work not on'
+	DCPText.DCPFaultNum = 07458
+	
+	CASE(7459):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 16 at work not on'
+	DCPText.DCPFaultNum = 07459
+	
+	CASE(7462):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 9 at work not off'
+	DCPText.DCPFaultNum = 07462
+	
+	CASE(7463):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 10 at work not off'
+	DCPText.DCPFaultNum = 07463
+	
+	CASE(7464):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 11 at work not off'
+	DCPText.DCPFaultNum = 07464
+	
+	CASE(7465):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 12 at work not off'
+	DCPText.DCPFaultNum = 07465
+	
+	CASE(7466):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 13 at work not off'
+	DCPText.DCPFaultNum = 07466
+	
+	CASE(7467):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 14 at work not off'
+	DCPText.DCPFaultNum = 07467
+	
+	CASE(7468):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 15 at work not off'
+	DCPText.DCPFaultNum = 07468
+	
+	CASE(7469):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 16 at work not off'
+	DCPText.DCPFaultNum = 07469
+	
+	CASE(7472):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 9 at rest not on'
+	DCPText.DCPFaultNum = 07472
+	
+	CASE(7473):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 10 at rest not on'
+	DCPText.DCPFaultNum = 07473
+	
+	CASE(7474):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 11 at rest not on'
+	DCPText.DCPFaultNum = 07474
+	
+	CASE(7475):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 12 at rest not on'
+	DCPText.DCPFaultNum = 07475
+	
+	CASE(7476):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 13 at rest not on'
+	DCPText.DCPFaultNum = 07476
+	
+	CASE(7477):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 14 at rest not on'
+	DCPText.DCPFaultNum = 07477
+	
+	CASE(7478):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 15 at rest not on'
+	DCPText.DCPFaultNum = 07478
+	
+	CASE(7479):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 16 at rest not on'
+	DCPText.DCPFaultNum = 07479
+	
+	CASE(7482):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 9 at rest not off'
+	DCPText.DCPFaultNum = 07482
+	
+	CASE(7483):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 10 at rest not off'
+	DCPText.DCPFaultNum = 07483
+	
+	CASE(7484):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 11 at rest not off'
+	DCPText.DCPFaultNum = 07484
+	
+	CASE(7485):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 12 at rest not off'
+	DCPText.DCPFaultNum = 07485
+	
+	CASE(7486):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 13 at rest not off'
+	DCPText.DCPFaultNum = 07486
+	
+	CASE(7487):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 14 at rest not off'
+	DCPText.DCPFaultNum = 07487
+	
+	CASE(7488):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 15 at rest not off'
+	DCPText.DCPFaultNum = 07488
+	
+	CASE(7489):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 16 at rest not off'
+	DCPText.DCPFaultNum = 07489
+
+	CASE(8352):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 17 at work not on'
+	DCPText.DCPFaultNum = 08352
+	
+	CASE(8353):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 18 at work not on'
+	DCPText.DCPFaultNum = 08353
+	
+	CASE(8354):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 19 at work not on'
+	DCPText.DCPFaultNum = 08354
+	
+	CASE(8355):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 20 at work not on'
+	DCPText.DCPFaultNum = 08355
+	
+	CASE(8356):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 21 at work not on'
+	DCPText.DCPFaultNum = 08356
+	
+	CASE(8357):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 22 at work not on'
+	DCPText.DCPFaultNum = 08357
+	
+	CASE(8358):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 23 at work not on'
+	DCPText.DCPFaultNum = 08358
+	
+	CASE(8359):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 24 at work not on'
+	DCPText.DCPFaultNum = 08359
+	
+	CASE(8362):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 17 at work not off'
+	DCPText.DCPFaultNum = 08362
+	
+	CASE(8363):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 18 at work not off'
+	DCPText.DCPFaultNum = 08363
+	
+	CASE(8364):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 19 at work not off'
+	DCPText.DCPFaultNum = 08364
+	
+	CASE(8365):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 20 at work not off'
+	DCPText.DCPFaultNum = 08365
+	
+	CASE(8366):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 21 at work not off'
+	DCPText.DCPFaultNum = 08366
+	
+	CASE(8367):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 22 at work not off'
+	DCPText.DCPFaultNum = 08367
+	
+	CASE(8368):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 23 at work not off'
+	DCPText.DCPFaultNum = 08368
+	
+	CASE(8369):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 24 at work not off'
+	DCPText.DCPFaultNum = 08369
+	
+	CASE(8372):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 17 at rest not on'
+	DCPText.DCPFaultNum = 08372
+	
+	CASE(8373):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 18 at rest not on'
+	DCPText.DCPFaultNum = 08373
+	
+	CASE(8374):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 19 at rest not on'
+	DCPText.DCPFaultNum = 08374
+	
+	CASE(8375):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 20 at rest not on'
+	DCPText.DCPFaultNum = 08375
+	
+	CASE(8376):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 21 at rest not on'
+	DCPText.DCPFaultNum = 08376
+	
+	CASE(8377):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 22 at rest not on'
+	DCPText.DCPFaultNum = 08377
+	
+	CASE(8378):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 23 at rest not on'
+	DCPText.DCPFaultNum = 08378
+	
+	CASE(8379):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 24 at rest not on'
+	DCPText.DCPFaultNum = 08379
+	
+	CASE(8382):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 17 at rest not off'
+	DCPText.DCPFaultNum = 08382
+	
+	CASE(8383):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 18 at rest not off'
+	DCPText.DCPFaultNum = 08383
+	
+	CASE(8384):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 19 at rest not off'
+	DCPText.DCPFaultNum = 08384
+	
+	CASE(8385):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 20 at rest not off'
+	DCPText.DCPFaultNum = 08385
+	
+	CASE(8386):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 21 at rest not off'
+	DCPText.DCPFaultNum = 08386
+	
+	CASE(8387):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 22 at rest not off'
+	DCPText.DCPFaultNum = 08387
+	
+	CASE(8388):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 23 at rest not off'
+	DCPText.DCPFaultNum = 08388
+	
+	CASE(8389):
+	DCPText.DCPLine1 = 'Gripper 1 : Cylinder 24 at rest not off'
+	DCPText.DCPFaultNum = 08389	
+	
+	CASE(8452):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 17 at work not on'
+	DCPText.DCPFaultNum = 08452
+	
+	CASE(8453):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 18 at work not on'
+	DCPText.DCPFaultNum = 08453
+	
+	CASE(8454):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 19 at work not on'
+	DCPText.DCPFaultNum = 08454
+	
+	CASE(8455):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 20 at work not on'
+	DCPText.DCPFaultNum = 08455
+	
+	CASE(8456):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 21 at work not on'
+	DCPText.DCPFaultNum = 08456
+	
+	CASE(8457):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 22 at work not on'
+	DCPText.DCPFaultNum = 08457
+	
+	CASE(8458):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 23 at work not on'
+	DCPText.DCPFaultNum = 08458
+	
+	CASE(8459):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 24 at work not on'
+	DCPText.DCPFaultNum = 08459
+	
+	CASE(8462):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 17 at work not off'
+	DCPText.DCPFaultNum = 08462
+	
+	CASE(8463):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 18 at work not off'
+	DCPText.DCPFaultNum = 08463
+	
+	CASE(8464):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 19 at work not off'
+	DCPText.DCPFaultNum = 08464
+	
+	CASE(8465):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 20 at work not off'
+	DCPText.DCPFaultNum = 08465
+	
+	CASE(8466):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 21 at work not off'
+	DCPText.DCPFaultNum = 08466
+	
+	CASE(8467):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 22 at work not off'
+	DCPText.DCPFaultNum = 08467
+	
+	CASE(8468):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 23 at work not off'
+	DCPText.DCPFaultNum = 08468
+	
+	CASE(8469):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 24 at work not off'
+	DCPText.DCPFaultNum = 08469
+	
+	CASE(8472):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 17 at rest not on'
+	DCPText.DCPFaultNum = 08472
+	
+	CASE(8473):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 18 at rest not on'
+	DCPText.DCPFaultNum = 08473
+	
+	CASE(8474):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 19 at rest not on'
+	DCPText.DCPFaultNum = 08474
+	
+	CASE(8475):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 20 at rest not on'
+	DCPText.DCPFaultNum = 08475
+	
+	CASE(8476):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 21 at rest not on'
+	DCPText.DCPFaultNum = 08476
+	
+	CASE(8477):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 22 at rest not on'
+	DCPText.DCPFaultNum = 08477
+	
+	CASE(8478):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 23 at rest not on'
+	DCPText.DCPFaultNum = 08478
+	
+	CASE(8479):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 24 at rest not on'
+	DCPText.DCPFaultNum = 08479
+	
+	CASE(8482):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 17 at rest not off'
+	DCPText.DCPFaultNum = 08482
+	
+	CASE(8483):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 18 at rest not off'
+	DCPText.DCPFaultNum = 08483
+	
+	CASE(8484):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 19 at rest not off'
+	DCPText.DCPFaultNum = 08484
+	
+	CASE(8485):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 20 at rest not off'
+	DCPText.DCPFaultNum = 08485
+	
+	CASE(8486):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 21 at rest not off'
+	DCPText.DCPFaultNum = 08486
+	
+	CASE(8487):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 22 at rest not off'
+	DCPText.DCPFaultNum = 08487
+	
+	CASE(8488):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 23 at rest not off'
+	DCPText.DCPFaultNum = 08488
+	
+	CASE(8489):
+	DCPText.DCPLine1 = 'Gripper 2 : Cylinder 24 at rest not off'
+	DCPText.DCPFaultNum = 08489	
+	
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+
+ENDSELECT
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-'+ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+--Get Eplan Reference
+EplanRef = GET_EPLANREF(EplanIO)
+
+--Split EplanRef into the Reference and the Page Number
+
+EplanPage = SUB_STR(EplanRef,17,20)
+EplanType = SUB_STR(EplanRef,22,40)
+EplanRef = SUB_STR(EplanRef,1,16)
+CNV_INT_STR(EplanIO,3,0,strEplanIO)
+--Write DCP Fault to user screen
+DCPText.DCPLine3 = 'GRIPPER FAULT'
+DCPText.DCPLine4 = 'DI' + strEplanIO + '  ' + EplanType
+DCPText.DCPLine5 =  'Eplan Ref = P.' + EplanPage + EplanRef
+SET_STR_REG(11,DCPText.DCPLine3,STATUS)
+SET_STR_REG(12,DCPText.DCPLine4,STATUS)
+SET_STR_REG(13,DCPText.DCPLine5,STATUS)
+
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = TRUE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+  
+IF FKEY_SEL = 0 THEN
+	FKEYS[1] = 'ACK'
+ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+  
+END DCPFAULT_MH

@@ -1,0 +1,1291 @@
+PROGRAM DCP_TUCKER_1
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+--Version 1.2 Added in Die Check Retry
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, intRivID, intOpen, intHenError :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+DCPFaultNum: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL, strRivID:STRING[3]
+strDCPNum,strOpen,strHenError : STRING[4]
+strHis1, strHis2,strHis3: STRING[82]
+strAddDCPTxt:STRING[20]
+
+--Delcare Internal Routines
+ROUTINE G_DCP_SPR1_1
+BEGIN 
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+
+SELECT DCPText.DCPFaultNum OF
+	
+CASE(101):
+DCPText.DCPLine1 = 'Timeout feeding cycle'
+DCPText.DCPFaultNum = 00101
+
+CASE(102):
+DCPText.DCPLine1 = 'Timeout rivet program'
+DCPText.DCPFaultNum = 00102
+
+CASE(103):
+DCPText.DCPLine1 = 'Timeout tolerance curve'
+DCPText.DCPFaultNum = 00103
+
+CASE(104):
+DCPText.DCPLine1 = 'Timeout start rivet process'
+DCPText.DCPFaultNum = 00104
+
+CASE(105):
+DCPText.DCPLine1 = 'Timeout end rivet process'
+DCPText.DCPFaultNum = 00105
+
+CASE(106):
+DCPText.DCPLine1 = 'Timeout measurement data'
+DCPText.DCPFaultNum = 00106
+
+CASE(107):
+DCPText.DCPLine1 = 'Rivet in receiver after rivet process'
+DCPText.DCPFaultNum = 00107
+
+CASE(108):
+DCPText.DCPLine1 = 'Timeout spindle home position'
+DCPText.DCPFaultNum = 00108
+
+CASE(109):
+DCPText.DCPLine1 = 'Timeout not ready for fixing linear slide'
+DCPText.DCPFaultNum = 00109
+
+CASE(110):
+DCPText.DCPLine1 = 'Timeout fixing linear slide'
+DCPText.DCPFaultNum = 00110
+
+CASE(111):
+DCPText.DCPLine1 = 'No program selection'
+DCPText.DCPFaultNum = 00111
+
+CASE(112):
+DCPText.DCPLine1 = 'Program not active'
+DCPText.DCPFaultNum = 00112
+
+CASE(113):
+DCPText.DCPLine1 = 'Start riveting on manual system'
+DCPText.DCPFaultNum = 00113
+
+CASE(114):
+DCPText.DCPLine1 = 'RAM module erased'
+DCPText.DCPFaultNum = 00114
+
+CASE(115):
+DCPText.DCPLine1 = 'Maintenance counter spindle erased'
+DCPText.DCPFaultNum = 00115
+
+CASE(116):
+DCPText.DCPLine1 = 'Statistic data erased'
+DCPText.DCPFaultNum = 00116
+
+CASE(117):
+DCPText.DCPLine1 = 'Fault memory erased'
+DCPText.DCPFaultNum = 00117
+
+CASE(118):
+DCPText.DCPLine1 = 'ROP memory erased'
+DCPText.DCPFaultNum = 00118
+
+CASE(119):
+DCPText.DCPLine1 = 'Maintenance counter feed tubes erased'
+DCPText.DCPFaultNum = 00119
+
+CASE(120):
+DCPText.DCPLine1 = 'Maintenance counter general purpose erased'
+DCPText.DCPFaultNum = 00120
+
+CASE(121):
+DCPText.DCPLine1 = 'Keyreader user data erased'
+DCPText.DCPFaultNum = 00121
+
+CASE(122):
+DCPText.DCPLine1 = 'List of reasons for changes erased'
+DCPText.DCPFaultNum = 00122
+
+CASE(123):
+DCPText.DCPLine1 = 'Insufficient memory capacity (RAM module)'
+DCPText.DCPFaultNum = 00123
+
+CASE(124):
+DCPText.DCPLine1 = 'RAM module memory faultily'
+DCPText.DCPFaultNum = 00124
+
+CASE(125):
+DCPText.DCPLine1 = 'RAM module faultily or missing'
+DCPText.DCPFaultNum = 00125
+
+CASE(126):
+DCPText.DCPLine1 = 'Test operation conditions not met'
+DCPText.DCPFaultNum = 00126
+
+CASE(127):
+DCPText.DCPLine1 = 'Fiber optic connection to customer interface disturbed'
+DCPText.DCPFaultNum = 00127
+
+CASE(128):
+DCPText.DCPLine1 = 'Start rivet not reset'
+DCPText.DCPFaultNum = 00128
+
+CASE(129):
+DCPText.DCPLine1 = 'Start rivet during test process'
+DCPText.DCPFaultNum = 00129
+
+CASE(130):
+DCPText.DCPLine1 = 'Feeder not in automatic operation mode'
+DCPText.DCPFaultNum = 00130
+
+CASE(131):
+DCPText.DCPLine1 = 'Wrong rivet in receiver'
+DCPText.DCPFaultNum = 00131
+
+CASE(132):
+DCPText.DCPLine1 = 'Feeder master: Communication fault with slave feeder'
+DCPText.DCPFaultNum = 00132
+
+CASE(133):
+DCPText.DCPLine1 = 'Feeder slave 1: Communication fault with slave'
+DCPText.DCPFaultNum = 00133
+
+CASE(134):
+DCPText.DCPLine1 = 'Feeder slave 2: Communication fault with slave'
+DCPText.DCPFaultNum = 00134
+
+CASE(135):
+DCPText.DCPLine1 = 'Feeder slave 3: Communication fault with slave'
+DCPText.DCPFaultNum = 00135
+
+CASE(136):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, inlet rail not filled'
+DCPText.DCPFaultNum = 00136
+
+CASE(137):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet not separated, inlet rail not filled'
+DCPText.DCPFaultNum = 00137
+
+CASE(138):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet not separated, inlet rail not filled'
+DCPText.DCPFaultNum = 00138
+
+CASE(139):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet not separated, inlet rail not filled'
+DCPText.DCPFaultNum = 00139
+
+CASE(140):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated'
+DCPText.DCPFaultNum = 00140
+
+CASE(141):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet not separated'
+DCPText.DCPFaultNum = 00141
+
+CASE(142):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet not separated'
+DCPText.DCPFaultNum = 00142
+
+CASE(143):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet not separated'
+DCPText.DCPFaultNum = 00143
+
+CASE(144):
+DCPText.DCPLine1 = 'Feeder master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00144
+
+CASE(145):
+DCPText.DCPLine1 = 'Feeder slave 1: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00145
+
+CASE(146):
+DCPText.DCPLine1 = 'Feeder slave 2: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00146
+
+CASE(147):
+DCPText.DCPLine1 = 'Feeder slave 3: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00147
+
+CASE(148):
+DCPText.DCPLine1 = 'Feeding process master: Timeout feeding in receiver'
+DCPText.DCPFaultNum = 00148
+
+CASE(149):
+DCPText.DCPLine1 = 'Feeding process slave 1: Timeout feeding in receiver'
+DCPText.DCPFaultNum = 00149
+
+CASE(150):
+DCPText.DCPLine1 = 'Feeding process slave 2: Timeout feeding in receiver'
+DCPText.DCPFaultNum = 00150
+
+CASE(151):
+DCPText.DCPLine1 = 'Feeding process slave 3: Timeout feeding in receiver'
+DCPText.DCPFaultNum = 00151
+
+CASE(152):
+DCPText.DCPLine1 = 'Customer interface: common fault for error codes larger 255'
+DCPText.DCPFaultNum = 00152
+
+CASE(153):
+DCPText.DCPLine1 = 'Fiber optic data connection feeder'
+DCPText.DCPFaultNum = 00153
+
+CASE(154):
+DCPText.DCPLine1 = 'Timeout fixing linear slide'
+DCPText.DCPFaultNum = 00154
+
+CASE(155):
+DCPText.DCPLine1 = 'Timeout floating linear slide'
+DCPText.DCPFaultNum = 00155
+
+CASE(156):
+DCPText.DCPLine1 = 'Spindle: Maintenance user counter 1 necessary'
+DCPText.DCPFaultNum = 00156
+
+CASE(157):
+DCPText.DCPLine1 = 'Spindle: Maintenance spindle is necessary'
+DCPText.DCPFaultNum = 00157
+
+CASE(158):
+DCPText.DCPLine1 = 'Spindle: Maintenance die is necessary'
+DCPText.DCPFaultNum = 00158
+
+CASE(159):
+DCPText.DCPLine1 = 'Spindle: Maintenance punch is necessary'
+DCPText.DCPFaultNum = 00159
+
+CASE(160):
+DCPText.DCPLine1 = 'Feeder Master: Maintenance feed tube is necessary'
+DCPText.DCPFaultNum = 00160
+
+CASE(161):
+DCPText.DCPLine1 = 'Timeout disconnecting spindle (Docking)'
+DCPText.DCPFaultNum = 00161
+
+CASE(162):
+DCPText.DCPLine1 = 'Timeout connecting spindle (Docking)'
+DCPText.DCPFaultNum = 00162
+
+CASE(163):
+DCPText.DCPLine1 = 'Timeout spindle parameter (docking)'
+DCPText.DCPFaultNum = 00163
+
+CASE(164):
+DCPText.DCPLine1 = 'Spindle (docking) number invalid'
+DCPText.DCPFaultNum = 00164
+
+CASE(165):
+DCPText.DCPLine1 = 'SIC: Rivet parameters invalid'
+DCPText.DCPFaultNum = 00165
+
+CASE(166):
+DCPText.DCPLine1 = 'SIC: Tolerance curve not loaded'
+DCPText.DCPFaultNum = 00166
+
+CASE(167):
+DCPText.DCPLine1 = 'Timeout start signal "Spindle drive to position"'
+DCPText.DCPFaultNum = 00167
+
+CASE(168):
+DCPText.DCPLine1 = 'Timeout spindle drive to position'
+DCPText.DCPFaultNum = 00168
+
+CASE(169):
+DCPText.DCPLine1 = 'Timeout request "Spindle position"'
+DCPText.DCPFaultNum = 00169
+
+CASE(170):
+DCPText.DCPLine1 = 'Fiber optic data connection SIC (servo drive)'
+DCPText.DCPFaultNum = 00170
+
+CASE(171):
+DCPText.DCPLine1 = 'SIC: Spindle type changed'
+DCPText.DCPFaultNum = 00171
+
+CASE(172):
+DCPText.DCPLine1 = 'Timeout spindle basic position run-up'
+DCPText.DCPFaultNum = 00172
+
+CASE(173):
+DCPText.DCPLine1 = 'Timeout spindle drive to basic position'
+DCPText.DCPFaultNum = 00173
+
+CASE(174):
+DCPText.DCPLine1 = 'Rivet process: Timeout linear slide floating'
+DCPText.DCPFaultNum = 00174
+
+CASE(175):
+DCPText.DCPLine1 = 'Rivet process: Protection circuit or emergency stop triggered during riveting'
+DCPText.DCPFaultNum = 00175
+
+CASE(176):
+DCPText.DCPLine1 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00176
+
+CASE(177):
+DCPText.DCPLine1 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00177
+
+CASE(178):
+DCPText.DCPLine1 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00178
+
+CASE(179):
+DCPText.DCPLine1 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00179
+
+CASE(180):
+DCPText.DCPLine1 = 'Spindle: Maintenance user counter 2 necessary'
+DCPText.DCPFaultNum = 00180
+
+CASE(181):
+DCPText.DCPLine1 = 'Spindle: Maintenance user counter 3 necessary'
+DCPText.DCPFaultNum = 00181
+
+CASE(182):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00182
+
+CASE(183):
+DCPText.DCPLine1 = 'Rivet process: Spindle does not achieve the basic position'
+DCPText.DCPFaultNum = 00183
+
+CASE(184):
+DCPText.DCPLine1 = 'Rivet process: Fixing linear slide not allowed'
+DCPText.DCPFaultNum = 00184
+
+CASE(185):
+DCPText.DCPLine1 = 'Feeder master: Rivet in tube not fed'
+DCPText.DCPFaultNum = 00185
+
+CASE(186):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet in tube not fed'
+DCPText.DCPFaultNum = 00186
+
+CASE(187):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet in tube not fed'
+DCPText.DCPFaultNum = 00187
+
+CASE(188):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet in tube not fed'
+DCPText.DCPFaultNum = 00188
+
+CASE(189):
+DCPText.DCPLine1 = 'Feeder master: Rivet to divider'
+DCPText.DCPFaultNum = 00189
+
+CASE(190):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet to divider'
+DCPText.DCPFaultNum = 00190
+
+CASE(191):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet to divider'
+DCPText.DCPFaultNum = 00191
+
+CASE(192):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet to divider'
+DCPText.DCPFaultNum = 00192
+
+CASE(193):
+DCPText.DCPLine1 = 'Feeder master: Drum motor lacks in supply voltage'
+DCPText.DCPFaultNum = 00193
+
+CASE(194):
+DCPText.DCPLine1 = 'Feeder slave 1: Drum motor lacks supply voltage'
+DCPText.DCPFaultNum = 00194
+
+CASE(195):
+DCPText.DCPLine1 = 'Feeder slave 2: Drum motor lacks in supply voltage'
+DCPText.DCPFaultNum = 00195
+
+CASE(196):
+DCPText.DCPLine1 = 'Feeder slave 3: Drum motor lacks in supply voltage'
+DCPText.DCPFaultNum = 00196
+
+CASE(197):
+DCPText.DCPLine1 = 'Feeder master: Divider not connected anymore'
+DCPText.DCPFaultNum = 00197
+
+CASE(198):
+DCPText.DCPLine1 = 'Feeder slave 1: Divider not connected anymore'
+DCPText.DCPFaultNum = 00198
+
+CASE(199):
+DCPText.DCPLine1 = 'Feeder slave 2: Divider not connected anymore'
+DCPText.DCPFaultNum = 00199
+
+CASE(200):
+DCPText.DCPLine1 = 'Feeder slave 3: Divider not connected anymore'
+DCPText.DCPFaultNum = 00200
+
+CASE(201):
+DCPText.DCPLine1 = 'Feeder master: Pre-separation not connected anymore'
+DCPText.DCPFaultNum = 00201
+
+CASE(202):
+DCPText.DCPLine1 = 'Feeder slave 1: Pre-separation not connected anymore'
+DCPText.DCPFaultNum = 00202
+
+CASE(203):
+DCPText.DCPLine1 = 'Feeder slave 2: Pre-separation not connected anymore'
+DCPText.DCPFaultNum = 00203
+
+CASE(204):
+DCPText.DCPLine1 = 'Feeder slave 3: Pre-separation not connected anymore'
+DCPText.DCPFaultNum = 00204
+
+CASE(205):
+DCPText.DCPLine1 = 'Feeder master: Linear slide control not connected anymore'
+DCPText.DCPFaultNum = 00205
+
+CASE(206):
+DCPText.DCPLine1 = 'Feeder slave 1: Linear slide control not connected anymore'
+DCPText.DCPFaultNum = 00206
+
+CASE(207):
+DCPText.DCPLine1 = 'Feeder slave 2: Linear slide control not connected anymore'
+DCPText.DCPFaultNum = 00207
+
+CASE(208):
+DCPText.DCPLine1 = 'Feeder slave 3: Linear slide control not connected anymore'
+DCPText.DCPFaultNum = 00208
+
+CASE(209):
+DCPText.DCPLine1 = 'Feeder master: 2-hand interface not connected anymore'
+DCPText.DCPFaultNum = 00209
+
+CASE(210):
+DCPText.DCPLine1 = 'Feeder slave 1: 2-hand interface not connected anymore.'
+DCPText.DCPFaultNum = 00210
+
+CASE(211):
+DCPText.DCPLine1 = 'Feeder slave 2: 2-hand interface not connected anymore'
+DCPText.DCPFaultNum = 00211
+
+CASE(212):
+DCPText.DCPLine1 = 'Feeder slave 3: 2-hand interface not connected anymore'
+DCPText.DCPFaultNum = 00212
+
+CASE(213):
+DCPText.DCPLine1 = 'Feeder master: An existing passive feeder is not connected anymore'
+DCPText.DCPFaultNum = 00213
+
+CASE(214):
+DCPText.DCPLine1 = 'Feeder slave 1: An existing passive is not connected anymore'
+DCPText.DCPFaultNum = 00214
+
+CASE(215):
+DCPText.DCPLine1 = 'Feeder slave 2: An existing passive feeder is not connected anymore'
+DCPText.DCPFaultNum = 00215
+
+CASE(216):
+DCPText.DCPLine1 = 'Feeder slave 3: An existing passive feeder is not connected anymore'
+DCPText.DCPFaultNum = 00216
+
+CASE(217):
+DCPText.DCPLine1 = 'Feeder master: Divider position incorrect for this feeder'
+DCPText.DCPFaultNum = 00217
+
+CASE(218):
+DCPText.DCPLine1 = 'Feeder slave 1: Divider position incorrect for this feeder'
+DCPText.DCPFaultNum = 00218
+
+CASE(219):
+DCPText.DCPLine1 = 'Feeder slave 2: Divider position incorrect for this feeder'
+DCPText.DCPFaultNum = 00219
+
+CASE(220):
+DCPText.DCPLine1 = 'Feeder slave 3: Divider position incorrect for this feeder'
+DCPText.DCPFaultNum = 00220
+
+CASE(221):
+DCPText.DCPLine1 = 'Feeder master: Chamber position of pre-separation faultily for this feeder'
+DCPText.DCPFaultNum = 00221
+
+CASE(222):
+DCPText.DCPLine1 = 'Feeder slave 1: Chamber position of pre-separation faultily for this feeder'
+DCPText.DCPFaultNum = 00222
+
+CASE(223):
+DCPText.DCPLine1 = 'Feeder slave 2: Chamber position of pre-separation faultily for this feeder'
+DCPText.DCPFaultNum = 00223
+
+CASE(224):
+DCPText.DCPLine1 = 'Feeder slave 3: Chamber position of pre-separation faultily for this feeder'
+DCPText.DCPFaultNum = 00224
+
+CASE(225):
+DCPText.DCPLine1 = 'Feeder master: Rivet not recognized in pre-separation'
+DCPText.DCPFaultNum = 00225
+
+CASE(226):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet not recognized in pre-separation'
+DCPText.DCPFaultNum = 00226
+
+CASE(227):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet not recognized in pre-separation'
+DCPText.DCPFaultNum = 00227
+
+CASE(228):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet not recognized in pre-separation'
+DCPText.DCPFaultNum = 00228
+
+CASE(229):
+DCPText.DCPLine1 = 'Feeding process master: Unknown rivet in receiver'
+DCPText.DCPFaultNum = 00229
+
+CASE(230):
+DCPText.DCPLine1 = 'Feeding process slave 1: Unknown rivet in receiver'
+DCPText.DCPFaultNum = 00230
+
+CASE(231):
+DCPText.DCPLine1 = 'Feeding process slave 2: Unknown rivet in receiver'
+DCPText.DCPFaultNum = 00231
+
+CASE(232):
+DCPText.DCPLine1 = 'Feeding process slave 3: Unknown rivet in receiver'
+DCPText.DCPFaultNum = 00232
+
+CASE(233):
+DCPText.DCPLine1 = 'Feeding process master: Unknown rivet in EPS'
+DCPText.DCPFaultNum = 00233
+
+CASE(234):
+DCPText.DCPLine1 = 'Feeding process slave 1: Unknown rivet in EPS'
+DCPText.DCPFaultNum = 00234
+
+CASE(235):
+DCPText.DCPLine1 = 'Feeding process slave 2: Unknown rivet in EPS'
+DCPText.DCPFaultNum = 00235
+
+CASE(236):
+DCPText.DCPLine1 = 'Feeding process slave 3 Unknown rivet in EPS'
+DCPText.DCPFaultNum = 00236
+
+CASE(237):
+DCPText.DCPLine1 = 'Controller fault F01: Heat sink temperature'
+DCPText.DCPFaultNum = 00237
+
+CASE(238):
+DCPText.DCPLine1 = 'Controller fault F02: Overvoltage'
+DCPText.DCPFaultNum = 00238
+
+CASE(239):
+DCPText.DCPLine1 = 'Controller fault F03: Following error'
+DCPText.DCPFaultNum = 00239
+
+CASE(240):
+DCPText.DCPLine1 = 'Controller fault F04: Feedback fault'
+DCPText.DCPFaultNum = 00240
+
+CASE(241):
+DCPText.DCPLine1 = 'Controller fault F05: Undervoltage'
+DCPText.DCPFaultNum = 00241
+
+CASE(242):
+DCPText.DCPLine1 = 'Controller fault F06: Motor temperature'
+DCPText.DCPFaultNum = 00242
+
+CASE(243):
+DCPText.DCPLine1 = 'Controller fault F07: Internal voltages'
+DCPText.DCPFaultNum = 00243
+
+CASE(244):
+DCPText.DCPLine1 = 'Controller fault F07: Internal voltages'
+DCPText.DCPFaultNum = 00244
+
+CASE(245):
+DCPText.DCPLine1 = 'Controller fault F09: EEPROM'
+DCPText.DCPFaultNum = 00245
+
+CASE(246):
+DCPText.DCPLine1 = 'Controller fault F10: Flash EPROM'
+DCPText.DCPFaultNum = 00246
+
+CASE(247):
+DCPText.DCPLine1 = 'Controller fault F10: Flash EPROM'
+DCPText.DCPFaultNum = 00247
+
+CASE(248):
+DCPText.DCPLine1 = 'Controller fault F12: Motor phase'
+DCPText.DCPFaultNum = 00248
+
+CASE(249):
+DCPText.DCPLine1 = 'Controller fault F13: Ambient temperature'
+DCPText.DCPFaultNum = 00249
+
+CASE(250):
+DCPText.DCPLine1 = 'Controller fault F14: Output stage'
+DCPText.DCPFaultNum = 00250
+
+CASE(251):
+DCPText.DCPLine1 = 'Controller fault F15: l2t max. exceeded'
+DCPText.DCPFaultNum = 00251
+
+CASE(252):
+DCPText.DCPLine1 = 'Controller fault F16: Mains BTB'
+DCPText.DCPFaultNum = 00252
+
+CASE(253):
+DCPText.DCPLine1 = 'Controller fault F17: AD converter'
+DCPText.DCPFaultNum = 00253
+
+CASE(254):
+DCPText.DCPLine1 = 'Controller fault F18: Load circuit'
+DCPText.DCPFaultNum = 00254
+
+CASE(255):
+DCPText.DCPLine1 = 'Controller fault F19: Missing mains phases'
+DCPText.DCPFaultNum = 00255
+
+CASE(256):
+DCPText.DCPLine1 = 'Controller fault F20: Slot error'
+DCPText.DCPFaultNum = 00256
+
+CASE(257):
+DCPText.DCPLine1 = 'Controller fault F21: Handling error'
+DCPText.DCPFaultNum = 00257
+
+CASE(258):
+DCPText.DCPLine1 = 'Controller fault F22: Ground connection'
+DCPText.DCPFaultNum = 00258
+
+CASE(259):
+DCPText.DCPLine1 = 'Controller fault F23: CANBUS OFF'
+DCPText.DCPFaultNum = 00259
+
+CASE(260):
+DCPText.DCPLine1 = 'Controller fault F24: Warning instead of fault'
+DCPText.DCPFaultNum = 00260
+
+CASE(261):
+DCPText.DCPLine1 = 'Controller fault F25: Commutation fault'
+DCPText.DCPFaultNum = 00261
+
+CASE(262):
+DCPText.DCPLine1 = 'Controller fault F26: Hardware limit switch'
+DCPText.DCPFaultNum = 00262
+
+CASE(263):
+DCPText.DCPLine1 = 'Controller fault F27: Fault AS option'
+DCPText.DCPFaultNum = 00263
+
+CASE(264):
+DCPText.DCPLine1 = 'Controller fault F28: External trajectory'
+DCPText.DCPFaultNum = 00264
+
+CASE(265):
+DCPText.DCPLine1 = 'Controller fault F29: Slot card fault'
+DCPText.DCPFaultNum = 00265
+
+CASE(266):
+DCPText.DCPLine1 = 'Controller fault F30: Timeout emergency stop'
+DCPText.DCPFaultNum = 00266
+
+CASE(267):
+DCPText.DCPLine1 = 'Controller fault F31: Fault MACRO'
+DCPText.DCPFaultNum = 00267
+
+CASE(268):
+DCPText.DCPLine1 = 'Controller fault F32: System fault'
+DCPText.DCPFaultNum = 00268
+
+CASE(269):
+DCPText.DCPLine1 = 'Controller: Fault in SDO communication'
+DCPText.DCPFaultNum = 00269
+
+CASE(270):
+DCPText.DCPLine1 = 'Controller: Common fault'
+DCPText.DCPFaultNum = 00270
+
+CASE(271):
+DCPText.DCPLine1 = 'Controller: Reset during operation'
+DCPText.DCPFaultNum = 00271
+
+CASE(272):
+DCPText.DCPLine1 = 'Controller: Fault during basic position run'
+DCPText.DCPFaultNum = 00272
+
+CASE(273):
+DCPText.DCPLine1 = 'SIC: Faulty mains'
+DCPText.DCPFaultNum = 00273
+
+CASE(274):
+DCPText.DCPLine1 = 'SIC: Invalid spindle position'
+DCPText.DCPFaultNum = 00274
+
+CASE(275):
+DCPText.DCPLine1 = 'SIC: Stored Force compensation value is too big'
+DCPText.DCPFaultNum = 00275
+
+CASE(276):
+DCPText.DCPLine1 = 'SIC: Error while basic position drive. Guide bush tight'
+DCPText.DCPFaultNum = 00276
+
+CASE(277):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00277
+
+CASE(278):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00278
+
+CASE(279):
+DCPText.DCPLine1 = 'SIC: Timeout SDO Communication'
+DCPText.DCPFaultNum = 00279
+
+CASE(280):
+DCPText.DCPLine1 = 'SIC: SDO channel has wrong start value'
+DCPText.DCPFaultNum = 00280
+
+CASE(281):
+DCPText.DCPLine1 = 'SIC: SDO channel is already occupied'
+DCPText.DCPFaultNum = 00281
+
+CASE(282):
+DCPText.DCPLine1 = 'SIC: Unknown spindle configuration'
+DCPText.DCPFaultNum = 00282
+
+CASE(283):
+DCPText.DCPLine1 = 'SIC: Wrong motor rotating direction'
+DCPText.DCPFaultNum = 00283
+
+CASE(284):
+DCPText.DCPLine1 = 'SIC: Protective circuit interruption during spindle movement'
+DCPText.DCPFaultNum = 00284
+
+CASE(285):
+DCPText.DCPLine1 = 'SIC: DDC communication faultily'
+DCPText.DCPFaultNum = 00285
+
+CASE(286):
+DCPText.DCPLine1 = 'SIC: SDO communication faultily'
+DCPText.DCPFaultNum = 00286
+
+CASE(287):
+DCPText.DCPLine1 = 'SIC: Fault during rivet process'
+DCPText.DCPFaultNum = 00287
+
+CASE(288):
+DCPText.DCPLine1 = 'SIC: Unallowed process command'
+DCPText.DCPFaultNum = 00288
+
+CASE(289):
+DCPText.DCPLine1 = 'SIC: Emergency stop prior to plate thickness measurement'
+DCPText.DCPFaultNum = 00289
+
+CASE(290):
+DCPText.DCPLine1 = 'SIC: Emergency stop prior to rivet length measurement'
+DCPText.DCPFaultNum = 00290
+
+CASE(291):
+DCPText.DCPLine1 = 'SIC: Emergency stop during rivet setting'
+DCPText.DCPFaultNum = 00291
+
+CASE(292):
+DCPText.DCPLine1 = 'SIC: Emergency stop during backward driving'
+DCPText.DCPFaultNum = 00292
+
+CASE(293):
+DCPText.DCPLine1 = 'SIC: Protective circuit prior to plate thickness measurement'
+DCPText.DCPFaultNum = 00293
+
+CASE(294):
+DCPText.DCPLine1 = 'SIC: Protective circuit prior to rivet length measurement'
+DCPText.DCPFaultNum = 00294
+
+CASE(295):
+DCPText.DCPLine1 = 'SIC: Protective circuit during rivet setting'
+DCPText.DCPFaultNum = 00295
+
+CASE(296):
+DCPText.DCPLine1 = 'SIC: Protective circuit during backward driving'
+DCPText.DCPFaultNum = 00296
+
+CASE(297):
+DCPText.DCPLine1 = 'SIC: Max. limit of C-Frame compensation exceeded'
+DCPText.DCPFaultNum = 00297
+
+CASE(298):
+DCPText.DCPLine1 = 'SIC: Fault during electrical connecting of the SR600'
+DCPText.DCPFaultNum = 00298
+
+CASE(299):
+DCPText.DCPLine1 = 'SIC: Fault during referencing of controller'
+DCPText.DCPFaultNum = 00299
+
+CASE(300):
+DCPText.DCPLine1 = 'SIC: Max. limit of rivet setting depth regulation exceeded'
+DCPText.DCPFaultNum = 00300
+
+CASE(301):
+DCPText.DCPLine1 = 'DDC: Unknown or no spindle configuration data'
+DCPText.DCPFaultNum = 00301
+
+CASE(302):
+DCPText.DCPLine1 = 'DDC: 24V supply voltage too low'
+DCPText.DCPFaultNum = 00302
+
+CASE(303):
+DCPText.DCPLine1 = 'DDC: Measured plate thickness too low'
+DCPText.DCPFaultNum = 00303
+
+CASE(304):
+DCPText.DCPLine1 = 'DDC: Measured rivet length too low'
+DCPText.DCPFaultNum = 00304
+
+CASE(305):
+DCPText.DCPLine1 = 'DDC: Calibration of max. force failed'
+DCPText.DCPFaultNum = 00305
+
+CASE(306):
+DCPText.DCPLine1 = 'DDC: Max. force exceeded'
+DCPText.DCPFaultNum = 00306
+
+CASE(307):
+DCPText.DCPLine1 = 'DDC: Measured setting path too low'
+DCPText.DCPFaultNum = 00307
+
+CASE(308):
+DCPText.DCPLine1 = 'DDC: Communication to SPI expansion card faultily'
+DCPText.DCPFaultNum = 00308
+
+CASE(309):
+DCPText.DCPLine1 = 'DDC: Rivet curve falls below tolerance curve'
+DCPText.DCPFaultNum = 00309
+
+CASE(310):
+DCPText.DCPLine1 = 'DDC: Rivet curve rises above tolerance curve'
+DCPText.DCPFaultNum = 00310
+
+CASE(311):
+DCPText.DCPLine1 = 'DDC: Protective end switch "Rear end position" triggered'
+DCPText.DCPFaultNum = 00311
+
+CASE(312):
+DCPText.DCPLine1 = 'DDC: Measured setting path too large'
+DCPText.DCPFaultNum = 00312
+
+CASE(313):
+DCPText.DCPLine1 = 'DDC: Rivet curve is longer than tolerance curve'
+DCPText.DCPFaultNum = 00313
+
+CASE(314):
+DCPText.DCPLine1 = 'DDC: Offset adjustment failed'
+DCPText.DCPFaultNum = 00314
+
+CASE(315):
+DCPText.DCPLine1 = 'DDC: Index Encoder 2 not detected'
+DCPText.DCPFaultNum = 00315
+
+CASE(316):
+DCPText.DCPLine1 = 'DDC: Proximity switch "Rivet in receiver" is constantly high'
+DCPText.DCPFaultNum = 00316
+
+CASE(317):
+DCPText.DCPLine1 = 'DDC: Measured rivet length too long'
+DCPText.DCPFaultNum = 00317
+
+CASE(318):
+DCPText.DCPLine1 = 'DDC: Measured plate thickness too high'
+DCPText.DCPFaultNum = 00318
+
+CASE(319):
+DCPText.DCPLine1 = 'DDC: Force measuring signal too low'
+DCPText.DCPFaultNum = 00319
+
+CASE(320):
+DCPText.DCPLine1 = 'DDC: could not calculate energy level for JIC'
+DCPText.DCPFaultNum = 00320
+
+CASE(321):
+DCPText.DCPLine1 = 'DDC: Broken cable encoder 1'
+DCPText.DCPFaultNum = 00321
+
+CASE(322):
+DCPText.DCPLine1 = 'DDC: Broken cable encoder 2'
+DCPText.DCPFaultNum = 00322
+
+CASE(323):
+DCPText.DCPLine1 = 'DDC: Function aborted'
+DCPText.DCPFaultNum = 00323
+
+CASE(324):
+DCPText.DCPLine1 = 'DDC: Short circuit of an outlet on the SPI expansion card'
+DCPText.DCPFaultNum = 00324
+
+CASE(325):
+DCPText.DCPLine1 = 'DDC: Measured punch contact point to large (only clinch system)'
+DCPText.DCPFaultNum = 00325
+
+CASE(326):
+DCPText.DCPLine1 = 'DDC: Measured remaining bottom thickness too low (only clinch system)'
+DCPText.DCPFaultNum = 00326
+
+CASE(327):
+DCPText.DCPLine1 = 'DDC: Measured remaining bottom thickness too high (only clinch system)'
+DCPText.DCPFaultNum = 00327
+
+CASE(328):
+DCPText.DCPLine1 = 'DDC: No rivet in receiver'
+DCPText.DCPFaultNum = 00328
+
+CASE(329):
+DCPText.DCPLine1 = 'DDC: reference curve not received'
+DCPText.DCPFaultNum = 00329
+
+CASE(330):
+DCPText.DCPLine1 = 'DDC: Internal calculating error for the c-frame or pre clamping spring constant'
+DCPText.DCPFaultNum = 00330
+
+CASE(331):
+DCPText.DCPLine1 = 'Force Correction: Error calculating delay between DDC and DF30CAN'
+DCPText.DCPFaultNum = 00331
+
+CASE(332):
+DCPText.DCPLine1 = 'Force Correction: Runtime error DDC'
+DCPText.DCPFaultNum = 00332
+
+CASE(333):
+DCPText.DCPLine1 = 'Feeding process master: Timeout feeding to EPS'
+DCPText.DCPFaultNum = 00333
+
+CASE(334):
+DCPText.DCPLine1 = 'Feeding process slave 1: Timeout feeding to EPS'
+DCPText.DCPFaultNum = 00334
+
+CASE(335):
+DCPText.DCPLine1 = 'Feeding process slave 2: Timeout feeding to EPS'
+DCPText.DCPFaultNum = 00335
+
+CASE(336):
+DCPText.DCPLine1 = 'Feeding process slave 3: Timeout feeding to EPS'
+DCPText.DCPFaultNum = 00336
+
+CASE(337):
+DCPText.DCPLine1 = 'Feeder Slave 1: Maintenance feed tube is necessary'
+DCPText.DCPFaultNum = 00337
+
+CASE(338):
+DCPText.DCPLine1 = 'Feeder Slave 2: Maintenance feed tube is necessary'
+DCPText.DCPFaultNum = 00338
+
+CASE(339):
+DCPText.DCPLine1 = 'Feeder Slave 3: Maintenance feed tube is necessary'
+DCPText.DCPFaultNum = 00339
+
+CASE(340):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00340
+
+CASE(341):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00341
+
+CASE(342):
+DCPText.DCPLine1 = 'Wrong customer interface software'
+DCPText.DCPFaultNum = 00342
+
+CASE(343):
+DCPText.DCPLine1 = 'Wrong feeder software'
+DCPText.DCPFaultNum = 00343
+
+CASE(344):
+DCPText.DCPLine1 = 'Feeder master: Protective circuit interrupted'
+DCPText.DCPFaultNum = 00344
+
+CASE(345):
+DCPText.DCPLine1 = 'Feeder slave 1: Protective circuit interrupted'
+DCPText.DCPFaultNum = 00345
+
+CASE(346):
+DCPText.DCPLine1 = 'Feeder slave 2: Protective circuit interrupted'
+DCPText.DCPFaultNum = 00346
+
+CASE(347):
+DCPText.DCPLine1 = 'Feeder slave 3: Protective circuit interrupted'
+DCPText.DCPFaultNum = 00347
+
+CASE(348):
+DCPText.DCPLine1 = 'Feeding start for incorrect unit configuration'
+DCPText.DCPFaultNum = 00348
+
+CASE(349):
+DCPText.DCPLine1 = 'Feeding process master: Timeout magazine feeding cycle'
+DCPText.DCPFaultNum = 00349
+
+CASE(350):
+DCPText.DCPLine1 = 'Feeding process slave 1: Timeout magazine feeding cycle'
+DCPText.DCPFaultNum = 00350
+
+CASE(351):
+DCPText.DCPLine1 = 'Feeding process slave 2: Timeout magazine feeding cycle'
+DCPText.DCPFaultNum = 00351
+
+CASE(352):
+DCPText.DCPLine1 = 'Feeding process slave 3: Timeout magazine feeding cycle'
+DCPText.DCPFaultNum = 00352
+
+CASE(353):
+DCPText.DCPLine1 = 'Feeding not possible in standby mode'
+DCPText.DCPFaultNum = 00353
+
+CASE(354):
+DCPText.DCPLine1 = 'Maintenance counter scrap exhauster achieved'
+DCPText.DCPFaultNum = 00354
+
+CASE(355):
+DCPText.DCPLine1 = 'Spindle parameter: Incorrect spindle type assignment'
+DCPText.DCPFaultNum = 00355
+
+CASE(356):
+DCPText.DCPLine1 = 'Tucker Is Not Ready'
+DCPText.DCPFaultNum = 00356
+
+CASE(357):
+DCPText.DCPLine1 = 'Tucker Is Not OK'
+DCPText.DCPFaultNum = 00357
+
+CASE(358):
+DCPText.DCPLine1 = 'Magazine Is Not Ready'
+DCPText.DCPFaultNum = 00358
+
+CASE(359):
+DCPText.DCPLine1 = 'Fill Station Is Not Ready Dock'
+DCPText.DCPFaultNum = 00359
+
+CASE(360):
+DCPText.DCPLine1 = 'Magazine Is Not Full'
+DCPText.DCPFaultNum = 00360
+
+CASE(361):
+DCPText.DCPLine1 = 'Magazine Undock Is NOK'
+DCPText.DCPFaultNum = 00361
+
+CASE(362):
+DCPText.DCPLine1 = 'Tucker1 Homing Failed'
+DCPText.DCPFaultNum = 00362
+
+CASE(363):
+DCPText.DCPLine1 = 'Tucker2 Homing Failed'
+DCPText.DCPFaultNum = 00363
+
+CASE(364):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00364
+
+CASE(365):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00365
+
+CASE(366):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00366
+
+CASE(367):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00367
+
+CASE(368):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00368
+
+CASE(369):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00369
+
+CASE(370):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00370
+
+CASE(371):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00371
+
+CASE(372):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00372
+
+CASE(373):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00373
+
+CASE(374):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00374
+
+CASE(375):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00375
+
+CASE(376):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00376
+
+CASE(377):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00377
+
+CASE(378):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00378
+
+CASE(379):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00379
+
+CASE(380):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00380
+
+CASE(381):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00381
+
+CASE(382):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00382
+
+CASE(383):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00383
+
+CASE(384):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00384
+
+CASE(385):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00385
+
+CASE(386):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00386
+
+CASE(387):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00387
+
+CASE(388):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00388
+
+CASE(389):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00389
+
+CASE(390):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00390
+
+CASE(391):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00391
+
+CASE(392):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00392
+
+CASE(393):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00393
+
+CASE(394):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00394
+
+CASE(395):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00395
+
+CASE(396):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00396
+
+CASE(397):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00397
+
+CASE(398):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00398
+
+CASE(399):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00399
+
+CASE(400):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00400
+
+	else:
+	DCPText.DCPLine1 = 'Undefined TUCKER DCP Fault Message'
+	
+ENDSELECT
+
+CNV_INT_STR(DCPText.DCPFaultNum,4,10,strDCPNum)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,strDCPNum,STATUS)
+
+END G_DCP_SPR1_1
+
+--Begin Prog
+BEGIN
+
+ 
+ 
+END DCP_TUCKER_1

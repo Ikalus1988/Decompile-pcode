@@ -1,0 +1,79 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_reg_com
+--
+-- brief: xyz_reg_com,
+--        comment
+--------------------------------------------------------------------------------
+
+PROGRAM XYZ_REG_COM
+
+%COMMENT = 'comment'
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+
+CONST
+    REG_TYPE_R = 0
+    REG_TYPE_PR = 1
+    REG_TYPE_SR = 2
+
+VAR
+    status :INTEGER
+
+%INCLUDE include\xyz_log_h
+
+ROUTINE SET_REG_MULT(BASE_IND: INTEGER; N: INTEGER; PREFIX: STRING; REG_TYPE: INTEGER)
+VAR 
+    I: INTEGER
+    TMPBUFF: STRING[20]
+BEGIN
+    FOR I = BASE_IND + 1 TO BASE_IND + N DO
+        CNV_INT_STR(I - BASE_IND, 1, 0, TMPBUFF)
+        TMPBUFF = PREFIX + TMPBUFF
+        IF REG_TYPE = REG_TYPE_R THEN
+            SET_REG_CMT(I-1, TMPBUFF, status)
+        ENDIF
+        IF REG_TYPE = REG_TYPE_PR THEN
+            SET_PREG_CMT(I-1, TMPBUFF, status)
+        ENDIF
+        IF REG_TYPE = REG_TYPE_SR THEN
+            SET_SREG_CMT(I-1, TMPBUFF, status)
+        ENDIF
+    ENDFOR
+END SET_REG_MULT
+
+BEGIN
+    SET_REG_CMT(REG_NO_JSPD,'MOT movej speed',status)
+    SET_REG_CMT(REG_NO_LSPD,'MOT movel speed',status)
+    SET_REG_CMT(REG_NO_ACC,'MOT acceleration',status)
+    SET_REG_CMT(REG_NO_CNT,'MOT cnt data',status)
+    SET_REG_CMT(REG_NO_CONN, 'MAST connect flag', status)
+    SET_REG_CMT(REG_NO_COMM, 'MAST comm flag', status)
+    SET_REG_CMT(REG_NO_ERR,'MAST error code',status)
+    SET_REG_CMT(REG_NO_INT,'MAST parsed int',status)
+    SET_REG_CMT(REG_NO_POSE,'MAST pose num',status)
+    SET_REG_CMT(REG_NO_PPNM,'MAST pipeline num',status)
+    SET_REG_CMT(REG_NO_RGNM,'MAST register num',status)
+    SET_PREG_CMT(PREG_NO_MOV,'MOT joint pose',status)
+    SET_PREG_CMT(PREG_IN_CPOS,'MAST cart pose',status)
+
+    SET_REG_MULT(REG_NO_WP, 30, 'MAST waypoint type', REG_TYPE_R)
+    SET_REG_MULT(PREG_IN_POS, 30, 'MAST waypoint', REG_TYPE_PR)
+
+    -- default heart beat interval: 600 seconds
+    SET_INT_REG(REG_NO_HB, 600, status)
+    IF status <> 0 THEN
+        log_error('[REG_COM] set heart beat interval failed')
+    ENDIF
+
+
+END XYZ_REG_COM

@@ -1,0 +1,40 @@
+PROGRAM ResetNutMem
+
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT = ERROR
+
+VAR
+
+------------------------------------------------------------------------------------
+--Vars
+------------------------------------------------------------------------------------
+arrNutID1 IN CMOS FROM Set_Nut_Data: ARRAY[100] OF INTEGER
+intNutCount1 IN CMOS FROM Set_Nut_Data: INTEGER
+arrNutID2 IN CMOS FROM Set_Nut_Data: ARRAY[100] OF INTEGER
+intNutCount2 IN CMOS FROM Set_Nut_Data: INTEGER
+idx:INTEGER
+
+--------------------------------------------------------------------------------------
+--Start of Prog
+---------------------------------------------------------------------------------------
+BEGIN
+	
+	
+------------------------------------------------------------------------------------------
+--Loop through array and make each element 0
+-------------------------------------------------------------------------------------------	
+	
+FOR idx = 1 TO 100 DO
+	arrNutID1[idx] = 0
+	intNutCount1 = 0
+	arrNutID2[idx] = 0
+	intNutCount2 = 0
+ENDFOR
+
+--------------------------------------------------------
+--The End
+--------------------------------------------------------
+
+END ResetNutMem
+

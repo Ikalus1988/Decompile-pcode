@@ -1,0 +1,68 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_c_v_cmd
+-- 
+-- brief: xyz_c_v_cmd,
+--         call vison cmd
+--------------------------------------------------------------------------------
+PROGRAM xyz_c_v_cmd
+
+%COMMENT = 'call vision cmd'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+CONST
+    VS_ID_PAM = 1
+    VS_CN_PAM = 2
+
+VAR
+    ret       : INTEGER
+    data_type : INTEGER
+    vs_id     : INTEGER
+    int_NA    : INTEGER
+    real_NA   : REAL
+    str_NA    : STRING[10]
+    vis_cn    : STRING[15]
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+GET_TPE_PRM(VS_ID_PAM, data_type, vs_id, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[C_VIS_CMD] get vs_id failed')
+ENDIF
+GET_TPE_PRM(VS_CN_PAM, data_type, int_NA, real_NA, vis_cn, ret)
+IF (ret <> 0) OR (data_type <> 3) THEN
+    log_error('[C_VIS_CMD] get vision codename faild')
+ENDIF
+ResetOutData
+ret = AddInttoArr(CMD_C_VISCMD)
+IF (ret <> 0) THEN
+    log_error('[C_VIS_CMD] fail to pack cmd')
+ENDIF
+ret = AddInttoArr(vs_id)
+IF (ret <> 0) THEN
+    log_error('[C_VIS_CMD] fail to pack vs_id')
+ENDIF
+ret = AddStrtoArr(vis_cn)
+IF (ret <> 0) THEN
+    log_error('[C_VIS_CMD] fail to pack vision codename')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_c_v_cmd

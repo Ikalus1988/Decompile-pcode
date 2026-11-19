@@ -1,0 +1,74 @@
+PROGRAM  MM_GET_DYPOS
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_DyPose'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+%INCLUDE mm_module_h
+--------------------------------------------------------------------------------
+-- Get_DyPose
+--------------------------------------------------------------------------------
+ROUTINE Get_DyPose
+BEGIN
+-- Get  TP  Parameter
+    Get_Arg(1, 1, Serial, Real_Value, Str_Value)
+    Get_Arg(2, 1, Pr_Num, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Label, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_UserData, Real_Value, Str_Value)  
+--Check If All Data 0
+    MMvis2_Pose[Serial].Pose.Config_Data=$MOR_GRP[1].$NILPOS.Config_Data
+    IF (MMvis2_Pose[Serial].Pose >=< $MOR_GRP[1].$NILPOS)THEN
+    	POST_ERR(ErrCode, 'MM:Robot_Internal_Error1', 0, ERR_ABORT)
+    ENDIF
+--Get PR TYPE    
+	Chk_Pr_Type(Pr_Num,1,pr_type,PR_XYZWPR,PR_XYZWPREXT)
+	IF pr_type=PR_XYZWPR THEN	--no 7th axis    
+	--Get PR Config
+	    Pr_Pos=GET_POS_REG(Pr_Num, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error2', 0, ERR_ABORT)
+	    ENDIF
+	--Trans Pose
+	    MMvis2_Pose[Serial].Pose.Config_Data=Pr_Pos.Config_Data
+	    SET_POS_REG(Pr_Num, MMvis2_Pose[Serial].Pose, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error3', 0, ERR_ABORT)
+	    ENDIF
+	ENDIF
+	IF pr_type=PR_XYZWPREXT THEN	--has 7th axis
+	--Get PR Config
+	    Pr_EPos=GET_POS_REG(Pr_Num, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error4', 0, ERR_ABORT)
+	    ENDIF
+	--Trans Pose
+	    Pr_EPos.x = MMvis2_Pose[Serial].Pose.x
+	    Pr_EPos.y = MMvis2_Pose[Serial].Pose.y
+	    Pr_EPos.z = MMvis2_Pose[Serial].Pose.z
+	    Pr_EPos.w = MMvis2_Pose[Serial].Pose.w
+	    Pr_EPos.p = MMvis2_Pose[Serial].Pose.p
+	    Pr_EPos.r = MMvis2_Pose[Serial].Pose.r	    	    
+	    SET_EPOS_REG(Pr_Num, Pr_EPos, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error5', 0, ERR_ABORT)
+	    ENDIF	
+	ENDIF
+--Trans Label
+    Set_RealReg(Reg_Label, MMvis2_Pose[Serial].Label)
+--Trans UserData then clear User Data
+	FOR i=1 TO UserData_Num DO
+		Set_RealReg((Reg_UserData+i-1), User_Data[Serial,i])
+		User_Data[Serial,i] = 0	
+	ENDFOR
+--Clear Pose Data    
+    MMvis2_Pose[Serial].Pose = $MOR_GRP[1].$NILPOS
+    MMvis2_Pose[Serial].Label = 0
+END Get_DyPose
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_DyPose
+END MM_GET_DYPOS

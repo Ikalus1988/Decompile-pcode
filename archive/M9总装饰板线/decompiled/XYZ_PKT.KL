@@ -1,0 +1,347 @@
+-- XYZ_PKT.KL (decompiled v3)
+PROGRAM XYZ_PKT
+%COMMENT = 'package'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	XYZ_MSG_T = STRUCTURE
+	MSG_QUOT_: INTEGER
+	MSG_REMA_: INTEGER
+	MSG_ARRAY_: ARRAY[6] OF STRING[200]
+	ENDSTRUCTURE
+	XYZ_DATA_T = STRUCTURE
+	DATA_NUM_: INTEGER
+	DATA_ARRAY_: ARRAY[70] OF STRING[20]
+	ENDSTRUCTURE
+	XYZ_SOCK_T = STRUCTURE
+	TYPE_: STRING[1]
+	CONNECTED_: INTEGER
+	STATUS_: INTEGER
+	TAG_IDX_: INTEGER
+	TAG_STR_: STRING[3]
+	PORT_: INTEGER
+	HOST_: STRING[30]
+	ENDSTRUCTURE
+VAR
+  p1_f04 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE SOCK_CTOR(p0 : XYZ_SOCK_T; p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CONN(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLOSE(p0 : XYZ_SOCK_T; p1 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SET_RT(p0 : FILE; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SOCK_OPFD(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_CLFD(p0 : FILE) : INTEGER FROM MI_LIB
+ROUTINE SOCK_SEND(p0 : FILE; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE SOCK_RECV(p0 : FILE; p1 : STRING; p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_CLEAR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_FORCE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE PKT_CTOR_MSG(p0 : XYZ_MSG_T) : INTEGER
+VAR
+  i__ : INTEGER
+BEGIN
+  p0.MSG_QUOT_ = 0
+  p0.MSG_REMA_ = 0
+  FOR i__ = 1 TO 3 DO
+  p0.MSG_ARRAY_[i__] = ''
+  ENDFOR
+  RETURN(0)
+END PKT_CTOR_MSG
+
+ROUTINE PKT_CTOR_DAT(p0 : XYZ_DATA_T) : INTEGER
+VAR
+  i__ : INTEGER
+BEGIN
+  p0.DATA_NUM_ = 0
+  FOR i__ = 1 TO 3 DO
+  p0.DATA_ARRAY_[i__] = ''
+  ENDFOR
+  RETURN(0)
+END PKT_CTOR_DAT
+
+ROUTINE PKT_GET_MLEN(p0 : XYZ_MSG_T) : INTEGER
+VAR
+  mlen : INTEGER
+BEGIN
+  mlen = p0.MSG_QUOT_ * 200 + p0.MSG_REMA_
+  RETURN(mlen)
+  RETURN(0)
+END PKT_GET_MLEN
+
+ROUTINE PKT_ADD_MSG(p0 : XYZ_MSG_T; p1 : STRING) : INTEGER
+VAR
+  idx_start : INTEGER
+  remain : INTEGER
+  temp_str : STRING[64]
+BEGIN
+  sv_i = str_len(p1)
+  remain = sv_i
+  idx_start = 1
+  IF ((remain > 0)) THEN
+  IF ((p0.MSG_QUOT_ + 1 > 6)) THEN
+  sv_i = LOG_ERROR('[PKT] msg array is full')
+  -- stmt79 stray sv_i
+  RETURN(1)
+  ENDIF
+  temp_str = ''
+  IF ((remain > 200 - p0.MSG_REMA_)) THEN
+  sv_s = sub_str(p1, idx_start, 200 - p0.MSG_REMA_)
+  temp_str = sv_s
+  p0.MSG_ARRAY_[p0.MSG_QUOT_ + 1] = '' + temp_str
+  -- stmt85 stray p0.MSG_ARRAY_[p0.MSG_QUOT_ + 1]
+  remain = remain - 200 - p0.MSG_REMA_
+  p0.MSG_QUOT_ = p0.MSG_QUOT_ + 1
+  idx_start = idx_start + 200 - p0.MSG_REMA_
+  p0.MSG_REMA_ = 0
+  ELSE
+  sv_s = sub_str(p1, idx_start, remain)
+  temp_str = sv_s
+  p0.MSG_ARRAY_[p0.MSG_QUOT_ + 1] = '' + temp_str
+  -- stmt92 stray p0.MSG_ARRAY_[p0.MSG_QUOT_ + 1]
+  p0.MSG_REMA_ = p0.MSG_REMA_ + remain
+  remain = 0
+  ENDIF
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PKT_ADD_MSG
+
+ROUTINE PKT_ADD_DAT(p0 : XYZ_DATA_T; p1 : STRING) : INTEGER
+BEGIN
+  IF ((p0.DATA_NUM_ + 1 > 70)) THEN
+  sv_i = LOG_ERROR('[PKT] data array is full')
+  -- stmt142 stray sv_i
+  RETURN(1)
+  ENDIF
+  p0.DATA_ARRAY_[p0.DATA_NUM_ + 1] = p1
+  p0.DATA_NUM_ = p0.DATA_NUM_ + 1
+  RETURN(0)
+  RETURN(0)
+END PKT_ADD_DAT
+
+ROUTINE PKT_CNV_MTD(p0 : XYZ_MSG_T; p1 : XYZ_DATA_T) : INTEGER
+VAR
+  i__ : INTEGER
+  idx_end : INTEGER
+  idx_start : INTEGER
+  r4_lc70 : INTEGER
+  stat__ : INTEGER
+  temp_len : INTEGER
+  temp_str : STRING[64]
+BEGIN
+  idx_start = 1
+  temp_str = ''
+  FOR i__ = 1 TO 3 DO
+  temp_str = p0.MSG_ARRAY_[i__] + ''
+  -- stmt116 stray temp_str
+  sv_i = str_len(temp_str)
+  r4_lc70 = sv_i
+  temp_len = 0
+  idx_end = 0
+  IF ((temp_len = 0)) THEN
+  sv_i = index(temp_str, ',')
+  idx_end = sv_i
+  IF ((idx_end = 0)) THEN
+  temp_len = 1
+  ELSE
+  sv_s = sub_str(temp_str, idx_start, idx_end - idx_start)
+  sv_i = PKT_ADD_DAT(p1, sv_s)
+  stat__ = sv_i
+  IF ((stat__ <> 0)) THEN
+  RETURN(stat__)
+  ENDIF
+  ENDIF
+  sv_s = sub_str(temp_str, idx_end + 1, r4_lc70 - idx_end + 1)
+  temp_str = sv_s
+  sv_i = str_len(temp_str)
+  r4_lc70 = sv_i
+  idx_end = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+  RETURN(0)
+END PKT_CNV_MTD
+
+ROUTINE PKT_CNV_DTM(p0 : XYZ_DATA_T; p1 : XYZ_MSG_T) : INTEGER
+VAR
+  i__ : INTEGER
+  stat__ : INTEGER
+BEGIN
+  FOR i__ = 1 TO 3 DO
+  sv_i = PKT_ADD_MSG(p1, '')
+  -- 弃参原式: (p0.DATA_ARRAY_[i__])
+  stat__ = sv_i
+  -- stmt157 residue ','
+  IF ((stat__ <> 0)) THEN
+  RETURN(stat__)
+  ENDIF
+  ENDFOR
+  sv_i = PKT_ADD_MSG(p1, '#')
+  stat__ = sv_i
+  IF ((stat__ <> 0)) THEN
+  RETURN(stat__)
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PKT_CNV_DTM
+
+ROUTINE PKT_RECV_SM(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER
+VAR
+  buff_len_ : INTEGER
+  stat__ : INTEGER
+  t_idx_ : INTEGER
+  temp_str : STRING[64]
+BEGIN
+  stat__ = 0
+  IF ((p1_f04 = 0)) THEN
+  sv_i = LOG_ERROR('[PKT] sock disconnected')
+  -- stmt177 stray sv_i
+  RETURN(1)
+  ENDIF
+  temp_str = ''
+  -- stmt183 stray p2 | temp_str | 4
+  sv_i = IO_STATUS(p2)
+  t_idx_ = sv_i
+  IF ((t_idx_ <> 0)) THEN
+  sv_i = LOG_ERROR('[PKT] recv length failed')
+  -- stmt186 stray sv_i
+  p1_f04 = 0
+  RETURN(t_idx_)
+  ENDIF
+  buff_len_ = 0
+  CNV_STR_INT(temp_str, buff_len_)
+  IF ((stat__ = 0)) THEN
+  temp_str = ''
+  IF ((buff_len_ > 200)) THEN
+  -- stmt196 stray p2 | temp_str | 200
+  buff_len_ = buff_len_ - 200
+  ELSE
+  -- stmt199 stray p2 | temp_str | buff_len_
+  buff_len_ = 0
+  stat__ = 1
+  ENDIF
+  ENDIF
+  sv_i = IO_STATUS(p2)
+  t_idx_ = sv_i
+  IF ((t_idx_ <> 0)) THEN
+  sv_i = LOG_ERROR('[PKT] recv msg from ipc failed')
+  -- stmt206 stray sv_i
+  p1_f04 = 0
+  RETURN(t_idx_)
+  ENDIF
+  sv_i = PKT_ADD_MSG(p0, temp_str)
+  t_idx_ = sv_i
+  IF ((t_idx_ <> 0)) THEN
+  RETURN(t_idx_)
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PKT_RECV_SM
+
+ROUTINE PKT_SEND_ALL(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER
+VAR
+  i__ : INTEGER
+  stat__ : INTEGER
+BEGIN
+  IF ((p1_f04 = 0)) THEN
+  sv_i = LOG_ERROR('[PKT] sock disconnected')
+  -- stmt224 stray sv_i
+  RETURN(1)
+  ENDIF
+  FOR i__ = 1 TO 3 DO
+  sv_i = SOCK_SEND(p2, '')
+  -- 弃参原式: (p0.MSG_ARRAY_[i__])
+  stat__ = sv_i
+  IF ((stat__ <> 0)) THEN
+  p1_f04 = 0
+  RETURN(stat__)
+  ENDIF
+  ENDFOR
+  sv_i = SOCK_SEND(p2, '')
+  -- 弃参原式: (p0.MSG_ARRAY_[p0.MSG_QUOT_ + 1])
+  stat__ = sv_i
+  IF ((stat__ <> 0)) THEN
+  p1_f04 = 0
+  RETURN(stat__)
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PKT_SEND_ALL
+
+ROUTINE PKT_RECV_UT(p0 : XYZ_MSG_T; p1 : XYZ_SOCK_T; p2 : FILE) : INTEGER
+VAR
+  buff : STRING[64]
+  buff_len : INTEGER
+  list_num : INTEGER
+  r9_lc37 : INTEGER
+  stat__ : INTEGER
+BEGIN
+  buff_len = 0
+  IF ((p1_f04 = 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] sock disconnected')
+  -- stmt0 stray sv_i
+  RETURN(1)
+  ENDIF
+  IF ((buff_len = 0)) THEN
+  r9_lc37 = 0
+  BYTES_AHEAD(p2, stat__, list_num)
+  IF ((list_num <> 0)) THEN
+  sv_i = LOG_ERROR('[BKGD] recv msg from ipc failed')
+  -- stmt7 stray sv_i
+  p1_f04 = 0
+  RETURN(1)
+  ENDIF
+  IF ((stat__ > 0)) THEN
+  IF ((stat__ > 127)) THEN
+  RETURN(0)
+  ELSE
+  RETURN(0)
+  ENDIF
+  ENDIF
+  sv_i = IO_STATUS(p2)
+  list_num = sv_i
+  IF ((list_num <> 0)) THEN
+  sv_i = LOG_ERROR('[PKT] recv msg from ipc failed')
+  -- stmt19 stray sv_i
+  p1_f04 = 0
+  RETURN(list_num)
+  ENDIF
+  r9_lc37 = r9_lc37 + 1
+  sv_i = PKT_ADD_MSG(p0, buff)
+  list_num = sv_i
+  IF ((list_num <> 0)) THEN
+  RETURN(list_num)
+  ENDIF
+  IF ((sv_s = '#')) THEN
+  buff_len = 1
+  ENDIF
+  ENDIF
+  RETURN(0)
+  RETURN(0)
+END PKT_RECV_UT
+
+BEGIN
+END XYZ_PKT

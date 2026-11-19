@@ -1,0 +1,107 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Constructor: clear xyz_msg_t all array and reset integer members to zero
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_ctor_msg(xmsgt : xyz_msg_t) FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Constructor: clear xyz_data_t all array and reset integer members to zero
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_ctor_dat(xdat : xyz_data_t) FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Get msg array length
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_get_mlen(xmsgt : xyz_msg_t) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add msg to xpkt msg array
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_add_msg(xmsgt : xyz_msg_t; msg : STRING) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Convert xyz_msg_t to xyz_data_t
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_cnv_mtd(xmsgt : xyz_msg_t; xdat : xyz_data_t) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add date to xyz_data_t data array
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_add_dat(xdat : xyz_data_t; data : STRING) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Convert xyz_data_t to xyz_msg_t
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_cnv_dtm(xdat : xyz_data_t; xmsgt : xyz_msg_t) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- package socket util function: 
+-- recv msg size first, recv msg according to msg size
+--------------------------------------------------------------------------------
+ROUTINE pkt_recv_sm(xmsgt : xyz_msg_t; xsock : xyz_sock_t; sock_fd_ : FILE) : INTEGER FROM xyz_pkt
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- package socket util function: send all. will send all msg in xmsgt
+-- 
+--------------------------------------------------------------------------------
+ROUTINE pkt_send_all(xmsgt : xyz_msg_t; xsock : xyz_sock_t; sock_fd_ : FILE) : INTEGER FROM xyz_pkt
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- package socket util function: recv until terminator
+-- recved msg will store in xmsgt
+--------------------------------------------------------------------------------
+ROUTINE pkt_recv_ut(xmsgt : xyz_msg_t; xsock : xyz_sock_t; sock_fd_ : FILE) : INTEGER FROM xyz_pkt
+
+

@@ -1,0 +1,814 @@
+PROGRAM DCP_SPOT
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+%COMMENT = 'Version 1.3'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID,ReqThickness,ActThickness :INTEGER
+paramReal, realDummy, realActThk, realReqThk, OldWearRbt, OldWearGun, NewWearRbt, NewWearGun,RbtDiff,GunDiff，OldWearRbt2, OldWearGun2, NewWearRbt2, NewWearGun2,RbtDiff2,GunDiff2:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum, DCPFaultNum1,strWDRbtOld, strWDRbtNew,strWDGunOld, strWDGunNew,strWDRbtDiff,strWDGunDiff，strWDRbtOld2, strWDRbtNew2,strWDGunOld2, strWDGunNew2,strRbtDiff2,strGunDiff2: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+strDCPText, strDCPText2, DCPPLCText, strHis1, strHis2,strHis3: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	DCPText.DCPLine1 = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+  --Get tp paramater which contains additional DCP Fault Text
+ GET_TPE_PRM(2,paramTyp,paramInt,paramReal,strAddDCPTxt,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+ --check if strAddDCPTxt is initialised, if not set DCPFau to 0, if OK get DCP Fault number
+ IF ( UNINIT(strAddDCPTxt)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+--Get Wear Values
+GET_REG(11,FALSE,paramInt, OldWearRbt,STATUS)
+GET_REG(12,FALSE,paramInt, OldWearGun,STATUS)
+GET_REG(13,FALSE,paramInt, NewWearRbt,STATUS)
+GET_REG(14,FALSE,paramInt, NewWearGun,STATUS)
+GET_REG(15,FALSE,paramInt, RbtDiff,STATUS)
+GET_REG(16,FALSE,paramInt, GunDiff,STATUS)
+
+GET_REG(241,FALSE,paramInt, OldWearRbt2,STATUS)
+GET_REG(242,FALSE,paramInt, OldWearGun2,STATUS)
+GET_REG(243,FALSE,paramInt, NewWearRbt2,STATUS)
+GET_REG(244,FALSE,paramInt, NewWearGun2,STATUS)
+GET_REG(245,FALSE,paramInt, RbtDiff2,STATUS)
+GET_REG(246,FALSE,paramInt, GunDiff2,STATUS)
+
+CNV_REAL_STR(OldWearRbt, 5, 3, strWDRbtOld)
+CNV_REAL_STR(NewWearRbt, 5, 3, strWDRbtNew)
+CNV_REAL_STR(OldWearGun, 5, 3, strWDGunOld)
+CNV_REAL_STR(NewWearGun, 5, 3, strWDGunNew)
+CNV_REAL_STR(RbtDiff, 5, 3, strWDRbtDiff)
+CNV_REAL_STR(GunDiff, 5, 3, strWDGunDiff)
+
+CNV_REAL_STR(OldWearRbt2, 5, 3, strWDRbtOld2)
+CNV_REAL_STR(NewWearRbt2, 5, 3, strWDRbtNew2)
+CNV_REAL_STR(OldWearGun2, 5, 3, strWDGunOld2)
+CNV_REAL_STR(NewWearGun2, 5, 3, strWDGunNew2)
+CNV_REAL_STR(RbtDiff2, 5, 3, strRbtDiff2)
+CNV_REAL_STR(GunDiff2, 5, 3, strGunDiff2)
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_REG(81,FALSE,intToolID, realDummy,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+--Get Thickness of part detected by the Robot
+GET_VAR(entry, '*SYSTEM*','$SGTHKRPT1.$THK_OBSV',realActThk,STATUS)
+CNV_REAL_STR(realActThk, 7, 10, ActThkStr)
+--Get  Real Number Thickness sent From Weld Timer
+GET_REG(31,TRUE,ReqThickness, realReqThk,STATUS)
+--If the real value is greater than 0 then convert Real to String
+IF realReqThk > 0 THEN
+	CNV_REAL_STR(realReqThk, 1, 10, strReqThk)
+--If real number is equal to 0 then get the Integer Value and convert to a String	
+ELSE
+--Get Integer Value of Thickness sent by weld Time	
+	GET_REG(31,FALSE,ReqThickness, realReqThk,STATUS)
+	CNV_INT_STR(ReqThickness,3,0,strReqThk)
+ENDIF
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(101):
+	DCPText.DCPLine1 = 'Spot type ID invalid'
+	DCPText.DCPFaultNum = 00101
+	
+	CASE(102):
+	DCPText.DCPLine1 = 'Spot spot ID invalid'
+	DCPText.DCPFaultNum = 00102
+	
+	CASE(103):
+	DCPText.DCPLine1 = 'Spot plate tolerance invalid'
+	DCPText.DCPFaultNum = 00103
+	FKEY_SEL = 1
+	
+	CASE(104):
+	DCPText.DCPLine1 = 'Spot release distance invalid'
+	DCPText.DCPFaultNum = 00104
+	
+	CASE(105):
+	DCPText.DCPLine1 = 'Tip dresser number invalid'
+	DCPText.DCPFaultNum = 00105
+	
+	CASE(106):
+	DCPText.DCPLine1 = 'Spot selection not acknowledge by weld timer'
+	DCPText.DCPFaultNum = 00106
+	
+	CASE(107):
+	DCPText.DCPLine1 = 'Spot selection not in weld timer spot table'
+	DCPText.DCPFaultNum = 00107
+	
+	CASE(108):
+	DCPText.DCPLine1 = 'Short curcuit weld fault'
+	DCPText.DCPFaultNum = 00108
+	FKEY_SEL = 3
+	
+	CASE(109):
+	DCPText.DCPLine1 = 'Spotware Process fault'
+	DCPText.DCPFaultNum = 00109
+	
+	CASE(110):
+	DCPText.DCPLine1 = 'Weld Complete-Timeout Fault'
+	DCPText.DCPFaultNum = 00110
+	FKEY_SEL = 1
+	
+	CASE(111):
+	DCPText.DCPLine1 = 'Plate Thickness Error'
+	DCPText.DCPFaultNum = 00111
+	FKEY_SEL = 2
+	
+	CASE(112):
+	DCPText.DCPLine1 = 'Bosch Not Ready'
+	DCPText.DCPFaultNum = 00112
+	
+	CASE(113):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00113
+	
+	CASE(114):
+	DCPText.DCPLine1 = 'Tip dresser 1 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00114
+	
+	CASE(115):
+	DCPText.DCPLine1 = 'Tip dresser 1 controller not OK'
+	DCPText.DCPFaultNum = 00115
+	
+	CASE(116):
+	DCPText.DCPLine1 = 'Tip dresser 1 not clear of ped gun'
+	DCPText.DCPFaultNum = 00116
+	
+	CASE(117):
+	DCPText.DCPLine1 = 'Tip dresser 1 not ready'
+	DCPText.DCPFaultNum = 00117
+	
+	CASE(118):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not on'
+	DCPText.DCPFaultNum = 00118
+	
+	CASE(119):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not off'
+	DCPText.DCPFaultNum = 00119
+	
+	CASE(120):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not on'
+	DCPText.DCPFaultNum = 00120
+	
+	CASE(121):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not off'
+	DCPText.DCPFaultNum = 00121
+	
+	CASE(122):
+	DCPText.DCPLine1 = 'Tip dresser 1 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00122
+	
+	CASE(123):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check start'
+	DCPText.DCPFaultNum = 00123
+	
+	CASE(124):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check end'
+	DCPText.DCPFaultNum = 00124
+	
+	CASE(125):
+	DCPText.DCPLine1 =  'Tip dresser 1 sliding forward not on'
+	DCPText.DCPFaultNum = 00125
+	
+	CASE(126):
+	DCPText.DCPLine1 =  'Tip dresser 1 sliding forward not off'
+	DCPText.DCPFaultNum = 00126
+	
+	CASE(127):
+	DCPText.DCPLine1 = 'Tip dresser 1 sliding backward not on'
+	DCPText.DCPFaultNum = 00127
+	
+	CASE(128):
+	DCPText.DCPLine1 = 'Tip dresser 1 sliding backward not off'
+	DCPText.DCPFaultNum = 00128
+	
+	CASE(129):
+	DCPText.DCPLine1 = 'Tip dresser 2 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00129
+	
+	CASE(130):
+	DCPText.DCPLine1 = 'Tip dresser 2 controller not OK'
+	DCPText.DCPFaultNum = 00130
+	
+	CASE(131):
+	DCPText.DCPLine1 = 'Tip dresser 2 not clear of ped gun'
+	DCPText.DCPFaultNum = 00131
+	
+	CASE(132):
+	DCPText.DCPLine1 = 'Tip dresser 2 not ready'
+	DCPText.DCPFaultNum = 00132
+	
+	CASE(133):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not on'
+	DCPText.DCPFaultNum = 00133
+	
+	CASE(134):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not off'
+	DCPText.DCPFaultNum = 00134
+	
+	CASE(135):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not on'
+	DCPText.DCPFaultNum = 00135
+	
+	CASE(136):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not off'
+	DCPText.DCPFaultNum = 00136
+	
+	CASE(137):
+	DCPText.DCPLine1 = 'Tip dresser 2 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00137
+	
+	CASE(138):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check start'
+	DCPText.DCPFaultNum = 00138
+	
+	CASE(139):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check end'
+	DCPText.DCPFaultNum = 00139
+	
+	CASE(140):
+	DCPText.DCPLine1 = 'Get Spot Data Param 1 Missing'
+	DCPText.DCPFaultNum = 00140
+	
+	CASE(141):
+	DCPText.DCPLine1 = 'Get Spot Data Invalid Spot String'
+	DCPText.DCPFaultNum = 00141
+	
+	CASE(142):
+	DCPText.DCPLine1 = 'Get Spot Data Param 2 Missing'
+	DCPText.DCPFaultNum = 00142
+	
+	CASE(143):
+	DCPText.DCPLine1 = 'Get Spot Data GO[37] Failed to Write'
+	DCPText.DCPFaultNum = 00143
+	
+	CASE(144):
+	DCPText.DCPLine1 = 'Get Spot Data GO[38] Failed to Write'
+	DCPText.DCPFaultNum = 00144
+	
+	CASE(145):
+	DCPText.DCPLine1 = 'Get Spot Data GO[33] Failed to Write'
+	DCPText.DCPFaultNum = 00145
+	
+	CASE(146):
+	DCPText.DCPLine1 = 'Get Spot Data Failed Read DI[785]'
+	DCPText.DCPFaultNum = 00146
+	
+	CASE(147):
+	DCPText.DCPLine1 = 'Get Spot Data Timeout on New Spot'
+	DCPText.DCPFaultNum = 00147
+	
+	CASE(148):
+	DCPText.DCPLine1 = 'Get Spot Data Failed Read GI[31]'
+	DCPText.DCPFaultNum = 00148
+	
+	CASE(149):
+	DCPText.DCPLine1 = 'Get Spot Data Failed to Write R[31]'
+	DCPText.DCPFaultNum = 00149
+	
+	CASE(150):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00150
+	
+	CASE(151):
+	DCPText.DCPLine1 = 'Spot type ID invalid'
+	DCPText.DCPFaultNum = 00151
+	
+	CASE(152):
+	DCPText.DCPLine1 = 'Spot spot ID invalid'
+	DCPText.DCPFaultNum = 00152
+	
+	CASE(153):
+	DCPText.DCPLine1 = 'Spot plate tolerance invalid'
+	DCPText.DCPFaultNum = 00153
+	
+	CASE(154):
+	DCPText.DCPLine1 = 'Spot release distance invalid'
+	DCPText.DCPFaultNum = 00154
+	
+	CASE(155):
+	DCPText.DCPLine1 = 'Tip dresser number invalid'
+	DCPText.DCPFaultNum = 00155
+	
+	CASE(156):
+	DCPText.DCPLine1 = 'Spot selection not acknowledge by weld timer'
+	DCPText.DCPFaultNum = 00156
+	
+	CASE(157):
+	DCPText.DCPLine1 = 'Spot selection not in weld timer spot table'
+	DCPText.DCPFaultNum = 00157
+	
+	CASE(158):
+	DCPText.DCPLine1 = 'Short curcuit weld fault'
+	DCPText.DCPFaultNum = 00158
+	
+	CASE(159):
+	DCPText.DCPLine1 = 'Spotware Process fault'
+	DCPText.DCPFaultNum = 00159
+	
+	CASE(160):
+	DCPText.DCPLine1 = 'No Water Flow'
+	DCPText.DCPFaultNum = 00160
+	
+	CASE(161):
+	DCPText.DCPLine1 = 'Tip Wear out of Tollerance'
+	DCPText.DCPLine2 = 'Old Gun'+strWDRbtOld+ '   New Gun'+strWDRbtNew
+	DCPText.DCPLine3 = 'Old Rbt'+strWDGunOld+ '   New Rbt'+strWDGunNew
+	DCPText.DCPLine4 = 'Rbt Diff='+strWDRbtDiff+'   Gun Diff'+strWDGunDiff
+	DCPText.DCPFaultNum = 00161
+	
+	CASE(162):
+	DCPText.DCPLine1 = 'Incorrect Tips Detected'
+	DCPText.DCPFaultNum = 00162
+	
+	CASE(163):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00163
+	
+	CASE(164):
+	DCPText.DCPLine1 = 'Tip dresser 1 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00164
+	
+	CASE(165):
+	DCPText.DCPLine1 = 'Tip dresser 1 controller not OK'
+	DCPText.DCPFaultNum = 00165
+	
+	CASE(166):
+	DCPText.DCPLine1 = 'Tip dresser 1 not clear of ped gun'
+	DCPText.DCPFaultNum = 00166
+	
+	CASE(167):
+	DCPText.DCPLine1 = 'Tip dresser 1 not ready'
+	DCPText.DCPFaultNum = 00167
+	
+	CASE(168):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not on'
+	DCPText.DCPFaultNum = 00168
+	
+	CASE(169):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not off'
+	DCPText.DCPFaultNum = 00169
+	
+	CASE(170):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not on'
+	DCPText.DCPFaultNum = 00170
+	
+	CASE(171):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not off'
+	DCPText.DCPFaultNum = 00171
+	
+	CASE(172):
+	DCPText.DCPLine1 = 'Tip dresser 1 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00172
+	
+	CASE(173):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check start'
+	DCPText.DCPFaultNum = 00173
+	
+	CASE(174):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check end'
+	DCPText.DCPFaultNum = 00174
+	
+	CASE(175):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00175
+	
+	CASE(176):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00176
+	
+	CASE(177):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00177
+	
+	CASE(178):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00178
+	
+	CASE(179):
+	DCPText.DCPLine1 = 'Tip dresser 2 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00179
+	
+	CASE(180):
+	DCPText.DCPLine1 = 'Tip dresser 2 controller not OK'
+	DCPText.DCPFaultNum = 00180
+	
+	CASE(181):
+	DCPText.DCPLine1 = 'Tip dresser 2 not clear of ped gun'
+	DCPText.DCPFaultNum = 00181
+	
+	CASE(182):
+	DCPText.DCPLine1 = 'Tip dresser 2 not ready'
+	DCPText.DCPFaultNum = 00182
+	
+	CASE(183):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not on'
+	DCPText.DCPFaultNum = 00183
+	
+	CASE(184):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not off'
+	DCPText.DCPFaultNum = 00184
+	
+	CASE(185):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not on'
+	DCPText.DCPFaultNum = 00185
+	
+	CASE(186):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not off'
+	DCPText.DCPFaultNum = 00186
+	
+	CASE(187):
+	DCPText.DCPLine1 = 'Tip dresser 2 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00187
+	
+	CASE(188):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check start'
+	DCPText.DCPFaultNum = 00188
+	
+	CASE(189):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check end'
+	DCPText.DCPFaultNum = 00189
+	
+	CASE(190):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00190
+	
+	CASE(191):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00191
+	
+	CASE(192):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00192
+	
+	CASE(193):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00193
+	
+	CASE(194):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00194
+	
+	CASE(195):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00195
+	
+	CASE(196):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00196
+	
+	CASE(197):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00197
+	
+	CASE(198):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00198
+	
+	CASE(199):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00199
+	
+	CASE(200):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00200
+	
+	CASE(201):
+	DCPText.DCPLine1 = 'Spot type ID invalid'
+	DCPText.DCPFaultNum = 00201
+	
+	CASE(202):
+	DCPText.DCPLine1 = 'Spot spot ID invalid'
+	DCPText.DCPFaultNum = 00202
+	
+	CASE(203):
+	DCPText.DCPLine1 = 'Spot plate tolerance invalid'
+	DCPText.DCPFaultNum = 00203
+	
+	CASE(204):
+	DCPText.DCPLine1 = 'Spot release distance invalid'
+	DCPText.DCPFaultNum = 00204
+	
+	CASE(205):
+	DCPText.DCPLine1 = 'Tip dresser number invalid'
+	DCPText.DCPFaultNum = 00205
+	
+	CASE(206):
+	DCPText.DCPLine1 = 'Spot selection not acknowledge by weld timer'
+	DCPText.DCPFaultNum = 00206
+	
+	CASE(207):
+	DCPText.DCPLine1 = 'Spot selection not in weld timer spot table'
+	DCPText.DCPFaultNum = 00207
+	
+	CASE(208):
+	DCPText.DCPLine1 = 'Short curcuit weld fault'
+	DCPText.DCPFaultNum = 00208
+	
+	CASE(209):
+	DCPText.DCPLine1 = 'Spotware Process fault'
+	DCPText.DCPFaultNum = 00209
+	
+	CASE(210):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00210
+	
+	CASE(211):
+	DCPText.DCPLine1 = 'Plate Thickness Error'
+	DCPText.DCPFaultNum = 00211
+	FKEY_SEL = 2
+	CASE(212):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00212
+	
+	CASE(213):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00213
+	
+	CASE(214):
+	DCPText.DCPLine1 = 'Tip dresser 1 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00214
+	
+	CASE(215):
+	DCPText.DCPLine1 = 'Tip dresser 1 controller not OK'
+	DCPText.DCPFaultNum = 00215
+	
+	CASE(216):
+	DCPText.DCPLine1 = 'Tip dresser 1 not clear of ped gun'
+	DCPText.DCPFaultNum = 00216
+	
+	CASE(217):
+	DCPText.DCPLine1 = 'Tip dresser 1 not ready'
+	DCPText.DCPFaultNum = 00217
+	
+	CASE(218):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not on'
+	DCPText.DCPFaultNum = 00218
+	
+	CASE(219):
+	DCPText.DCPLine1 = 'Tip dresser 1 forward not off'
+	DCPText.DCPFaultNum = 00219
+	
+	CASE(220):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not on'
+	DCPText.DCPFaultNum = 00220
+	
+	CASE(221):
+	DCPText.DCPLine1 = 'Tip dresser 1 backward not off'
+	DCPText.DCPFaultNum = 00221
+	
+	CASE(222):
+	DCPText.DCPLine1 = 'Tip dresser 1 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00222
+	
+	CASE(223):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check start'
+	DCPText.DCPFaultNum = 00223
+	
+	CASE(224):
+	DCPText.DCPLine1 = 'Tip dresser 1 no rotation check end'
+	DCPText.DCPFaultNum = 00224
+	
+	CASE(225):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00225
+	
+	CASE(226):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00226
+	
+	CASE(227):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00227
+	
+	CASE(228):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 00228
+	
+	CASE(229):
+	DCPText.DCPLine1 = 'Tip dresser 2 circuit breaker not OK'
+	DCPText.DCPFaultNum = 00229
+	
+	CASE(230):
+	DCPText.DCPLine1 = 'Tip dresser 2 controller not OK'
+	DCPText.DCPFaultNum = 00230
+	
+	CASE(231):
+	DCPText.DCPLine1 = 'Tip dresser 2 not clear of ped gun'
+	DCPText.DCPFaultNum = 00231
+	
+	CASE(232):
+	DCPText.DCPLine1 = 'Tip dresser 2 not ready'
+	DCPText.DCPFaultNum = 00232
+	
+	CASE(233):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not on'
+	DCPText.DCPFaultNum = 00233
+	
+	CASE(234):
+	DCPText.DCPLine1 = 'Tip dresser 2 forward not off'
+	DCPText.DCPFaultNum = 00234
+	
+	CASE(235):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not on'
+	DCPText.DCPFaultNum = 00235
+	
+	CASE(236):
+	DCPText.DCPLine1 = 'Tip dresser 2 backward not off'
+	DCPText.DCPFaultNum = 00236
+	
+	CASE(237):
+	DCPText.DCPLine1 = 'Tip dresser 2 motor run from PLC not on'
+	DCPText.DCPFaultNum = 00237
+	
+	CASE(238):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check start'
+	DCPText.DCPFaultNum = 00238
+	
+	CASE(239):
+	DCPText.DCPLine1 = 'Tip dresser 2 no rotation check end'
+	DCPText.DCPFaultNum = 00239
+	
+	CASE(261):
+	DCPText.DCPLine1 = 'Gun2 Tip Wear out of Tollerance'
+	DCPText.DCPLine2 = 'Old Gun'+strWDRbtOld2+ '   New Gun'+strWDRbtNew2
+	DCPText.DCPLine3 = 'Old Rbt'+strWDGunOld2+ '   New Rbt'+strWDGunNew2
+	DCPText.DCPLine4 = 'Rbt Diff='+strRbtDiff2+'   Gun Diff'+strGunDiff2
+	DCPText.DCPFaultNum = 00261
+	
+	CASE(262):
+	DCPText.DCPLine1 = 'Gun2 Incorrect Tips Detected'
+	DCPText.DCPFaultNum = 00262	
+	
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+
+ENDSELECT
+WRITE('DCP Fault: ', intDCPFault,CR, DCPText.DCPLine1, CR, DCPText.DCPLine2,CR)
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum = SUB_STR(DCPFaultNum1,3,3)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+--If DCP Fault Number = 103 or 203 Spot Plate Thickness out of Tolerance Display Actual Thickness and Requested Thickness to User Screen
+IF ((intDCPFault = 111) OR (intDCPFault = 211)) THEN
+	DCPText.DCPLine4 ='Requested Thickness = '+strReqThk
+	DCPText.DCPLine5 ='Actual Thickness = '+ActThkStr
+	SET_STR_REG(11,'Requested Thickness = '+strReqThk,STATUS)
+	SET_STR_REG(12,'Actual Thickness = '+ActThkStr,STATUS)
+--Else Display Nothing	
+ENDIF
+--Short Circuit Weld Failure
+IF (intDCPFault = 108) THEN
+	DCPText.DCPLine4 ='Press Retry to Redo Tip Dressing'
+	DCPText.DCPLine5 ='Press ACK to Redo Short Circuit'
+	SET_STR_REG(11,'Press Retry to Redo Tip Dressing',STATUS)
+	SET_STR_REG(12,'Press Reset to Redo Short Circuit',STATUS)
+ENDIF
+	
+--Decide based on Integer Value in FKEY_SEL what text to display on the Alarm page	
+IF FKEY_SEL = 0 THEN
+	FKEYS[1] = 'ACK'
+	FKEYS[2] = ''
+	FKEYS[3] = ''
+	FKEYS[4] = ''
+ENDIF
+IF FKEY_SEL = 1 THEN
+	FKEYS[1] = ''
+	FKEYS[2] = 'SKIP'
+	FKEYS[3] = 'RETRY'
+	FKEYS[4] = ''
+ENDIF
+IF FKEY_SEL = 2 THEN
+	FKEYS[1] = ''
+	FKEYS[2] = 'IGNORE'
+	FKEYS[3] = 'RETRY'
+	FKEYS[4] = 'SKIP'
+ENDIF
+IF FKEY_SEL = 3 THEN
+	FKEYS[1] = 'ACK'
+	FKEYS[2] = ''
+	FKEYS[3] = 'RETRY'
+	FKEYS[4] = ''
+ENDIF
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = TRUE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+  
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+END DCP_SPOT

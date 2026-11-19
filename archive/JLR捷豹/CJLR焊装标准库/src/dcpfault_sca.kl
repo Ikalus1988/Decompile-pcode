@@ -1,0 +1,615 @@
+PROGRAM DCPFAULT_SCA
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+%COMMENT = 'Version 1.4'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1: STRING[5]
+ToolID: STRING[2]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+strDCPText,strDCPText2, DCPPLCText, strHis1, strHis2,strHis3, strCurrent1, strCurrent2: STRING[82]
+strAddDCPTxt:STRING[20]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFaul_SCAt Program on Robot!',CR, 'Check argument 1 is an integer!')
+	DCPText.DCPLine1 = 'Invalid Call to DCPFault_SCA Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+
+  --Get tp paramater which contains additional DCP Fault Text
+ GET_TPE_PRM(2,paramTyp,paramInt,paramReal,strAddDCPTxt,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+ --check if strAddDCPTxt is initialised, if not set DCPFau to 0, if OK get DCP Fault number
+ IF ( UNINIT(strAddDCPTxt)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,3,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+--Get Robot Name
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE (6174):
+		DCPText.DCPLine1 = 'SCA 1 All errors are active'
+		DCPText.DCPFaultNum = 06174
+
+	
+	CASE (6175):
+		DCPText.DCPLine1 = 'SCA 1 General Error'
+		DCPText.DCPFaultNum = 06175
+		
+				
+	CASE (6176):
+		DCPText.DCPLine1 = 'SCA 1 High Limit Error'
+		DCPText.DCPFaultNum = 06176
+		
+		
+	CASE (6177):
+		DCPText.DCPLine1 = 'SCA 1 Low Limit Error'
+		DCPText.DCPFaultNum = 06177
+		
+		
+	CASE (6178):
+		DCPText.DCPLine1 = 'SCA 1 Material Error'
+		DCPText.DCPFaultNum = 06178
+		
+		
+	CASE (6179):
+		DCPText.DCPLine1 = 'SCA 1 System Error'
+		DCPText.DCPFaultNum = 06179
+		
+		
+	CASE (6177):
+		DCPText.DCPLine1 = 'SCA 1 System Not Ready' 
+		DCPText.DCPFaultNum = 06177
+		
+		
+	CASE (6178):
+		DCPText.DCPLine1 = 'SCA 1 Pre Pressure Not Reached'
+		DCPText.DCPFaultNum = 06178
+		
+		
+	CASE (6183):
+		DCPText.DCPLine1 = 'SCA 1 Program Not Acknowledged'
+		DCPText.DCPFaultNum = 06183
+		
+		
+	CASE (6184):
+		DCPText.DCPLine1 = 'SCA 1 Segment Not Acknowledged' 
+		DCPText.DCPFaultNum = 06184
+		
+
+	CASE (6186):
+		DCPText.DCPLine1 = 'SCA 1 Cycle End not Responded'
+		DCPText.DCPFaultNum = 06186
+		
+		
+	CASE (6187):
+		DCPText.DCPLine1 = 'SCA 1 Cycle Finished Still On'
+		DCPText.DCPFaultNum = 06187
+
+
+	CASE (6189):
+		DCPText.DCPLine1 = 'SCA 1 Operation Not On'
+		DCPText.DCPFaultNum = 06189
+		
+
+	CASE (6190):
+		DCPText.DCPLine1 = 'SCA 1 Appilcation Ready Not On'
+		DCPText.DCPFaultNum = 06190
+
+
+	CASE (6191):
+		DCPText.DCPLine1 = 'SCA 1 Appilcation Ready Not Off'
+		DCPText.DCPFaultNum = 06191
+				
+						
+	CASE (6192):
+		DCPText.DCPLine1 = 'SCA 1 Pump Not On'
+		DCPText.DCPFaultNum = 06192		
+		
+			
+	CASE (6193):
+		DCPText.DCPLine1 = 'SCA 1 Heat Not On'
+		DCPText.DCPFaultNum = 06193
+		
+		
+	CASE (6194):
+		DCPText.DCPLine1 = 'SCA 1 Heat Not Ready'
+		DCPText.DCPFaultNum = 06194		
+
+		
+	CASE (6196):
+		DCPText.DCPLine1 = 'SCA 1 Doser Still Full'
+		DCPText.DCPFaultNum = 06196
+				
+			
+	CASE (6197):
+		DCPText.DCPLine1 = 'SCA 1 Purge Done Not On'
+		DCPText.DCPFaultNum = 06197
+				
+				
+	CASE (6199):
+		DCPText.DCPLine1 = 'SCA 1 Dock to fill Doser Not Full Error'
+		DCPText.DCPFaultNum = 06199
+		
+				
+	CASE (6200):
+		DCPText.DCPLine1 = 'SCA 1 Dock to fill Doser purge Error'
+		DCPText.DCPFaultNum = 06200
+		
+		
+	CASE (6201):
+		DCPText.DCPLine1 = 'SCA 1 2C Mixture Error'
+		DCPText.DCPFaultNum = 06201
+		
+		
+	CASE (6202):
+		DCPText.DCPLine1 = 'SCA 1 Change Mixer request is On' 
+		DCPText.DCPFaultNum = 06202
+		
+		
+	CASE (6203):
+		DCPText.DCPLine1 = 'SCA 1 2C Purge Active not Off' 
+		DCPText.DCPFaultNum = 06203
+		
+		
+	CASE (6204):
+		DCPText.DCPLine1 = 'SCA 1 2C Purge Active Not On'
+		DCPText.DCPFaultNum = 06204
+		
+	
+	CASE (6206):
+		DCPText.DCPLine1 = 'SCA 1 Purge Request Not Off'
+		DCPText.DCPFaultNum = 06206
+
+	CASE (6207):
+		DCPText.DCPLine1 = 'SCA 1 Plate Over Travel Still On'
+		DCPText.DCPFaultNum = 06207
+		
+		
+	CASE (6208):
+		DCPText.DCPLine1 = 'SCA 1 Plate in Position Still On'
+		DCPText.DCPFaultNum = 06208
+		
+		
+	CASE (6209):
+		DCPText.DCPLine1 = 'SCA 1 Plate in Position Not On '
+		DCPText.DCPFaultNum = 06209
+				
+		
+	CASE (6209):
+		DCPText.DCPLine1 = 'SCA 1 Purge Done Not Off'
+		DCPText.DCPFaultNum = 06209
+		
+	CASE (6210):
+		DCPText.DCPLine1 = 'SCA 1 Inlet Valve Not Open'
+		DCPText.DCPFaultNum = 06210		
+	
+		
+	CASE (6210):
+		DCPText.DCPLine1 = 'SCA 1 Clamp open not on'
+		DCPText.DCPFaultNum = 06210
+		
+		
+	CASE (6211):
+		DCPText.DCPLine1 = 'SCA 1 Clamp Open not Off' 
+		DCPText.DCPFaultNum = 06211
+		
+		
+	CASE (6212):
+		DCPText.DCPLine1 = 'SCA 1 Clamp Closed not On'
+		DCPText.DCPFaultNum = 06212
+		
+		
+	CASE (6213):
+		DCPText.DCPLine1 = 'SCA 1 Clamp closed not off'
+		DCPText.DCPFaultNum = 06213
+		
+		
+	CASE (6214):
+		DCPText.DCPLine1 = 'SCA 1 Mandrill Closed Not On' 
+		DCPText.DCPFaultNum = 06214
+		
+
+	CASE (6215):
+		DCPText.DCPLine1 = 'SCA 1 Mandrill Closed Not Off'
+		DCPText.DCPFaultNum = 06215
+		
+		
+	CASE (6216):
+		DCPText.DCPLine1 = 'SCA 1 Doser PP Not Off'
+		DCPText.DCPFaultNum = 06216
+		
+		
+	CASE (6217):
+		DCPText.DCPLine1 = 'SCA 1 Doser PP Not On'
+		DCPText.DCPFaultNum = 06217
+		
+
+	CASE (6219):
+		DCPText.DCPLine1 = 'SCA 1 Doser Not Full' 
+		DCPText.DCPLine4 = 'Manually Fill from the SCA Controller' 
+		DCPText.DCPFaultNum = 06219
+		
+		
+	CASE (6220):
+		DCPText.DCPLine1 = 'SCA 1 Appilcation OK Not On'
+		DCPText.DCPFaultNum = 06220
+
+
+	CASE (6221):
+		DCPText.DCPLine1 = 'SCA 1 Appilcation OK Not Off'
+		DCPText.DCPFaultNum = 06221
+
+		
+	CASE (6274):
+		DCPText.DCPLine1 = 'SCA 2 All errors are active'
+		DCPText.DCPFaultNum = 06274
+
+	
+	CASE (6275):
+		DCPText.DCPLine1 = 'SCA 2 General Error'
+		DCPText.DCPFaultNum = 06275
+		
+				
+	CASE (6276):
+		DCPText.DCPLine1 = 'SCA 2 High Limit Error'
+		DCPText.DCPFaultNum = 06276
+		
+		
+	CASE (6277):
+		DCPText.DCPLine1 = 'SCA 2 Low Limit Error'
+		DCPText.DCPFaultNum = 06277
+		
+		
+	CASE (6278):
+		DCPText.DCPLine1 = 'SCA 2 Material Error'
+		DCPText.DCPFaultNum = 06278
+		
+		
+	CASE (6279):
+		DCPText.DCPLine1 = 'SCA 2 System Error'
+		DCPText.DCPFaultNum = 06279
+		
+		
+	CASE (6277):
+		DCPText.DCPLine1 = 'SCA 2 System Not Ready' 
+		DCPText.DCPFaultNum = 06277
+		
+		
+	CASE (6278):
+		DCPText.DCPLine1 = 'SCA 2 Pre Pressure Not Reached'
+		DCPText.DCPFaultNum = 06278
+		
+		
+	CASE (6283):
+		DCPText.DCPLine1 = 'SCA 2 Program Not Acknowledged'
+		DCPText.DCPFaultNum = 06283
+		
+		
+	CASE (6284):
+		DCPText.DCPLine1 = 'SCA 2 Segment Not Acknowledged' 
+		DCPText.DCPFaultNum = 06284
+		
+
+	CASE (6286):
+		DCPText.DCPLine1 = 'SCA 2 Cycle End not Responded'
+		DCPText.DCPFaultNum = 06286
+		
+		
+	CASE (6287):
+		DCPText.DCPLine1 = 'SCA 2 Cycle Finished Still On'
+		DCPText.DCPFaultNum = 06287
+		
+
+	CASE (6289):
+		DCPText.DCPLine1 = 'SCA 2 Operation Not On'
+		DCPText.DCPFaultNum = 06289	
+		
+		
+	CASE (6290):
+		DCPText.DCPLine1 = 'SCA 2 Appilcation Ready Not On'
+		DCPText.DCPFaultNum = 06290
+		
+		
+	CASE (6291):
+		DCPText.DCPLine1 = 'SCA 2 Appilcation Ready Not Off'
+		DCPText.DCPFaultNum = 06291
+		
+								
+	CASE (6292):
+		DCPText.DCPLine1 = 'SCA 2 Pump Not On'
+		DCPText.DCPFaultNum = 06292		
+		
+			
+	CASE (6293):
+		DCPText.DCPLine1 = 'SCA 2 Heat Not On'
+		DCPText.DCPFaultNum = 06293
+		
+		
+	CASE (6294):
+		DCPText.DCPLine1 = 'SCA 2 Heat Not Ready'
+		DCPText.DCPFaultNum = 06294		
+
+		
+	CASE (6296):
+		DCPText.DCPLine1 = 'SCA 2 Doser Still Full'
+		DCPText.DCPFaultNum = 06296
+				
+			
+	CASE (6297):
+		DCPText.DCPLine1 = 'SCA 2 Purge Done Not On'
+		DCPText.DCPFaultNum = 06297
+				
+				
+	CASE (6299):
+		DCPText.DCPLine1 = 'SCA 2 Dock to fill Doser Not Full Error'
+		DCPText.DCPFaultNum = 06299
+		
+				
+	CASE (6300):
+		DCPText.DCPLine1 = 'SCA 2 Dock to fill Doser purge Error'
+		DCPText.DCPFaultNum = 06300
+		
+		
+	CASE (6301):
+		DCPText.DCPLine1 = 'SCA 2 2C Mixture Error'
+		DCPText.DCPFaultNum = 06301
+		
+		
+	CASE (6302):
+		DCPText.DCPLine1 = 'SCA 2 Change Mixer request is On' 
+		DCPText.DCPFaultNum = 06302
+		
+		
+	CASE (6303):
+		DCPText.DCPLine1 = 'SCA 2 2C Purge Active not Off' 
+		DCPText.DCPFaultNum = 06303
+		
+		
+	CASE (6304):
+		DCPText.DCPLine1 = 'SCA 2 2C Purge Active Not On'
+		DCPText.DCPFaultNum = 06304
+		
+	
+	CASE (6306):
+		DCPText.DCPLine1 = 'SCA 2 Purge Request Not Off'
+		DCPText.DCPFaultNum = 06306
+
+	CASE (6307):
+		DCPText.DCPLine1 = 'SCA 2 Plate Over Travel Still On'
+		DCPText.DCPFaultNum = 06307
+		
+		
+	CASE (6308):
+		DCPText.DCPLine1 = 'SCA 2 Plate in Position Still On'
+		DCPText.DCPFaultNum = 06308
+		
+		
+	CASE (6309):
+		DCPText.DCPLine1 = 'SCA 2 Plate in Position Not On '
+		DCPText.DCPFaultNum = 06309
+				
+		
+	CASE (6309):
+		DCPText.DCPLine1 = 'SCA 2 Purge Done Not Off'
+		DCPText.DCPFaultNum = 06309
+		
+	CASE (6310):
+		DCPText.DCPLine1 = 'SCA 2 Inlet Valve Not Open'
+		DCPText.DCPFaultNum = 06310		
+	
+		
+	CASE (6310):
+		DCPText.DCPLine1 = 'SCA 2 Clamp open not on'
+		DCPText.DCPFaultNum = 06310
+		
+		
+	CASE (6311):
+		DCPText.DCPLine1 = 'SCA 2 Clamp Open not Off' 
+		DCPText.DCPFaultNum = 06311
+		
+		
+	CASE (6312):
+		DCPText.DCPLine1 = 'SCA 2 Clamp Closed not On'
+		DCPText.DCPFaultNum = 06312
+		
+		
+	CASE (6313):
+		DCPText.DCPLine1 = 'SCA 2 Clamp closed not off'
+		DCPText.DCPFaultNum = 06313
+		
+		
+	CASE (6314):
+		DCPText.DCPLine1 = 'SCA 2 Mandrill Closed Not On' 
+		DCPText.DCPFaultNum = 06314
+		
+
+	CASE (6315):
+		DCPText.DCPLine1 = 'SCA 2 Mandrill Closed Not Off'
+		DCPText.DCPFaultNum = 06315
+		
+		
+	CASE (6316):
+		DCPText.DCPLine1 = 'SCA 2 Doser PP Not Off'
+		DCPText.DCPFaultNum = 06316
+		
+		
+	CASE (6317):
+		DCPText.DCPLine1 = 'SCA 2 Doser PP Not On'
+		DCPText.DCPFaultNum = 06317
+		
+
+	CASE (6319):
+		DCPText.DCPLine1 = 'SCA 2 Doser Not Full' 
+		DCPText.DCPLine4 = 'Manually Fill from the SCA Controller' 
+		DCPText.DCPFaultNum = 06319
+		
+
+	CASE (6320):
+		DCPText.DCPLine1 = 'SCA 2 Appilcation OK Not On'
+		DCPText.DCPFaultNum = 06320
+
+
+	CASE (6321):
+		DCPText.DCPLine1 = 'SCA 2 Appilcation OK Not Off'
+		DCPText.DCPFaultNum = 06321
+
+		
+	else:
+
+		
+		DCPText.DCPLine1 = 'Undefined SCA DCP Fault Message'
+
+ENDSELECT
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 +DCPText.DCPLine2
+
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+DCPText.DCPLine3 = 'Check All SCA Equipment'
+
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = TRUE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+  
+  	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+	ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+END DCPFAULT_SCA

@@ -1,0 +1,17 @@
+PROGRAM  MM_Get_Prop
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_Property'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_VizProp FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_VizProp
+END MM_Get_Prop

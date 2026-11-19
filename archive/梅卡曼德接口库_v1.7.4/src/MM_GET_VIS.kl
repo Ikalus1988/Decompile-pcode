@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_VIS
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_VisData'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_VisData FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_VisData
+END MM_GET_VIS

@@ -1,0 +1,1628 @@
+-- TCP_MEA.KL (decompiled v3)
+PROGRAM TCP_MEA
+%COMMENT = 'decompiled v3'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  v1 : INTEGER
+  v2 : FILE
+  v3 : ARRAY[64] OF INTEGER
+  v4 : ARRAY[64] OF INTEGER
+  v5 : ARRAY[64] OF INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : ARRAY[64] OF INTEGER
+  v12 : ARRAY[64] OF INTEGER
+  v13 : ARRAY[64] OF INTEGER
+  v14 : ARRAY[64] OF INTEGER
+  v15 : ARRAY[64] OF INTEGER
+  v16 : ARRAY[64] OF INTEGER
+  v17 : ARRAY[64] OF INTEGER
+  v18 : ARRAY[64] OF INTEGER
+  v19 : ARRAY[64] OF INTEGER
+  v20 : ARRAY[64] OF INTEGER
+  v21 : ARRAY[64] OF INTEGER
+  v22 : ARRAY[64] OF INTEGER
+  v23 : ARRAY[64] OF INTEGER
+  v24 : ARRAY[64] OF INTEGER
+  v25 : ARRAY[64] OF INTEGER
+  v26 : INTEGER
+  v27 : INTEGER
+  v28 : ARRAY[64] OF INTEGER
+  v29 : INTEGER
+  v30 : INTEGER
+  v31 : INTEGER
+  v32 : ARRAY[64] OF INTEGER
+  v33 : INTEGER
+  v34 : ARRAY[64] OF INTEGER
+  v35 : INTEGER
+  v36 : ARRAY[64] OF INTEGER
+  v37 : INTEGER
+  v38 : REAL
+  v39 : REAL
+  v40 : STRING[64]
+  v41 : INTEGER
+  v42 : INTEGER
+  v43 : INTEGER
+  v44 : INTEGER
+  v45 : REAL
+  v46 : STRING[64]
+  v47 : INTEGER
+  v48 : INTEGER
+  v49 : INTEGER
+  v50 : INTEGER
+  v51 : INTEGER
+  v52 : INTEGER
+  v53 : INTEGER
+  FILENAME : FILE
+  CALL_TYPE : INTEGER
+  CALL_INT : INTEGER
+  CALL_REAL : REAL
+  CALL_STR : STRING[20]
+  CALL_STATUS : INTEGER
+  SINGLENRBACK : BOOLEAN
+  ROTSPEED : INTEGER
+  ABLAUF_EXIT : BOOLEAN
+  TOOLCALC : BOOLEAN
+  ZEROFRAME : INTEGER
+  DELTAP1P2X : REAL
+  DELTAP1P2Y : REAL
+  KM_TEMP_GIN : INTEGER
+  USER_SCREEN : BOOLEAN
+  TC_COUNTER : INTEGER
+  PRGSIZE : INTEGER
+  WZG_MASTER : INTEGER
+  WZG_WORKING : INTEGER
+  GLB_MASTER : INTEGER
+  GLB_WORKING : INTEGER
+  FRM_MASTER : INTEGER
+  FRM_WORKING : INTEGER
+  LS_TOOL_NO : INTEGER
+  LS_FRAME_NO : INTEGER
+  SENSOR_BASE : INTEGER
+  PRG_NUMBER : INTEGER
+  IN_GR_NR : INTEGER
+  OUT_GR_NR : INTEGER
+  C_WO_PROG_NR : STRING[10]
+  MEA_SENSOR : ARRAY[127] OF REAL
+  MEA_DST : ARRAY[127] OF REAL
+  MEA_DIM : ARRAY[127] OF REAL
+  RADIUS : ARRAY[127] OF REAL
+  PENDULUM : ARRAY[127] OF REAL
+  ORI_LENGTH : ARRAY[127] OF REAL
+  OFFSET_PEND : ARRAY[127] OF REAL
+  STICKOUT : ARRAY[127] OF REAL
+  WORKING_DIR : ARRAY[127] OF REAL
+  MEA_DIR : ARRAY[127] OF REAL
+  MEA_SPEED : ARRAY[127] OF REAL
+  CALC_METHOD : ARRAY[127] OF REAL
+  BASE_OR_TOOL : ARRAY[127] OF INTEGER
+  PARAM_128 : ARRAY[10] OF REAL
+  PARAM_129 : ARRAY[15] OF INTEGER
+  PARAM_130 : ARRAY[20] OF REAL
+  MEAPOS : ARRAY[64] OF INTEGER
+  TCPPOS : ARRAY[64] OF INTEGER
+  p2_f1c : INTEGER
+  p3_f10 : INTEGER
+  p4_f24 : INTEGER
+  p4_f28 : INTEGER
+  p4_f2c : INTEGER
+  r10_lc18_f1c : INTEGER
+  r10_lc30_f24 : INTEGER
+  r10_lc30_f28 : INTEGER
+  r10_lc30_f2c : INTEGER
+  r10_lc9_f08 : INTEGER
+  r10_lc9_f10 : INTEGER
+  r11_lc18_f1c : INTEGER
+  r11_lc27_f08 : INTEGER
+  r11_lc27_f0c : INTEGER
+  r11_lc27_f10 : INTEGER
+  r11_lc27_f14 : INTEGER
+  r11_lc27_f18 : INTEGER
+  r11_lc27_f1c : INTEGER
+  r11_lc36_f08 : INTEGER
+  r11_lc36_f10 : REAL
+  r11_lc63_f08 : INTEGER
+  r11_lc63_f0c : INTEGER
+  r11_lc75_f08 : INTEGER
+  r11_lc75_f0c : INTEGER
+  r11_lc9_f1c : REAL
+  r16_lc12_f10 : INTEGER
+  r9_lc18_f1c : INTEGER
+  r9_lc30_f24 : INTEGER
+  r9_lc30_f28 : INTEGER
+  r9_lc30_f2c : INTEGER
+  r9_lc54_f10 : INTEGER
+  r9_lc9_f1c : INTEGER
+  v0_f04 : ARRAY[64] OF INTEGER
+  v0_f0c : ARRAY[64] OF INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v42_f08 : INTEGER
+  v42_f0c : INTEGER
+  v42_f10 : INTEGER
+  v42_f14 : INTEGER
+  v42_f18 : INTEGER
+  v42_f1c : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE GET_BIT_IN(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE G2_BACKREAD1(p0, p1 : INTEGER) : REAL FROM MI_LIB
+ROUTINE INV_MOD(p0 : JOINTPOS) : POSITION FROM MI_LIB
+ROUTINE G2_MSG_FC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_MSG_KORR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_VECMEIN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_VECMAUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_REFMEIN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_REFMAUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ABLAUF_SETUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETMAXTOL(p0 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE CHECK_INI(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACKALL_L(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACKALL_S(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACK_LESE(p0, p1 : INTEGER) : REAL FROM MI_LIB
+ROUTINE G2_BACK_PNRS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_BACK_PNRL(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SET_W_OUT_S(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TC_ABLAUF(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_KORR(p0, p1, p2, p3, p4 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE G2_INIT(p0, p1, p2, p3, p4 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RESETBACKUP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RESET_OUT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSGWRITE(p0 : INTEGER; p1 : BOOLEAN) : INTEGER FROM MI_LIB
+ROUTINE MSG_CLEAR_FU(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MSG_CR2(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INFO_MSG(p0 : BOOLEAN; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SHOW_FRAME(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE TC_COUNT : INTEGER
+BEGIN
+  v1 = v1 + 1
+  sv_i = MSGWRITE(131, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt231 stray sv_i
+  WRITE(v1)
+  sv_i = MSG_CR2(0)
+  -- stmt233 stray sv_i
+  RETURN(0)
+END TC_COUNT
+
+ROUTINE DEFBACKUP : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  sv_i = RESETBACKUP(0)
+  -- stmt251 stray sv_i
+  OPEN FILE v2('RW', 'fr:\BizLink_Backup.txt')
+  -- stmt252 residue 'fr:\\BizLink_Backup.txt'
+  FOR r1_lc2 = 1 TO 3 DO
+  WRITE('Program Number', r1_lc2, ' ', CR, 'Parameter', '     Value', CR, 'Index', CR)
+  -- stmt255 stray v2
+  FOR r1_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r1_lc1, '            ', CR)
+  -- stmt1 stray v2 | v4[r1_lc2][r1_lc1] | 3 | 3
+  ENDFOR
+  ENDFOR
+  WRITE('Program Index 128', CR, 'Parameter', '     Value', CR, 'Index', CR)
+  -- stmt5 stray v2
+  FOR r1_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r1_lc1, '           ', CR)
+  -- stmt7 stray v2 | v5[r1_lc1] | 3 | 3
+  ENDFOR
+  -- stmt10 stray v2
+  RETURN(0)
+END DEFBACKUP
+
+ROUTINE WRITEDATA : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = v3[2]
+  OPEN FILE v2('RW', 'fr:\BizLink_Data.txt')
+  -- stmt20 residue 'fr:\\BizLink_Data.txt'
+  sv_i = FILECHECKER(v2, 1, '', 0)
+  -- stmt21 stray sv_i
+  WRITE('Software version:', CR, '2.0.13', CR)
+  -- stmt23 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Software version:', 0)
+  -- stmt24 stray sv_i
+  WRITE(CR, 'Controller size:', CR, v6, CR)
+  -- stmt26 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Controller size:', 0)
+  -- stmt27 stray sv_i
+  WRITE(CR, 'Group Input:', CR, v7, CR, 'Group Output:', CR, v8, CR)
+  -- stmt29 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Group In-/Output:', 0)
+  -- stmt30 stray sv_i
+  WRITE(CR, 'Language:', CR, v9, CR)
+  -- stmt32 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Language', 0)
+  -- stmt33 stray sv_i
+  WRITE(CR, 'Sensor Tool Number:', CR, v10, CR)
+  -- stmt35 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Sensor Tool Number', 0)
+  -- stmt36 stray sv_i
+  WRITE(CR, 'Program Index 129:', CR)
+  -- stmt38 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  WRITE(r5_lc1, ' ', v3[r5_lc1], CR)
+  -- stmt40 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Program Index 129,Paramameter', r5_lc1)
+  -- stmt41 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Program Index 130:', CR)
+  -- stmt44 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt46 stray v2 | v11[r5_lc1] | 3 | 3
+  sv_i = FILECHECKER(v2, 3, 'Program Index 130,Paramameter', r5_lc1)
+  -- stmt47 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Measurement Dimensions:', CR)
+  -- stmt50 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt52 stray v2 | v12[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Measurement Dimensions PrgNo:', r5_lc1)
+  -- stmt53 stray sv_i
+  ENDFOR
+  WRITE(CR, 'TCP Depth:', CR)
+  -- stmt56 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt58 stray v2 | v13[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'TCP Depth PrgNo:', r5_lc1)
+  -- stmt59 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Radius:', CR)
+  -- stmt62 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt64 stray v2 | v14[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Radius PrgNo:', r5_lc1)
+  -- stmt65 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Pendulum:', CR)
+  -- stmt68 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt70 stray v2 | v15[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Pendulum PrgNo:', r5_lc1)
+  -- stmt71 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Orientation Length:', CR)
+  -- stmt74 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt76 stray v2 | v16[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Orientation Length PrgNo:', r5_lc1)
+  -- stmt77 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Offset Pendulum:', CR)
+  -- stmt80 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt82 stray v2 | v17[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Offset Pendulum PrgNo:', r5_lc1)
+  -- stmt83 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Stickout:', CR)
+  -- stmt86 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt88 stray v2 | v18[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Stickout PrgNo', r5_lc1)
+  -- stmt89 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Working Direction:', CR)
+  -- stmt92 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt94 stray v2 | v19[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Working Direction PrgNo:', r5_lc1)
+  -- stmt95 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Measurement Direction:', CR)
+  -- stmt98 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt100 stray v2 | v20[r5_lc1] | 3 | 1
+  sv_i = FILECHECKER(v2, 3, 'Measurement Direction PrgNo:', r5_lc1)
+  -- stmt101 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Speed Data:', CR)
+  -- stmt104 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_i = trunc((v21[r5_lc1]))
+  WRITE(r5_lc1, ' ', sv_i, CR)
+  -- stmt106 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Speed Data PrgNo:', r5_lc1)
+  -- stmt107 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Tool Or Base:', CR)
+  -- stmt110 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  WRITE(r5_lc1, ' ', v22[r5_lc1], CR)
+  -- stmt112 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Tool Or Base PrgNo:', r5_lc1)
+  -- stmt113 stray sv_i
+  ENDFOR
+  WRITE(CR, 'Sensor Measurement:', CR)
+  -- stmt116 stray v2
+  FOR r5_lc1 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r5_lc1, ' ', CR)
+  -- stmt118 stray v2 | v23[r5_lc1] | 3 | 3
+  sv_i = FILECHECKER(v2, 3, 'Sensor Measurement PrgNo:', r5_lc1)
+  -- stmt119 stray sv_i
+  ENDFOR
+  FOR r5_lc1 = 1 TO 3 DO
+  WRITE(CR, 'Program No', r5_lc1, ' ', CR)
+  -- stmt124 stray v2
+  sv_i = FILECHECKER(v2, 3, 'Position No:', r5_lc1)
+  -- stmt125 stray sv_i
+  FOR r5_lc2 = 1 TO 3 DO
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  PAUSE
+  io_01[0] = 0[r5_lc1][r5_lc2]
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(r5_lc2, '  ', '  ', '  ', '  ', '  ', 0, 0, 0, CR)
+  -- stmt127 stray v2 | v24[r5_lc1][r5_lc2]_f08 | 9 | 3 | v24[r5_lc1][r5_lc2]_f0c | 9 | 3 | v24[r5_lc1][r5_lc2]_f10 | 9 | 3 | v24[r5_lc1][r5_lc2]_f14 | 9 | 3 | v24[r5_lc1][r5_lc2]_f18 | 9 | 3 | v24[r5_lc1][r5_lc2]_f1c | 9 | 3 |
+  -- stmt127 stray v24[r5_lc1][r5_lc2]_f20 | v24[r5_lc1][r5_lc2]_f20 | v24[r5_lc1][r5_lc2]_f20 | v24[r5_lc1][r5_lc2]_f20 | 0[r5_lc1][r5_lc2] | io_01[0] | 0[r5_lc1][r5_lc2] | 0[r5_lc1][r5_lc2] | 9 | 3 | v24[r5_lc1][r5_lc2]_f28 | 9 | 3 |
+  -- stmt127 stray v24[r5_lc1][r5_lc2]_f2c | 9 | 3
+  sv_i = FILECHECKER(v2, 3, 'Position No:', r5_lc2)
+  -- stmt144 stray sv_i
+  ENDFOR
+  ENDFOR
+  -- stmt148 stray v2
+  sv_i = FILECHECKER(v2, 4, '', 0)
+  -- stmt149 stray sv_i
+  RETURN(0)
+END WRITEDATA
+
+ROUTINE FILECHECKER(p0 : FILE; p1 : INTEGER; p2 : STRING; p3 : INTEGER) : INTEGER
+BEGIN
+  IF ((sv_i <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  SELECT p1 OF
+  CASE(1):
+  IF ((sv_i <> 2014)) THEN
+  sv_i = IO_STATUS(p0)
+  WRITE(CR, 'Error Opening File', CR, 'IO_Status Code : ', sv_i, CR)
+  WRITE(CR, p2, ' ', p3)
+  ELSE
+  IF ((p2 = 'Backup')) THEN
+  -- stmt42 stray p0
+  sv_i = DEFBACKUP
+  -- stmt43 stray sv_i
+  sv_i = MSGWRITE(155, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt44 stray sv_i
+  sv_i = MSGWRITE(156, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt45 stray sv_i
+  ENDIF
+  IF ((p2 = 'Data')) THEN
+  sv_i = CHECK_INI(0)
+  -- stmt49 stray sv_i
+  -- stmt50 stray p0
+  sv_i = WRITEDATA
+  -- stmt51 stray sv_i
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt52 stray sv_i
+  WRITE('Initialized')
+  DELAY 500
+  ENDIF
+  ENDIF
+  CASE(2):
+  sv_i = IO_STATUS(p0)
+  WRITE('Error Reading File', CR, 'IO_Status Code : ', sv_i, CR)
+  WRITE(CR, p2, ' ', p3)
+  CASE(3):
+  sv_i = IO_STATUS(p0)
+  WRITE('Error Writing File', CR, 'IO_Status Code : ', sv_i, CR)
+  WRITE(CR, p2, ' ', p3)
+  CASE(4):
+  sv_i = IO_STATUS(p0)
+  WRITE('Error Closing File', CR, 'IO_Status Code : ', sv_i, CR)
+  WRITE(CR, p2, ' ', p3)
+  CASE(5):
+  sv_i = IO_STATUS(p0)
+  WRITE('Error Canceling File', CR, 'IO_Status Code : ', sv_i, CR)
+  WRITE(CR, p2, ' ', p3)
+  ENDSELECT
+  ENDIF
+  IF ((p2 <> 'BackUp')) THEN
+  ABORT
+  ENDIF
+  IF ((p2 = 'Data')) THEN
+  OPEN FILE p0('RO', 'fr:\BizLink_Data.txt')
+  -- stmt81 residue 'fr:\\BizLink_Data.txt'
+  ENDIF
+  RETURN(0)
+END FILECHECKER
+
+ROUTINE READBACKUP : INTEGER
+VAR
+  r3_lc10 : INTEGER
+  r3_lc11 : INTEGER
+  r3_lc12 : INTEGER
+  r3_lc13 : INTEGER
+  r3_lc14 : INTEGER
+  r3_lc15 : INTEGER
+  r3_lc16 : INTEGER
+  r3_lc17 : INTEGER
+  r3_lc9 : INTEGER
+BEGIN
+  r3_lc12 = v3[2]
+  r3_lc13 = v3[3]
+  r3_lc14 = v3[4]
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt111 stray sv_i
+  sv_i = MSGWRITE(8, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt112 stray sv_i
+  sv_i = MSGWRITE(9, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt113 stray sv_i
+  sv_i = MSGWRITE(137, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt114 stray sv_i
+  sv_i = MSGWRITE(138, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt115 stray sv_i
+  PAUSE
+  -- stmt117 stray r3_lc15
+  OPEN FILE v2('RO', 'fr:\BizLink_Backup.txt')
+  -- stmt119 residue 'fr:\\BizLink_Backup.txt'
+  IF ((sv_i <> 0)) THEN
+  sv_i = FILECHECKER(v2, 1, 'Backup', 0)
+  -- stmt121 stray sv_i
+  ENDIF
+  -- stmt123 stray v2
+  IF ((r3_lc15 < 0) OR (r3_lc15 > 127) AND (v6 = 127)) THEN
+  WRITE(CR, 'Wrong entry!')
+  ABORT
+  ENDIF
+  IF ((r3_lc15 < 0) OR (r3_lc15 > 10) AND (v6 = 10)) THEN
+  WRITE(CR, 'Wrong entry!')
+  ABORT
+  ENDIF
+  IF ((r3_lc15 = 0)) THEN
+  sv_i = G2_BACKALL_L(0)
+  -- stmt135 stray sv_i
+  ENDIF
+  IF ((r3_lc15 = 99)) THEN
+  sv_i = DEFBACKUP
+  -- stmt138 stray sv_i
+  ENDIF
+  IF ((r3_lc15 > 0)) THEN
+  OPEN FILE v2('RO', 'fr:\BizLink_Backup.txt')
+  -- stmt141 residue 'fr:\\BizLink_Backup.txt'
+  sv_i = FILECHECKER(v2, 1, '', 0)
+  -- stmt142 stray sv_i
+  FOR r3_lc16 = 1 TO 3 DO
+  -- stmt145 stray v2 | r3_lc9 | r3_lc9 | r3_lc9
+  sv_i = FILECHECKER(v2, 2, 'Program Number', r3_lc16)
+  -- stmt146 stray sv_i
+  FOR r3_lc17 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt148 stray v2 | r3_lc11 | v4[r3_lc16][r3_lc17]
+  sv_i = FILECHECKER(v2, 2, 'Parameter', r3_lc17)
+  -- stmt149 stray sv_i
+  ENDFOR
+  ENDFOR
+  -- stmt153 stray v2 | r3_lc9 | r3_lc9 | r3_lc9
+  sv_i = FILECHECKER(v2, 2, '', 0)
+  -- stmt154 stray sv_i
+  FOR r3_lc16 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt157 stray v2 | r3_lc11 | v5[r3_lc16]
+  sv_i = FILECHECKER(v2, 2, 'Parameter 128 Number', r3_lc16)
+  -- stmt158 stray sv_i
+  ENDFOR
+  -- stmt161 stray v2
+  sv_i = FILECHECKER(v2, 4, '', 0)
+  -- stmt162 stray sv_i
+  sv_i = G2_BACK_PNRL(r3_lc15)
+  -- stmt164 stray sv_i
+  ENDIF
+  OPEN FILE v2('RW', 'fr:\BizLink_Backup.txt')
+  -- stmt167 residue 'fr:\\BizLink_Backup.txt'
+  sv_i = FILECHECKER(v2, 1, 'Backup', 0)
+  -- stmt168 stray sv_i
+  FOR r3_lc10 = 1 TO 3 DO
+  WRITE('Program Number', r3_lc10, ' ', CR, 'Parameter', '     Value', CR, 'Index', CR)
+  -- stmt171 stray v2
+  sv_i = FILECHECKER(v2, 3, '', 0)
+  -- stmt172 stray sv_i
+  FOR r3_lc11 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r3_lc11, '            ', CR)
+  -- stmt174 stray v2 | v4[r3_lc10][r3_lc11] | 3 | 3
+  sv_i = FILECHECKER(v2, 3, 'Program Number', r3_lc10)
+  -- stmt175 stray sv_i
+  ENDFOR
+  ENDFOR
+  WRITE('Program Index 128', CR, 'Parameter', '     Value', CR, 'Index', CR)
+  -- stmt179 stray v2
+  FOR r3_lc11 = 1 TO 3 DO
+  DELAY 0
+  WRITE(r3_lc11, '           ', CR)
+  -- stmt181 stray v2 | v5[r3_lc11] | 3 | 3
+  sv_i = FILECHECKER(v2, 3, 'Program Index 128', r3_lc11)
+  -- stmt182 stray sv_i
+  ENDFOR
+  -- stmt185 stray v2
+  sv_i = FILECHECKER(v2, 4, '', 0)
+  -- stmt186 stray sv_i
+  RETURN(0)
+END READBACKUP
+
+ROUTINE WRITEBACKUP : INTEGER
+VAR
+  r4_lc10 : INTEGER
+  r4_lc11 : INTEGER
+  r4_lc12 : INTEGER
+  r4_lc13 : INTEGER
+  r4_lc14 : INTEGER
+  r4_lc15 : INTEGER
+  r4_lc16 : INTEGER
+  r4_lc9 : INTEGER
+BEGIN
+  OPEN FILE v2('RO', 'fr:\BizLink_Backup.txt')
+  -- stmt210 residue 'fr:\\BizLink_Backup.txt'
+  sv_i = FILECHECKER(v2, 1, 'Backup', 0)
+  -- stmt211 stray sv_i
+  -- stmt212 stray v2
+  r4_lc13 = v3[2]
+  r4_lc14 = v3[3]
+  r4_lc15 = v3[4]
+  sv_i = MSG_CLEAR_FU(0)
+  -- stmt218 stray sv_i
+  sv_i = MSGWRITE(8, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt219 stray sv_i
+  sv_i = MSGWRITE(11, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt220 stray sv_i
+  sv_i = MSGWRITE(136, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt221 stray sv_i
+  sv_i = MSGWRITE(138, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt222 stray sv_i
+  PAUSE
+  -- stmt224 stray r4_lc16
+  OPEN FILE v2('RO', 'fr:\BizLink_Backup.txt')
+  -- stmt227 residue 'fr:\\BizLink_Backup.txt'
+  sv_i = FILECHECKER(v2, 1, '', 0)
+  -- stmt228 stray sv_i
+  FOR r4_lc10 = 1 TO 3 DO
+  -- stmt231 stray v2 | r4_lc9 | r4_lc9 | r4_lc9
+  sv_i = FILECHECKER(v2, 2, 'Program Number', r4_lc10)
+  -- stmt232 stray sv_i
+  FOR r4_lc11 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt234 stray v2 | r4_lc12 | v4[r4_lc10][r4_lc11]
+  sv_i = FILECHECKER(v2, 2, 'Parameter', r4_lc11)
+  -- stmt235 stray sv_i
+  ENDFOR
+  ENDFOR
+  -- stmt239 stray v2 | r4_lc9 | r4_lc9 | r4_lc9
+  sv_i = FILECHECKER(v2, 2, '', 0)
+  -- stmt240 stray sv_i
+  FOR r4_lc10 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt243 stray v2 | r4_lc12 | v5[r4_lc10]
+  sv_i = FILECHECKER(v2, 2, 'Parameter 128 Number', r4_lc10)
+  -- stmt244 stray sv_i
+  ENDFOR
+  -- stmt247 stray v2
+  sv_i = FILECHECKER(v2, 4, '', 0)
+  -- stmt248 stray sv_i
+  IF ((r4_lc16 = 0)) THEN
+  sv_i = G2_BACKALL_S(0)
+  -- stmt251 stray sv_i
+  ELSE
+  sv_i = G2_BACK_PNRS(r4_lc16)
+  -- stmt253 stray sv_i
+  ENDIF
+  RETURN(0)
+END WRITEBACKUP
+
+ROUTINE READDATA : INTEGER
+VAR
+  r6_lc18 : STRING[64]
+  r6_lc22 : ARRAY[64] OF INTEGER
+  r6_lc23 : INTEGER
+  r6_lc24 : INTEGER
+  r6_lc25 : INTEGER
+  r6_lc26 : INTEGER
+  r6_lc27 : INTEGER
+  r6_lc28 : INTEGER
+  r6_lc29 : INTEGER
+  r6_lc30 : INTEGER
+  r6_lc31 : INTEGER
+  r6_lc32 : INTEGER
+  r6_lc33 : INTEGER
+  r6_lc34 : INTEGER
+  r6_lc35 : INTEGER
+  r6_lc36 : INTEGER
+  r6_lc37 : INTEGER
+BEGIN
+  VAR_INFO('tcp_comm', 'Param_129[6]', (r6_lc34 <> 0), r6_lc18, r6_lc35, r6_lc22, r6_lc37, r6_lc36)
+  -- 弃参原式: r6_lc34
+  IF ((r6_lc34 <> 0)) THEN
+  v3[6] = 9
+  ENDIF
+  OPEN FILE v2('RO', 'fr:\BizLink_Data.txt')
+  -- stmt189 residue 'fr:\\BizLink_Data.txt'
+  sv_i = FILECHECKER(v2, 1, 'Data', 0)
+  -- stmt190 stray sv_i
+  PAUSE
+  -- stmt192 stray v2 | v6
+  sv_i = FILECHECKER(v2, 2, 'Controller size:', 0)
+  -- stmt193 stray sv_i
+  PAUSE
+  PAUSE
+  -- stmt195 stray v2 | v7 | v8
+  sv_i = FILECHECKER(v2, 2, 'Group In-/Output:', 0)
+  -- stmt196 stray sv_i
+  PAUSE
+  -- stmt198 stray v2 | v9
+  sv_i = FILECHECKER(v2, 2, 'Language', 0)
+  -- stmt199 stray sv_i
+  PAUSE
+  -- stmt201 stray v2 | v10
+  sv_i = FILECHECKER(v2, 2, 'Sensor Tool Number', 0)
+  -- stmt202 stray sv_i
+  -- stmt204 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Program Index 129,Paramameter', 0)
+  -- stmt205 stray sv_i
+  PAUSE
+  PAUSE
+  -- stmt206 stray v2 | r6_lc25 | v3[1]
+  FOR r6_lc23 = 2 TO 3 DO
+  PAUSE
+  PAUSE
+  -- stmt208 stray v2 | r6_lc25 | v3[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Program Index 129,Paramameter', r6_lc23)
+  -- stmt209 stray sv_i
+  ENDFOR
+  -- stmt212 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Program Index 130,Paramameter', 0)
+  -- stmt213 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt215 stray v2 | r6_lc25 | v11[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Program Index 130,Paramameter', r6_lc23)
+  -- stmt216 stray sv_i
+  ENDFOR
+  -- stmt219 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Measurement Dimensions PrgNo:', 0)
+  -- stmt220 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt222 stray v2 | r6_lc25 | v12[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Measurement Dimensions PrgNo:', r6_lc23)
+  -- stmt223 stray sv_i
+  ENDFOR
+  -- stmt226 stray v2
+  sv_i = FILECHECKER(v2, 2, 'TCP Depth PrgNo:', 0)
+  -- stmt227 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt229 stray v2 | r6_lc25 | v13[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'TCP Depth PrgNo:', r6_lc23)
+  -- stmt230 stray sv_i
+  ENDFOR
+  -- stmt233 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Radius PrgNo:', 0)
+  -- stmt234 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt236 stray v2 | r6_lc25 | v14[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Radius PrgNo:', r6_lc23)
+  -- stmt237 stray sv_i
+  ENDFOR
+  -- stmt240 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Pendulum PrgNo:', 0)
+  -- stmt241 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt243 stray v2 | r6_lc25 | v15[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Pendulum PrgNo:', r6_lc23)
+  -- stmt244 stray sv_i
+  ENDFOR
+  -- stmt247 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Orientation Length PrgNo:', 0)
+  -- stmt248 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt250 stray v2 | r6_lc25 | v16[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Orientation Length PrgNo:', r6_lc23)
+  -- stmt251 stray sv_i
+  ENDFOR
+  -- stmt254 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Offset Pendulum PrgNo:', 0)
+  -- stmt255 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt1 stray v2 | r6_lc25 | v17[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Offset Pendulum PrgNo:', r6_lc23)
+  -- stmt2 stray sv_i
+  ENDFOR
+  -- stmt5 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Stickout PrgNo:', 0)
+  -- stmt6 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt8 stray v2 | r6_lc25 | v18[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Stickout PrgNo', r6_lc23)
+  -- stmt9 stray sv_i
+  ENDFOR
+  -- stmt12 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Working Direction PrgNo:', 0)
+  -- stmt13 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt15 stray v2 | r6_lc25 | v19[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Working Direction PrgNo', r6_lc23)
+  -- stmt16 stray sv_i
+  ENDFOR
+  -- stmt19 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Measurement Direction PrgNo:', 0)
+  -- stmt20 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt22 stray v2 | r6_lc25 | v20[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Measurement Direction PrgNo:', r6_lc23)
+  -- stmt23 stray sv_i
+  ENDFOR
+  -- stmt26 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Speed Data PrgNo:', 0)
+  -- stmt27 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt29 stray v2 | r6_lc25 | v21[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Speed Data PtgNo:', r6_lc23)
+  -- stmt30 stray sv_i
+  ENDFOR
+  -- stmt33 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Tool Or Base PrgNo:', 0)
+  -- stmt34 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  PAUSE
+  -- stmt36 stray v2 | r6_lc25 | v22[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Tool Or Base PrgNo:', r6_lc23)
+  -- stmt37 stray sv_i
+  ENDFOR
+  -- stmt40 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Sensor Measurement PrgNo:', 0)
+  -- stmt41 stray sv_i
+  FOR r6_lc23 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  -- stmt43 stray v2 | r6_lc25 | v23[r6_lc23]
+  sv_i = FILECHECKER(v2, 2, 'Sensor Measurement PrgNo:', r6_lc23)
+  -- stmt44 stray sv_i
+  ENDFOR
+  FOR r6_lc23 = 1 TO 3 DO
+  -- stmt48 stray v2
+  sv_i = FILECHECKER(v2, 2, 'Program Number', r6_lc23)
+  -- stmt49 stray sv_i
+  FOR r6_lc24 = 1 TO 3 DO
+  PAUSE
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  PAUSE
+  PAUSE
+  PAUSE
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt51 stray v2 | r6_lc26 | v24[r6_lc23][r6_lc24]_f08 | v24[r6_lc23][r6_lc24]_f0c | v24[r6_lc23][r6_lc24]_f10 | v24[r6_lc23][r6_lc24]_f14 | v24[r6_lc23][r6_lc24]_f18 | v24[r6_lc23][r6_lc24]_f1c | r6_lc27 | r6_lc28 | r6_lc29 | r6_lc30 |
+  -- stmt51 stray 0[r6_lc23][r6_lc24] | v24[r6_lc23][r6_lc24]_f28 | v24[r6_lc23][r6_lc24]_f2c
+  sv_i = FILECHECKER(v2, 2, 'Position No:', r6_lc24)
+  -- stmt64 stray sv_i
+  -- stmt66 stray r6_lc27 | v24[r6_lc23][r6_lc24]_f20
+  -- stmt67 stray r6_lc28 | v24[r6_lc23][r6_lc24]_f20
+  PAUSE
+  -- stmt68 stray r6_lc29 | v24[r6_lc23][r6_lc24]_f20
+  -- stmt69 stray r6_lc30 | v24[r6_lc23][r6_lc24]_f20
+  -- stmt70 stray r6_lc31 | v24[r6_lc23][r6_lc24]_f20 | io_01[0]
+  io_01[0] = v24[r6_lc23][r6_lc24]_f20
+  -- stmt71 stray r6_lc32
+  -- stmt72 stray r6_lc33 | v24[r6_lc23][r6_lc24]_f20
+  ENDFOR
+  ENDFOR
+  -- stmt77 stray v2
+  sv_i = FILECHECKER(v2, 4, '', 0)
+  -- stmt78 stray sv_i
+  RETURN(0)
+END READDATA
+
+ROUTINE SET_TOOL(p0 : BOOLEAN) : INTEGER
+BEGIN
+  v0_f0c[1] = 0
+  v0_f04[1] = 5
+  IF ((p0 <> 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt95 stray v25[v26][v27] | v0_f58[1]
+  -- stmt96 stray v27 | v28[v26]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt98 stray v25[v26][v29] | v0_f58[1]
+  -- stmt99 stray v29 | v28[v26]
+  ENDIF
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt103 stray v25[v26][v10] | v0_f58[1]
+  -- stmt104 stray v10 | v28[v26]
+  ENDIF
+  IF ((v23[v30] = 1)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt108 stray v25[v26][v27] | v0_f58[1]
+  v10 = v27
+  ENDIF
+  IF ((v31 > 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt113 stray v32[v26][v31] | v0_f1c[1]
+  ENDIF
+  RETURN(0)
+END SET_TOOL
+
+ROUTINE SET_FRAME(p0 : BOOLEAN) : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt126 stray v32[v26][v33] | v0_f1c[1]
+  -- stmt127 stray v33 | v34[v26]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt129 stray v32[v26][v35] | v0_f1c[1]
+  -- stmt130 stray v35 | v34[v26]
+  ENDIF
+  RETURN(0)
+END SET_FRAME
+
+ROUTINE CALC_POS_DK(p0, p1 : INTEGER; p2, p3 : POSITION; p4 : JOINTPOS) : INTEGER
+VAR
+  r9_lc18 : POSITION
+  r9_lc30 : POSITION
+  r9_lc54 : POSITION
+  r9_lc56 : INTEGER
+  r9_lc9 : POSITION
+BEGIN
+  r9_lc56 = 1
+  r9_lc9 = p2
+  r9_lc18 = r9_lc9
+  r9_lc9_f1c = r9_lc9_f1c
+  r9_lc18_f1c = 0
+  -- stmt157 stray r9_lc9_f1c
+  r9_lc30 = p4
+  -- stmt158 stray r9_lc9 | p3 | r9_lc18
+  sv_p = INV_MOD(r9_lc30)
+  r9_lc30 = sv_p
+  r9_lc30_f24 = p4_f24
+  r9_lc30_f28 = p4_f28
+  r9_lc30_f2c = p4_f2c
+  -- stmt163 stray r9_lc30 | v36[p1]
+  IF ((p1 = 999)) THEN
+  r9_lc54 = p3
+  r9_lc54_f10 = r9_lc54_f10 + 50
+  r9_lc9_f1c = r9_lc9_f1c
+  r9_lc18_f1c = 0
+  -- stmt170 stray r9_lc9_f1c
+  r9_lc30 = p4
+  -- stmt171 stray r9_lc9 | r9_lc54 | r9_lc18
+  sv_p = INV_MOD(r9_lc30)
+  r9_lc30 = sv_p
+  r9_lc30_f24 = p4_f24
+  r9_lc30_f28 = p4_f28
+  r9_lc30_f2c = p4_f2c
+  -- stmt176 stray r9_lc30 | v36[p1]
+  ENDIF
+  r9_lc9_f1c = r9_lc9_f1c + 90 * r9_lc56
+  r9_lc18_f1c = 0
+  -- stmt180 stray r9_lc9_f1c
+  r9_lc30 = p4
+  -- stmt181 stray r9_lc9 | p3 | r9_lc18
+  sv_p = INV_MOD(r9_lc30)
+  r9_lc30 = sv_p
+  r9_lc30_f24 = p4_f24
+  r9_lc30_f28 = p4_f28
+  r9_lc30_f2c = p4_f2c
+  -- stmt186 stray r9_lc30 | v36[p1 + 1]
+  r9_lc9_f1c = r9_lc9_f1c + 90 * r9_lc56
+  r9_lc18_f1c = 0
+  -- stmt189 stray r9_lc9_f1c
+  r9_lc30 = p4
+  -- stmt190 stray r9_lc9 | p3 | r9_lc18
+  sv_p = INV_MOD(r9_lc30)
+  r9_lc30 = sv_p
+  r9_lc30_f24 = p4_f24
+  r9_lc30_f28 = p4_f28
+  r9_lc30_f2c = p4_f2c
+  -- stmt195 stray r9_lc30 | v36[p1 + 2]
+  r9_lc9_f1c = r9_lc9_f1c + 90 * r9_lc56
+  r9_lc18_f1c = 0
+  -- stmt198 stray r9_lc9_f1c
+  r9_lc30 = p4
+  -- stmt199 stray r9_lc9 | p3 | r9_lc18
+  sv_p = INV_MOD(r9_lc30)
+  r9_lc30 = sv_p
+  r9_lc30_f24 = p4_f24
+  r9_lc30_f28 = p4_f28
+  r9_lc30_f2c = p4_f2c
+  -- stmt204 stray r9_lc30 | v36[p1 + 3]
+  RETURN(0)
+END CALC_POS_DK
+
+ROUTINE CALC_POS_PE(p0, p1 : INTEGER; p2, p3 : POSITION; p4 : JOINTPOS) : INTEGER
+VAR
+  r10_lc18 : POSITION
+  r10_lc30 : POSITION
+  r10_lc32 : INTEGER
+  r10_lc9 : POSITION
+BEGIN
+  r10_lc32 = 1
+  IF ((v20[v30] = 1)) THEN
+  r10_lc32 = (0 - 1)
+  ENDIF
+  r10_lc18 = p2
+  r10_lc9 = p3
+  r10_lc9_f10 = r10_lc9_f10 - v18[v30] * r10_lc32
+  p2_f1c = p2_f1c
+  r10_lc18_f1c = 0
+  -- stmt234 stray p2_f1c
+  r10_lc30 = p4
+  -- stmt235 stray p2 | r10_lc9 | r10_lc18
+  sv_p = INV_MOD(r10_lc30)
+  r10_lc30 = sv_p
+  r10_lc30_f24 = p4_f24
+  r10_lc30_f28 = p4_f28
+  r10_lc30_f2c = p4_f2c
+  -- stmt240 stray r10_lc30 | v36[p1]
+  r10_lc9_f08 = v17[v30]
+  r10_lc30 = p4
+  -- stmt243 stray p2 | r10_lc9 | r10_lc18
+  sv_p = INV_MOD(r10_lc30)
+  r10_lc30 = sv_p
+  r10_lc30_f24 = p4_f24
+  r10_lc30_f28 = p4_f28
+  r10_lc30_f2c = p4_f2c
+  -- stmt248 stray r10_lc30 | v36[p1 + 1]
+  r10_lc9_f10 = 0 - v18[v30] * r10_lc32
+  -- stmt250 stray p3_f10
+  r10_lc30 = p4
+  -- stmt251 stray p2 | r10_lc9 | r10_lc18
+  sv_p = INV_MOD(r10_lc30)
+  r10_lc30 = sv_p
+  r10_lc30_f24 = p4_f24
+  r10_lc30_f28 = p4_f28
+  r10_lc30_f2c = p4_f2c
+  -- stmt0 stray r10_lc30 | v36[p1 + 2]
+  RETURN(0)
+END CALC_POS_PE
+
+ROUTINE CALC_POS(p0 : INTEGER; p1 : REAL) : INTEGER
+VAR
+  r11_lc18 : POSITION
+  r11_lc27 : POSITION
+  r11_lc36 : POSITION
+  r11_lc63 : POSITION
+  r11_lc75 : POSITION
+  r11_lc79 : ARRAY[64] OF INTEGER
+  r11_lc80 : REAL
+  r11_lc81 : INTEGER
+  r11_lc82 : INTEGER
+  r11_lc83 : INTEGER
+  r11_lc84 : INTEGER
+  r11_lc85 : INTEGER
+  r11_lc9 : POSITION
+BEGIN
+  v37 = 0
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  VAR_INFO('tcp_comm', 'LS_Tool_No', (r11_lc83 <> 0), 'Integer', 1, r11_lc79, r11_lc84, r11_lc85)
+  -- 弃参原式: r11_lc83
+  IF ((r11_lc83 <> 0)) THEN
+  WRITE(CR, 'Sensor tool number uninitialised!', CR, 'Press FWD to continue')
+  ABORT
+  ENDIF
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt36 stray v25[v26][v10] | v0_f58[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt37 stray v32[v26][v27] | v0_f1c[1]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt39 stray v25[v26][v27] | v0_f58[1]
+  ENDIF
+  r11_lc81 = v15[p0]
+  r11_lc82 = v16[p0]
+  IF ((v22[p0] <> 4)) THEN
+  v23[p0] = 0
+  v11[8] = 0
+  ENDIF
+  IF ((v20[p0] = 1) AND (v23[p0] = 0)) THEN
+  r11_lc81 = (0 - 1) * v15[p0]
+  p1 = (0 - 1) * p1
+  r11_lc82 = (0 - 1) * v16[p0]
+  ENDIF
+  IF ((v20[p0] = 0) AND (v23[p0] = 1)) THEN
+  r11_lc81 = (0 - 1) * v15[p0]
+  p1 = (0 - 1) * p1
+  r11_lc82 = (0 - 1) * v16[p0]
+  ENDIF
+  r11_lc63 = v24[v30][1]
+  r11_lc75 = v24[v30][2]
+  sv_p = INV_MOD(r11_lc63)
+  r11_lc63 = sv_p
+  sv_p = INV_MOD(r11_lc75)
+  r11_lc75 = sv_p
+  IF ((v37 = 0)) THEN
+  v38 = r11_lc75_f08 - r11_lc63_f08
+  v39 = r11_lc75_f0c - r11_lc63_f0c
+  ENDIF
+  IF ((v39 <> 0) AND (0 < 10)) THEN
+  v37 = 1
+  sv_i = MSGWRITE(42, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt75 stray sv_i
+  PAUSE
+  ENDIF
+  IF ((v37 = 0)) THEN
+  sv_r = atan2(v38, v39)
+  r11_lc80 = sv_r
+  ENDIF
+  IF ((v37 = 0)) THEN
+  r11_lc27 = r11_lc63
+  r11_lc27_f08 = 0
+  r11_lc27_f0c = 0
+  r11_lc27_f10 = 0
+  r11_lc27_f14 = 0
+  r11_lc27_f18 = 0
+  r11_lc27_f1c = 0
+  r11_lc9 = r11_lc27
+  r11_lc9_f1c = r11_lc80
+  r11_lc36 = r11_lc27
+  r11_lc36_f08 = v14[p0]
+  r11_lc36_f10 = 0
+  -- stmt97 stray p1
+  sv_i = CALC_POS_DK(0, 1, r11_lc9, r11_lc36, r11_lc63)
+  -- 弃参原式: p0
+  -- stmt98 stray sv_i
+  r11_lc9 = r11_lc27
+  r11_lc9_f1c = r11_lc80
+  r11_lc36 = r11_lc27
+  r11_lc36_f08 = v14[p0]
+  r11_lc36_f10 = 0 - p1
+  -- stmt105 stray r11_lc82
+  sv_i = CALC_POS_DK(0, 5, r11_lc9, r11_lc36, r11_lc63)
+  -- 弃参原式: p0
+  -- stmt106 stray sv_i
+  r11_lc9 = r11_lc27
+  r11_lc18 = r11_lc27
+  r11_lc9_f1c = r11_lc80
+  r11_lc18_f1c = 0
+  -- stmt112 stray r11_lc80
+  r11_lc36 = r11_lc27
+  r11_lc36_f08 = v14[p0]
+  r11_lc36_f10 = r11_lc81 / 2
+  sv_i = CALC_POS_PE(0, 9, r11_lc9, r11_lc36, r11_lc63)
+  -- 弃参原式: p0
+  -- stmt116 stray sv_i
+  ENDIF
+  IF ((v37 = 0)) THEN
+  sv_i = MSGWRITE(44, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt120 stray sv_i
+  DELAY 2000
+  ENDIF
+  RETURN(0)
+END CALC_POS
+
+ROUTINE MENU_ADJPOS : INTEGER
+VAR
+  r12_lc1 : INTEGER
+BEGIN
+  sv_i = SET_W_OUT_S(v40, 0)
+  -- stmt137 stray sv_i
+  FOR r12_lc1 = 1 TO 3 DO
+  IF ((v22[v30] = 0) OR (v22[v30] = 1) OR (v22[v30] = 4)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt141 stray v25[v26][v29] | v0_f58[1]
+  -- stmt142 stray 7 | 1 | 50 | 1 | 20 | 1 | v24[v30][r12_lc1]
+  DELAY 500
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt144 stray v25[v26][v27] | v0_f58[1]
+  IF ((v31 > 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt146 stray v32[v26][v31] | v0_f1c[1]
+  ENDIF
+  DELAY 50
+  sv_p = curpos(0, 0)
+  -- stmt149 stray sv_p | v24[v30][r12_lc1]
+  DELAY 50
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt152 stray v32[v26][v35] | v0_f1c[1]
+  -- stmt153 stray 7 | 1 | 50 | 1 | 20 | 1 | v24[v30][r12_lc1]
+  DELAY 500
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt155 stray v32[v26][v33] | v0_f1c[1]
+  DELAY 50
+  sv_p = curpos(0, 0)
+  -- stmt157 stray sv_p | v24[v30][r12_lc1]
+  DELAY 50
+  ENDIF
+  ENDFOR
+  sv_i = WRITEDATA
+  -- stmt162 stray sv_i
+  RETURN(0)
+END MENU_ADJPOS
+
+ROUTINE DK1(p0 : BOOLEAN) : INTEGER
+BEGIN
+  v41 = 20
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  sv_i = SET_FRAME((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt177 stray sv_i
+  ENDIF
+  sv_i = SET_TOOL((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt180 stray sv_i
+  -- stmt182 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[1]
+  -- stmt183 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[3] | v36[2]
+  -- stmt184 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[1] | v36[4]
+  -- stmt185 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[3] | v36[2]
+  -- stmt186 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[1] | v36[4]
+  RETURN(0)
+END DK1
+
+ROUTINE DK2(p0 : BOOLEAN) : INTEGER
+BEGIN
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  sv_i = SET_FRAME((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt200 stray sv_i
+  ENDIF
+  sv_i = SET_TOOL((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt203 stray sv_i
+  -- stmt205 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[5]
+  -- stmt206 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[7] | v36[6]
+  -- stmt207 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[5] | v36[8]
+  -- stmt208 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[7] | v36[6]
+  -- stmt209 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[5] | v36[8]
+  RETURN(0)
+END DK2
+
+ROUTINE PENDELN(p0 : BOOLEAN) : INTEGER
+BEGIN
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  sv_i = SET_FRAME((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt223 stray sv_i
+  ENDIF
+  sv_i = SET_TOOL((p0 <> 0))
+  -- 弃参原式: p0
+  -- stmt226 stray sv_i
+  -- stmt228 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[9]
+  -- stmt229 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[10]
+  -- stmt230 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[11]
+  -- stmt231 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[10]
+  -- stmt232 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[11]
+  -- stmt233 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[10]
+  -- stmt234 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[11]
+  -- stmt235 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[10]
+  -- stmt236 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[9]
+  RETURN(0)
+END PENDELN
+
+ROUTINE SYM_CHECK : INTEGER
+VAR
+  r16_lc12 : POSITION
+  r16_lc13 : INTEGER
+  r16_lc14 : INTEGER
+BEGIN
+  r16_lc14 = 0
+  r16_lc13 = 1
+  r16_lc12 = v24[v30][2]
+  IF ((v22[v30] = 2) OR (v22[v30] = 3)) THEN
+  r16_lc14 = 1
+  ENDIF
+  IF ((r16_lc14 <> 0) AND (v20[v30] = 1)) THEN
+  r16_lc13 = (0 - 1)
+  ENDIF
+  IF ((v20[v30] = 1) AND (v23[v30] = 1)) THEN
+  r16_lc13 = (0 - 1)
+  ENDIF
+  r16_lc12_f10 = r16_lc12_f10 + 40 * r16_lc13
+  IF ((r16_lc14 <> 0)) THEN
+  PURGE CONDITION[1]
+  -- stmt17 stray v42 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt18 stray v25[v26][v10] | v0_f58[1]
+  ELSE
+  PURGE CONDITION[1]
+  -- stmt20 stray v42 | v0_f58[1]
+  ENDIF
+  -- stmt23 stray 7 | 1 | v21[v30] / 10 | 1 | v41 | 1 | r16_lc12
+  IF ((r16_lc14 <> 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt26 stray v32[v26][v27] | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt27 stray v25[v26][v10] | v0_f58[1]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt29 stray v25[v26][v27] | v0_f58[1]
+  ENDIF
+  -- stmt33 stray 7 | 1 | v21[v30] / 10 | 1 | v41 | 1 | r16_lc12
+  -- stmt35 stray 7 | 1 | v21[v30] | 1 | v41 | 1 | v36[1]
+  -- stmt36 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[3] | v36[2]
+  -- stmt37 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[1] | v36[4]
+  -- stmt38 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[3] | v36[2]
+  -- stmt39 stray 8 | 1 | v21[v30] | 1 | v41 | 1 | v36[1] | v36[4]
+  -- stmt41 stray 7 | 1 | v21[v30] / 10 | 1 | v41 | 1 | r16_lc12
+  IF ((r16_lc14 <> 0)) THEN
+  PURGE CONDITION[1]
+  -- stmt44 stray v42 | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt45 stray v25[v26][v10] | v0_f58[1]
+  ELSE
+  PURGE CONDITION[1]
+  -- stmt47 stray v42 | v0_f58[1]
+  ENDIF
+  -- stmt50 stray 7 | 1 | v21[v30] / 10 | 1 | v41 | 1 | r16_lc12
+  v43 = (0 - 1)
+  v44 = (0 - 1)
+  v45 = (0 - 1)
+  v46 = ''
+  v47 = (0 - 1)
+  v27 = (0 - 1)
+  v29 = (0 - 1)
+  v30 = (0 - 1)
+  v48 = 1
+  v42_f08 = 0
+  v42_f0c = 0
+  v42_f10 = 0
+  v42_f14 = 0
+  v42_f18 = 0
+  v42_f1c = 0
+  v1 = (0 - 1)
+  GET_TPE_PRM(1, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v49 = v44
+  v48 = 0
+  IF ((v49 = 2) OR (v49 = 3) OR (v49 = 5) OR (v49 = 6)) THEN
+  v49 = v49 + 20
+  ENDIF
+  ENDIF
+  GET_TPE_PRM(2, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v30 = v44
+  ENDIF
+  GET_TPE_PRM(3, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v29 = v44
+  ENDIF
+  GET_TPE_PRM(4, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v27 = v44
+  ENDIF
+  GET_TPE_PRM(5, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1) AND (v44 >= 0) AND (v44 <= 4)) THEN
+  v22[v30] = v44
+  ENDIF
+  IF ((v47 = 0) AND (v43 = 2) AND (v45 >= 0) AND (v45 <= 4)) THEN
+  sv_i = trunc(v45)
+  v22[v30] = sv_i
+  ENDIF
+  GET_TPE_PRM(6, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v26 = v44
+  ENDIF
+  GET_TPE_PRM(7, v43, v44, v45, v46, v47)
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v50 = v44
+  ENDIF
+  GET_TPE_PRM(8, v43, v44, v45, v46, v47)
+  IF ((v47 = 17042)) THEN
+  v51 = 0
+  ELSE
+  v51 = 1
+  ENDIF
+  IF ((v47 = 0) AND (v43 = 1)) THEN
+  v52 = v44
+  ENDIF
+  IF ((v48 = 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  SELECT v49 OF
+  CASE(1):
+  sv_s = chr(128)
+  WRITE(sv_s)
+  IF ((v11[8] = 1)) THEN
+  sv_i = MSGWRITE(134, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt145 stray sv_i
+  ELSE
+  sv_i = MSGWRITE(116, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt147 stray sv_i
+  ENDIF
+  ENDIF
+  sv_i = MSG_CR(0)
+  -- stmt149 stray sv_i
+  sv_i = INFO_MSG((1 <> 0), (v22[v30]))
+  -- 弃参原式: 1
+  -- stmt150 stray sv_i
+  sv_i = DK1((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt151 stray sv_i
+  sv_i = TC_ABLAUF(v27, v26)
+  CASE(2):
+  sv_s = chr(128)
+  WRITE(sv_s)
+  IF ((v11[8] = 1)) THEN
+  sv_i = MSGWRITE(134, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt157 stray sv_i
+  ENDIF
+  sv_i = MSGWRITE(116, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt159 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt160 stray sv_i
+  sv_i = INFO_MSG((1 <> 0), (v22[v30]))
+  -- 弃参原式: 1
+  -- stmt161 stray sv_i
+  sv_i = PENDELN((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt162 stray sv_i
+  sv_i = TC_ABLAUF(v27, v26)
+  CASE(3):
+  sv_s = chr(128)
+  WRITE(sv_s)
+  IF ((v11[8] = 1)) THEN
+  sv_i = MSGWRITE(134, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt168 stray sv_i
+  ELSE
+  sv_i = MSGWRITE(116, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt170 stray sv_i
+  ENDIF
+  sv_i = MSG_CR(0)
+  -- stmt172 stray sv_i
+  sv_i = INFO_MSG((1 <> 0), (v22[v30]))
+  -- 弃参原式: 1
+  -- stmt173 stray sv_i
+  sv_i = DK2((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt174 stray sv_i
+  sv_i = TC_ABLAUF(v27, v26)
+  CASE(4):
+  sv_s = chr(128)
+  WRITE(sv_s)
+  IF ((v11[8] = 1)) THEN
+  sv_i = MSGWRITE(134, (0 <> 0))
+  -- 弃参原式: 0
+  -- stmt180 stray sv_i
+  ENDIF
+  sv_i = MSGWRITE(116, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt182 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt183 stray sv_i
+  sv_i = INFO_MSG((1 <> 0), (v22[v30]))
+  -- 弃参原式: 1
+  -- stmt184 stray sv_i
+  sv_i = DK1((1 <> 0))
+  -- 弃参原式: 1
+  -- stmt185 stray sv_i
+  sv_i = TC_ABLAUF(v27, v26)
+  CASE(5):
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = MSGWRITE(100, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt190 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt191 stray sv_i
+  sv_i = INFO_MSG((1 <> 0), (v22[v30]))
+  -- 弃参原式: 1
+  -- stmt192 stray sv_i
+  sv_i = SYM_CHECK
+  -- stmt193 stray sv_i
+  sv_i = TC_ABLAUF(v27, v26)
+  CASE(11):
+  sv_i = G2_INIT(v30, v29, v27, (v22[v30]), v26)
+  -- stmt198 stray sv_i
+  IF ((v51 <> 0)) THEN
+  sv_i = G2_INIT(v30, v50, v52, (v22[v30]), v26)
+  -- stmt200 stray sv_i
+  ENDIF
+  sv_i = G2_VECMEIN(v30)
+  -- stmt202 stray sv_i
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = MSGWRITE(117, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt204 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt205 stray sv_i
+  sv_i = INFO_MSG((0 <> 0), (v22[v30]))
+  -- 弃参原式: 0
+  -- stmt206 stray sv_i
+  sv_i = DK1((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt207 stray sv_i
+  sv_i = G2_KORR(v30, v29, v27, (v22[v30]), v26)
+  -- stmt208 stray sv_i
+  sv_i = DK1((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt209 stray sv_i
+  sv_i = G2_KORR(v30, v29, v27, (v22[v30]), v26)
+  -- stmt210 stray sv_i
+  sv_i = DK1((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt211 stray sv_i
+  sv_i = G2_KORR(v30, v29, v27, (v22[v30]), v26)
+  -- stmt212 stray sv_i
+  sv_i = G2_MSG_FC(0)
+  -- stmt213 stray sv_i
+  sv_i = G2_VECMAUS(0)
+  -- stmt214 stray sv_i
+  IF ((v53 <> 0)) THEN
+  sv_i = ABLAUF_SETUP(v30)
+  -- stmt216 stray sv_i
+  ELSE
+  v48 = 1
+  CASE(12):
+  sv_i = G2_INIT(v30, v29, v27, (v22[v30]), v26)
+  -- stmt222 stray sv_i
+  sv_i = G2_REFMEIN(v30)
+  -- stmt223 stray sv_i
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = MSGWRITE(121, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt225 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt226 stray sv_i
+  sv_i = INFO_MSG((0 <> 0), (v22[v30]))
+  -- 弃参原式: 0
+  -- stmt227 stray sv_i
+  sv_i = DK1((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt228 stray sv_i
+  IF ((v51 <> 0)) THEN
+  sv_i = G2_KORR(v30, v50, v52, (v22[v30]), v26)
+  -- stmt230 stray sv_i
+  ELSE
+  sv_i = G2_KORR(v30, v29, v27, (v22[v30]), v26)
+  -- stmt232 stray sv_i
+  ENDIF
+  ENDIF
+  sv_i = G2_MSG_FC(0)
+  -- stmt234 stray sv_i
+  sv_i = G2_REFMAUS(0)
+  -- stmt235 stray sv_i
+  WHILE ((v53 <> 0)) DO
+  sv_i = ABLAUF_SETUP(v30)
+  -- stmt237 stray sv_i
+  ENDWHILE
+  v48 = 1
+  CASE(13):
+  sv_i = G2_INIT(v30, v29, v27, (v22[v30]), v26)
+  -- stmt243 stray sv_i
+  sv_i = G2_REFMEIN(v30)
+  -- stmt244 stray sv_i
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = MSGWRITE(122, (1 <> 0))
+  -- 弃参原式: 1
+  -- stmt246 stray sv_i
+  sv_i = MSG_CR(0)
+  -- stmt247 stray sv_i
+  sv_i = INFO_MSG((0 <> 0), (v22[v30]))
+  -- 弃参原式: 0
+  -- stmt248 stray sv_i
+  sv_i = DK1((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt249 stray sv_i
+  sv_i = G2_KORR(v30, v29, v27, (v22[v30]), v26)
+  -- stmt250 stray sv_i
+  sv_i = PENDELN((0 <> 0))
+  -- 弃参原式: 0
+  -- stmt251 stray sv_i
+  WHILE ((v51 <> 0)) DO
+  sv_i = G2_KORR(v30, v50, v52, (v22[v30]), v26)
+  -- stmt253 stray sv_i
+  ENDWHILE
+  RETURN(0)
+  ENDSELECT
+END SYM_CHECK
+
+BEGIN
+END TCP_MEA

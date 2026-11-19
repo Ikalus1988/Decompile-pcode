@@ -1,0 +1,315 @@
+PROGRAM DCPFAULT
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.0 - Initial Release
+--Version 1.1 - Initilised strDCPText2 ='' in all case statements
+--Version 1.2 Corrected all the CNV_INT_STR to base 10 number system
+%COMMENT = 'Version 1.4'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+strDCPNum: STRING[5]
+strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+strProgNum: STRING[4]
+ToolID: STRING[2]
+RobotName, strDCPText, strDCPText2, DCPPLCText, strHis1, strHis2,strHis3,UserDefined: STRING[82]
+strAddDCPTxt:STRING[20]
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	strDCPText = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+ 
+  --Get tp paramater which contains additional DCP Fault Text
+ GET_TPE_PRM(2,paramTyp,paramInt,paramReal,strAddDCPTxt,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+ --check if strAddDCPTxt is initialised, if not set DCPFau to 0, if OK get DCP Fault number
+ IF ( UNINIT(strAddDCPTxt)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+CNV_INT_STR(paramInt,3,10,paramString)
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+--Get String Register 8 IF DCP Fault Num is 5 (User Defined)
+IF intDCPFault = 5 THEN
+	GET_TPE_PRM(2,paramTyp,paramInt,paramReal,UserDefined,STATUS)
+ELSE
+	UserDefined = ''
+ENDIF
+	--Initilise SPRText
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE (0):
+	
+	CASE (1):
+		DCPText.DCPLine1 = 'Program Number' + strProgNum + ' is not in RSR0001'
+		DCPText.DCPLine2 = ''
+		DCPText.DCPFaultNum = 00001
+
+	CASE (2):
+		DCPText.DCPLine1 = 'Area in Request Number ' + strAreaInREQ
+		DCPText.DCPLine2 = 'invalid. Value should be between 1 - 32'
+		DCPText.DCPFaultNum = 00002
+	
+	CASE (3):
+		DCPText.DCPLine1 = 'Area out Release Number ' + strAreaOutRL
+		DCPText.DCPLine2= ' invalid. Value should be between 1 - 32'
+		DCPText.DCPFaultNum = 00003
+		
+	CASE (4):
+		DCPText.DCPLine1 = 'PED Back Task still active for gun ' 
+		DCPText.DCPLine2= ' NOT IMPLEMENTED!!'
+		DCPText.DCPFaultNum = 00004
+		
+	CASE (5):
+		DCPText.DCPLine1 = 'User Defined DCP Message:- ' 
+		DCPText.DCPLine2= UserDefined
+		DCPText.DCPFaultNum = 00005
+		
+	CASE (6):
+		DCPText.DCPLine1 = 'Collision Zone Release Number '  + strColREL
+		DCPText.DCPLine2= ' invalid. Value should be between 1 - 64'
+		DCPText.DCPFaultNum = 00006
+		
+	CASE (7):
+		DCPText.DCPLine1 = 'Collision Zone Release robot '
+		DCPText.DCPLine2= 'output signal mismatch'
+		DCPText.DCPFaultNum = 00007
+		
+	CASE (8):
+		DCPText.DCPLine1 = 'Collision Zone Release PLC  '
+		DCPText.DCPLine2= 'input signal mismatch'
+		DCPText.DCPFaultNum = 00008
+		
+	CASE (9):
+		DCPText.DCPLine1 = 'Collision Zone Request Number '  + strColREQ
+		DCPText.DCPLine2= ' invalid. Value should be between 1 - 64'
+		DCPText.DCPFaultNum = 00009
+			
+	CASE (10):
+		DCPText.DCPLine1 = 'Collision Zone Request robot '
+		DCPText.DCPLine2= 'output signal mismatch'
+		DCPText.DCPFaultNum = 00010
+		
+	CASE (11):
+		DCPText.DCPLine1 = 'Collision Zone Request PLC '
+		DCPText.DCPLine2= 'input signal mismatch'
+		DCPText.DCPFaultNum = 00011
+		
+	CASE (12):
+		DCPText.DCPLine1 = 'Job Done Number '  + strJobDone
+		DCPText.DCPLine2=  'invalid. Value should be between 1 - 32'
+		DCPText.DCPFaultNum = 00012
+		
+	CASE (13):
+		DCPText.DCPLine1 = 'Tool Request Number '  + strToolREQ
+		DCPText.DCPLine2=  'invalid. Value should be between 1 - 32'
+		DCPText.DCPFaultNum = 00013
+		
+	CASE (14):
+		DCPText.DCPLine1 = 'Robot Home Position World Zone not Configured'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00014
+		
+	CASE (15):
+		DCPText.DCPLine1 = 'Robot @ Home Position output not on'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00015
+		
+	CASE (16):
+		DCPText.DCPLine1 = 'Set Tool Number '  + ' is not Implemented!!'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00016
+		
+	CASE (17):
+		DCPText.DCPLine1 = 'Set Tool Number too big for GO???'  + ' is not Implemented!!'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00017
+		
+	CASE (18):
+		DCPText.DCPLine1 = 'Robot World Zone not Configured'  + ' is not Implemented!!'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00018
+		
+	CASE (19):
+		DCPText.DCPLine1 = 'Robot not at Service position'  + ' is not Implemented!!'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00019
+		
+	CASE (20):
+		DCPText.DCPLine1 = 'Service Tool Number is out of range'  + ' is not Implemented!!'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00020
+		
+	CASE (21):
+		DCPText.DCPLine1 = 'Last Collision Zone Request not Set'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00021
+		
+	CASE (22):
+		DCPText.DCPLine1 = 'Last Collision Zone Request Invalid'	
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00022
+		
+	CASE (23):
+		DCPText.DCPLine1 = 'Last Collision Zone Release not Set'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00023
+		
+	CASE (24):
+		DCPText.DCPLine1 = 'Last Collision Zone Release Invalid'
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00024
+		
+	CASE (25):
+		DCPText.DCPLine1 = '00025: '
+		DCPText.DCPLine2=''
+		
+	CASE (50):
+		DCPText.DCPLine1 = 'Ethernet Comms not Running Slot'+paramString
+		DCPText.DCPLine2=''
+		DCPText.DCPFaultNum = 00050
+	else:
+		DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+		DCPText.DCPLine1 =''
+
+ENDSELECT
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,DCPText.DCPFaultNum,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,3,10,strDCPNum)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,strDCPNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+--SET_STR_REG(11,DCPText.DCPLine2,STATUS)
+--SET_STR_REG(12,DCPText.DCPLine3,STATUS)
+--SET_STR_REG(13,DCPText.DCPLine4,STATUS)
+	--Initialise Register 56 to 0
+	SET_INT_REG(56,0,STATUS)
+	--Initialise FKEYS
+	 	FKEYS[1]  = ''
+		FKEYS[2]  = ''
+		FKEYS[3]  = ''
+		FKEYS[4]  = ''
+		FKEYS[5]  = ''
+		FKEYS[6]  = ''
+		FKEYS[7]  = ''
+		FKEYS[8]  = ''
+		FKEYS[9]  = ''
+		FKEYS[10] = ''
+	--Decide based on Integer Value in FKEY_SEL what text to display on the Alarm page	
+	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+	ENDIF
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = TRUE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+END DCPFAULT

@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_STAT
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_STAT'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_Status FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_Status
+END MM_GET_STAT

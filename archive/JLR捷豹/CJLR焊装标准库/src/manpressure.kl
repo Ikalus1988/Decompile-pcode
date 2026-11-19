@@ -1,0 +1,209 @@
+PROGRAM ManPressure
+
+%COMMENT = 'Version 1.2'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOABORT = ERROR + TPENABLE + COMMAND
+%NOPAUSE = ERROR + TPENABLE + COMMAND
+
+%INCLUDE kliotyps
+
+--Delcare a Type and Structure to Delcare all the DCP Detail that will be needed
+TYPE
+	DCPDetail = STRUCTURE
+
+	Text: STRING[82]
+	F1: BOOLEAN
+	F2: BOOLEAN
+	F3: BOOLEAN
+	F4: BOOLEAN
+	F5: BOOLEAN 
+
+	ENDSTRUCTURE
+	
+	Revision FROM SpotChkVer = STRUCTURE
+	Major:INTEGER
+	Minor:INTEGER
+	ENDSTRUCTURE
+
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, BoschPres :INTEGER
+paramReal, realDummy:REAL
+dCPInfo: DCPDetail
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+ManPresVer:Revision
+
+--Get Version Routine
+ROUTINE ManPres_Ver:Revision
+
+BEGIN
+	
+ManPresVer.Major = 1
+ManPresVer.Minor = 0
+
+RETURN(ManPresVer)
+
+END ManPres_Ver
+
+--Routine that will be Ran if the F1 Key is pressed
+ROUTINE F1Pressed
+
+BEGIN
+	IF (dCPInfo.F1) THEN
+		SET_INT_REG(56,1,STATUS)
+		blKeyPressed = TRUE		
+	ENDIF
+END F1Pressed
+
+--Routine that will be Ran if the F2 Key is pressed
+ROUTINE F2Pressed
+
+BEGIN
+	IF (dCPInfo.F2) THEN
+		SET_INT_REG(56,2,STATUS)
+		blKeyPressed = TRUE			
+	ENDIF
+END F2Pressed
+
+--Routine that will be Ran if the F3 Key is pressed
+ROUTINE F3Pressed
+
+BEGIN	
+	IF (dCPInfo.F3) THEN	
+		SET_INT_REG(56,3,STATUS)
+		blKeyPressed = TRUE			
+	ENDIF
+END F3Pressed
+
+--Routine that will be Ran if the F4 Key is pressed
+ROUTINE F4Pressed
+
+BEGIN	
+	IF (dCPInfo.F4) THEN	
+		SET_INT_REG(56,4,STATUS)
+		blKeyPressed = TRUE			
+	ENDIF
+END F4Pressed
+
+--Routine that will be Ran if the F5 Key is pressed
+ROUTINE F5Pressed
+
+BEGIN
+	IF (dCPInfo.F5) THEN
+		SET_INT_REG(56,5,STATUS)
+		blKeyPressed = TRUE	
+	ENDIF
+END F5Pressed
+
+--Begin Prog
+BEGIN
+
+--Get Requested Bosch Pressure
+GET_PORT_VAL(io_gpin,32,BoschPres,STATUS)
+--Convert Bosch to Newtons
+BoschPres = BoschPres*40
+
+--Get Robot Current Force
+--GET_VAR - $SGGUN1.$STATE.$PRES_FDB
+--Need to record the average recorded....or the highest value recorded....
+
+
+
+dCPInfo.F1 = TRUE
+dCPInfo.F2 = TRUE
+dCPInfo.F3 = FALSE
+dCPInfo.F4 = FALSE
+dCPInfo.F5 = FALSE
+
+WRITE('        Manual Pressure Check  ',CR,CR)
+WRITE('Bosch Requested Pressure = ' ,BoschPres,' Newtons',CR)
+WRITE('Robot Detected Pressure = ',' Newtons',CR)
+
+
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+--Write FKeys,
+IF (dCPInfo.F1) THEN
+	strTPFunc[1] = '  YES   '	
+	else
+	strTPFunc[1] = '        '	
+ENDIF
+
+IF (dCPInfo.F2) THEN
+	strTPFunc[2] = '  No    '	
+	else
+	strTPFunc[2] = '        '	
+ENDIF
+
+IF (dCPInfo.F3) THEN
+	strTPFunc[3] = 'SKIP    '	
+	else
+	strTPFunc[3] = '        '
+ENDIF
+
+IF (dCPInfo.F4) THEN
+	strTPFunc[4] = 'F4      '	
+	else
+	strTPFunc[4] = '        '
+ENDIF
+
+IF (dCPInfo.F5) THEN
+	strTPFunc[5] = 'F5      '	
+	else
+	strTPFunc[5] = '        '	
+ENDIF
+
+
+WRITE TPFUNC(strTPFunc[1] + strTPFunc[2] + strTPFunc[3] + strTPFunc[4] + strTPFunc[5],CR)
+
+--Check for F key being pressed AND enabled
+
+blKeyPressed = FALSE
+
+PURGE CONDITION[1]
+
+CONDITION[1]:
+	
+	WHEN TPIN[129]+ DO F1Pressed
+	WHEN TPIN[137]+ DO F1Pressed
+	
+	WHEN TPIN[131]+ DO F2Pressed
+	WHEN TPIN[138]+ DO F2Pressed
+	
+	WHEN TPIN[132]+ DO F3Pressed
+	WHEN TPIN[139]+ DO F3Pressed
+	
+	WHEN TPIN[133]+ DO F4Pressed
+	WHEN TPIN[141]+ DO F4Pressed
+	
+	WHEN TPIN[134]+ DO F5Pressed
+	WHEN TPIN[142]+ DO F5Pressed
+	
+ENDCONDITION
+
+ENABLE CONDITION[1]	
+	WRITE TPPROMPT(CHR(128))
+	WRITE TPERROR(CHR(128))
+	WRITE TPPROMPT('Do you want to repeat??')
+
+	REPEAT
+	--FORCE_SPMENU(TP_PANEL,SPI_TPUSER, 1)
+	DELAY 100
+
+UNTIL(blKeyPressed)
+
+WRITE TPPROMPT('')
+Write(chr(128))
+END ManPressure

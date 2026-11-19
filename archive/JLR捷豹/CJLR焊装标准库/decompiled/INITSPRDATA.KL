@@ -1,0 +1,30 @@
+-- INITSPRDATA.KL (decompiled v3)
+PROGRAM INITSPRDATA
+%COMMENT = 'Version 1.3'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE POSTSTAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITRIVDATA(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETRIVDATA(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  sv_s = chr(128)
+  WRITE(sv_s)
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('Initialising SPR Data ...', CR, '(Only uninitialised data is changed.)', CR)
+  sv_i = INITRIVDATA(0)
+  -- stmt30 stray sv_i
+  WRITE('Done.', CR)
+END INITSPRDATA
+

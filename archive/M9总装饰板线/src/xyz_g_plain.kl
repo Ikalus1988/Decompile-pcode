@@ -1,0 +1,58 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_g_plain
+-- 
+-- brief: xyz_g_plain,
+--        get place in result
+--------------------------------------------------------------------------------
+PROGRAM xyz_g_plain
+
+
+%COMMENT = 'get place in'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+CONST
+    PARAM_NUM = 1
+
+VAR
+    ret      : INTEGER
+    data_type: INTEGER
+    vs_id    : INTEGER
+    real_NA  : REAL
+    str_NA   : STRING[1]
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+GET_TPE_PRM(PARAM_NUM, data_type, vs_id, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[CMD_G_PLAIN] fail to get vs_id')
+ENDIF
+ResetOutData
+ret = AddInttoArr(CMD_G_PLAIN)
+IF (ret <> 0) THEN
+    log_error('[G_PLAIN] fail to pack cmd')
+ENDIF
+ret = AddInttoArr(vs_id)
+IF (ret <> 0) THEN
+    log_error('[CMD_G_PLAIN] fail to pack vs_id')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_g_plain

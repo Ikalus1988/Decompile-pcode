@@ -1,0 +1,966 @@
+-- MI13_RVH_DCP.KL (decompiled v3)
+PROGRAM MI13_RVH_DCP
+%COMMENT = 'MI13 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALARMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[128]
+	DCPLINE2: STRING[128]
+	DCPLINE3: STRING[128]
+	DCPLINE4: STRING[128]
+	DCPLINE5: STRING[128]
+	ENDSTRUCTURE
+VAR
+  ALMDCP : ALARMDCP
+  ALMDCP_f04 : STRING[64]
+  pp00 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING
+BEGIN
+  SELECT sv_i OF
+  CASE(2):
+  ALMDCP_f04 = 'Timeout rivet program'
+  -- stmt58 stray ALMDCP_f04
+  CASE(3):
+  ALMDCP_f04 = 'Timeout tolerance curve'
+  -- stmt59 stray ALMDCP_f04
+  CASE(4):
+  ALMDCP_f04 = 'Timeout start rivet process'
+  -- stmt60 stray ALMDCP_f04
+  CASE(5):
+  ALMDCP_f04 = 'Timeout end rivet process'
+  -- stmt61 stray ALMDCP_f04
+  CASE(6):
+  ALMDCP_f04 = 'Timeout measurement data'
+  -- stmt62 stray ALMDCP_f04
+  CASE(7):
+  ALMDCP_f04 = 'Rivet in receiver after rivet process'
+  -- stmt63 stray ALMDCP_f04
+  CASE(8):
+  ALMDCP_f04 = 'Timeout spindle home pos.'
+  -- stmt64 stray ALMDCP_f04
+  CASE(9):
+  ALMDCP_f04 = 'Timeout not ready for fixing linear slide'
+  -- stmt65 stray ALMDCP_f04
+  CASE(10):
+  ALMDCP_f04 = 'Timeout fixing linear slide'
+  -- stmt66 stray ALMDCP_f04
+  CASE(11):
+  ALMDCP_f04 = 'No program selection'
+  -- stmt67 stray ALMDCP_f04
+  CASE(12):
+  ALMDCP_f04 = 'Program not active'
+  -- stmt68 stray ALMDCP_f04
+  CASE(13):
+  ALMDCP_f04 = 'Start riveting on manual system'
+  -- stmt69 stray ALMDCP_f04
+  CASE(14):
+  ALMDCP_f04 = 'RAM module erased'
+  -- stmt70 stray ALMDCP_f04
+  CASE(15):
+  ALMDCP_f04 = 'Maint. counter spindle erased'
+  -- stmt71 stray ALMDCP_f04
+  CASE(16):
+  ALMDCP_f04 = 'Statistic data erased'
+  -- stmt72 stray ALMDCP_f04
+  CASE(17):
+  ALMDCP_f04 = 'Fault memory erased'
+  -- stmt73 stray ALMDCP_f04
+  CASE(18):
+  ALMDCP_f04 = 'ROP memory erased'
+  -- stmt74 stray ALMDCP_f04
+  CASE(19):
+  ALMDCP_f04 = 'Maint. counter feed tubes erased'
+  -- stmt75 stray ALMDCP_f04
+  CASE(20):
+  ALMDCP_f04 = 'Maint. counter general purpose erased'
+  -- stmt76 stray ALMDCP_f04
+  CASE(21):
+  ALMDCP_f04 = 'Keyreader user data erased'
+  -- stmt77 stray ALMDCP_f04
+  CASE(22):
+  ALMDCP_f04 = 'List of reasons for changes erased'
+  -- stmt78 stray ALMDCP_f04
+  CASE(23):
+  ALMDCP_f04 = 'Insufficient memory capacity (RAM module)'
+  -- stmt79 stray ALMDCP_f04
+  CASE(24):
+  ALMDCP_f04 = 'RAM module memory faultily'
+  -- stmt80 stray ALMDCP_f04
+  CASE(25):
+  ALMDCP_f04 = 'RAM module faultily or missing'
+  CASE(26):
+  ALMDCP_f04 = 'Test operation conditions not met'
+  CASE(27):
+  ALMDCP_f04 = 'Fiber optic interface disturbed'
+  CASE(28):
+  ALMDCP_f04 = 'Start rivet not reset'
+  CASE(29):
+  ALMDCP_f04 = 'Start rivet during test process'
+  CASE(30):
+  ALMDCP_f04 = 'Feeder not in automatic operation mode'
+  CASE(31):
+  ALMDCP_f04 = 'Wrong rivet in receiver'
+  CASE(32):
+  ALMDCP_f04 = 'Master: Comm. fault with slave feeder'
+  CASE(33):
+  ALMDCP_f04 = 'Slave1: Comm. fault with slave'
+  CASE(34):
+  ALMDCP_f04 = 'Slave2: Comm. fault with slave'
+  CASE(35):
+  ALMDCP_f04 = 'Slave3: Comm. fault with slave'
+  CASE(36):
+  ALMDCP_f04 = 'Master: Rivet not separated, inlet rail not filled'
+  CASE(37):
+  ALMDCP_f04 = 'Slave1: Rivet not separated, inlet rail not filled'
+  CASE(38):
+  ALMDCP_f04 = 'Slave2: Rivet not separated, inlet rail not filled'
+  CASE(39):
+  ALMDCP_f04 = 'Slave3: Rivet not separated, inlet rail not filled'
+  CASE(40):
+  ALMDCP_f04 = 'Master: Rivet not separated'
+  CASE(41):
+  ALMDCP_f04 = 'Slave1: Rivet not separated'
+  CASE(42):
+  ALMDCP_f04 = 'Slave2: Rivet not separated'
+  CASE(43):
+  ALMDCP_f04 = 'Slave3: Rivet not separated'
+  CASE(44):
+  ALMDCP_f04 = 'Master: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(45):
+  ALMDCP_f04 = 'Slave1: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(46):
+  ALMDCP_f04 = 'Slave2: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(47):
+  ALMDCP_f04 = 'Slave3: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(48):
+  ALMDCP_f04 = 'Feeding process master: Timeout feeding in receiver'
+  CASE(49):
+  ALMDCP_f04 = 'Feeding process slave1: Timeout feeding in receiver'
+  CASE(50):
+  ALMDCP_f04 = 'Feeding process slave2: Timeout feeding in receiver'
+  CASE(51):
+  ALMDCP_f04 = 'Feeding process slave3: Timeout feeding in receiver'
+  CASE(52):
+  ALMDCP_f04 = 'Customer interface: common fault for error codes larger 255'
+  CASE(53):
+  ALMDCP_f04 = 'Fiber optic data connection feeder'
+  CASE(54):
+  ALMDCP_f04 = 'Timeout fixing linear slide'
+  CASE(55):
+  ALMDCP_f04 = 'Timeout floating linear slide'
+  CASE(56):
+  ALMDCP_f04 = 'Spindle: Maint. user counter 1 necessary'
+  CASE(57):
+  ALMDCP_f04 = 'Spindle: Maint. spindle is necessary'
+  CASE(58):
+  ALMDCP_f04 = 'Spindle: Maint. die is necessary'
+  CASE(59):
+  ALMDCP_f04 = 'Spindle: Maint. punch is necessary'
+  CASE(60):
+  ALMDCP_f04 = 'Feeder Master: Maint. feed tube is necessary'
+  CASE(61):
+  ALMDCP_f04 = 'Timeout disconnecting spindle (Docking)'
+  CASE(62):
+  ALMDCP_f04 = 'Timeout connecting spindle (Docking)'
+  CASE(63):
+  ALMDCP_f04 = 'Timeout spindle parameter (docking)'
+  CASE(64):
+  ALMDCP_f04 = 'Spindle (docking) number invalid'
+  CASE(65):
+  ALMDCP_f04 = 'SIC: Rivet parameters invalid'
+  CASE(66):
+  ALMDCP_f04 = 'SIC: Tolerance curve not loaded'
+  CASE(67):
+  ALMDCP_f04 = 'Timeout start signal "Spindle drive to pos.'
+  CASE(68):
+  ALMDCP_f04 = 'Timeout spindle drive to pos.'
+  CASE(69):
+  ALMDCP_f04 = 'Timeout request "Spindle pos.'
+  CASE(70):
+  ALMDCP_f04 = 'Fiber optic data connection SIC (servo drive)'
+  CASE(71):
+  ALMDCP_f04 = 'SIC: Spindle type changed'
+  CASE(72):
+  ALMDCP_f04 = 'Timeout spindle basic pos. run-up'
+  CASE(73):
+  ALMDCP_f04 = 'Timeout spindle drive to basic pos.'
+  CASE(74):
+  ALMDCP_f04 = 'Rivet process: Timeout linear slide floating'
+  CASE(75):
+  ALMDCP_f04 = 'Rivet process: Protection circuit or e-stop triggered during riveting'
+  CASE(76):
+  ALMDCP_f04 = 'Preseperation: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(77):
+  ALMDCP_f04 = 'Preseperation: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(78):
+  ALMDCP_f04 = 'Preseperation: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(79):
+  ALMDCP_f04 = 'Preseperation: Sensor "rivet in receiver" did not recognize a rivet'
+  CASE(80):
+  ALMDCP_f04 = 'Spindle: Maint. user counter 2 necessary'
+  CASE(81):
+  ALMDCP_f04 = 'Spindle: Maint. user counter 3 necessary'
+  CASE(83):
+  ALMDCP_f04 = 'Rivet process: Spindle does not achieve the basic pos.'
+  CASE(84):
+  ALMDCP_f04 = 'Rivet process: Fixing linear slide not allowed'
+  CASE(85):
+  ALMDCP_f04 = 'Master: Rivet in tube not fed'
+  CASE(86):
+  ALMDCP_f04 = 'Slave1: Rivet in tube not fed'
+  CASE(87):
+  ALMDCP_f04 = 'Slave2: Rivet in tube not fed'
+  CASE(88):
+  ALMDCP_f04 = 'Slave3: Rivet in tube not fed'
+  CASE(89):
+  ALMDCP_f04 = 'Master: Rivet to divider'
+  CASE(90):
+  ALMDCP_f04 = 'Slave1: Rivet to divider'
+  CASE(91):
+  ALMDCP_f04 = 'Slave2: Rivet to divider'
+  CASE(92):
+  ALMDCP_f04 = 'Slave3: Rivet to divider'
+  CASE(93):
+  ALMDCP_f04 = 'Master: Drum motor lacks in supply voltage'
+  CASE(94):
+  ALMDCP_f04 = 'Slave1: Drum motor lacks supply voltage'
+  CASE(95):
+  ALMDCP_f04 = 'Slave2: Drum motor lacks in supply voltage'
+  CASE(96):
+  ALMDCP_f04 = 'Slave3: Drum motor lacks in supply voltage'
+  CASE(97):
+  ALMDCP_f04 = 'Master: Divider not connected anymore'
+  CASE(98):
+  ALMDCP_f04 = 'Slave1: Divider not connected anymore'
+  CASE(99):
+  ALMDCP_f04 = 'Slave2: Divider not connected anymore'
+  CASE(100):
+  ALMDCP_f04 = 'Slave3: Divider not connected anymore'
+  CASE(101):
+  ALMDCP_f04 = 'Master: Pre-separation not connected anymore'
+  CASE(102):
+  ALMDCP_f04 = 'Slave1: Pre-separation not connected anymore'
+  CASE(103):
+  ALMDCP_f04 = 'Slave2: Pre-separation not connected anymore'
+  CASE(104):
+  ALMDCP_f04 = 'Slave3: Pre-separation not connected anymore'
+  CASE(105):
+  ALMDCP_f04 = 'Master: Linear slide control not connected anymore'
+  CASE(106):
+  ALMDCP_f04 = 'Slave1: Linear slide control not connected anymore'
+  CASE(107):
+  ALMDCP_f04 = 'Slave2: Linear slide control not connected anymore'
+  CASE(108):
+  ALMDCP_f04 = 'Slave3: Linear slide control not connected anymore'
+  CASE(109):
+  ALMDCP_f04 = 'Master: 2-hand interface not connected anymore'
+  CASE(110):
+  ALMDCP_f04 = 'Slave1: 2-hand interface not connected anymore'
+  CASE(111):
+  ALMDCP_f04 = 'Slave2: 2-hand interface not connected anymore'
+  CASE(112):
+  ALMDCP_f04 = 'Slave3: 2-hand interface not connected anymore'
+  CASE(113):
+  ALMDCP_f04 = 'Master: An existing passive feeder is not connected anymore'
+  CASE(114):
+  ALMDCP_f04 = 'Slave1: An existing passive is not connected anymore'
+  CASE(115):
+  ALMDCP_f04 = 'Slave2: An existing passive feeder is not connected anymore'
+  CASE(116):
+  ALMDCP_f04 = 'Slave3: An existing passive feeder is not connected anymore'
+  CASE(117):
+  ALMDCP_f04 = 'Master: Divider pos. incorrect for this feeder'
+  CASE(118):
+  ALMDCP_f04 = 'Slave1: Divider pos. incorrect for this feeder'
+  CASE(119):
+  ALMDCP_f04 = 'Slave2: Divider pos. incorrect for this feeder'
+  CASE(120):
+  ALMDCP_f04 = 'Slave3: Divider pos. incorrect for this feeder'
+  CASE(121):
+  ALMDCP_f04 = 'Master: Chamber pos. of pre-separation faultily for this feeder'
+  CASE(122):
+  ALMDCP_f04 = 'Slave1: Chamber pos. of pre-separation faultily for this feeder'
+  CASE(123):
+  ALMDCP_f04 = 'Slave2: Chamber pos. of pre-separation faultily for this feeder'
+  CASE(124):
+  ALMDCP_f04 = 'Slave3: Chamber pos. of pre-separation faultily for this feeder'
+  CASE(125):
+  ALMDCP_f04 = 'Master: Rivet not recognized in pre-separation'
+  CASE(126):
+  ALMDCP_f04 = 'Slave1: Rivet not recognized in pre-separation'
+  CASE(127):
+  ALMDCP_f04 = 'Slave2: Rivet not recognized in pre-separation'
+  CASE(128):
+  ALMDCP_f04 = 'Slave3: Rivet not recognized in pre-separation'
+  CASE(129):
+  ALMDCP_f04 = 'Feeding proc. master: Unknown rivet in receiver'
+  CASE(130):
+  ALMDCP_f04 = 'Feeding proc. slave1: Unknown rivet in receiver'
+  CASE(131):
+  ALMDCP_f04 = 'Feeding proc. slave2: Unknown rivet in receiver'
+  CASE(132):
+  ALMDCP_f04 = 'Feeding proc. slave3: Unknown rivet in receiver'
+  CASE(133):
+  ALMDCP_f04 = 'Feeding proc. master: Unknown rivet in EPS'
+  CASE(134):
+  ALMDCP_f04 = 'Feeding proc. slave1: Unknown rivet in EPS'
+  CASE(135):
+  ALMDCP_f04 = 'Feeding proc. slave2: Unknown rivet in EPS'
+  CASE(136):
+  ALMDCP_f04 = 'Feeding proc. slave3 Unknown rivet in EPS'
+  CASE(137):
+  ALMDCP_f04 = 'Controller fault F01: Heat sink temperature'
+  CASE(138):
+  ALMDCP_f04 = 'Controller fault F02: Overvoltage'
+  CASE(139):
+  ALMDCP_f04 = 'Controller fault F03: Following error'
+  CASE(140):
+  ALMDCP_f04 = 'Controller fault F04: Feedback fault'
+  CASE(141):
+  ALMDCP_f04 = 'Controller fault F05: Undervoltage'
+  CASE(142):
+  ALMDCP_f04 = 'Controller fault F06: Motor temperature'
+  CASE(143):
+  ALMDCP_f04 = 'Controller fault F07: Internal voltages'
+  CASE(144):
+  ALMDCP_f04 = 'Controller fault F07: Internal voltages'
+  CASE(145):
+  ALMDCP_f04 = 'Controller fault F09: EEPROM'
+  CASE(146):
+  ALMDCP_f04 = 'Controller fault F10: Flash EPROM'
+  CASE(147):
+  ALMDCP_f04 = 'Controller fault F10: Flash EPROM'
+  CASE(148):
+  ALMDCP_f04 = 'Controller fault F12: Motor phase'
+  CASE(149):
+  ALMDCP_f04 = 'Controller fault F13: Ambient temperature'
+  CASE(150):
+  ALMDCP_f04 = 'Controller fault F14: Output stage'
+  CASE(151):
+  ALMDCP_f04 = 'Controller fault F15: l2t max. exceeded'
+  CASE(152):
+  ALMDCP_f04 = 'Controller fault F16: Mains BTB'
+  CASE(153):
+  ALMDCP_f04 = 'Controller fault F17: AD converter'
+  CASE(154):
+  ALMDCP_f04 = 'Controller fault F18: Load circuit'
+  CASE(155):
+  ALMDCP_f04 = 'Controller fault F19: Missing mains phases'
+  CASE(156):
+  ALMDCP_f04 = 'Controller fault F20: Slot error'
+  CASE(157):
+  ALMDCP_f04 = 'Controller fault F21: Handling error'
+  CASE(158):
+  ALMDCP_f04 = 'Controller fault F22: Ground connection'
+  CASE(159):
+  ALMDCP_f04 = 'Controller fault F23: CANBUS OFF'
+  CASE(160):
+  ALMDCP_f04 = 'Controller fault F24: Warning instead of fault'
+  CASE(161):
+  ALMDCP_f04 = 'Controller fault F25: Commutation fault'
+  CASE(162):
+  ALMDCP_f04 = 'Controller fault F26: Hardware limit switch'
+  CASE(163):
+  ALMDCP_f04 = 'Controller fault F27: Fault AS option'
+  CASE(164):
+  ALMDCP_f04 = 'Controller fault F28: External trajectory'
+  CASE(165):
+  ALMDCP_f04 = 'Controller fault F29: Slot card fault'
+  CASE(166):
+  ALMDCP_f04 = 'Controller fault F30: Timeout emergency stop'
+  CASE(167):
+  ALMDCP_f04 = 'Controller fault F31: Fault MACRO'
+  CASE(168):
+  ALMDCP_f04 = 'Controller fault F32: System fault'
+  CASE(169):
+  ALMDCP_f04 = 'Controller: Fault in SDO communication'
+  CASE(170):
+  ALMDCP_f04 = 'Controller: Common fault'
+  CASE(171):
+  ALMDCP_f04 = 'Controller: Reset during operation'
+  CASE(172):
+  ALMDCP_f04 = 'Controller: Fault during basic pos. run'
+  CASE(173):
+  ALMDCP_f04 = 'SIC: Faulty mains'
+  CASE(174):
+  ALMDCP_f04 = 'SIC: Invalid spindle pos.'
+  CASE(175):
+  ALMDCP_f04 = 'SIC: Stored Force compensation value is too big'
+  CASE(176):
+  ALMDCP_f04 = 'SIC: Error while basic pos. drive. Guide bush tight'
+  CASE(179):
+  ALMDCP_f04 = 'SIC: Timeout SDO Communication'
+  CASE(180):
+  ALMDCP_f04 = 'SIC: SDO channel has wrong start value'
+  CASE(181):
+  ALMDCP_f04 = 'SIC: SDO channel is already occupied'
+  CASE(182):
+  ALMDCP_f04 = 'SIC: Unknown spindle configuration'
+  CASE(183):
+  ALMDCP_f04 = 'SIC: Wrong motor rotating direction'
+  CASE(184):
+  ALMDCP_f04 = 'SIC: Protective circuit interruption during spindle movement'
+  CASE(185):
+  ALMDCP_f04 = 'SIC: DDC communication faultily'
+  CASE(186):
+  ALMDCP_f04 = 'SIC: SDO communication faultily'
+  CASE(187):
+  ALMDCP_f04 = 'SIC: Fault during rivet process'
+  CASE(188):
+  ALMDCP_f04 = 'SIC: Unallowed process command'
+  CASE(189):
+  ALMDCP_f04 = 'SIC: Emergency stop prior to plate thickness measurement'
+  CASE(190):
+  ALMDCP_f04 = 'SIC: Emergency stop prior to rivet length measurement'
+  CASE(191):
+  ALMDCP_f04 = 'SIC: Emergency stop during rivet setting'
+  CASE(192):
+  ALMDCP_f04 = 'SIC: Emergency stop during backward driving'
+  CASE(193):
+  ALMDCP_f04 = 'SIC: Protective circuit prior to plate thickness measurement'
+  CASE(194):
+  ALMDCP_f04 = 'SIC: Protective circuit prior to rivet length measurement'
+  CASE(195):
+  ALMDCP_f04 = 'SIC: Protective circuit during rivet setting'
+  CASE(196):
+  ALMDCP_f04 = 'SIC: Protective circuit during backward driving'
+  CASE(197):
+  ALMDCP_f04 = 'SIC: Max. limit of C-Frame compensation exceeded'
+  CASE(198):
+  ALMDCP_f04 = 'SIC: Fault during electrical connecting of the SR600'
+  CASE(199):
+  ALMDCP_f04 = 'SIC: Fault during referencing of controller'
+  CASE(200):
+  ALMDCP_f04 = 'SIC: Max. limit of rivet setting depth regulation exceeded'
+  CASE(201):
+  ALMDCP_f04 = 'DDC: Unknown or no spindle configuration data'
+  CASE(202):
+  ALMDCP_f04 = 'DDC: 24V supply voltage too low'
+  CASE(203):
+  ALMDCP_f04 = 'DDC: Measured plate thickness too low'
+  CASE(204):
+  ALMDCP_f04 = 'DDC: Measured rivet length too low'
+  CASE(205):
+  ALMDCP_f04 = 'DDC: Calibration of max. force failed'
+  CASE(206):
+  ALMDCP_f04 = 'DDC: Max. force exceeded'
+  CASE(207):
+  ALMDCP_f04 = 'DDC: Measured setting path too low'
+  CASE(208):
+  ALMDCP_f04 = 'DDC: Communication to SPI expansion card faultily'
+  CASE(209):
+  ALMDCP_f04 = 'DDC: Rivet curve falls below tolerance curve'
+  CASE(210):
+  ALMDCP_f04 = 'DDC: Rivet curve rises above tolerance curve'
+  CASE(211):
+  ALMDCP_f04 = 'DDC: Protective end switch "Rear end pos." triggered'
+  CASE(212):
+  ALMDCP_f04 = 'DDC: Measured setting path too large'
+  CASE(213):
+  ALMDCP_f04 = 'DDC: Rivet curve is longer than tolerance curve'
+  CASE(214):
+  ALMDCP_f04 = 'DDC: Offset adjustment failed'
+  CASE(215):
+  ALMDCP_f04 = 'DDC: Index Encoder 2 not detected'
+  CASE(216):
+  ALMDCP_f04 = 'DDC: Proximity switch "Rivet in receiver" is constantly high'
+  CASE(217):
+  ALMDCP_f04 = 'DDC: Measured rivet length too long'
+  CASE(218):
+  ALMDCP_f04 = 'DDC: Measured plate thickness too high'
+  CASE(219):
+  ALMDCP_f04 = 'DDC: Force measuring signal too low'
+  CASE(220):
+  ALMDCP_f04 = 'DDC: could not calculate energy level for JIC'
+  CASE(221):
+  ALMDCP_f04 = 'DDC: Broken cable encoder 1'
+  CASE(222):
+  ALMDCP_f04 = 'DDC: Broken cable encoder 2'
+  CASE(223):
+  ALMDCP_f04 = 'DDC: Function aborted'
+  CASE(224):
+  ALMDCP_f04 = 'DDC: Short circuit of an outlet on the SPI expansion card'
+  CASE(225):
+  ALMDCP_f04 = 'DDC: Measured punch contact point to large (only clinch system)'
+  CASE(226):
+  ALMDCP_f04 = 'DDC: Measured remaining bottom thickness too low (only clinch system)'
+  CASE(227):
+  ALMDCP_f04 = 'DDC: Measured remaining bottom thickness too high (only clinch system)'
+  CASE(228):
+  ALMDCP_f04 = 'DDC: No rivet in receiver'
+  CASE(229):
+  ALMDCP_f04 = 'DDC: reference curve not received'
+  CASE(230):
+  ALMDCP_f04 = 'DDC: Internal calculating error for c-frame or pre clamping spring constant'
+  CASE(231):
+  ALMDCP_f04 = 'Force Correction: Error calculating delay between DDC and DF30CAN'
+  CASE(232):
+  ALMDCP_f04 = 'Force Correction: Runtime error DDC'
+  CASE(233):
+  ALMDCP_f04 = 'Feeding proc. master: Timeout feeding to EPS'
+  CASE(234):
+  ALMDCP_f04 = 'Feeding proc. slave1: Timeout feeding to EPS'
+  CASE(235):
+  ALMDCP_f04 = 'Feeding proc. slave2: Timeout feeding to EPS'
+  CASE(236):
+  ALMDCP_f04 = 'Feeding proc. slave3: Timeout feeding to EPS'
+  CASE(237):
+  ALMDCP_f04 = 'Feeder Slave 1: Maint. feed tube is necessary'
+  CASE(238):
+  ALMDCP_f04 = 'Feeder Slave 2: Maint. feed tube is necessary'
+  CASE(239):
+  ALMDCP_f04 = 'Feeder Slave 3: Maint. feed tube is necessary'
+  CASE(242):
+  ALMDCP_f04 = 'Wrong customer interface software'
+  CASE(243):
+  ALMDCP_f04 = 'Wrong feeder software'
+  CASE(244):
+  ALMDCP_f04 = 'Master: Protective circuit interrupted'
+  CASE(245):
+  ALMDCP_f04 = 'Slave1: Protective circuit interrupted'
+  CASE(246):
+  ALMDCP_f04 = 'Slave2: Protective circuit interrupted'
+  CASE(247):
+  ALMDCP_f04 = 'Slave3: Protective circuit interrupted'
+  CASE(248):
+  ALMDCP_f04 = 'Feeding start for incorrect unit configuration'
+  CASE(249):
+  ALMDCP_f04 = 'Feeding proc. master: Timeout magazine feeding cycle'
+  CASE(250):
+  ALMDCP_f04 = 'Feeding proc. slave1: Timeout magazine feeding cycle'
+  CASE(251):
+  ALMDCP_f04 = 'Feeding proc. slave2: Timeout magazine feeding cycle'
+  CASE(252):
+  ALMDCP_f04 = 'Feeding proc. slave3: Timeout magazine feeding cycle'
+  CASE(253):
+  ALMDCP_f04 = 'Feeding not possible in standby mode'
+  CASE(254):
+  ALMDCP_f04 = 'Maint. counter scrap exhauster achieved'
+  CASE(255):
+  ALMDCP_f04 = 'Spindle parameter: Incorrect spindle type assignment'
+  CASE(350):
+  ALMDCP_f04 = 'Process: Master - start feeding for a non-existent feeder'
+  CASE(351):
+  ALMDCP_f04 = 'Process: Slave1 - start feeding for a non-existent feeder'
+  CASE(352):
+  ALMDCP_f04 = 'Process: Slave2 - start feeding for a non-existent feeder'
+  CASE(353):
+  ALMDCP_f04 = 'Process: Slave3 - start feeding for a non-existent feeder'
+  CASE(354):
+  ALMDCP_f04 = 'Master: Proximity switch "Rivet in tube" is constantly high'
+  CASE(355):
+  ALMDCP_f04 = 'Slave1: Proximity switch "Rivet in tube" is constantly high'
+  CASE(356):
+  ALMDCP_f04 = 'Slave2: Proximity switch "Rivet in tube" is constantly high'
+  CASE(357):
+  ALMDCP_f04 = 'Slave3: Proximity switch "Rivet in tube" is constantly high'
+  CASE(358):
+  ALMDCP_f04 = 'Master: Proximity switch "Rivet after divider" is constantly high'
+  CASE(359):
+  ALMDCP_f04 = 'Slave1: Proximity switch "Rivet after divider" is constantly high'
+  CASE(360):
+  ALMDCP_f04 = 'Slave2: Proximity switch "Rivet after divider" is constantly high'
+  CASE(361):
+  ALMDCP_f04 = 'Slave3: Proximity switch "Rivet after divider" is constantly high'
+  CASE(362):
+  ALMDCP_f04 = 'Master: Proximity switch "Rivet in pre-separation" is constantly high'
+  CASE(363):
+  ALMDCP_f04 = 'Slave1: Proximity switch "Rivet in pre-separation" is constantly high'
+  CASE(364):
+  ALMDCP_f04 = 'Slave2: Proximity switch "Rivet in pre-separation" is constantly high'
+  CASE(365):
+  ALMDCP_f04 = 'Slave3: Proximity switch "Rivet in pre-separation" is constantly high'
+  CASE(370):
+  ALMDCP_f04 = 'Master: Mag. slide 1 has not reached mag pos.'
+  CASE(371):
+  ALMDCP_f04 = 'Slave1: Mag. slide 1 has not reached mag pos.'
+  CASE(372):
+  ALMDCP_f04 = 'Slave2: Mag. slide 1 has not reached mag pos.'
+  CASE(373):
+  ALMDCP_f04 = 'Slave3: Mag. slide 1 has not reached mag pos.'
+  CASE(374):
+  ALMDCP_f04 = 'Master: Mag. slide 1 has not reached receiver pos.'
+  CASE(375):
+  ALMDCP_f04 = 'Slave1: Mag. slide 1 has not reached receiver pos.'
+  CASE(376):
+  ALMDCP_f04 = 'Slave2: Mag. slide 1 has not reached receiver pos.'
+  CASE(377):
+  ALMDCP_f04 = 'Slave3: Mag. slide 1 has not reached receiver pos.'
+  CASE(378):
+  ALMDCP_f04 = 'Master: Fault test unit'
+  CASE(379):
+  ALMDCP_f04 = 'Slave1: Fault test unit'
+  CASE(380):
+  ALMDCP_f04 = 'Slave2: Fault test unit'
+  CASE(381):
+  ALMDCP_f04 = 'Slave3: Fault test unit'
+  CASE(382):
+  ALMDCP_f04 = 'Master: Rivet jam in oscillating conveyor'
+  CASE(383):
+  ALMDCP_f04 = 'Slave1: Rivet jam in oscillating conveyor'
+  CASE(384):
+  ALMDCP_f04 = 'Slave2: Rivet jam in oscillating conveyor'
+  CASE(385):
+  ALMDCP_f04 = 'Slave3: Rivet jam in oscillating conveyor'
+  CASE(386):
+  ALMDCP_f04 = 'Master: Rivet package separation does not reach pos. "Rivet"'
+  CASE(387):
+  ALMDCP_f04 = 'Slave1: Rivet package separation does not reach pos. "Rivet"'
+  CASE(388):
+  ALMDCP_f04 = 'Slave2: Rivet package separation does not reach pos. "Rivet"'
+  CASE(389):
+  ALMDCP_f04 = 'Slave3: Rivet package separation does not reach pos. "Rivet"'
+  CASE(390):
+  ALMDCP_f04 = 'Master: Rivet package separation does not reach pos. "Air"'
+  CASE(391):
+  ALMDCP_f04 = 'Slave1: Rivet package separation does not reach pos. "Air"'
+  CASE(392):
+  ALMDCP_f04 = 'Slave2: Rivet package separation does not reach pos. "Air"'
+  CASE(393):
+  ALMDCP_f04 = 'Slave3: Rivet package separation does not reach pos. "Air"'
+  CASE(394):
+  ALMDCP_f04 = 'Master: Rivets do not fall through rivet package separation'
+  CASE(395):
+  ALMDCP_f04 = 'Slave1: Rivets do not fall through rivet package separation'
+  CASE(396):
+  ALMDCP_f04 = 'Slave2: Rivets do not fall through rivet package separation'
+  CASE(397):
+  ALMDCP_f04 = 'Slave3: Rivets do not fall through rivet package separation'
+  CASE(398):
+  ALMDCP_f04 = 'Master: Rivet package is not fed'
+  CASE(399):
+  ALMDCP_f04 = 'Slave1: Rivet package is not fed'
+  CASE(400):
+  ALMDCP_f04 = 'Slave2: Rivet package is not fed'
+  CASE(401):
+  ALMDCP_f04 = 'Slave3: Rivet package is not fed'
+  CASE(402):
+  ALMDCP_f04 = 'Process: Master - incorrect feeder assignment'
+  CASE(403):
+  ALMDCP_f04 = 'Process: Slave1 - incorrect feeder assignment'
+  CASE(404):
+  ALMDCP_f04 = 'Process: Slave2 - incorrect feeder assignment'
+  CASE(405):
+  ALMDCP_f04 = 'Process: Slave3 - incorrect feeder assignment'
+  CASE(406):
+  ALMDCP_f04 = 'Process: Incorrect spindle type assignment'
+  CASE(407):
+  ALMDCP_f04 = 'Spindle parameter: Incorrect proc. type assignment'
+  CASE(408):
+  ALMDCP_f04 = 'Process: Master does not have spindle 1 assignment'
+  CASE(409):
+  ALMDCP_f04 = 'Process: Slave1 does not have spindle 1 assignment'
+  CASE(410):
+  ALMDCP_f04 = 'Process: Slave2 does not have spindle 1 assignment'
+  CASE(411):
+  ALMDCP_f04 = 'Process: Slave3 does not have spindle 1 assignment'
+  CASE(412):
+  ALMDCP_f04 = 'Process: Master does not have spindle 2 assignment'
+  CASE(413):
+  ALMDCP_f04 = 'Process: Slave1 does not have spindle 2 assignment'
+  CASE(414):
+  ALMDCP_f04 = 'Process: Slave2 does not have spindle 2 assignment'
+  CASE(415):
+  ALMDCP_f04 = 'Process: Slave3 does not have spindle 2 assignment'
+  CASE(416):
+  ALMDCP_f04 = 'Process: Master does not have spindle 3 assignment'
+  CASE(417):
+  ALMDCP_f04 = 'Process: Slave1 does not have spindle 3 assignment'
+  CASE(418):
+  ALMDCP_f04 = 'Process: Slave2 does not have spindle 3 assignment'
+  CASE(419):
+  ALMDCP_f04 = 'Process: Slave3 does not have spindle 3 assignment'
+  CASE(420):
+  ALMDCP_f04 = 'Process: Master does not have spindle 4 assignment'
+  CASE(421):
+  ALMDCP_f04 = 'Process: Slave1 does not have spindle 4 assignment'
+  CASE(422):
+  ALMDCP_f04 = 'Process: Slave2 does not have spindle 4 assignment'
+  CASE(423):
+  ALMDCP_f04 = 'Process: Slave3 does not have spindle 4 assignment'
+  CASE(424):
+  ALMDCP_f04 = 'Master: Atomizing device not connected anymore'
+  CASE(425):
+  ALMDCP_f04 = 'Slave1: Atomizing device not connected anymore'
+  CASE(426):
+  ALMDCP_f04 = 'Slave2: Atomizing device not connected anymore'
+  CASE(427):
+  ALMDCP_f04 = 'Slave3: Atomizing device not connected anymore'
+  CASE(428):
+  ALMDCP_f04 = 'Master: Magazine not connected anymore'
+  CASE(429):
+  ALMDCP_f04 = 'Slave1: Magazine not connected anymore'
+  CASE(430):
+  ALMDCP_f04 = 'Slave2: Magazine not connected anymore'
+  CASE(431):
+  ALMDCP_f04 = 'Slave3: Magazine not connected anymore'
+  CASE(432):
+  ALMDCP_f04 = 'Master: Rivet in receiver not recognized'
+  CASE(433):
+  ALMDCP_f04 = 'Slave1: Rivet in receiver not recognized'
+  CASE(434):
+  ALMDCP_f04 = 'Slave2: Rivet in receiver not recognized'
+  CASE(435):
+  ALMDCP_f04 = 'Slave3: Rivet in receiver not recognized'
+  CASE(436):
+  ALMDCP_f04 = 'Master: Filling station not connected anymore'
+  CASE(437):
+  ALMDCP_f04 = 'Slave1: Filling station not connected anymore'
+  CASE(438):
+  ALMDCP_f04 = 'Slave2: Filling station not connected anymore'
+  CASE(439):
+  ALMDCP_f04 = 'Slave3: Filling station not connected anymore'
+  CASE(440):
+  ALMDCP_f04 = 'Master: Sensor "C-Frame in scrap emptying station" is constantly high'
+  CASE(441):
+  ALMDCP_f04 = 'Slave1: Sensor "C-Frame in scrap emptying station" is constantly high'
+  CASE(442):
+  ALMDCP_f04 = 'Slave2: Sensor "C-Frame in scrap emptying station" is constantly high'
+  CASE(443):
+  ALMDCP_f04 = 'Slave3: Sensor "C-Frame in scrap emptying station" is constantly high'
+  CASE(444):
+  ALMDCP_f04 = 'Master: Rivet not separated, Bunker not filled'
+  CASE(445):
+  ALMDCP_f04 = 'Slave1: Rivet not separated, Bunker not filled'
+  CASE(446):
+  ALMDCP_f04 = 'Slave2: Rivet not separated, Bunker not filled'
+  CASE(447):
+  ALMDCP_f04 = 'Slave3: Rivet not separated, Bunker not filled'
+  CASE(448):
+  ALMDCP_f04 = 'Master: Protection circuit interrupt'
+  CASE(449):
+  ALMDCP_f04 = 'Feeder  slave1: Protection circuit interrupt'
+  CASE(450):
+  ALMDCP_f04 = 'Feeder  slave2: Protection circuit interrupt'
+  CASE(451):
+  ALMDCP_f04 = 'Feeder  slave3: Protection circuit interrupt'
+  CASE(452):
+  ALMDCP_f04 = 'Master: cetering pins not in alignment pos.'
+  CASE(453):
+  ALMDCP_f04 = 'Slave1: cetering pins not in alignment pos.'
+  CASE(454):
+  ALMDCP_f04 = 'Slave2: cetering pins not in alignment pos.'
+  CASE(455):
+  ALMDCP_f04 = 'Slave3: cetering pins not in alignment pos.'
+  CASE(456):
+  ALMDCP_f04 = 'Master: cetering pins not in home pos.'
+  CASE(457):
+  ALMDCP_f04 = 'Slave1: cetering pins not in home pos.'
+  CASE(458):
+  ALMDCP_f04 = 'Slave2: cetering pins not in home pos.'
+  CASE(459):
+  ALMDCP_f04 = 'Slave3: cetering pins not in home pos.'
+  CASE(460):
+  ALMDCP_f04 = 'Master: magazine lock not sealed'
+  CASE(461):
+  ALMDCP_f04 = 'Slave1: magazine lock not sealed'
+  CASE(462):
+  ALMDCP_f04 = 'Slave2: magazine lock not sealed'
+  CASE(463):
+  ALMDCP_f04 = 'Slave3: magazine lock not sealed'
+  CASE(464):
+  ALMDCP_f04 = 'Master: magazine lock not opened'
+  CASE(465):
+  ALMDCP_f04 = 'Slave1: magazine lock not opened'
+  CASE(466):
+  ALMDCP_f04 = 'Slave2: magazine lock not opened'
+  CASE(467):
+  ALMDCP_f04 = 'Slave3: magazine lock not opened'
+  CASE(600):
+  ALMDCP_f04 = 'Master: Filling station does not reach basic pos.'
+  CASE(601):
+  ALMDCP_f04 = 'Slave1: Filling station does not reach basic pos.'
+  CASE(602):
+  ALMDCP_f04 = 'Slave2: Filling station does not reach basic pos.'
+  CASE(603):
+  ALMDCP_f04 = 'Slave3: Filling station does not reach basic pos.'
+  CASE(604):
+  ALMDCP_f04 = 'Master: Timeout slavefeeder'
+  CASE(605):
+  ALMDCP_f04 = 'Slave1: Timeout slavefeeder'
+  CASE(606):
+  ALMDCP_f04 = 'Slave2: Timeout slavefeeder'
+  CASE(607):
+  ALMDCP_f04 = 'Slave3: Timeout slavefeeder'
+  CASE(608):
+  ALMDCP_f04 = 'Master: Invalid configuration'
+  CASE(609):
+  ALMDCP_f04 = 'Slave1: Invalid configuration'
+  CASE(610):
+  ALMDCP_f04 = 'Slave2: Invalid configuration'
+  CASE(611):
+  ALMDCP_f04 = 'Slave3: Invalid configuration'
+  CASE(612):
+  ALMDCP_f04 = 'Process: Timeout feeder not ready for process'
+  CASE(613):
+  ALMDCP_f04 = 'Process: Timeout SIC (controller) not ready for process'
+  CASE(614):
+  ALMDCP_f04 = 'Process: SIC (controller) process not finished yet'
+  CASE(615):
+  ALMDCP_f04 = 'Process: Adjustment drive necessary'
+  CASE(616):
+  ALMDCP_f04 = 'Start riveting during protective circuit or emergency stop'
+  CASE(617):
+  ALMDCP_f04 = 'SIC: Programmed value Speed riveting too small'
+  CASE(618):
+  ALMDCP_f04 = 'SIC: Programmed value Speed driving too small'
+  CASE(619):
+  ALMDCP_f04 = 'Timeout overhead floating linear slide'
+  CASE(620):
+  ALMDCP_f04 = 'Hardware configuration of the controller has changed'
+  CASE(621):
+  ALMDCP_f04 = 'Hardware configuration of the spindle has changed'
+  CASE(622):
+  ALMDCP_f04 = 'Hardware configuration of the feeders have changed'
+  CASE(623):
+  ALMDCP_f04 = 'SIC: Programmed value Spindle home POSITION too big'
+  CASE(624):
+  ALMDCP_f04 = 'SIC: Reference curve has invalid values'
+  CASE(625):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode activated for spindel 1'
+  CASE(626):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode activated for spindel 2'
+  CASE(627):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode activated for spindel 3'
+  CASE(628):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode activated for spindel 4'
+  CASE(629):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 1'
+  CASE(630):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 2'
+  CASE(631):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 3'
+  CASE(632):
+  ALMDCP_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 4'
+  CASE(633):
+  ALMDCP_f04 = 'Spindle1: Maint. mag-tube 1 is necessary'
+  CASE(634):
+  ALMDCP_f04 = 'Spindle2: Maint. mag-tube 1 is necessary'
+  CASE(635):
+  ALMDCP_f04 = 'Spindle3: Maint. mag-tube 1 is necessary'
+  CASE(636):
+  ALMDCP_f04 = 'Spindle4: Maint. mag-tube 1 is necessary'
+  CASE(637):
+  ALMDCP_f04 = 'Spindle1: Maint. mag-tube 2 is necessary'
+  CASE(638):
+  ALMDCP_f04 = 'Spindle2: Maint. mag-tube 2 is necessary'
+  CASE(639):
+  ALMDCP_f04 = 'Spindle3: Maint. mag-tube 2 is necessary'
+  CASE(640):
+  ALMDCP_f04 = 'Spindle4: Maint. mag-tube 2 is necessary'
+  CASE(641):
+  ALMDCP_f04 = 'Spindle1: Maint. mag-tube behind separation is necessary'
+  CASE(642):
+  ALMDCP_f04 = 'Spindle2: Maint. mag-tube behind separation is necessary'
+  CASE(643):
+  ALMDCP_f04 = 'Spindle3: Maint. mag-tube behind separation is necessary'
+  CASE(644):
+  ALMDCP_f04 = 'Spindle4: Maint. mag-tube behind separation is necessary'
+  CASE(645):
+  ALMDCP_f04 = 'Prozess: JIC Criteria 1 is out of tolerance threshold'
+  CASE(646):
+  ALMDCP_f04 = 'DDC: magazine lock not opened'
+  CASE(647):
+  ALMDCP_f04 = 'DDC: magazine lock not sealed'
+  CASE(648):
+  ALMDCP_f04 = 'DDC: Magazine slide 1 has not reached mag pos.'
+  CASE(649):
+  ALMDCP_f04 = 'DDC: Magazine slide 1 has not reached receiver pos.'
+  CASE(650):
+  ALMDCP_f04 = 'DDC: Magazine slide 2 has not reached mag pos.'
+  CASE(651):
+  ALMDCP_f04 = 'DDC: Magazine slide 2 has not reached receiver pos.'
+  CASE(652):
+  ALMDCP_f04 = 'DDC: Rivet in receiver not recognized'
+  CASE(654):
+  ALMDCP_f04 = 'Force Correction: Communication to DF30CAN is faulty'
+  CASE(655):
+  ALMDCP_f04 = 'DDC: Corrected max. force exceeded (FC)'
+  CASE(662):
+  ALMDCP_f04 = 'Prozess: JIC Criteria 2 is out of tolerance threshold'
+  CASE(663):
+  ALMDCP_f04 = 'Feeder: Die changer not connected anymore'
+  CASE(664):
+  ALMDCP_f04 = 'Feeder: Communication fault with die changer'
+  CASE(665):
+  ALMDCP_f04 = 'Die changer: Station not closed'
+  CASE(666):
+  ALMDCP_f04 = 'Die changer: Station not opened'
+  CASE(667):
+  ALMDCP_f04 = 'Die changer: selected die pos. is occupied'
+  CASE(668):
+  ALMDCP_f04 = 'Die changer: selected die pos. is vacant'
+  CASE(669):
+  ALMDCP_f04 = 'Die changer: selected die pos. is out of range'
+  CASE(670):
+  ALMDCP_f04 = 'Die changer: deposited die not in pos.'
+  CASE(671):
+  ALMDCP_f04 = 'Die changer: die not picked up'
+  CASE(672):
+  ALMDCP_f04 = 'Die changer: coded plug is missing'
+  CASE(679):
+  ALMDCP_f04 = 'Die changer process: Cycle Timeout'
+  CASE(680):
+  ALMDCP_f04 = 'Die changer process: No valid die-number detected'
+  CASE(681):
+  ALMDCP_f04 = 'Process: Incorrect die-assignment'
+  CASE(682):
+  ALMDCP_f04 = 'Force correction: data do not match'
+  CASE(683):
+  ALMDCP_f04 = 'Force Correction: SIC command not supported by the DDC'
+  CASE(684):
+  ALMDCP_f04 = 'Force Correction: Time out DDC'
+  CASE(685):
+  ALMDCP_f04 = 'Force Correction: Runtime error SIC'
+  CASE(686):
+  ALMDCP_f04 = 'SIC: Timeout SIC/CI fieldbus 7.Achse'
+  CASE(688):
+  ALMDCP_f04 = 'SIC: 7.Achse unable to follow - spindle active'
+  CASE(689):
+  ALMDCP_f04 = 'SIC: Spindle function is unavailable - follow active'
+  CASE(690):
+  ALMDCP_f04 = 'SIC: 7.Achse unable to follow - shaft not right'
+  CASE(695):
+  ALMDCP_f04 = 'SIC: Adjustment drive necessary'
+  CASE(699):
+  ALMDCP_f04 = 'ZCPU: RAM initializes interrupt'
+  CASE(764):
+  ALMDCP_f04 = 'The created rivet ID recognizes ambiguities'
+  CASE(765):
+  ALMDCP_f04 = 'Spindle: Waste collection bin full'
+  ELSE:
+  ALMDCP_f04 = 'Undefined TUCKER DCP Fault Message'
+  -- stmt246 stray ALMDCP_f04
+  ENDSELECT
+  RETURN(sv_s)
+END ERROR_MSG
+
+BEGIN
+  SELECT pp00 OF
+  CASE(1):
+  ALMDCP_f04 = 'Timeout feeding cycle'
+  -- stmt57 stray ALMDCP_f04
+  ENDSELECT
+END MI13_RVH_DCP
+

@@ -1,0 +1,95 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_usr_cmd
+-- 
+-- brief: xyz_usr_cmd(xyzUserCommand),
+--        send custom request
+--------------------------------------------------------------------------------
+PROGRAM xyz_usr_cmd
+
+
+%COMMENT = 'custom request'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+VAR
+    ret       : INTEGER
+    i         : INTEGER
+    in_str   : STRING[20]
+    in_int   : INTEGER
+    in_real  : REAL
+    in_cart  : XYZWPR
+    in_joint : JOINTPOS
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+ResetOutData
+ret = AddInttoArr(CMD_CUS_REQ)
+IF (ret <> 0) THEN
+    log_error('[CUS_REQ] fail to pack cmd')
+ENDIF
+FOR i = 1 TO 5 DO
+    GET_STR_REG(SREG_IN_STR+i-1, in_str, ret)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to get string')
+    ENDIF
+    ret = AddStrtoArr(in_str)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to pack string')
+    ENDIF
+ENDFOR
+FOR i = 1 TO 10 DO
+    GET_REG(REG_IN_INT+i-1, FALSE, in_int, in_real, ret)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to get int')
+    ENDIF
+    ret = AddInttoArr(in_int)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to pack int')
+    ENDIF
+ENDFOR
+FOR i = 1 TO 10 DO
+    GET_REG(REG_IN_FLT+i-1, TRUE, in_int, in_real, ret)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to get real')
+    ENDIF
+    ret = AddRealtoArr(in_real)
+    IF (ret <> 0) THEN
+        log_error('[CUS_REQ] fail to pack real')
+    ENDIF
+ENDFOR
+in_cart = GET_POS_REG(PREG_IN_CRT, ret)
+IF (ret <> 0) THEN
+    log_error('[CUS_REQ] fail to get cart pose')
+ENDIF
+ret = AddCPostoArr(in_cart)
+IF (ret <> 0) THEN
+    log_error('[CUS_REQ] fail to pack cart pose')
+ENDIF
+in_joint = GET_JPOS_REG(PREG_IN_JNT, ret)
+IF (ret <> 0) THEN
+    log_error('[CUS_REQ] fail to get joint pose')
+ENDIF
+ret = AddJPostoArr(in_joint)
+IF (ret <> 0) THEN
+    log_error('[CUS_REQ] fail to pack joint pose')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_usr_cmd

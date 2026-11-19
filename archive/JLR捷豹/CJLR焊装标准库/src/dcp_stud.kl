@@ -1,0 +1,252 @@
+PROGRAM DCP_STUD
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+%COMMENT = 'Version 1.2'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID,ReqThickness,ActThickness :INTEGER
+paramReal, realDummy, realActThk, realReqThk:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+strDCPText, strDCPText2, DCPPLCText, strHis1, strHis2,strHis3, str11,str12,str13: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	DCPText.DCPLine1 = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+ 
+  --Get tp paramater which contains additional DCP Fault Text
+ GET_TPE_PRM(2,paramTyp,paramInt,paramReal,strAddDCPTxt,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+ --check if strAddDCPTxt is initialised, if not set DCPFau to 0, if OK get DCP Fault number
+ IF ( UNINIT(strAddDCPTxt)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(4353):
+	DCPText.DCPLine1 = 'Weld ready not ON'
+	DCPText.DCPFaultNum = 04353
+	
+	CASE(4354):
+	DCPText.DCPLine1 = 'Weld ready not OFF'
+	DCPText.DCPFaultNum = 04354
+	
+	CASE(8500):
+	DCPText.DCPLine1 = 'In tolerance not OFF'
+	DCPText.DCPFaultNum = 08500	
+	
+	CASE(8501):
+	DCPText.DCPLine1 = 'Stud controllerID out of range'
+	DCPText.DCPFaultNum = 08501
+	
+	CASE(8502):
+	DCPText.DCPLine1 = 'Stud toolID out of range'
+	DCPText.DCPFaultNum = 08502
+	
+	CASE(8503):
+	DCPText.DCPLine1 = 'Stud program number out of range'
+	DCPText.DCPFaultNum = 08503
+	
+	CASE(8504):
+	DCPText.DCPLine1 = 'Weld in progress not OFF'
+	DCPText.DCPFaultNum = 08504
+	
+	CASE(8507):
+	DCPText.DCPLine1 = 'Stud number not cleared'
+	DCPText.DCPFaultNum = 08507
+	
+	CASE(8510):
+	DCPText.DCPLine1 = 'Unknown head condition'
+	DCPText.DCPFaultNum = 08510
+				
+	CASE(8511):
+	DCPText.DCPLine1 = 'No fault not ON'
+	DCPText.DCPFaultNum = 08511
+		
+	CASE(8512):
+	DCPText.DCPLine1 = 'Welding head fault'
+	DCPText.DCPFaultNum = 08512
+		
+	CASE(8515):
+	DCPText.DCPLine1 = 'Head 1  back not ON'
+	DCPText.DCPFaultNum = 08515	
+	
+	CASE(8516):
+	DCPText.DCPLine1 = 'Stud repeat error'
+	DCPText.DCPFaultNum = 08516
+	FKEY_SEL = 1	
+	
+	CASE(8518):
+	DCPText.DCPLine1 = 'Weld complete not OFF'
+	DCPText.DCPFaultNum = 08518
+	
+	CASE(8523):
+	DCPText.DCPLine1 = 'Stud out of tolerance'
+	DCPText.DCPFaultNum = 08523
+	
+	CASE(8525):
+	DCPText.DCPLine1 = 'Head 2  back not ON'
+	DCPText.DCPFaultNum = 08525		
+	
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+
+ENDSELECT
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+DCPText.DCPLine3 = 'Check Tucker Controller for Errors....'
+SET_STR_REG(11,DCPText.DCPLine3,STATUS)
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = TRUE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+  
+  	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+  	ENDIF
+  	IF FKEY_SEL = 1 THEN
+		FKEYS[1] = ''
+		FKEYS[3] = 'STUD'
+		FKEYS[4] = 'SKIP'
+  	ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+  
+END DCP_STUD

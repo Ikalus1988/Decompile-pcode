@@ -1,0 +1,1295 @@
+-- MI20_SWH_DCP.KL (decompiled v3)
+PROGRAM MI20_SWH_DCP
+%COMMENT = 'MI20 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALARMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[128]
+	DCPLINE2: STRING[128]
+	DCPLINE3: STRING[128]
+	DCPLINE4: STRING[128]
+	DCPLINE5: STRING[128]
+	ENDSTRUCTURE
+VAR
+  ALMDCP : ALARMDCP
+  ALMDCP_f04 : STRING[64]
+  pp00 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING
+BEGIN
+  SELECT sv_i OF
+  CASE(2):
+  ALMDCP_f04 = 'No SOW'
+  -- stmt61 stray ALMDCP_f04
+  CASE(3):
+  ALMDCP_f04 = 'Weld tool not in R position'
+  -- stmt62 stray ALMDCP_f04
+  CASE(4):
+  ALMDCP_f04 = 'SOW not reset'
+  -- stmt63 stray ALMDCP_f04
+  CASE(5):
+  ALMDCP_f04 = 'Weld procedure sequence fault'
+  -- stmt64 stray ALMDCP_f04
+  CASE(6):
+  ALMDCP_f04 = 'Program not selected'
+  -- stmt65 stray ALMDCP_f04
+  CASE(7):
+  ALMDCP_f04 = 'Program not active'
+  -- stmt66 stray ALMDCP_f04
+  CASE(13):
+  ALMDCP_f04 = 'SMPS: Lift fault'
+  -- stmt67 stray ALMDCP_f04
+  CASE(14):
+  ALMDCP_f04 = 'Short-circuit weld'
+  -- stmt68 stray ALMDCP_f04
+  CASE(15):
+  ALMDCP_f04 = 'Drop down timeout'
+  -- stmt69 stray ALMDCP_f04
+  CASE(16):
+  ALMDCP_f04 = 'Open circuit, no arc'
+  -- stmt70 stray ALMDCP_f04
+  CASE(17):
+  ALMDCP_f04 = 'Measurement line broken'
+  -- stmt71 stray ALMDCP_f04
+  CASE(18):
+  ALMDCP_f04 = 'Maintenance user counter required'
+  -- stmt72 stray ALMDCP_f04
+  CASE(19):
+  ALMDCP_f04 = 'Maintenance collet required'
+  -- stmt73 stray ALMDCP_f04
+  CASE(20):
+  ALMDCP_f04 = 'Maintenance weld tool required'
+  -- stmt74 stray ALMDCP_f04
+  CASE(22):
+  ALMDCP_f04 = 'Maintenance feeding tube required'
+  -- stmt75 stray ALMDCP_f04
+  CASE(23):
+  ALMDCP_f04 = 'Welding gun sequence not followed'
+  -- stmt76 stray ALMDCP_f04
+  CASE(24):
+  ALMDCP_f04 = 'Datum line not found'
+  -- stmt77 stray ALMDCP_f04
+  CASE(25):
+  ALMDCP_f04 = 'Wrong fastener (stud) loader'
+  -- stmt78 stray ALMDCP_f04
+  CASE(26):
+  ALMDCP_f04 = 'Stud divider: Fault on the slave feeder'
+  -- stmt79 stray ALMDCP_f04
+  CASE(30):
+  ALMDCP_f04 = 'Weld out of tolerance'
+  -- stmt80 stray ALMDCP_f04
+  CASE(31):
+  ALMDCP_f04 = 'Weld aborted due to pilot arc voltage'
+  -- stmt81 stray ALMDCP_f04
+  CASE(32):
+  ALMDCP_f04 = 'SMPS: Regulation out of range'
+  -- stmt82 stray ALMDCP_f04
+  CASE(33):
+  ALMDCP_f04 = 'Common measurement line broken'
+  -- stmt83 stray ALMDCP_f04
+  CASE(34):
+  ALMDCP_f04 = 'Safety circuit fault'
+  -- stmt84 stray ALMDCP_f04
+  CASE(35):
+  ALMDCP_f04 = 'System configuration fault'
+  CASE(38):
+  ALMDCP_f04 = 'Fiber optic connection feeder'
+  CASE(39):
+  ALMDCP_f04 = 'Fiber optic connection customer interface'
+  CASE(40):
+  ALMDCP_f04 = 'Fiber optic connection SMPS'
+  CASE(41):
+  ALMDCP_f04 = 'SMPS: Weld program parameters invalid'
+  CASE(42):
+  ALMDCP_f04 = ' Feeder: Safety relays still under power'
+  CASE(44):
+  ALMDCP_f04 = 'Conditions for partial operation stop are not met'
+  CASE(45):
+  ALMDCP_f04 = 'Start weld cycle not reset'
+  CASE(46):
+  ALMDCP_f04 = 'No stud loaded'
+  CASE(47):
+  ALMDCP_f04 = 'Test mode conditions not met'
+  CASE(48):
+  ALMDCP_f04 = 'LMR: No release of movement'
+  CASE(49):
+  ALMDCP_f04 = 'Feeder: Not in automatic mode'
+  CASE(50):
+  ALMDCP_f04 = 'System configuration fault'
+  CASE(51):
+  ALMDCP_f04 = 'Weld start during test mode'
+  CASE(52):
+  ALMDCP_f04 = 'Feeder: Unknown weld tool'
+  CASE(53):
+  ALMDCP_f04 = 'Feeder: Initialization weld tool'
+  CASE(54):
+  ALMDCP_f04 = 'Feeder: Configuration fault program select switch / stud arrival sensor'
+  CASE(55):
+  ALMDCP_f04 = 'ZCPU: Gripper function and stud feeding activated'
+  CASE(56):
+  ALMDCP_f04 = 'ZCPU: No value for lift height/penetration due to operator protection during welding'
+  CASE(57):
+  ALMDCP_f04 = 'Feeder: Lift fault'
+  CASE(58):
+  ALMDCP_f04 = 'ZCPU: Start signal invalid during current operation mode'
+  CASE(59):
+  ALMDCP_f04 = 'Weld Tool: Stud stickout not sufficient'
+  CASE(60):
+  ALMDCP_f04 = 'CCPU: Memory capacity RAM module not sufficient'
+  CASE(61):
+  ALMDCP_f04 = 'CCPU: RAM module memory defective'
+  CASE(62):
+  ALMDCP_f04 = 'CCPU: RAM module is missing or defective'
+  CASE(63):
+  ALMDCP_f04 = 'SMPS: Fault during start-up of software '
+  CASE(64):
+  ALMDCP_f04 = 'CCPU: RAM module is incorrect initialized'
+  CASE(68):
+  ALMDCP_f04 = 'Maintenance counter feedings cleared'
+  CASE(69):
+  ALMDCP_f04 = 'CCPU: RAM module cleared'
+  CASE(70):
+  ALMDCP_f04 = 'Maintenance counter collet cleared'
+  CASE(71):
+  ALMDCP_f04 = 'Statistics cleared'
+  CASE(72):
+  ALMDCP_f04 = 'Fault memory cleared'
+  CASE(73):
+  ALMDCP_f04 = 'WOP memory cleared'
+  CASE(74):
+  ALMDCP_f04 = 'Maintenance counter feeding tube cleared'
+  CASE(75):
+  ALMDCP_f04 = 'Maintenance counter weld tool cleared'
+  CASE(76):
+  ALMDCP_f04 = 'Maintenance counter user cleared'
+  CASE(78):
+  ALMDCP_f04 = 'Keyreader - User Data Deleted'
+  CASE(79):
+  ALMDCP_f04 = 'Keyreader - Reasons for changing texts deleted'
+  CASE(100):
+  ALMDCP_f04 = 'Feeder: Auxiliary supply without power'
+  CASE(102):
+  ALMDCP_f04 = 'Feeder: Fault during stud separation'
+  CASE(103):
+  ALMDCP_f04 = 'Feeder: Air pressure not sufficient'
+  CASE(106):
+  ALMDCP_f04 = 'Feeder: Feeding tube locking'
+  CASE(109):
+  ALMDCP_f04 = 'Feeder: Timeout feeding tube'
+  CASE(110):
+  ALMDCP_f04 = 'Weld Tool: Gripper not closed'
+  CASE(111):
+  ALMDCP_f04 = 'Weld Tool: Gripper will not open'
+  CASE(112):
+  ALMDCP_f04 = 'Feeder: Pressure monitor protective gas'
+  CASE(117):
+  ALMDCP_f04 = 'Feeder: Communication with LM controller disturbed'
+  CASE(118):
+  ALMDCP_f04 = 'Feeder: +5V voltage control panel not available'
+  CASE(119):
+  ALMDCP_f04 = 'Feeder: LM/Solenoid undervoltage'
+  CASE(120):
+  ALMDCP_f04 = 'CCPU: Programmed stud assignment not correct'
+  CASE(121):
+  ALMDCP_f04 = 'Feeder: LM/Solenoid overvoltage'
+  CASE(122):
+  ALMDCP_f04 = 'Feeder: Weld tool has not been detected in a correct manner'
+  CASE(123):
+  ALMDCP_f04 = 'Feeder: Overload LM/Solenoid controller'
+  CASE(124):
+  ALMDCP_f04 = 'Feeder: Amplifier ground fault'
+  CASE(125):
+  ALMDCP_f04 = 'Feeder: LM controller distance measurement not detected'
+  CASE(126):
+  ALMDCP_f04 = 'Feeder: Insufficient room for lift'
+  CASE(127):
+  ALMDCP_f04 = 'Feeder: Timeout lift movement'
+  CASE(128):
+  ALMDCP_f04 = 'Feeder: LM controller over temperature'
+  CASE(129):
+  ALMDCP_f04 = 'Weld Tool: LMR collective fault'
+  CASE(130):
+  ALMDCP_f04 = 'Feeder: No valid software in LM controller'
+  CASE(131):
+  ALMDCP_f04 = 'Feeder: No valid software in feeder control board'
+  CASE(142):
+  ALMDCP_f04 = 'CCPU: Stud divider position not reached'
+  CASE(144):
+  ALMDCP_f04 = 'Feeder: LM system fault'
+  CASE(145):
+  ALMDCP_f04 = 'Feeder: LM not ready'
+  CASE(147):
+  ALMDCP_f04 = 'Feeder: LM controller amplifier not detected'
+  CASE(150):
+  ALMDCP_f04 = 'Feeder: 5V control voltage LM controller not available'
+  CASE(151):
+  ALMDCP_f04 = 'Feeder: 24V internal control voltage not available'
+  CASE(152):
+  ALMDCP_f04 = 'Feeder: 24V external control voltage not available'
+  CASE(153):
+  ALMDCP_f04 = 'Feeder: 24V internal control voltage relay not available'
+  CASE(154):
+  ALMDCP_f04 = 'Feeder: 24V external control voltage relay not available'
+  CASE(155):
+  ALMDCP_f04 = 'Feeder: 15V control panel supply voltage not available'
+  CASE(156):
+  ALMDCP_f04 = 'Feeder: +15V LM controller control voltage not available'
+  CASE(157):
+  ALMDCP_f04 = 'Feeder: -15V LM controller control voltage not available'
+  CASE(159):
+  ALMDCP_f04 = 'Feeder: Stud stickout not sufficient'
+  CASE(160):
+  ALMDCP_f04 = 'Feeder: Color marking not possible'
+  CASE(161):
+  ALMDCP_f04 = 'Feeder: Fastener not supplied'
+  CASE(162):
+  ALMDCP_f04 = 'Feeder: Fastener not removed'
+  CASE(165):
+  ALMDCP_f04 = 'Feeder: Invalid software'
+  CASE(167):
+  ALMDCP_f04 = 'Feeder: 5V supply voltage distance measurement missing'
+  CASE(168):
+  ALMDCP_f04 = 'LMR: Angle position not achieved'
+  CASE(169):
+  ALMDCP_f04 = 'LMR: Not in pickup position'
+  CASE(170):
+  ALMDCP_f04 = 'LMR: Not ready for rotation'
+  CASE(171):
+  ALMDCP_f04 = 'Feeder: Invalid weld tool'
+  CASE(172):
+  ALMDCP_f04 = 'Feeder: Unknown LMR type'
+  CASE(173):
+  ALMDCP_f04 = 'LMR: Stud not fetched'
+  CASE(174):
+  ALMDCP_f04 = 'LMR: No stud in pickup station '
+  CASE(175):
+  ALMDCP_f04 = 'LMR: Initialization fault'
+  CASE(176):
+  ALMDCP_f04 = 'LMR: Fault during rotation into welding position'
+  CASE(177):
+  ALMDCP_f04 = 'LMR: Fault during rotation into pickup position'
+  CASE(178):
+  ALMDCP_f04 = 'LMR: Referencing fault'
+  CASE(179):
+  ALMDCP_f04 = 'LMR: Gripper teaching fault'
+  CASE(181):
+  ALMDCP_f04 = 'LMR: Fault during rotation into angle position'
+  CASE(182):
+  ALMDCP_f04 = 'LMR: Fault during saving of pickup position'
+  CASE(183):
+  ALMDCP_f04 = 'LMR: Fault during saving of mechanical adjust position'
+  CASE(184):
+  ALMDCP_f04 = 'Feeder: CAN bus initialization fault'
+  CASE(185):
+  ALMDCP_f04 = 'LMR: LM rear position not reached'
+  CASE(187):
+  ALMDCP_f04 = 'LMR: Faulty position stabilizer'
+  CASE(188):
+  ALMDCP_f04 = 'LMR: Gripper not opened'
+  CASE(189):
+  ALMDCP_f04 = 'LMR: Rotation without stud not allowed'
+  CASE(190):
+  ALMDCP_f04 = 'Customer Interface: Start signal for dummy weld head'
+  CASE(191):
+  ALMDCP_f04 = 'Customer Interface: Start feeding for inactive outlet 1'
+  CASE(192):
+  ALMDCP_f04 = 'Customer Interface: Start feeding for inactive outlet 2'
+  CASE(193):
+  ALMDCP_f04 = 'Customer Interface: Start feeding for inactive outlet 3'
+  CASE(194):
+  ALMDCP_f04 = 'Customer Interface: Start feeding for inactive outlet 4'
+  CASE(195):
+  ALMDCP_f04 = 'Customer Interface: Start feeding for inactive outlet 5'
+  CASE(196):
+  ALMDCP_f04 = 'Customer Interface: Start weld cycle for inactive outlet 1'
+  CASE(197):
+  ALMDCP_f04 = 'Customer Interface: Start weld cycle for inactive outlet 2'
+  CASE(198):
+  ALMDCP_f04 = 'Customer Interface: Start weld cycle for inactive outlet 3'
+  CASE(199):
+  ALMDCP_f04 = 'Customer Interface: Start weld cycle for inactive outlet 4'
+  CASE(200):
+  ALMDCP_f04 = 'Customer Interface: Start weld cycle for inactive outlet 5'
+  CASE(202):
+  ALMDCP_f04 = 'SMPS: Temperature too high'
+  CASE(204):
+  ALMDCP_f04 = 'SMPS: Hardware fault'
+  CASE(208):
+  ALMDCP_f04 = 'PKZ: Work piece missing'
+  CASE(209):
+  ALMDCP_f04 = 'PKZ: Counter achieved'
+  CASE(210):
+  ALMDCP_f04 = 'PKZ: Type selection work piece missing'
+  CASE(211):
+  ALMDCP_f04 = 'Abort through "force WC" signal'
+  CASE(212):
+  ALMDCP_f04 = 'MAC box: Current Controller Fault'
+  CASE(213):
+  ALMDCP_f04 = 'MAC box: Maximum current reached'
+  CASE(214):
+  ALMDCP_f04 = 'MAC-Box: fuse power section fault'
+  CASE(215):
+  ALMDCP_f04 = 'MAC-Box: no connection to the coil'
+  CASE(300):
+  ALMDCP_f04 = 'LMR: Overload rotation motor'
+  CASE(301):
+  ALMDCP_f04 = 'LMR: Overvoltage rotation motor'
+  CASE(302):
+  ALMDCP_f04 = 'LMR: Controller rotation motor over temperature'
+  CASE(303):
+  ALMDCP_f04 = 'LMR: Maximum output power controller rotation motor achieved'
+  CASE(304):
+  ALMDCP_f04 = 'LMR: Undervoltage rotation motor'
+  CASE(305):
+  ALMDCP_f04 = 'LMR: Motor phases not or incorrect connected'
+  CASE(306):
+  ALMDCP_f04 = 'LMR: Control board memory data invalid'
+  CASE(307):
+  ALMDCP_f04 = 'LMR: Overload digital output'
+  CASE(308):
+  ALMDCP_f04 = 'LMR: Processor of controller rotation motor overloaded'
+  CASE(309):
+  ALMDCP_f04 = 'LMR: Maximum speed of rotation motor exceeded'
+  CASE(310):
+  ALMDCP_f04 = 'LMR: Position registration of rotation disturbed'
+  CASE(311):
+  ALMDCP_f04 = 'LMR: Position fault during rotation'
+  CASE(312):
+  ALMDCP_f04 = 'Fiber optic connection between SD10 master and slave disturbed'
+  CASE(314):
+  ALMDCP_f04 = 'LMR: 24V external control voltage relay not available'
+  CASE(315):
+  ALMDCP_f04 = 'LMR: Reference position not found'
+  CASE(316):
+  ALMDCP_f04 = 'LMR: Angle position not reached'
+  CASE(317):
+  ALMDCP_f04 = 'LMR: Angle position not allowed'
+  CASE(318):
+  ALMDCP_f04 = 'Timeout transfer LM program to feeder'
+  CASE(319):
+  ALMDCP_f04 = 'Timeout transfer weld cycle to customer interface'
+  CASE(320):
+  ALMDCP_f04 = 'Timeout transfer weld program to SMPS'
+  CASE(321):
+  ALMDCP_f04 = 'Timeout transfer start weld cycle'
+  CASE(322):
+  ALMDCP_f04 = 'Timeout stop feeder communication'
+  CASE(323):
+  ALMDCP_f04 = 'Timeout transfer bus master to SMPS'
+  CASE(324):
+  ALMDCP_f04 = 'Timeout takeover bus master from SMPS'
+  CASE(325):
+  ALMDCP_f04 = 'Timeout robot retreating to weld position'
+  CASE(326):
+  ALMDCP_f04 = 'Timeout transfer lift data from feeder'
+  CASE(327):
+  ALMDCP_f04 = 'Timeout transfer weld measuring data from SMPS'
+  CASE(330):
+  ALMDCP_f04 = 'Timeout LM of the LMR weldhead in rear postion'
+  CASE(331):
+  ALMDCP_f04 = 'Timeout execution function "auto teach"'
+  CASE(332):
+  ALMDCP_f04 = 'Timeout execution function "auto teach LMR"'
+  CASE(343):
+  ALMDCP_f04 = 'LMR: Deviation from absolute position'
+  CASE(345):
+  ALMDCP_f04 = 'Continuing weld cycle after operation stop/operator protection not possible'
+  CASE(346):
+  ALMDCP_f04 = 'LMR: Wrong stud length'
+  CASE(347):
+  ALMDCP_f04 = 'LMR: Wrong stud diameter'
+  CASE(348):
+  ALMDCP_f04 = 'LMR: Fault weld post-processing'
+  CASE(349):
+  ALMDCP_f04 = 'LMR: Pickup station 1 loading pin not in rear position'
+  CASE(350):
+  ALMDCP_f04 = 'LMR: Pickup station 1 loading pin not in front position'
+  CASE(351):
+  ALMDCP_f04 = 'LMR: Pickup station 1 rotation segment not in feeding position'
+  CASE(352):
+  ALMDCP_f04 = 'LMR: Pickup station 1 rotation segment not in loading position'
+  CASE(353):
+  ALMDCP_f04 = 'LMR: Angle position not allowed'
+  CASE(354):
+  ALMDCP_f04 = 'LMR: Fault during start-up of software of LMR control board'
+  CASE(355):
+  ALMDCP_f04 = 'LMR: Communication with LMR control board disturbed'
+  CASE(356):
+  ALMDCP_f04 = 'LMR: Current coupling not open'
+  CASE(357):
+  ALMDCP_f04 = 'LMR: Current coupling not closed'
+  CASE(358):
+  ALMDCP_f04 = 'Feeder: Separation fault - stud has not left feeder'
+  CASE(359):
+  ALMDCP_f04 = 'Feeder: Feeding fault - stud is still located in tube'
+  CASE(360):
+  ALMDCP_f04 = 'LMR: Pickup station 2 loading pin not in rear position'
+  CASE(361):
+  ALMDCP_f04 = 'LMR: Pickup station 2 loading pin not in front position'
+  CASE(362):
+  ALMDCP_f04 = 'LMR: Pickup station 2 rotation segment not in feeding position'
+  CASE(363):
+  ALMDCP_f04 = 'LMR: Pickup station 2 rotation segment not in loading position'
+  CASE(364):
+  ALMDCP_f04 = 'Weld tool: Maximum speed LM exceeded'
+  CASE(365):
+  ALMDCP_f04 = 'Feeder: Processor of LM controller overloaded'
+  CASE(366):
+  ALMDCP_f04 = 'Fault distance measurement cable package'
+  CASE(367):
+  ALMDCP_f04 = 'LMR: Rotation release withdrawn during movement'
+  CASE(368):
+  ALMDCP_f04 = 'Feeder: Filling flap not locked'
+  CASE(369):
+  ALMDCP_f04 = 'Feeder: Rail not filled, stud filling level too low'
+  CASE(386):
+  ALMDCP_f04 = 'Feeder: Observance active loading pin - air pressure out of range'
+  CASE(387):
+  ALMDCP_f04 = 'Feeder: Observance protective gas - out of range'
+  CASE(388):
+  ALMDCP_f04 = 'LMR: Magazine block cylinder does not reach home position'
+  CASE(389):
+  ALMDCP_f04 = 'LMR: Magazine block cylinder does not reach operating position'
+  CASE(390):
+  ALMDCP_f04 = 'LMR: Rotation magazine does not move'
+  CASE(391):
+  ALMDCP_f04 = 'LMR: Rotation magazine position not found'
+  CASE(392):
+  ALMDCP_f04 = 'LMR: Standard stud not recognized'
+  CASE(393):
+  ALMDCP_f04 = 'Feeder: Horizontal cylinder does not reach home position'
+  CASE(394):
+  ALMDCP_f04 = 'Feeder: Horizontal cylinder does not reach operating position'
+  CASE(395):
+  ALMDCP_f04 = 'LMR: Rotation magazine empty'
+  CASE(396):
+  ALMDCP_f04 = 'LMR: No fastener in loading position of the rotation magazine'
+  CASE(397):
+  ALMDCP_f04 = 'Feeder: Vertical cylinder does not reach home position'
+  CASE(398):
+  ALMDCP_f04 = 'Feeder: Vertical cylinder does not reach the operating position'
+  CASE(399):
+  ALMDCP_f04 = 'Feeder: Setting piston does not reach front position'
+  CASE(400):
+  ALMDCP_f04 = 'Feeder: Setting piston does not reach rear position'
+  CASE(401):
+  ALMDCP_f04 = 'Feeder: Fault separation motor setting piston'
+  CASE(404):
+  ALMDCP_f04 = 'Weld tool: Fastener could not be deposited in rotation magazine'
+  CASE(413):
+  ALMDCP_f04 = 'Feeder: No fastener in fetch position feeding rail'
+  CASE(420):
+  ALMDCP_f04 = 'Ouput signals of customer interface changed via control panel'
+  CASE(500):
+  ALMDCP_f04 = 'Feeder slave 1: Air pressure too low'
+  CASE(501):
+  ALMDCP_f04 = 'Feeder slave 2: Air pressure too low'
+  CASE(502):
+  ALMDCP_f04 = 'Feeder slave 3: Air pressure too low'
+  CASE(503):
+  ALMDCP_f04 = 'Feeder slave 4: Air pressure too low'
+  CASE(504):
+  ALMDCP_f04 = 'Feeder slave 5: Air pressure too low'
+  CASE(505):
+  ALMDCP_f04 = 'Feeder slave 6: Air pressure too low'
+  CASE(506):
+  ALMDCP_f04 = 'Feeder slave 7: Air pressure too low'
+  CASE(507):
+  ALMDCP_f04 = 'Feeder slave 8: Air pressure too low'
+  CASE(508):
+  ALMDCP_f04 = 'Feeder slave 9: Air pressure too low'
+  CASE(509):
+  ALMDCP_f04 = 'Feeder slave 1: Feeding tube locking pickup station'
+  CASE(510):
+  ALMDCP_f04 = 'Feeder slave 2: Feeding tube locking pickup station'
+  CASE(511):
+  ALMDCP_f04 = 'Feeder slave 3: Feeding tube locking pickup station'
+  CASE(512):
+  ALMDCP_f04 = 'Feeder slave 4: Feeding tube locking pickup station'
+  CASE(513):
+  ALMDCP_f04 = 'Feeder slave 5: Feeding tube locking pickup station'
+  CASE(514):
+  ALMDCP_f04 = 'Feeder slave 6: Feeding tube locking pickup station'
+  CASE(515):
+  ALMDCP_f04 = 'Feeder slave 7: Feeding tube locking pickup station'
+  CASE(516):
+  ALMDCP_f04 = 'Feeder slave 8: Feeding tube locking pickup station'
+  CASE(517):
+  ALMDCP_f04 = 'Feeder slave 9: Feeding tube locking pickup station'
+  CASE(518):
+  ALMDCP_f04 = 'Feeder slave 1: Fault during stud separation'
+  CASE(519):
+  ALMDCP_f04 = 'Feeder slave 2: Fault during stud separation'
+  CASE(520):
+  ALMDCP_f04 = 'Feeder slave 3: Fault during stud separation'
+  CASE(521):
+  ALMDCP_f04 = 'Feeder slave 4: Fault during stud separation'
+  CASE(522):
+  ALMDCP_f04 = 'Feeder slave 5: Fault during stud separation'
+  CASE(523):
+  ALMDCP_f04 = 'Feeder slave 6: Fault during stud separation'
+  CASE(524):
+  ALMDCP_f04 = 'Feeder slave 7: Fault during stud separation'
+  CASE(525):
+  ALMDCP_f04 = 'Feeder slave 8: Fault during stud separation'
+  CASE(526):
+  ALMDCP_f04 = 'Feeder slave 9: Fault during stud separation'
+  CASE(527):
+  ALMDCP_f04 = 'Feeder slave 1: 24V internal control voltage not available'
+  CASE(528):
+  ALMDCP_f04 = 'Feeder slave 2: 24V internal control voltage not available'
+  CASE(529):
+  ALMDCP_f04 = 'Feeder slave 3: 24V internal control voltage not available'
+  CASE(530):
+  ALMDCP_f04 = 'Feeder slave 4: 24V internal control voltage not available'
+  CASE(531):
+  ALMDCP_f04 = 'Feeder slave 5: 24V internal control voltage not available'
+  CASE(532):
+  ALMDCP_f04 = 'Feeder slave 6: 24V internal control voltage not available'
+  CASE(533):
+  ALMDCP_f04 = 'Feeder slave 7: 24V internal control voltage not available'
+  CASE(534):
+  ALMDCP_f04 = 'Feeder slave 8: 24V internal control voltage not available'
+  CASE(535):
+  ALMDCP_f04 = 'Feeder slave 9: 24V internal control voltage not available'
+  CASE(536):
+  ALMDCP_f04 = 'Feeder slave 1: 24V external control voltage not available'
+  CASE(537):
+  ALMDCP_f04 = 'Feeder slave 2: 24V external control voltage not available'
+  CASE(538):
+  ALMDCP_f04 = 'Feeder slave 3: 24V external control voltage not available'
+  CASE(539):
+  ALMDCP_f04 = 'Feeder slave 4: 24V external control voltage not available'
+  CASE(540):
+  ALMDCP_f04 = 'Feeder slave 5: 24V external control voltage not available'
+  CASE(541):
+  ALMDCP_f04 = 'Feeder slave 6: 24V external control voltage not available'
+  CASE(542):
+  ALMDCP_f04 = 'Feeder slave 7: 24V external control voltage not available'
+  CASE(543):
+  ALMDCP_f04 = 'Feeder slave 8: 24V external control voltage not available'
+  CASE(544):
+  ALMDCP_f04 = 'Feeder slave 9: 24V external control voltage not available'
+  CASE(545):
+  ALMDCP_f04 = 'Feeder slave 1: 24V internal control voltage relay not available'
+  CASE(546):
+  ALMDCP_f04 = 'Feeder slave 2: 24V internal control voltage relay not available'
+  CASE(547):
+  ALMDCP_f04 = 'Feeder slave 3: 24V internal control voltage relay not available'
+  CASE(548):
+  ALMDCP_f04 = 'Feeder slave 4: 24V internal control voltage relay not available'
+  CASE(549):
+  ALMDCP_f04 = 'Feeder slave 5: 24V internal control voltage relay not available'
+  CASE(550):
+  ALMDCP_f04 = 'Feeder slave 6: 24V internal control voltage relay not available'
+  CASE(551):
+  ALMDCP_f04 = 'Feeder slave 7: 24V internal control voltage relay not available'
+  CASE(552):
+  ALMDCP_f04 = 'Feeder slave 8: 24V internal control voltage relay not available'
+  CASE(553):
+  ALMDCP_f04 = 'Feeder slave 9: 24V internal control voltage relay not available'
+  CASE(554):
+  ALMDCP_f04 = 'Feeder slave 1: 24V external control voltage relay not available'
+  CASE(555):
+  ALMDCP_f04 = 'Feeder slave 2: 24V external control voltage relay not available'
+  CASE(556):
+  ALMDCP_f04 = 'Feeder slave 3: 24V external control voltage relay not available'
+  CASE(557):
+  ALMDCP_f04 = 'Feeder slave 4: 24V external control voltage relay not available'
+  CASE(558):
+  ALMDCP_f04 = 'Feeder slave 5: 24V external control voltage relay not available'
+  CASE(559):
+  ALMDCP_f04 = 'Feeder slave 6: 24V external control voltage relay not available'
+  CASE(560):
+  ALMDCP_f04 = 'Feeder slave 7: 24V external control voltage relay not available'
+  CASE(561):
+  ALMDCP_f04 = 'Feeder slave 8: 24V external control voltage relay not available'
+  CASE(562):
+  ALMDCP_f04 = 'Feeder slave 9: 24V external control voltage relay not available'
+  CASE(563):
+  ALMDCP_f04 = 'Feeder slave 1: 15V control panel supply voltage not available"Air"'
+  CASE(564):
+  ALMDCP_f04 = 'Feeder slave 2: 15V control panel supply voltage not available'
+  CASE(565):
+  ALMDCP_f04 = 'Feeder slave 3: 15V control panel supply voltage not available'
+  CASE(566):
+  ALMDCP_f04 = 'Feeder slave 4: 15V control panel supply voltage not available'
+  CASE(567):
+  ALMDCP_f04 = 'Feeder slave 5: 15V control panel supply voltage not available'
+  CASE(568):
+  ALMDCP_f04 = 'Feeder slave 6: 15V control panel supply voltage not available'
+  CASE(569):
+  ALMDCP_f04 = 'Feeder slave 7: 15V control panel supply voltage not available'
+  CASE(570):
+  ALMDCP_f04 = 'Feeder slave 8: 15V control panel supply voltage not available'
+  CASE(571):
+  ALMDCP_f04 = 'Feeder slave 9: 15V control panel supply voltage not available'
+  CASE(572):
+  ALMDCP_f04 = 'Feeder slave 1: +5V voltage control panel not available'
+  CASE(573):
+  ALMDCP_f04 = 'Feeder slave 2: +5V voltage control panel not available'
+  CASE(574):
+  ALMDCP_f04 = 'Feeder slave 3: +5V voltage control panel not available'
+  CASE(575):
+  ALMDCP_f04 = 'Feeder slave 4: +5V voltage control panel not available'
+  CASE(576):
+  ALMDCP_f04 = 'Feeder slave 5: +5V voltage control panel not available'
+  CASE(577):
+  ALMDCP_f04 = 'Feeder slave 6: +5V voltage control panel not available'
+  CASE(578):
+  ALMDCP_f04 = 'Feeder slave 7: +5V voltage control panel not available'
+  CASE(579):
+  ALMDCP_f04 = 'Feeder slave 8: +5V voltage control panel not available'
+  CASE(580):
+  ALMDCP_f04 = 'Feeder slave 9: +5V voltage control panel not availablet'
+  CASE(581):
+  ALMDCP_f04 = 'Feeder slave 1: No valid software in feeder control board'
+  CASE(582):
+  ALMDCP_f04 = 'Feeder slave 2: No valid software in feeder control board'
+  CASE(583):
+  ALMDCP_f04 = 'Feeder slave 3: No valid software in feeder control board'
+  CASE(584):
+  ALMDCP_f04 = 'Feeder slave 4: No valid software in feeder control board'
+  CASE(585):
+  ALMDCP_f04 = 'Feeder slave 5: No valid software in feeder control board'
+  CASE(586):
+  ALMDCP_f04 = 'Feeder slave 6: No valid software in feeder control board'
+  CASE(587):
+  ALMDCP_f04 = 'Feeder slave 7: No valid software in feeder control board'
+  CASE(588):
+  ALMDCP_f04 = 'Feeder slave 8: No valid software in feeder control board'
+  CASE(589):
+  ALMDCP_f04 = 'Feeder slave 9: No valid software in feeder control board'
+  CASE(590):
+  ALMDCP_f04 = 'Feeder slave 1: No stud in pickup station'
+  CASE(591):
+  ALMDCP_f04 = 'Feeder slave 2: No stud in pickup station'
+  CASE(592):
+  ALMDCP_f04 = 'Feeder slave 3: No stud in pickup station'
+  CASE(593):
+  ALMDCP_f04 = 'Feeder slave 4: No stud in pickup station'
+  CASE(594):
+  ALMDCP_f04 = 'Feeder slave 5: No stud in pickup station'
+  CASE(595):
+  ALMDCP_f04 = 'Feeder slave 6: No stud in pickup station'
+  CASE(596):
+  ALMDCP_f04 = 'Feeder slave 7: No stud in pickup station'
+  CASE(597):
+  ALMDCP_f04 = 'Feeder slave 8: No stud in pickup station'
+  CASE(598):
+  ALMDCP_f04 = 'Feeder slave 9: No stud in pickup station'
+  CASE(599):
+  ALMDCP_f04 = 'Feeder slave 1: Pickup station loading pin not in rear position'
+  CASE(600):
+  ALMDCP_f04 = 'Feeder slave 2: Pickup station loading pin not in rear position'
+  CASE(601):
+  ALMDCP_f04 = 'Feeder slave 3: Pickup station loading pin not in rear position'
+  CASE(602):
+  ALMDCP_f04 = 'Feeder slave 4: Pickup station loading pin not in rear position'
+  CASE(603):
+  ALMDCP_f04 = 'Feeder slave 5: Pickup station loading pin not in rear position'
+  CASE(604):
+  ALMDCP_f04 = 'Feeder slave 6: Pickup station loading pin not in rear position'
+  CASE(605):
+  ALMDCP_f04 = 'Feeder slave 7: Pickup station loading pin not in rear position'
+  CASE(606):
+  ALMDCP_f04 = 'Feeder slave 8: Pickup station loading pin not in rear position'
+  CASE(607):
+  ALMDCP_f04 = 'Feeder slave 9: Pickup station loading pin not in rear position'
+  CASE(608):
+  ALMDCP_f04 = 'Feeder slave 1: Pickup station loading pin not in front position'
+  CASE(609):
+  ALMDCP_f04 = 'Feeder slave 2: Pickup station loading pin not in front position'
+  CASE(610):
+  ALMDCP_f04 = 'Feeder slave 3: Pickup station loading pin not in front position'
+  CASE(611):
+  ALMDCP_f04 = 'Feeder slave 4: Pickup station loading pin not in front position'
+  CASE(612):
+  ALMDCP_f04 = 'Feeder slave 5: Pickup station loading pin not in front position'
+  CASE(613):
+  ALMDCP_f04 = 'Feeder slave 6: Pickup station loading pin not in front position'
+  CASE(614):
+  ALMDCP_f04 = 'Feeder slave 7: Pickup station loading pin not in front position'
+  CASE(615):
+  ALMDCP_f04 = 'Feeder slave 8: Pickup station loading pin not in front position'
+  CASE(616):
+  ALMDCP_f04 = 'Feeder slave 9: Pickup station loading pin not in front position'
+  CASE(617):
+  ALMDCP_f04 = 'Feeder slave 1: Pickup station rotation segment not in feeding position'
+  CASE(618):
+  ALMDCP_f04 = 'Feeder slave 2: Pickup station rotation segment not in feeding position'
+  CASE(619):
+  ALMDCP_f04 = 'Feeder slave 3: Pickup station rotation segment not in feeding position'
+  CASE(620):
+  ALMDCP_f04 = 'Feeder slave 4: Pickup station rotation segment not in feeding position'
+  CASE(621):
+  ALMDCP_f04 = 'Feeder slave 5: Pickup station rotation segment not in feeding position'
+  CASE(622):
+  ALMDCP_f04 = 'Feeder slave 6: Pickup station rotation segment not in feeding position'
+  CASE(623):
+  ALMDCP_f04 = 'Feeder slave 7: Pickup station rotation segment not in feeding position'
+  CASE(624):
+  ALMDCP_f04 = 'Feeder slave 8: Pickup station rotation segment not in feeding position'
+  CASE(625):
+  ALMDCP_f04 = 'Feeder slave 9: Pickup station rotation segment not in feeding position'
+  CASE(626):
+  ALMDCP_f04 = 'Feeder slave 1: Pickup station rotation segment not in loading position'
+  CASE(627):
+  ALMDCP_f04 = 'Feeder slave 2: Pickup station rotation segment not in loading position'
+  CASE(628):
+  ALMDCP_f04 = 'Feeder slave 3: Pickup station rotation segment not in loading position'
+  CASE(629):
+  ALMDCP_f04 = 'Feeder slave 4: Pickup station rotation segment not in loading position'
+  CASE(630):
+  ALMDCP_f04 = 'Feeder slave 5: Pickup station rotation segment not in loading position'
+  CASE(631):
+  ALMDCP_f04 = 'Feeder slave 6: Pickup station rotation segment not in loading position'
+  CASE(632):
+  ALMDCP_f04 = 'Feeder slave 7: Pickup station rotation segment not in loading position'
+  CASE(633):
+  ALMDCP_f04 = 'Feeder slave 8: Pickup station rotation segment not in loading position'
+  CASE(634):
+  ALMDCP_f04 = 'Feeder slave 9: Pickup station rotation segment not in loading position'
+  CASE(635):
+  ALMDCP_f04 = 'Feeder slave 1: Fiber optic connection to next slave feeder'
+  CASE(636):
+  ALMDCP_f04 = 'Feeder slave 2: Fiber optic connection to next slave feeder'
+  CASE(637):
+  ALMDCP_f04 = 'Feeder slave 3: Fiber optic connection to next slave feeder'
+  CASE(638):
+  ALMDCP_f04 = 'Feeder slave 4: Fiber optic connection to next slave feeder'
+  CASE(639):
+  ALMDCP_f04 = 'Feeder slave 5: Fiber optic connection to next slave feeder'
+  CASE(640):
+  ALMDCP_f04 = 'Feeder slave 6: Fiber optic connection to next slave feeder'
+  CASE(641):
+  ALMDCP_f04 = 'Feeder slave 7: Fiber optic connection to next slave feeder'
+  CASE(642):
+  ALMDCP_f04 = 'Feeder slave 8: Fiber optic connection to next slave feeder'
+  CASE(643):
+  ALMDCP_f04 = 'Feeder slave 9: Fiber optic connection to next slave feeder'
+  CASE(644):
+  ALMDCP_f04 = 'Feeder slave 1: Multiple use slave address'
+  CASE(645):
+  ALMDCP_f04 = 'Feeder slave 2: Multiple use slave address'
+  CASE(646):
+  ALMDCP_f04 = 'Feeder slave 3: Multiple use slave address'
+  CASE(647):
+  ALMDCP_f04 = 'Feeder slave 4: Multiple use slave address'
+  CASE(648):
+  ALMDCP_f04 = 'Feeder slave 5: Multiple use slave address'
+  CASE(649):
+  ALMDCP_f04 = 'Feeder slave 6: Multiple use slave address'
+  CASE(650):
+  ALMDCP_f04 = 'Feeder slave 7: Multiple use slave address'
+  CASE(651):
+  ALMDCP_f04 = 'Feeder slave 8: Multiple use slave address'
+  CASE(652):
+  ALMDCP_f04 = 'Feeder slave 9: Multiple use slave address'
+  CASE(653):
+  ALMDCP_f04 = 'Feeder slave 1: Separation fault - stud has not left feeder'
+  CASE(654):
+  ALMDCP_f04 = 'Feeder slave 2: Separation fault - stud has not left feeder'
+  CASE(655):
+  ALMDCP_f04 = 'Feeder slave 3: Separation fault - stud has not left feeder'
+  CASE(656):
+  ALMDCP_f04 = 'Feeder slave 4: Separation fault - stud has not left feeder'
+  CASE(657):
+  ALMDCP_f04 = 'Feeder slave 5: Separation fault - stud has not left feeder'
+  CASE(658):
+  ALMDCP_f04 = 'Feeder slave 6: Separation fault - stud has not left feeder'
+  CASE(659):
+  ALMDCP_f04 = 'Feeder slave 7: Separation fault - stud has not left feeder'
+  CASE(660):
+  ALMDCP_f04 = 'Feeder slave 8: Separation fault - stud has not left feeder'
+  CASE(661):
+  ALMDCP_f04 = 'Feeder slave 9: Separation fault - stud has not left feeder'
+  CASE(662):
+  ALMDCP_f04 = 'Feeder slave 1: Feeding fault - stud is still located in tube'
+  CASE(663):
+  ALMDCP_f04 = 'Feeder slave 2: Feeding fault - stud is still located in tube'
+  CASE(664):
+  ALMDCP_f04 = 'Feeder slave 3: Feeding fault - stud is still located in tube'
+  CASE(665):
+  ALMDCP_f04 = 'Feeder slave 4: Feeding fault - stud is still located in tube'
+  CASE(666):
+  ALMDCP_f04 = 'Feeder slave 5: Feeding fault - stud is still located in tube'
+  CASE(667):
+  ALMDCP_f04 = 'Feeder slave 6: Feeding fault - stud is still located in tube'
+  CASE(668):
+  ALMDCP_f04 = 'Feeder slave 7: Feeding fault - stud is still located in tube'
+  CASE(669):
+  ALMDCP_f04 = 'Feeder slave 8: Feeding fault - stud is still located in tube'
+  CASE(670):
+  ALMDCP_f04 = 'Feeder slave 9: Feeding fault - stud is still located in tube'
+  CASE(716):
+  ALMDCP_f04 = 'Weld tool 1: Maintenance weld tool required'
+  CASE(717):
+  ALMDCP_f04 = 'Weld tool 2: Maintenance weld tool required'
+  CASE(718):
+  ALMDCP_f04 = 'Weld tool 3: Maintenance weld tool required'
+  CASE(719):
+  ALMDCP_f04 = 'Weld tool 4: Maintenance weld tool required'
+  CASE(720):
+  ALMDCP_f04 = 'Weld tool 5: Maintenance weld tool required'
+  CASE(721):
+  ALMDCP_f04 = 'Weld tool 6: Maintenance weld tool required'
+  CASE(722):
+  ALMDCP_f04 = 'Weld tool 7: Maintenance weld tool required'
+  CASE(723):
+  ALMDCP_f04 = 'Weld tool 8: Maintenance weld tool required'
+  CASE(724):
+  ALMDCP_f04 = 'Weld tool 9: Maintenance weld tool required'
+  CASE(725):
+  ALMDCP_f04 = 'Weld tool 10: Maintenance weld tool required'
+  CASE(726):
+  ALMDCP_f04 = 'Weld tool 1: Maintenance collet required'
+  CASE(727):
+  ALMDCP_f04 = 'Weld tool 2: Maintenance collet required'
+  CASE(728):
+  ALMDCP_f04 = 'Weld tool 3: Maintenance collet required'
+  CASE(729):
+  ALMDCP_f04 = 'Weld tool 4: Maintenance collet required'
+  CASE(730):
+  ALMDCP_f04 = 'Weld tool 5: Maintenance collet required'
+  CASE(731):
+  ALMDCP_f04 = 'Weld tool 6: Maintenance collet required'
+  CASE(732):
+  ALMDCP_f04 = 'Weld tool 7: Maintenance collet required'
+  CASE(733):
+  ALMDCP_f04 = 'Weld tool 8: Maintenance collet required'
+  CASE(734):
+  ALMDCP_f04 = 'Weld tool 9: Maintenance collet required'
+  CASE(735):
+  ALMDCP_f04 = 'Weld tool 10: Maintenance collet required'
+  CASE(736):
+  ALMDCP_f04 = 'Weld tool 1: Maintenance user counter required'
+  CASE(737):
+  ALMDCP_f04 = 'Weld tool 2: Maintenance user counter required'
+  CASE(738):
+  ALMDCP_f04 = 'Weld tool 3: Maintenance user counter required'
+  CASE(739):
+  ALMDCP_f04 = 'Weld tool 4: Maintenance user counter required'
+  CASE(740):
+  ALMDCP_f04 = 'Weld tool 5: Maintenance user counter required'
+  CASE(741):
+  ALMDCP_f04 = 'Weld tool 6: Maintenance user counter required'
+  CASE(742):
+  ALMDCP_f04 = 'Weld tool 7: Maintenance user counter required'
+  CASE(743):
+  ALMDCP_f04 = 'Weld tool 8: Maintenance user counter required'
+  CASE(744):
+  ALMDCP_f04 = 'Weld tool 9: Maintenance user counter required'
+  CASE(745):
+  ALMDCP_f04 = 'Weld tool 10: Maintenance user counter required'
+  CASE(746):
+  ALMDCP_f04 = 'Feeder master: Maintenance feeder required'
+  CASE(747):
+  ALMDCP_f04 = 'Feeder slave 1: Maintenance feeder required'
+  CASE(748):
+  ALMDCP_f04 = 'Feeder slave 2: Maintenance feeder required'
+  CASE(749):
+  ALMDCP_f04 = 'Feeder slave 3: Maintenance feeder required'
+  CASE(750):
+  ALMDCP_f04 = 'Feeder slave 4: Maintenance feeder required'
+  CASE(751):
+  ALMDCP_f04 = 'Feeder slave 5: Maintenance feeder required'
+  CASE(752):
+  ALMDCP_f04 = 'Feeder slave 6: Maintenance feeder required'
+  CASE(753):
+  ALMDCP_f04 = 'Feeder slave 7: Maintenance feeder required'
+  CASE(754):
+  ALMDCP_f04 = 'Feeder slave 8: Maintenance feeder required'
+  CASE(755):
+  ALMDCP_f04 = 'Feeder slave 9: Maintenance feeder required'
+  CASE(756):
+  ALMDCP_f04 = 'Feeder master: Maintenance feeding tube required'
+  CASE(757):
+  ALMDCP_f04 = 'Feeder slave 1: Maintenance feeding tube required'
+  CASE(758):
+  ALMDCP_f04 = 'Feeder slave 2: Maintenance feeding tube required'
+  CASE(759):
+  ALMDCP_f04 = 'Feeder slave 3: Maintenance feeding tube required'
+  CASE(760):
+  ALMDCP_f04 = 'Feeder slave 4: Maintenance feeding tube required'
+  CASE(761):
+  ALMDCP_f04 = 'Feeder slave 5: Maintenance feeding tube required'
+  CASE(762):
+  ALMDCP_f04 = 'Feeder slave 6: Maintenance feeding tube required'
+  CASE(763):
+  ALMDCP_f04 = 'Feeder slave 7: Maintenance feeding tube required'
+  CASE(764):
+  ALMDCP_f04 = 'Feeder slave 8: Maintenance feeding tube required'
+  CASE(765):
+  ALMDCP_f04 = 'Feeder slave 9: Maintenance feeding tube required'
+  CASE(766):
+  ALMDCP_f04 = 'Divider 1: Maintenance feeding tube after divider required'
+  CASE(767):
+  ALMDCP_f04 = 'Divider 2: Maintenance feeding tube after divider required'
+  CASE(768):
+  ALMDCP_f04 = 'Divider 3: Maintenance feeding tube after divider required'
+  CASE(769):
+  ALMDCP_f04 = 'Divider 4: Maintenance feeding tube after divider required'
+  CASE(770):
+  ALMDCP_f04 = 'Divider 5: Maintenance feeding tube after divider required'
+  CASE(771):
+  ALMDCP_f04 = 'Feeder slave 1: Feeder not connected'
+  CASE(772):
+  ALMDCP_f04 = 'Feeder slave 2: Feeder not connected'
+  CASE(773):
+  ALMDCP_f04 = 'Feeder slave 3: Feeder not connected'
+  CASE(774):
+  ALMDCP_f04 = 'Feeder slave 4: Feeder not connected'
+  CASE(775):
+  ALMDCP_f04 = 'Feeder slave 5: Feeder not connected'
+  CASE(776):
+  ALMDCP_f04 = 'Feeder slave 6: Feeder not connected'
+  CASE(777):
+  ALMDCP_f04 = 'Feeder slave 7: Feeder not connected'
+  CASE(778):
+  ALMDCP_f04 = 'Feeder slave 8: Feeder not connected'
+  CASE(779):
+  ALMDCP_f04 = 'Feeder slave 9: Feeder not connected'
+  CASE(780):
+  ALMDCP_f04 = 'Wrong weld head docked'
+  CASE(2000):
+  ALMDCP_f04 = 'DCE: The battery of the storage module (RAM module) is low'
+  CASE(2001):
+  ALMDCP_f04 = 'DCE: The battery of the clock on central control board (ZCPU) is low'
+  CASE(2002):
+  ALMDCP_f04 = 'DCE: DIP switch S2 is set on central control board (ZCPU)'
+  CASE(2003):
+  ALMDCP_f04 = 'DCE: IP addresses in storage module (RAM module) and Ethernet card are not identical'
+  CASE(2004):
+  ALMDCP_f04 = 'DCE: No physical network connection available (uplink)'
+  CASE(2005):
+  ALMDCP_f04 = 'DCE: Time synchronization via network has been disrupted - Connection to time server could not be established'
+  CASE(2016):
+  ALMDCP_f04 = 'Weld Tool: Pre-maintenance warning - Maintenance of collet required'
+  CASE(2020):
+  ALMDCP_f04 = 'Feeder: Stud fill level is low'
+  CASE(2024):
+  ALMDCP_f04 = 'Feeder: Drum door not locked'
+  CASE(2025):
+  ALMDCP_f04 = 'Feeder: Control board for drum motor is missing or defective'
+  CASE(2026):
+  ALMDCP_f04 = 'Feeder: Voltage supply for drum motor is missing'
+  CASE(2027):
+  ALMDCP_f04 = 'Feeder: Voltage supply for LM/Solenoid too low'
+  CASE(2028):
+  ALMDCP_f04 = 'Feeder: Temperature of the LM amplifier too high'
+  CASE(2029):
+  ALMDCP_f04 = 'Weld Tool: LM temperature too high'
+  CASE(2030):
+  ALMDCP_f04 = 'LMR: Unknown warning weld head'
+  CASE(2031):
+  ALMDCP_f04 = 'Feeder: Filling of feeding rail has been disrupted'
+  CASE(2032):
+  ALMDCP_f04 = 'Weld Tool: Maintenance of collet required'
+  CASE(2034):
+  ALMDCP_f04 = 'Weld Tool: Maintenance required'
+  CASE(2035):
+  ALMDCP_f04 = 'Feeding tube: Maintenance required'
+  CASE(2036):
+  ALMDCP_f04 = 'User counter: Maintenance required'
+  CASE(2037):
+  ALMDCP_f04 = 'Robot / PLC: Release of movement for LMR is missing'
+  CASE(2038):
+  ALMDCP_f04 = 'Feeder: Timeout during feeding cycle'
+  CASE(2039):
+  ALMDCP_f04 = 'Robot / PLC: Weld start is not effected after operation stop or operator protection'
+  CASE(2040):
+  ALMDCP_f04 = 'LMR: Voltage supply for the rotation motor is near the lower limit value'
+  CASE(2041):
+  ALMDCP_f04 = 'LMR: Current limitation in controller rotation motor active'
+  CASE(2042):
+  ALMDCP_f04 = 'LMR: Voltage limitation in controller rotation motor active'
+  CASE(2043):
+  ALMDCP_f04 = 'Feeder: Malfunction stud arrival sensor'
+  CASE(2044):
+  ALMDCP_f04 = 'LMR: LM start or LMR angle position lost'
+  CASE(2045):
+  ALMDCP_f04 = 'LMR: No stud fed into pickup station'
+  CASE(2046):
+  ALMDCP_f04 = 'LMR: Maintenance warning wear gripper'
+  CASE(2048):
+  ALMDCP_f04 = 'Feeder Slave 1: Stud fill level is low'
+  CASE(2049):
+  ALMDCP_f04 = 'Feeder Slave 1: Drum door not locked'
+  CASE(2050):
+  ALMDCP_f04 = 'Feeder Slave 1: Control board for drum motor is missing or defective'
+  CASE(2051):
+  ALMDCP_f04 = 'Feeder Slave 1: Voltage supply for drum motor is missing'
+  CASE(2052):
+  ALMDCP_f04 = 'Feeder Slave 1: Stud separation is disrupted'
+  CASE(2053):
+  ALMDCP_f04 = 'Feeder Slave 1: Malfunction stud arrival sensor '
+  CASE(2054):
+  ALMDCP_f04 = 'Feeder Slave 1: No stud fed into pickup station'
+  CASE(2056):
+  ALMDCP_f04 = 'Feeder Slave 2: Stud fill level is low'
+  CASE(2057):
+  ALMDCP_f04 = 'Feeder Slave 2: Drum door not locked'
+  CASE(2058):
+  ALMDCP_f04 = 'Feeder Slave 2: Control board for drum motor is missing or defective'
+  CASE(2059):
+  ALMDCP_f04 = 'Feeder Slave 2: Voltage supply for drum motor is missing'
+  CASE(2060):
+  ALMDCP_f04 = 'Feeder Slave 2: Stud separation is disrupted'
+  CASE(2061):
+  ALMDCP_f04 = 'Feeder Slave 2: Malfunction stud arrival sensor '
+  CASE(2062):
+  ALMDCP_f04 = 'Feeder Slave 2: No stud fed into pickup station'
+  CASE(2064):
+  ALMDCP_f04 = 'Feeder Slave 3: Stud fill level is low'
+  CASE(2065):
+  ALMDCP_f04 = 'Feeder Slave 3: Drum door not locked'
+  CASE(2066):
+  ALMDCP_f04 = 'Feeder Slave 3: Control board for drum motor is missing or defective'
+  CASE(2067):
+  ALMDCP_f04 = 'Feeder Slave 3: Voltage supply for drum motor is missing'
+  CASE(2068):
+  ALMDCP_f04 = 'Feeder Slave 3: Stud separation is disrupted'
+  CASE(2069):
+  ALMDCP_f04 = 'Feeder Slave 3: Malfunction stud arrival sensor '
+  CASE(2070):
+  ALMDCP_f04 = 'Feeder Slave 3: No stud fed into pickup station'
+  CASE(2072):
+  ALMDCP_f04 = 'Feeder Slave 4: Stud fill level is low'
+  CASE(2073):
+  ALMDCP_f04 = 'Feeder Slave 4: Drum door not locked'
+  CASE(2074):
+  ALMDCP_f04 = 'Feeder Slave 4: Control board for drum motor is missing or defective'
+  CASE(2075):
+  ALMDCP_f04 = 'Feeder Slave 4: Voltage supply for drum motor is missing'
+  CASE(2076):
+  ALMDCP_f04 = 'Feeder Slave 4: Stud separation is disrupted'
+  CASE(2077):
+  ALMDCP_f04 = 'Feeder Slave 4: Malfunction stud arrival sensor '
+  CASE(2078):
+  ALMDCP_f04 = 'Feeder Slave 4: No stud fed into pickup station'
+  CASE(2080):
+  ALMDCP_f04 = 'Feeder Slave 5: Stud fill level is low'
+  CASE(2081):
+  ALMDCP_f04 = 'Feeder Slave 5: Drum door not locked'
+  CASE(2082):
+  ALMDCP_f04 = 'Feeder Slave 5: Control board for drum motor is missing or defective'
+  CASE(2083):
+  ALMDCP_f04 = 'Feeder Slave 5: Voltage supply for drum motor is missing'
+  CASE(2084):
+  ALMDCP_f04 = 'Feeder Slave 5: Stud separation is disrupted'
+  CASE(2085):
+  ALMDCP_f04 = 'Feeder Slave 5: Malfunction stud arrival sensor '
+  CASE(2086):
+  ALMDCP_f04 = 'Feeder Slave 5: No stud fed into pickup station'
+  CASE(2088):
+  ALMDCP_f04 = 'Feeder Slave 6: Stud fill level is low'
+  CASE(2089):
+  ALMDCP_f04 = 'Feeder Slave 6: Drum door not locked'
+  CASE(2090):
+  ALMDCP_f04 = 'Feeder Slave 6: Control board for drum motor is missing or defective'
+  CASE(2091):
+  ALMDCP_f04 = 'Feeder Slave 6: Voltage supply for drum motor is missing'
+  CASE(2092):
+  ALMDCP_f04 = 'Feeder Slave 6: Stud separation is disrupted'
+  CASE(2093):
+  ALMDCP_f04 = 'Feeder Slave 6: Malfunction stud arrival sensor '
+  CASE(2094):
+  ALMDCP_f04 = 'Feeder Slave 6: No stud fed into pickup station'
+  CASE(2096):
+  ALMDCP_f04 = 'Feeder Slave 7: Stud fill level is low'
+  CASE(2097):
+  ALMDCP_f04 = 'Feeder Slave 7: Drum door not locked'
+  CASE(2098):
+  ALMDCP_f04 = 'Feeder Slave 7: Control board for drum motor is missing or defective'
+  CASE(2099):
+  ALMDCP_f04 = 'Feeder Slave 7: Voltage supply for drum motor is missing'
+  CASE(2100):
+  ALMDCP_f04 = 'Feeder Slave 7: Stud separation is disrupted'
+  CASE(2101):
+  ALMDCP_f04 = 'Feeder Slave 7: Malfunction stud arrival sensor '
+  CASE(2102):
+  ALMDCP_f04 = 'Feeder Slave 7: No stud fed into pickup station'
+  CASE(2104):
+  ALMDCP_f04 = 'Feeder Slave 8: Stud fill level is low'
+  CASE(2105):
+  ALMDCP_f04 = 'Feeder Slave 8: Drum door not locked'
+  CASE(2106):
+  ALMDCP_f04 = 'Feeder Slave 8: Control board for drum motor is missing or defective'
+  CASE(2107):
+  ALMDCP_f04 = 'Feeder Slave 8: Voltage supply for drum motor is missing'
+  CASE(2108):
+  ALMDCP_f04 = 'Feeder Slave 8: Stud separation is disrupted'
+  CASE(2109):
+  ALMDCP_f04 = 'Feeder Slave 8: Malfunction stud arrival sensor '
+  CASE(2110):
+  ALMDCP_f04 = 'Feeder Slave 8: No stud fed into pickup station'
+  CASE(2112):
+  ALMDCP_f04 = 'Feeder Slave 9: Stud fill level is low'
+  CASE(2113):
+  ALMDCP_f04 = 'Feeder Slave 9: Drum door not locked'
+  CASE(2114):
+  ALMDCP_f04 = 'Feeder Slave 9: Control board for drum motor is missing or defective'
+  CASE(2115):
+  ALMDCP_f04 = 'Feeder Slave 9: Voltage supply for drum motor is missing'
+  CASE(2116):
+  ALMDCP_f04 = 'Feeder Slave 9: Stud separation is disrupted'
+  CASE(2117):
+  ALMDCP_f04 = 'Feeder Slave 9: Malfunction stud arrival sensor '
+  CASE(2118):
+  ALMDCP_f04 = 'Feeder Slave 9: No stud fed into pickup station'
+  CASE(2128):
+  ALMDCP_f04 = 'Weld Tool 1: Maintenance of weld tool required'
+  CASE(2129):
+  ALMDCP_f04 = 'Weld Tool 1: Maintenance of collet required'
+  CASE(2130):
+  ALMDCP_f04 = 'Weld Tool 1: Maintenance of user counter required'
+  CASE(2131):
+  ALMDCP_f04 = 'Feeder master: Maintenance of feeder required'
+  CASE(2132):
+  ALMDCP_f04 = 'Feeder master: Maintenance of feeding tube required'
+  CASE(2133):
+  ALMDCP_f04 = 'Divider 1: Maintenance of feeding tube after divider required'
+  CASE(2136):
+  ALMDCP_f04 = 'Weld Tool 2: Maintenance of weld tool required'
+  CASE(2137):
+  ALMDCP_f04 = 'Weld Tool 2: Maintenance of collet required'
+  CASE(2138):
+  ALMDCP_f04 = 'Weld Tool 2: Maintenance of user counter required'
+  CASE(2139):
+  ALMDCP_f04 = 'Feeder Slave 1: Maintenance of feeder required'
+  CASE(2140):
+  ALMDCP_f04 = 'Feeder Slave 1: Maintenance of feeding tube required'
+  CASE(2141):
+  ALMDCP_f04 = 'Divider 2: Maintenance of feeding tube after divider required'
+  CASE(2144):
+  ALMDCP_f04 = 'Weld Tool 3: Maintenance of weld tool required'
+  CASE(2145):
+  ALMDCP_f04 = 'Weld Tool 3: Maintenance of collet required'
+  CASE(2146):
+  ALMDCP_f04 = 'Weld Tool 3: Maintenance of user counter required'
+  CASE(2147):
+  ALMDCP_f04 = 'Feeder Slave 2: Maintenance of feeder required'
+  CASE(2148):
+  ALMDCP_f04 = 'Feeder Slave 2: Maintenance of feeding tube required'
+  CASE(2149):
+  ALMDCP_f04 = 'Divider 3: Maintenance of feeding tube after divider required'
+  CASE(2152):
+  ALMDCP_f04 = 'Weld Tool 4: Maintenance of weld tool required'
+  CASE(2153):
+  ALMDCP_f04 = 'Weld Tool 4: Maintenance of collet required'
+  CASE(2154):
+  ALMDCP_f04 = 'Weld Tool 4: Maintenance of user counter required'
+  CASE(2155):
+  ALMDCP_f04 = 'Feeder Slave 3: Maintenance of feeder required'
+  CASE(2156):
+  ALMDCP_f04 = 'Feeder Slave 3: Maintenance of feeding tube required'
+  CASE(2157):
+  ALMDCP_f04 = 'Divider 4: Maintenance of feeding tube after divider required'
+  CASE(2160):
+  ALMDCP_f04 = 'Weld Tool 5: Maintenance of weld tool required'
+  CASE(2161):
+  ALMDCP_f04 = 'Weld Tool 5: Maintenance of collet required'
+  CASE(2162):
+  ALMDCP_f04 = 'Weld Tool 5: Maintenance of user counter required'
+  CASE(2163):
+  ALMDCP_f04 = 'Feeder Slave 4: Maintenance of feeder required'
+  CASE(2164):
+  ALMDCP_f04 = 'Feeder Slave 4: Maintenance of feeding tube required'
+  CASE(2165):
+  ALMDCP_f04 = 'Divider 5: Maintenance of feeding tube after divider required'
+  CASE(2168):
+  ALMDCP_f04 = 'Weld Tool 6: Maintenance of weld tool required'
+  CASE(2169):
+  ALMDCP_f04 = 'Weld Tool 6: Maintenance of collet required'
+  CASE(2170):
+  ALMDCP_f04 = 'Weld Tool 6: Maintenance of user counter required'
+  CASE(2171):
+  ALMDCP_f04 = 'Feeder Slave 5: Maintenance of feeder required'
+  CASE(2172):
+  ALMDCP_f04 = 'Feeder Slave 5: Maintenance of feeding tube required'
+  CASE(2173):
+  ALMDCP_f04 = 'Divider 6: Maintenance of feeding tube after divider required'
+  CASE(2176):
+  ALMDCP_f04 = 'Weld Tool 7: Maintenance of weld tool required'
+  CASE(2177):
+  ALMDCP_f04 = 'Weld Tool 7: Maintenance of collet required'
+  CASE(2178):
+  ALMDCP_f04 = 'Weld Tool 7: Maintenance of user counter required'
+  CASE(2179):
+  ALMDCP_f04 = 'Feeder Slave 6: Maintenance of feeder required'
+  CASE(2180):
+  ALMDCP_f04 = 'Feeder Slave 6: Maintenance of feeding tube required'
+  CASE(2181):
+  ALMDCP_f04 = 'Divider 7: Maintenance of feeding tube after divider required'
+  CASE(2184):
+  ALMDCP_f04 = 'Weld Tool 8: Maintenance of weld tool required'
+  CASE(2185):
+  ALMDCP_f04 = 'Weld Tool 8: Maintenance of collet required'
+  CASE(2186):
+  ALMDCP_f04 = 'Weld Tool 8: Maintenance of user counter required'
+  CASE(2187):
+  ALMDCP_f04 = 'Feeder Slave 7: Maintenance of feeder required'
+  CASE(2188):
+  ALMDCP_f04 = 'Feeder Slave 7: Maintenance of feeding tube required'
+  CASE(2189):
+  ALMDCP_f04 = 'Divider 8: Maintenance of feeding tube after divider required'
+  CASE(2192):
+  ALMDCP_f04 = 'Weld Tool 9: Maintenance of weld tool required'
+  CASE(2193):
+  ALMDCP_f04 = 'Weld Tool 9: Maintenance of collet required'
+  CASE(2194):
+  ALMDCP_f04 = 'Weld Tool 9: Maintenance of user counter required'
+  CASE(2195):
+  ALMDCP_f04 = 'Feeder Slave 8: Maintenance of feeder required'
+  CASE(2196):
+  ALMDCP_f04 = 'Feeder Slave 8: Maintenance of feeding tube required'
+  CASE(2197):
+  ALMDCP_f04 = 'Divider 9: Maintenance of feeding tube after divider required'
+  CASE(2200):
+  ALMDCP_f04 = 'Weld Tool 10: Maintenance of weld tool required'
+  CASE(2201):
+  ALMDCP_f04 = 'Weld Tool 10: Maintenance of collet required'
+  CASE(2202):
+  ALMDCP_f04 = 'Weld Tool 10: Maintenance of user counter required'
+  CASE(2203):
+  ALMDCP_f04 = 'Feeder Slave 9: Maintenance of feeder required'
+  CASE(2204):
+  ALMDCP_f04 = 'Feeder Slave 9: Maintenance of feeding tube required'
+  CASE(2205):
+  ALMDCP_f04 = 'Divider 10: Maintenance of feeding tube after divider required'
+  ELSE:
+  ALMDCP_f04 = 'Undefined TUCKER DCP Fault Message'
+  -- stmt158 stray ALMDCP_f04
+  ENDSELECT
+  RETURN(sv_s)
+END ERROR_MSG
+
+BEGIN
+  SELECT pp00 OF
+  CASE(1):
+  ALMDCP_f04 = 'Weld tool remains in R position'
+  -- stmt60 stray ALMDCP_f04
+  ENDSELECT
+END MI20_SWH_DCP
+

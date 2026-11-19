@@ -1,0 +1,253 @@
+PROGRAM YAMAZUMI
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+%CMOS2SHADOW
+%INCLUDE kliotyps
+%INCLUDE Yam_Type
+-------------------------------------------------------------------------------------------
+----------------------------VARIABLE DECLARATIONS------------------------
+-------------------------------------------------------------------------------------------
+%INCLUDE Yam_Variables
+VAR		
+paramTyp								: INTEGER
+paramInt									: INTEGER
+paramReal								: REAL
+paramString							: STRING[10]
+YamAction								: STRING[5]
+YamDes									: STRING[80]
+YamCar									: STRING[4]
+entry										: INTEGER
+idx											: INTEGER
+testDisp									: REAL
+TimeRaw									: INTEGER
+ClockRead								: INTEGER
+NumReq									: INTEGER
+strNumReq								: STRING[4]
+STATUS									: INTEGER
+ClkStart IN SHADOW				: INTEGER
+ClkStop IN SHADOW				: INTEGER
+ClkSplit IN SHADOW				: ARRAY[255] OF INTEGER
+strClkSplit								: ARRAY[255] OF STRING[6]
+ClkSplitDes IN SHADOW		: ARRAY[255] OF STRING[26]
+ClkSplitAct IN SHADOW			: ARRAY[255] OF STRING[5]
+ClkSplitTime IN SHADOW		: ARRAY[255] OF STRING[18]
+ClkSplitMem							: INTEGER
+ProgNum									: INTEGER
+YamNo IN SHADOW				: INTEGER
+blEnd										: BOOLEAN
+div_num									: INTEGER
+calcVal										: ARRAY[255] OF REAL
+File260										: FILE
+overwrite_sw							: BOOLEAN
+nowait_sw								: BOOLEAN
+RobotName								: STRING[6]
+DestFile									: STRING[14]
+TimeDate								: STRING[18]
+StrDay										: STRING[2]
+IntDay										: INTEGER
+MemDay									: INTEGER
+DayChgd									: BOOLEAN
+-------------------------------------------------------------------------------------------
+------------------------------Routines-------------------------------------------------
+-------------------------------------------------------------------------------------------
+%INCLUDE Yam_Routines
+ROUTINE ClrX260Clock
+BEGIN
+	FOR idx = 1 TO 255 DO
+			ClkSplit[idx] = 0
+			ClkSplitDes[idx] = ''
+			ClkSplitAct[idx] = ''
+			ClkSplitTime[idx] = ''
+			ClkStart = 0
+			ClkStop = 0
+	ENDFOR
+END ClrX260Clock
+
+ROUTINE ChkDayChg
+--Check to see if its a new day and old Yamazumi File needs to be Archived
+BEGIN
+	DayChgd = FALSE
+	--Get Time and Date
+	GET_TIME(TimeRaw)
+	CNV_TIME_STR(TimeRaw, TimeDate)	
+	--Extract just the day
+	StrDay = SUB_STR(TimeDate,1,2)
+	CNV_STR_INT(StrDay, IntDay)
+	--Check for Uninitilised Data
+	IF UNINIT(MemDay) THEN
+		MemDay = IntDay
+	ENDIF
+	--If the day has changed set the flag
+	IF (MemDay <> IntDay) THEN
+		DayChgd = TRUE
+	ENDIF
+END ChkDayChg
+
+ROUTINE YamArchive
+BEGIN
+	overwrite_sw = TRUE 
+	nowait_sw = FALSE
+	
+	DELETE_FILE('FR:YAMAZUMI.CSV', nowait_sw,STATUS)
+	MemDay = IntDay
+	--Generate New File and Insert Column headers
+	OPEN FILE File260('AP', 'FR:YAMAZUMI.CSV')
+		  IF (IO_STATUS(File260) = 0) THEN
+				WRITE('FILE OPENED File260')
+				--Write all Yamazumi Data to the Opened File
+				WRITE File260('Robot Name,Timer Name, Duration MS, Action, Time/Date',CR)
+				--Close File once writing is complete
+				CLOSE FILE File260
+		  ELSE
+		    WRITE ('Error Opening File',CR)
+		  ENDIF
+END YamArchive
+
+BEGIN
+	--Clear the User Screen
+	WRITE(CHR(128))
+	--Get Robot Name
+	GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+	--Initilise Data
+	INIT
+	--Check for Day changed and Archiving Required
+	ChkDayChg
+	--Archive File to Server
+	IF DayChgd = TRUE THEN
+		YamArchive
+	ENDIF
+--------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------Read in Arguments----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
+	--Read in the 1st Argument which will be the Yamzumi Action - Start/Stop/VA/NVA/ENVA
+	GET_TPE_PRM(1,paramTyp,paramInt,paramReal,YamAction,STATUS)
+	IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN	
+		FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1)
+		WRITE('Invalid Yamazumi Action in Argument 1')	
+		ABORT
+	ENDIF
+	
+	--Read in the 2nd Argument which will be the Yamzumi Action Description
+	GET_TPE_PRM(2,paramTyp,paramInt,paramReal,YamDes,STATUS)
+	IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN	
+		FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1)
+		WRITE('Invalid Yamazumi Action Description in Argument 2')	
+		ABORT
+	ENDIF
+
+		--Read in the 3rd Argument which will be optional such as Area Req Num or Col Zone Req Num
+	GET_TPE_PRM(3,paramTyp,NumReq,paramReal,paramString,STATUS)
+--------------------------------------------------------------------------------------------------------------------------------
+
+	--Get Program Number from Numerical Register 160
+	GET_REG(160,FALSE, ProgNum, paramReal,STATUS)
+	WRITE TPERROR(CHR(128))
+	
+--Check Yamazumi is Switched in and Robot is in Auto
+IF((DOUT[3073] = ON) AND (DOUT[3094] = ON))THEN
+	
+	WRITE TPERROR('JLR: Yamazumi Active')
+	-------------------------------------------------------------------------------------------
+	-----------------------------Check Action For Start--------------------------------
+	-------------------------------------------------------------------------------------------
+		IF(YamAction = 'Start') OR (YamAction = 'START') THEN
+			--Clear the Old Clock Data
+			ClrX260Clock
+			GET_VAR(entry, '*SYSTEM*','$FAST_CLOCK',ClockRead,STATUS)
+			CNV_INT_STR(ProgNum,2,10,StrNumReq)
+			YamNo = 1
+			ClkStart = ClockRead
+			ClkSplitMem = ClockRead
+			ClkSplit[YamNo] = ClockRead
+			ClkSplitAct[YamNo] = YamAction
+			ClkSplitDes[YamNo] = YamDes + ' ' + StrNumReq
+			--Populate the Time and Date for this Yamzumi
+			GET_TIME(TimeRaw)
+			CNV_TIME_STR(TimeRaw, ClkSplitTime[YamNo])	
+			--Set End Flag to False
+			blEnd = FALSE
+			YamNo = YamNo +1
+			WRITE('START',CR)
+		ENDIF
+	
+	-------------------------------------------------------------------------------------------
+	-----------------------------Check For Process------------------------------------
+	-------------------------------------------------------------------------------------------
+		IF (YamAction = 'VA') OR (YamAction = 'NVA') OR (YamAction = 'ENVA') THEN
+			GET_VAR(entry, '*SYSTEM*','$FAST_CLOCK',ClockRead,STATUS)
+			ClkSplit[YamNo] = ClockRead
+			ClkSplitAct[YamNo] = YamAction
+			IF ((UNINIT(NumReq)) OR (NumReq = 0)) THEN
+				ClkSplitDes[YamNo] = YamDes
+			ELSE
+				CNV_INT_STR(NumReq,2,10,StrNumReq)
+				ClkSplitDes[YamNo] = YamDes + ' ' + StrNumReq
+			ENDIF
+			
+			--Populate the Time and Date for this Yamzumi
+			GET_TIME(TimeRaw)
+			CNV_TIME_STR(TimeRaw, ClkSplitTime[YamNo])	
+			--Calculate the time taken for the Previous Split
+			IF (YamNo > 1) THEN
+				-- Fast clock that is used equates to 500ms a Second Therefore times 2 to get correct value
+				ClkSplit[YamNo] = ((ClkSplit[YamNo] - ClkSplitMem) * 2)
+			ENDIF
+			
+			ClkSplitMem = ClockRead
+			YamNo = YamNo +1
+		ENDIF
+		
+	-------------------------------------------------------------------------------------------
+	-----------------------------Check Action For Stop---------------------------------
+	-------------------------------------------------------------------------------------------
+		IF(YamAction = 'end') OR (YamAction = 'END')  OR (YamAction = 'End')THEN
+			GET_VAR(entry, '*SYSTEM*','$FAST_CLOCK',ClockRead,STATUS)
+			ClkStop = ClockRead
+			--Calculate the time taken for the Previous Split
+			-- Fast clock that is used equates to 500ms a Second Therefore times 2 to get correct value
+			ClkSplit[YamNo] = ((ClkStop - ClkSplitMem)*2)
+			ClkSplitAct[YamNo] = YamAction
+			ClkSplitDes[YamNo] = YamDes
+			--Populate the Time and Date for this Yamzumi
+			GET_TIME(TimeRaw)
+			CNV_TIME_STR(TimeRaw, ClkSplitTime[YamNo])			
+			testDisp = (ClkStop - ClkStart)/1000
+			WRITE('STOP',CR)
+			WRITE(testDisp)
+			blEnd = TRUE
+		ENDIF	
+	
+	--If Stop command was issued the Data must be written to the file
+		IF(YamAction = 'end') OR (YamAction = 'END') OR (YamAction = 'End')THEN
+			
+			--For Start make Clk Split Prog Number * 1000...Matches ABB
+			ClkSplit[1] = ProgNum * 1000
+			
+			--Convert Clock Splits from Integer to String
+			FOR idx = 1 TO 255 DO
+				CNV_INT_STR(ClkSplit[idx],5,10,strClkSplit[idx])
+			ENDFOR
+			
+			--Open File Ready to write
+			OPEN FILE File260('AP','FR:YAMAZUMI.CSV')
+			  IF (IO_STATUS(File260) = 0) THEN
+					WRITE('FILE OPENED File260')
+					--Write all Yamazumi Data to the Opened File
+					FOR idx = 1 TO YamNo DO
+					WRITE File260(RobotName + ',' + ClkSplitDes[idx] + ',' + strClkSplit[idx] + ',' + ClkSplitAct[idx] + ',' + ClkSplitTime[idx],CR)
+					ENDFOR
+					--Close File once writing is complete
+					CLOSE FILE File260
+					WRITE(CR,STATUS)
+			  ELSE
+			  	
+			    DELAY(500)
+			    WRITE ('Error Opening File',CR)
+			     
+			  ENDIF
+		ENDIF
+ENDIF
+END YAMAZUMI

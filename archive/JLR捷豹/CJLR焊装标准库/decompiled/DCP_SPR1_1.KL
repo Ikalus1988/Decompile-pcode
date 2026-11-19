@@ -1,0 +1,1146 @@
+-- DCP_SPR1_1.KL (decompiled v3)
+PROGRAM DCP_SPR1_1
+%COMMENT = 'Version 1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : STRING[64]
+  v3 : REAL
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : REAL
+  v7 : INTEGER
+  v8 : REAL
+  v9 : INTEGER
+  v10 : REAL
+  v11 : INTEGER
+  v12 : REAL
+  v13 : INTEGER
+  v14 : REAL
+  v15 : INTEGER
+  v16 : REAL
+  v17 : INTEGER
+  v18 : STRING[64]
+  v19 : INTEGER
+  v20 : STRING[64]
+  v21 : INTEGER
+  v22 : REAL
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : REAL
+  DCPTEXT : REAL
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  FKEYS : ARRAY[10] OF STRING[12]
+  FKEY_SEL : INTEGER
+  BLPLC : BOOLEAN
+  BLSPR : BOOLEAN
+  BLSPOT : BOOLEAN
+  BLDISPENSE : BOOLEAN
+  BLMH : BOOLEAN
+  BLSTUD : BOOLEAN
+  BLNUT : BOOLEAN
+  BLISRA : BOOLEAN
+  BLQUISS : BOOLEAN
+  STATUS : INTEGER
+  PARAMTYP : INTEGER
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTDCPFAULT : INTEGER
+  INTPROGNUM : INTEGER
+  INTAREAINREQ : INTEGER
+  INTAREAOUTRL : INTEGER
+  INTTOOLREQ : INTEGER
+  INTJOBDONE : INTEGER
+  INTCOLREQ : INTEGER
+  INTCOLREL : INTEGER
+  INTRIVID : INTEGER
+  INTOPEN : INTEGER
+  INTHENERROR : INTEGER
+  PARAMREAL : REAL
+  REALDUMMY : REAL
+  PARAMSTRING : STRING[10]
+  DCPFAULTNUM : STRING[5]
+  STRPROGNUM : STRING[3]
+  STRAREANUM : STRING[3]
+  STRAREAINREQ : STRING[3]
+  STRAREAOUTRL : STRING[3]
+  STRTOOLREQ : STRING[3]
+  STRJOBDONE : STRING[3]
+  STRCOLREQ : STRING[3]
+  STRCOLREL : STRING[3]
+  STRRIVID : STRING[3]
+  STRDCPNUM : STRING[4]
+  STROPEN : STRING[4]
+  STRHENERROR : STRING[4]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STRADDDCPTXT : STRING[20]
+  v23_f00 : INTEGER
+  v23_f04 : STRING[64]
+  v23_f30 : STRING[64]
+  v23_f5c : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE imp5(p0 : INTEGER; p1 : REAL; p2 : STRING) : INTEGER FROM MI_LIB
+
+BEGIN
+  CNV_INT_STR(18, 1, v1, v2)
+  GET_REG(v1, (3 <> 0), 10, v3, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(151, '', v4)
+  -- 弃参原式: 0
+  GET_REG(v4, (3 <> 0), 10, v6, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(152, '', v7)
+  -- 弃参原式: 0
+  GET_REG(v7, (3 <> 0), 10, v8, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(153, '', v9)
+  -- 弃参原式: 0
+  GET_REG(v9, (3 <> 0), 10, v10, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(154, '', v11)
+  -- 弃参原式: 0
+  GET_REG(v11, (3 <> 0), 10, v12, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(156, '', v13)
+  -- 弃参原式: 0
+  GET_REG(v13, (3 <> 0), 10, v14, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(157, '', v15)
+  -- 弃参原式: 0
+  GET_REG(v15, (3 <> 0), 10, v16, 0)
+  -- 弃参原式: 3
+  SET_STR_REG(86, '', v17)
+  -- 弃参原式: 0
+  GET_REG(v17, (3 <> 0), 0, 0.0, 0)
+  -- 弃参原式: 3 | v18 | v18
+  SET_STR_REG(84, '', v19)
+  -- 弃参原式: 0
+  GET_REG(v19, (3 <> 0), 0, 0.0, 0)
+  -- 弃参原式: 3 | v20 | v20
+  CNV_INT_STR(18, 90, v21, v2)
+  GET_REG(v21, (3 <> 0), 0, v22, 0)
+  -- 弃参原式: 3
+  SELECT v23_f00 OF
+  CASE(503):
+  v23_f04 = 'Pneumatic Die Check Failed'
+  v23_f00 = 503
+  v24 = 4
+  CASE(561):
+  v23_f04 = 'Bus Tool 1 Cube A'
+  v23_f00 = 561
+  CASE(562):
+  v23_f04 = 'Bus Tool 1 Cube B'
+  v23_f00 = 562
+  CASE(563):
+  v23_f04 = 'Bus Tool 2 Cube A'
+  v23_f00 = 563
+  CASE(564):
+  v23_f04 = 'Bus Tool 2 Cube B'
+  v23_f00 = 564
+  CASE(565):
+  v23_f04 = 'Bus Tool 3 Cube A'
+  v23_f00 = 565
+  CASE(566):
+  v23_f04 = 'Bus Stand Tool 1'
+  v23_f00 = 566
+  CASE(567):
+  v23_f04 = 'Bus Stand Tool 2'
+  v23_f00 = 567
+  CASE(568):
+  v23_f04 = 'Bus Stand Tool 3'
+  v23_f00 = 568
+  CASE(569):
+  v23_f04 = 'Bus BL20toDrive'
+  v23_f00 = 569
+  CASE(570):
+  v23_f04 = 'Bus Tool 3 Cube B'
+  v23_f00 = 570
+  CASE(571):
+  v23_f04 = 'Bus Tool'
+  v23_f00 = 571
+  CASE(572):
+  v23_f04 = 'Bus Selector'
+  v23_f00 = 572
+  CASE(573):
+  v23_f04 = 'Bus IBUS Gateway'
+  v23_f00 = 573
+  CASE(574):
+  v23_f04 = 'Spare'
+  v23_f00 = 574
+  CASE(575):
+  v23_f04 = 'Spare'
+  v23_f00 = 575
+  CASE(576):
+  v23_f04 = 'Spare'
+  v23_f00 = 576
+  CASE(577):
+  v23_f04 = 'Following Error'
+  v23_f00 = 577
+  CASE(578):
+  v23_f04 = 'Encoder HW'
+  v23_f00 = 578
+  CASE(579):
+  v23_f04 = 'Drive Over Temp'
+  v23_f00 = 579
+  CASE(580):
+  v23_f04 = 'Drive UnderVoltage'
+  v23_f00 = 580
+  CASE(581):
+  v23_f04 = 'Control Voltage'
+  v23_f00 = 581
+  CASE(582):
+  v23_f04 = 'Motor OverTemp'
+  v23_f00 = 582
+  CASE(583):
+  v23_f04 = 'Drive OverCurrent'
+  v23_f00 = 583
+  CASE(584):
+  v23_f04 = 'Home Failed'
+  v23_f00 = 584
+  CASE(585):
+  v23_f04 = 'Cannot Verify Home'
+  v23_f00 = 585
+  CASE(586):
+  v23_f04 = 'Home Required'
+  v23_f00 = 586
+  CASE(587):
+  v23_f04 = 'Over Travel'
+  v23_f00 = 587
+  CASE(588):
+  v23_f04 = 'Under Travel'
+  v23_f00 = 588
+  CASE(589):
+  v23_f04 = 'Compliant Pressure Low'
+  v23_f00 = 589
+  CASE(590):
+  v23_f04 = 'Spare'
+  v23_f00 = 590
+  CASE(591):
+  v23_f04 = 'Invalid Partial'
+  v23_f00 = 591
+  CASE(592):
+  v23_f04 = 'Drive Fault'
+  v23_f00 = 592
+  CASE(593):
+  v23_f04 = 'No App Sel'
+  v23_f00 = 593
+  CASE(594):
+  v23_f04 = 'Invalid Force'
+  v23_f00 = 594
+  CASE(595):
+  v23_f04 = 'No Tool Sel'
+  v23_f00 = 595
+  CASE(596):
+  v23_f04 = 'Feed Nose Switch'
+  v23_f00 = 596
+  CASE(597):
+  v23_f04 = 'No Riv Type Sel'
+  v23_f00 = 597
+  CASE(598):
+  v23_f04 = 'Cab Disabled'
+  v23_f00 = 598
+  CASE(599):
+  v23_f04 = 'Excessive Cycle Time'
+  v23_f00 = 599
+  CASE(600):
+  v23_f04 = 'Unable To Power Down'
+  v23_f00 = 600
+  CASE(601):
+  v23_f04 = 'Remove Rivets B4'
+  v23_f00 = 601
+  CASE(602):
+  v23_f04 = 'Incorrect Cal'
+  v23_f00 = 602
+  CASE(603):
+  v23_f04 = 'CB F1 Tripped'
+  v23_f00 = 603
+  CASE(604):
+  v23_f04 = 'CB F4 Tripped'
+  v23_f00 = 604
+  CASE(605):
+  v23_f04 = 'System Fault'
+  v23_f00 = 605
+  CASE(606):
+  v23_f04 = 'RivMon Not Triggered'
+  v23_f00 = 606
+  CASE(607):
+  v23_f04 = 'RivMon Not Ready'
+  v23_f00 = 607
+  CASE(608):
+  v23_f04 = 'RivMon Comms'
+  v23_f00 = 608
+  CASE(609):
+  v23_f04 = 'Transfer Fail 1'
+  v23_f00 = 609
+  CASE(610):
+  v23_f04 = 'Transfer Fail 2'
+  v23_f00 = 610
+  CASE(611):
+  v23_f04 = 'Transfer Fail 3'
+  v23_f00 = 611
+  CASE(612):
+  v23_f04 = 'Selector Not At A'
+  v23_f00 = 612
+  CASE(613):
+  v23_f04 = 'Selector Not At B'
+  v23_f00 = 613
+  CASE(614):
+  v23_f04 = 'SelRivDetectSenMissed'
+  v23_f00 = 614
+  CASE(615):
+  v23_f04 = 'Selector Not At AorB'
+  v23_f00 = 615
+  CASE(616):
+  v23_f04 = 'RLC Wrong Rivet 1A'
+  v23_f00 = 616
+  CASE(617):
+  v23_f04 = 'RLC Incorrect Fixed Limits 1A'
+  v23_f00 = 617
+  CASE(618):
+  v23_f04 = 'RLC No Rivet To Measure 1A'
+  v23_f00 = 618
+  CASE(619):
+  v23_f04 = 'RLC Probe Failed 1A'
+  v23_f00 = 619
+  CASE(620):
+  v23_f04 = 'Feed Riv Not Esc'
+  v23_f00 = 620
+  CASE(621):
+  v23_f04 = 'Feed RIF'
+  v23_f00 = 621
+  CASE(622):
+  v23_f04 = 'Feed MRIN'
+  v23_f00 = 622
+  CASE(623):
+  v23_f04 = 'Feed Probe Back'
+  v23_f00 = 623
+  CASE(624):
+  v23_f04 = 'Feed Probe Not Back'
+  v23_f00 = 624
+  CASE(625):
+  v23_f04 = 'Feed RIT'
+  v23_f00 = 625
+  CASE(626):
+  v23_f04 = 'Unknown Rivet IN Nose'
+  v23_f00 = 626
+  CASE(627):
+  v23_f04 = 'Feed Wrong Riv In Nose'
+  v23_f00 = 627
+  CASE(628):
+  v23_f04 = 'Cube 1A Riv Not Escaped'
+  v23_f00 = 628
+  CASE(629):
+  v23_f04 = 'Cube 1A Bowl Run'
+  v23_f00 = 629
+  CASE(630):
+  v23_f04 = 'Cube 1A Esc Sensor'
+  v23_f00 = 630
+  CASE(631):
+  v23_f04 = 'Cube 1B Riv Not Escaped'
+  v23_f00 = 631
+  CASE(632):
+  v23_f04 = 'Cube 1B Bowl Run'
+  v23_f00 = 632
+  CASE(633):
+  v23_f04 = 'Cube 1B Esc Sensor'
+  v23_f00 = 633
+  CASE(634):
+  v23_f04 = 'Cube 2A Riv Not Escaped'
+  v23_f00 = 634
+  CASE(635):
+  v23_f04 = 'Cube 2A Bowl Run'
+  v23_f00 = 635
+  CASE(636):
+  v23_f04 = 'Cube 2A Esc Sensor'
+  v23_f00 = 636
+  CASE(637):
+  v23_f04 = 'Cube 2B Riv Not Escaped'
+  v23_f00 = 637
+  CASE(638):
+  v23_f04 = 'Cube 2B Bowl Run'
+  v23_f00 = 638
+  CASE(639):
+  v23_f04 = 'Cube 2B Esc Sensor'
+  v23_f00 = 639
+  CASE(640):
+  v23_f04 = 'Cube 3A Riv Not Escaped'
+  v23_f00 = 640
+  CASE(641):
+  v23_f04 = 'Cube 3A Bowl Run'
+  v23_f00 = 641
+  CASE(642):
+  v23_f04 = 'Cube 3A Esc Sensor'
+  v23_f00 = 642
+  CASE(643):
+  v23_f04 = 'Stand1 Gate Not Closed'
+  v23_f00 = 643
+  CASE(644):
+  v23_f04 = 'Stand1 Gate Not Open'
+  v23_f00 = 644
+  CASE(645):
+  v23_f04 = 'Stand1 Dock Sensor On B4'
+  v23_f00 = 645
+  CASE(646):
+  v23_f04 = 'Mag1 Mag Gate Wrong B4'
+  v23_f00 = 646
+  CASE(647):
+  v23_f04 = 'Mag1 Stand Gate Wrong B4'
+  v23_f00 = 647
+  CASE(648):
+  v23_f04 = 'Mag1 Probe Not Back A'
+  v23_f00 = 648
+  CASE(649):
+  v23_f04 = 'Mag1 Probe Not Back B'
+  v23_f00 = 649
+  CASE(650):
+  v23_f04 = 'Mag1 Shuttle Not Closed'
+  v23_f00 = 650
+  CASE(651):
+  v23_f04 = 'Mag1 Shuttle Not Open'
+  v23_f00 = 651
+  CASE(652):
+  v23_f04 = 'Stand1 Probe Not Back'
+  v23_f00 = 652
+  CASE(653):
+  v23_f04 = 'Mag2 Gate Not Closed'
+  v23_f00 = 653
+  CASE(654):
+  v23_f04 = 'Mag2 Gate Not Open'
+  v23_f00 = 654
+  CASE(655):
+  v23_f04 = 'Stand2 Dock Sensor On B4'
+  v23_f00 = 655
+  CASE(656):
+  v23_f04 = 'Mag2 Mag Gate Wrong B4'
+  v23_f00 = 656
+  CASE(657):
+  v23_f04 = 'Mag2 Stand Gate Wrong B4'
+  v23_f00 = 657
+  CASE(658):
+  v23_f04 = 'Mag2 Probe Not Back A'
+  v23_f00 = 658
+  CASE(659):
+  v23_f04 = 'Mag2 Probe Not Back B'
+  v23_f00 = 659
+  CASE(660):
+  v23_f04 = 'Mag2 Shuttle Not Closed'
+  v23_f00 = 660
+  CASE(661):
+  v23_f04 = 'Mag2 Shuttle Not Open'
+  v23_f00 = 661
+  CASE(662):
+  v23_f04 = 'Stand2 Probe Not Back'
+  v23_f00 = 662
+  CASE(663):
+  v23_f04 = 'Mag3 Gate Not Closed'
+  v23_f00 = 663
+  CASE(664):
+  v23_f04 = 'Mag3 Gate Not Open'
+  v23_f00 = 664
+  CASE(665):
+  v23_f04 = 'Stand3 Dock Sensor On B4'
+  v23_f00 = 665
+  CASE(666):
+  v23_f04 = 'Mag3 Mag Gate Wrong B4'
+  v23_f00 = 666
+  CASE(667):
+  v23_f04 = 'Mag3 Stand Gate Wrong B4'
+  v23_f00 = 667
+  CASE(668):
+  v23_f04 = 'Mag3 Probe Back A'
+  v23_f00 = 668
+  CASE(669):
+  v23_f04 = 'Mag3 Shuttle Not Closed'
+  v23_f00 = 669
+  CASE(670):
+  v23_f04 = 'Mag3 Shuttle Not Open'
+  v23_f00 = 670
+  CASE(671):
+  v23_f04 = 'Stand3 Probe Not Back'
+  v23_f00 = 671
+  CASE(672):
+  v23_f04 = 'Tape Cut Fault'
+  v23_f00 = 672
+  CASE(673):
+  v23_f04 = 'Sprocket Nose Switch Fault'
+  v23_f00 = 673
+  CASE(674):
+  v23_f04 = 'Sprocket Feed Fault'
+  v23_f00 = 674
+  CASE(675):
+  v23_f04 = 'Sprocket Cont Feed Fault'
+  v23_f00 = 675
+  CASE(676):
+  v23_f04 = 'RIN Dry Cycle Mode'
+  v23_f00 = 676
+  CASE(677):
+  v23_f04 = 'RLC Track Fail 1A'
+  v23_f00 = 677
+  CASE(678):
+  v23_f04 = 'RLC Wrong Rivet 1B'
+  v23_f00 = 678
+  CASE(679):
+  v23_f04 = 'RLC Incorrect Fixed Limits 1B'
+  v23_f00 = 679
+  CASE(680):
+  v23_f04 = 'RLC No Rivet to Measure 1B'
+  v23_f00 = 680
+  CASE(681):
+  v23_f04 = 'RLC Probe Failed 1B'
+  v23_f00 = 681
+  CASE(682):
+  v23_f04 = 'RLC Track Fail 1B'
+  v23_f00 = 682
+  CASE(683):
+  v23_f04 = 'Stand FOPD Adv Sens Stuck ON'
+  v23_f00 = 683
+  CASE(684):
+  v23_f04 = 'Stand1 FOPD Cyl Stuck Fwd'
+  v23_f00 = 684
+  CASE(685):
+  v23_f04 = 'Stand1 FOPD Ret Sens Stuck ON'
+  v23_f00 = 685
+  CASE(686):
+  v23_f04 = 'Stand1 FOPD Adv Sens Not ON'
+  v23_f00 = 686
+  CASE(687):
+  v23_f04 = 'Stand1 No Robot Clear Sig'
+  v23_f00 = 687
+  CASE(688):
+  v23_f04 = 'Unknown Rivet IN Nose Track'
+  v23_f00 = 688
+  CASE(689):
+  v23_f04 = 'Process Missing Rivet'
+  v23_f00 = 689
+  CASE(690):
+  v23_f04 = 'Process Double Rivet'
+  v23_f00 = 690
+  CASE(691):
+  v23_f04 = 'Process Velocity Too Fast'
+  v23_f00 = 691
+  CASE(692):
+  v23_f04 = 'Process Velocity Too Slow'
+  v23_f00 = 692
+  CASE(693):
+  v23_f04 = 'Process Material Too Thin'
+  v23_f00 = 693
+  CASE(694):
+  v23_f04 = 'Process Material Too Thick'
+  v23_f00 = 694
+  CASE(695):
+  v23_f04 = 'Process Rivet Too Long'
+  v23_f00 = 695
+  CASE(696):
+  v23_f04 = 'Process Rivet Too Short'
+  v23_f00 = 696
+  CASE(697):
+  v23_f04 = 'Process Head Height Too High'
+  v23_f00 = 697
+  CASE(698):
+  v23_f04 = 'Process Head Height Too Low'
+  v23_f00 = 698
+  CASE(699):
+  v23_f04 = 'Process Insertion Time'
+  v23_f00 = 699
+  CASE(700):
+  v23_f04 = 'Process Material Too Hard'
+  v23_f00 = 700
+  CASE(701):
+  v23_f04 = 'Process Material Too Soft'
+  v23_f00 = 701
+  CASE(702):
+  v23_f04 = 'Process Wrong Material 1'
+  v23_f00 = 702
+  CASE(703):
+  v23_f04 = 'Process Wrong Material 2'
+  v23_f00 = 703
+  CASE(704):
+  v23_f04 = 'Process Tol Error'
+  v23_f00 = 704
+  CASE(705):
+  v23_f04 = 'RLC Wrong Rivet 2A'
+  v23_f00 = 705
+  CASE(706):
+  v23_f04 = 'RLC Incorrect Fixed Limits 2A'
+  v23_f00 = 706
+  CASE(707):
+  v23_f04 = 'RLC No Rivet to Measure 2A'
+  v23_f00 = 707
+  CASE(708):
+  v23_f04 = 'RLC Probe Failed 2A'
+  v23_f00 = 708
+  CASE(709):
+  v23_f04 = 'RLC Track Fail 2A'
+  v23_f00 = 709
+  CASE(710):
+  v23_f04 = 'RLC Wrong Rivet 2B'
+  v23_f00 = 710
+  CASE(711):
+  v23_f04 = 'RLC Incorrect Fixed Limits 2B'
+  v23_f00 = 711
+  CASE(712):
+  v23_f04 = 'RLC No Rivet to Measure 2B'
+  v23_f00 = 712
+  CASE(713):
+  v23_f04 = 'RLC Probe Failed 2B'
+  v23_f00 = 713
+  CASE(714):
+  v23_f04 = 'RLC Track Fail 2B'
+  v23_f00 = 714
+  CASE(715):
+  v23_f04 = 'RLC Wrong Rivet 3A'
+  v23_f00 = 715
+  CASE(716):
+  v23_f04 = 'RLC Incorrect Fixed Limits 3A'
+  v23_f00 = 716
+  CASE(717):
+  v23_f04 = 'RLC No Rivet to Measure 3A'
+  v23_f00 = 717
+  CASE(718):
+  v23_f04 = 'RLC Probe Failed 3A'
+  v23_f00 = 718
+  CASE(719):
+  v23_f04 = 'RLC Track Fail 3A'
+  v23_f00 = 719
+  CASE(720):
+  v23_f04 = 'RLC Wrong Rivet 3B'
+  v23_f00 = 720
+  CASE(721):
+  v23_f04 = 'RLC Incorrect Fixed Limits 3B'
+  v23_f00 = 721
+  CASE(722):
+  v23_f04 = 'RLC No Rivet to Measure 3B'
+  v23_f00 = 722
+  CASE(723):
+  v23_f04 = 'Cube 1A Rivet In Tube '
+  v23_f00 = 723
+  CASE(724):
+  v23_f04 = 'Cube 1B Rivet In Tube'
+  v23_f00 = 724
+  CASE(725):
+  v23_f04 = 'Feed No Riv In Gate'
+  v23_f00 = 725
+  CASE(726):
+  v23_f04 = 'Feed RIMT'
+  v23_f00 = 726
+  CASE(727):
+  v23_f04 = 'Stand1 Dock Sensor OFF'
+  v23_f00 = 727
+  CASE(728):
+  v23_f04 = 'Stand2 Dock Sensor OFF'
+  v23_f00 = 728
+  CASE(729):
+  v23_f04 = 'Stand3 Dock Sensor OFF'
+  v23_f00 = 729
+  CASE(730):
+  v23_f04 = 'Mag Gate Not At Mid'
+  v23_f00 = 730
+  CASE(731):
+  v23_f04 = 'Mag Probe A Stuck Back'
+  v23_f00 = 731
+  CASE(732):
+  v23_f04 = 'Mag Probe B Stuck Back'
+  v23_f00 = 732
+  CASE(733):
+  v23_f04 = 'Feed Riv In Gate B4'
+  v23_f00 = 733
+  CASE(734):
+  v23_f04 = 'Cube1ARivInTubeSen'
+  v23_f00 = 734
+  CASE(735):
+  v23_f04 = 'Cube1AEscGateNotATtrack'
+  v23_f00 = 735
+  CASE(736):
+  v23_f04 = 'Cube1AEscGateNotATtube'
+  v23_f00 = 736
+  CASE(737):
+  v23_f04 = 'Cube1ARivStuckInGate'
+  v23_f00 = 737
+  CASE(738):
+  v23_f04 = 'Cube1BRivInTubeSen'
+  v23_f00 = 738
+  CASE(739):
+  v23_f04 = 'Cube1BEscGateNotATtrack'
+  v23_f00 = 739
+  CASE(740):
+  v23_f04 = 'Cube1BEscGateNotATtube'
+  v23_f00 = 740
+  CASE(741):
+  v23_f04 = 'Cube1BRivStuckInGate'
+  v23_f00 = 741
+  CASE(742):
+  v23_f04 = 'ToolRivDetectSenMissed'
+  v23_f00 = 742
+  CASE(743):
+  v23_f04 = 'PY 1A: Platform failed to vent'
+  v23_f00 = 743
+  CASE(744):
+  v23_f04 = 'PY 1A: UDP Communication Error'
+  v23_f00 = 744
+  CASE(745):
+  v23_f04 = 'PY 1B: Incorrect Tag detected'
+  v23_f00 = 745
+  CASE(746):
+  v23_f04 = 'PY 1B: Cylinder not at Ready position'
+  v23_f00 = 746
+  CASE(747):
+  v23_f04 = 'PY 1B: Cylinder not at Locked position'
+  v23_f00 = 747
+  CASE(748):
+  v23_f04 = 'PY 1B: RFID Reader Error'
+  v23_f00 = 748
+  CASE(749):
+  v23_f04 = 'PY 1B: Low Level Sensor Error'
+  v23_f00 = 749
+  CASE(750):
+  v23_f04 = 'PY 1B: Rivets failed to enter Hopper'
+  v23_f00 = 750
+  CASE(751):
+  v23_f04 = 'PY 1B: Platform failed to vent'
+  v23_f00 = 751
+  CASE(752):
+  v23_f04 = 'PY 1B: UDP Communication Error'
+  v23_f00 = 752
+  CASE(753):
+  v23_f04 = 'PY 2A: Incorrect Tag detected'
+  v23_f00 = 753
+  CASE(754):
+  v23_f04 = 'PY 2A: Cylinder not at Ready position'
+  v23_f00 = 754
+  CASE(755):
+  v23_f04 = 'PY 2A: Cylinder not at Locked position'
+  v23_f00 = 755
+  CASE(756):
+  v23_f04 = 'PY 2A: RFID Reader Error'
+  v23_f00 = 756
+  CASE(757):
+  v23_f04 = 'PY 2A: Low Level Sensor Error'
+  v23_f00 = 757
+  CASE(758):
+  v23_f04 = 'PY 2A: Rivets failed to enter Hopper'
+  v23_f00 = 758
+  CASE(759):
+  v23_f04 = 'PY 2A: Platform failed to vent'
+  v23_f00 = 759
+  CASE(760):
+  v23_f04 = 'PY 2A: UDP Communication Error'
+  v23_f00 = 760
+  CASE(761):
+  v23_f04 = 'PY 2B: Incorrect Tag detected'
+  v23_f00 = 761
+  CASE(762):
+  v23_f04 = 'PY 2B: Cylinder not at Ready position'
+  v23_f00 = 762
+  CASE(763):
+  v23_f04 = 'PY 2B: Cylinder not at Locked position'
+  v23_f00 = 763
+  CASE(764):
+  v23_f04 = 'PY 2B: RFID Reader Error'
+  v23_f00 = 764
+  CASE(765):
+  v23_f04 = 'PY 2B: Low Level Sensor Error'
+  v23_f00 = 765
+  CASE(766):
+  v23_f04 = 'PY 2B: Rivets failed to enter Hopper'
+  v23_f00 = 766
+  CASE(767):
+  v23_f04 = 'PY 2B: Platform failed to vent'
+  v23_f00 = 767
+  CASE(768):
+  v23_f04 = 'PY 2B: UDP Communication Error'
+  v23_f00 = 768
+  CASE(769):
+  v23_f04 = 'PY 3A: Incorrect Tag detected'
+  v23_f00 = 769
+  CASE(770):
+  v23_f04 = 'PY 3A: Cylinder not at Ready position'
+  v23_f00 = 770
+  CASE(771):
+  v23_f04 = 'PY 3A: Cylinder not at Locked position'
+  v23_f00 = 771
+  CASE(772):
+  v23_f04 = 'PY 3A: RFID Reader Error'
+  v23_f00 = 772
+  CASE(773):
+  v23_f04 = 'PY 3A: Low Level Sensor Error'
+  v23_f00 = 773
+  CASE(774):
+  v23_f04 = 'PY 3A: Rivets failed to enter Hopper'
+  v23_f00 = 774
+  CASE(775):
+  v23_f04 = 'PY 3A: Platform failed to vent'
+  v23_f00 = 775
+  CASE(776):
+  v23_f04 = 'PY 3A: UDP Communication Error'
+  v23_f00 = 776
+  CASE(777):
+  v23_f04 = 'PY 3B: Incorrect Tag detected'
+  v23_f00 = 777
+  CASE(778):
+  v23_f04 = 'PY 3B: Cylinder not at Ready position'
+  v23_f00 = 778
+  CASE(779):
+  v23_f04 = 'PY 3B: Cylinder not at Locked position'
+  v23_f00 = 779
+  CASE(780):
+  v23_f04 = 'PY 3B: RFID Reader Error'
+  v23_f00 = 780
+  CASE(781):
+  v23_f04 = 'Die Check Camera: Communications Failure'
+  v23_f00 = 781
+  CASE(782):
+  v23_f04 = 'Die Check Camera: Configuration Incorrect'
+  v23_f00 = 782
+  CASE(783):
+  v23_f04 = 'Cube - Stand: No Rivet seen by Stand 2At'
+  v23_f00 = 783
+  CASE(784):
+  v23_f04 = 'Cube - Stand: No Rivet seen by Stand 2Br'
+  v23_f00 = 784
+  CASE(785):
+  v23_f04 = 'Robot Mode Selection Error'
+  v23_f00 = 785
+  CASE(786):
+  v23_f04 = 'Selector not at A or B'
+  v23_f00 = 786
+  CASE(787):
+  v23_f04 = 'Spare'
+  v23_f00 = 787
+  CASE(788):
+  v23_f04 = 'Spare'
+  v23_f00 = 788
+  CASE(789):
+  v23_f04 = 'Spare'
+  v23_f00 = 789
+  CASE(790):
+  v23_f04 = 'Spare'
+  v23_f00 = 790
+  CASE(791):
+  v23_f04 = 'Spare'
+  v23_f00 = 791
+  CASE(792):
+  v23_f04 = 'Spare'
+  v23_f00 = 792
+  CASE(793):
+  v23_f04 = 'Spare'
+  v23_f00 = 793
+  CASE(794):
+  v23_f04 = 'Spare'
+  v23_f00 = 794
+  CASE(795):
+  v23_f04 = 'Spare'
+  v23_f00 = 795
+  CASE(796):
+  v23_f04 = 'Spare'
+  v23_f00 = 796
+  CASE(797):
+  v23_f04 = 'Spare'
+  v23_f00 = 797
+  CASE(798):
+  v23_f04 = 'Spare'
+  v23_f00 = 798
+  CASE(799):
+  v23_f04 = 'Spare'
+  v23_f00 = 799
+  CASE(800):
+  v23_f04 = 'Spare'
+  v23_f00 = 800
+  CASE(801):
+  v23_f04 = 'Spare'
+  v23_f00 = 801
+  CASE(802):
+  v23_f04 = 'Spare'
+  v23_f00 = 802
+  CASE(803):
+  v23_f04 = 'Spare'
+  v23_f00 = 803
+  CASE(804):
+  v23_f04 = 'Spare'
+  v23_f00 = 804
+  CASE(805):
+  v23_f04 = 'Spare'
+  v23_f00 = 805
+  CASE(806):
+  v23_f04 = 'Spare'
+  v23_f00 = 806
+  CASE(807):
+  v23_f04 = 'Spare'
+  v23_f00 = 807
+  CASE(808):
+  v23_f04 = 'Spare'
+  v23_f00 = 808
+  CASE(809):
+  v23_f04 = 'Spare'
+  v23_f00 = 809
+  CASE(810):
+  v23_f04 = 'Spare'
+  v23_f00 = 810
+  CASE(811):
+  v23_f04 = 'Spare'
+  v23_f00 = 811
+  CASE(812):
+  v23_f04 = 'Spare'
+  v23_f00 = 812
+  CASE(813):
+  v23_f04 = 'Spare'
+  v23_f00 = 813
+  CASE(814):
+  v23_f04 = 'Spare'
+  v23_f00 = 814
+  CASE(815):
+  v23_f04 = 'E-Stop Active, Robot Fault Reset Required'
+  v23_f00 = 815
+  CASE(816):
+  v23_f04 = ''
+  v23_f00 = 816
+  CASE(817):
+  v23_f04 = ''
+  v23_f00 = 817
+  CASE(818):
+  v23_f04 = ''
+  v23_f00 = 818
+  CASE(819):
+  v23_f04 = ''
+  v23_f00 = 819
+  CASE(820):
+  v23_f04 = 'This SPR tool out of range : 1 to MAX'
+  v23_f00 = 820
+  CASE(821):
+  v23_f04 = 'Select toolID out of range : 1 to MAX'
+  v23_f00 = 821
+  CASE(822):
+  v23_f04 = 'This SPR rivetID < 1 or > MAX'
+  v23_f00 = 822
+  CASE(823):
+  v23_f04 = 'This SPR rivet type invalid'
+  v23_f00 = 823
+  CASE(824):
+  v23_f04 = 'Equalization type not valid'
+  v23_f00 = 824
+  CASE(825):
+  v23_f04 = ''
+  v23_f00 = 825
+  CASE(826):
+  v23_f04 = 'Previous Rivet not Reset (Ok/NOK)'
+  v23_f30 = 'Check if Current Rivet has been Set'
+  v23_f5c = 'Ack = Set           Retry = Not Set'
+  v23_f00 = 826
+  v24 = 3
+  CASE(827):
+  v23_f04 = ''
+  v23_f00 = 827
+  CASE(828):
+  v23_f04 = ''
+  v23_f00 = 828
+  CASE(829):
+  v23_f04 = ''
+  v23_f00 = 829
+  CASE(830):
+  v23_f04 = 'This pre opening < MIN'
+  v23_f00 = 830
+  CASE(831):
+  v23_f04 = 'This pre opening > MAX'
+  v23_f00 = 831
+  CASE(832):
+  v23_f04 = 'This pre opening is INVALID'
+  v23_f00 = 832
+  CASE(833):
+  v23_f04 = 'This post opening < MIN'
+  v23_f00 = 833
+  CASE(834):
+  v23_f04 = 'This post opening > MAX'
+  v23_f00 = 834
+  CASE(835):
+  v23_f04 = 'This post opening is INVALID'
+  v23_f00 = 835
+  CASE(836):
+  v23_f04 = 'Next post opening < MIN'
+  v23_f00 = 836
+  CASE(837):
+  v23_f04 = 'Next post opening > MAX'
+  v23_f00 = 837
+  CASE(838):
+  v23_f04 = 'Next post opening is INVALID'
+  v23_f00 = 838
+  CASE(839):
+  v23_f04 = 'This ControllerID <> Next ControllerID'
+  v23_f00 = 839
+  CASE(840):
+  v23_f04 = 'This TooID <> Next ToolID'
+  v23_f00 = 840
+  CASE(841):
+  v23_f04 = 'This post <> Next pre'
+  v23_f00 = 841
+  CASE(842):
+  v23_f04 = 'Selected pre opening < MIN'
+  v23_f00 = 842
+  CASE(843):
+  v23_f04 = 'Selected pre opening > MAX'
+  v23_f00 = 843
+  CASE(844):
+  v23_f04 = 'Selected pre opening is INVALID'
+  v23_f00 = 844
+  CASE(845):
+  v23_f04 = 'Fill Station < 1'
+  v23_f00 = 845
+  CASE(846):
+  v23_f04 = 'Fill Station > MAX'
+  v23_f00 = 846
+  CASE(847):
+  v23_f04 = 'Error out of range'
+  v23_f00 = 847
+  CASE(848):
+  v23_f04 = 'Tool still POWERED DOWN'
+  v23_f00 = 848
+  CASE(849):
+  v23_f04 = 'Controller not OK'
+  v23_f00 = 849
+  CASE(850):
+  v23_f04 = 'Controller not READY'
+  v23_f00 = 850
+  CASE(851):
+  v23_f04 = 'Rivet Type A not selected'
+  v23_f00 = 851
+  v24 = 1
+  CASE(852):
+  v23_f04 = 'Rivet Type B not selected'
+  v23_f00 = 852
+  v24 = 1
+  CASE(853):
+  v23_f04 = 'Rivet Type C not selected'
+  v23_f00 = 853
+  v24 = 1
+  CASE(854):
+  v23_f04 = 'Rivet Type D not selected'
+  v23_f00 = 854
+  v24 = 1
+  CASE(855):
+  v23_f04 = 'Anti repeat rivet, Rivet ID' + v18
+  v23_f00 = 855
+  v24 = 2
+  CASE(856):
+  v23_f04 = 'Rivet array dnHenRivetNum not cleared'
+  v23_f00 = 856
+  CASE(857):
+  v23_f04 = 'EOS timed out.'
+  v23_f30 = 'Check if Current Rivet has been Set'
+  v23_f5c = 'Ack = Set           Retry = Not Set'
+  v23_f00 = 857
+  v24 = 3
+  CASE(858):
+  v23_f04 = 'Tool NOT at PARTIAL'
+  v23_f00 = 858
+  v23_f30 = 'Requested Partial = ' + v20
+  IF ((v19 = 0)) THEN
+  v23_f30 = 'Requested Partial = Home'
+  ENDIF
+  CASE(859):
+  v23_f04 = 'Rivet quality is UNKNOWN'
+  v23_f00 = 859
+  CASE(860):
+  v23_f04 = 'Soft Move not tuned'
+  v23_f00 = 860
+  CASE(861):
+  v23_f04 = 'Soft Move tuned failed'
+  v23_f00 = 861
+  CASE(862):
+  v23_f04 = 'Rivet quality NOT OK'
+  v23_f00 = 862
+  CASE(863):
+  v23_f04 = 'Tool NOT at HOME'
+  v23_f00 = 863
+  CASE(864):
+  v23_f04 = 'Waiting Ready to Dock to be ON'
+  v23_f00 = 864
+  CASE(865):
+  v23_f04 = 'Waiting Ready to Dock to be OFF'
+  v23_f00 = 865
+  CASE(866):
+  v23_f04 = 'Waiting End of Dock to be ON'
+  v23_f00 = 866
+  CASE(867):
+  v23_f04 = 'Waiting End of Dock to be OFF'
+  v23_f00 = 867
+  CASE(874):
+  v23_f04 = 'Die check signals not OFF'
+  v23_f00 = 874
+  CASE(871):
+  v23_f04 = 'Henrob not in auto to move tool HOME'
+  v23_f00 = 871
+  CASE(875):
+  v23_f04 = 'Die check signals not ON'
+  v23_f00 = 875
+  CASE(872):
+  v23_f04 = 'Henrob not in auto to move tool PARTIAL'
+  v23_f00 = 872
+  CASE(873):
+  v23_f04 = 'Tool not POWERED DOWN'
+  v23_f00 = 873
+  CASE(868):
+  v23_f04 = 'Tool Stand 1 is not OK to dock on'
+  v23_f00 = 868
+  CASE(869):
+  v23_f04 = 'Tool Stand 2 is not OK to dock on'
+  v23_f00 = 869
+  CASE(870):
+  v23_f04 = 'Tool Stand 3 is not OK to dock on'
+  v23_f00 = 870
+  CASE(876):
+  v23_f04 = 'Die check tool 1 not OK'
+  v23_f00 = 876
+  v24 = 4
+  CASE(877):
+  v23_f04 = 'Die check tool 2 not OK'
+  v23_f00 = 877
+  v24 = 4
+  CASE(878):
+  v23_f04 = 'Die check tool 3 not OK'
+  v23_f00 = 878
+  v24 = 4
+  CASE(879):
+  v23_f04 = ''
+  v23_f00 = 879
+  CASE(880):
+  v23_f04 = 'E-STOP Active During Rivet, '
+  v23_f30 = 'Choose Re-Rivet or Skip'
+  v23_f00 = 880
+  v24 = 2
+  ELSE:
+  v23_f04 = 'Undefined SPR DCP Fault Message'
+  ENDSELECT
+  GET_REG(v23_f00, (4 <> 0), 10, v25, 0)
+  -- 弃参原式: 4
+  sv_i = imp5(9, v25, v2)
+  -- stmt107 stray sv_i
+END DCP_SPR1_1
+

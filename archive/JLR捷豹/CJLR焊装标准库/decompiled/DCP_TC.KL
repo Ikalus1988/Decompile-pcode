@@ -1,0 +1,537 @@
+-- DCP_TC.KL (decompiled v3)
+PROGRAM DCP_TC
+%COMMENT = 'Version 1.0'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_02 : ARRAY[512] OF INTEGER
+  PARAMTYP : INTEGER
+  INTDCPFAULT : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[64]
+  STATUS : INTEGER
+  STRDCPTEXT : STRING[64]
+  INTARG : INTEGER
+  STRARG : STRING[64]
+  ENTRY : INTEGER
+  ROBOTNAME : STRING[64]
+  INTTOOLID : INTEGER
+  TOOLID : STRING[64]
+  DCPTEXT : ALMDCP
+  FKEY_SEL : INTEGER
+  FKEYS : ARRAY[64] OF STRING[64]
+  DCPPLCTEXT : STRING[64]
+  DCPFAULTNUM1 : STRING[64]
+  DCPFAULTNUM : STRING[64]
+  BLPLC : INTEGER
+  BLSPR : INTEGER
+  BLSPOT : INTEGER
+  BLDISPENSE : INTEGER
+  BLMH : INTEGER
+  BLSTUD : INTEGER
+  BLNUT : INTEGER
+  BLISRA : INTEGER
+  BLQUISS : INTEGER
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTPROGNUM : INTEGER
+  INTAREAINREQ : INTEGER
+  INTAREAOUTRL : INTEGER
+  INTTOOLREQ : INTEGER
+  INTJOBDONE : INTEGER
+  INTCOLREQ : INTEGER
+  INTCOLREL : INTEGER
+  REALDUMMY : REAL
+  REALACTTHK : REAL
+  REALREQTHK : REAL
+  STRPROGNUM : STRING[3]
+  STRAREANUM : STRING[3]
+  STRAREAINREQ : STRING[3]
+  STRAREAOUTRL : STRING[3]
+  STRTOOLREQ : STRING[3]
+  STRJOBDONE : STRING[3]
+  STRCOLREQ : STRING[3]
+  STRCOLREL : STRING[3]
+  STRDCPTEXT2 : STRING[82]
+  ACTTHKSTR : STRING[20]
+  STRREQTHK : STRING[20]
+  STRADDDCPTXT : STRING[20]
+  STRTPFUNC : ARRAY[5] OF STRING[8]
+  BLKEYPRESSED : BOOLEAN
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  DCPTEXT_f30 : STRING[64]
+  DCPTEXT_f5c : STRING[64]
+  DCPTEXT_f88 : STRING[64]
+  DCPTEXT_fb4 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE DCPDISP(p0 : ALMDCP) : INTEGER FROM MI_LIB
+ROUTINE DCPDISPALM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DCP_CLR(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE POSTSTAT(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  POST_ERR(p0, '', 0, 2)
+  ENDIF
+  GET_TPE_PRM(1, PARAMTYP, INTDCPFAULT, PARAMREAL, PARAMSTRING, STATUS)
+  IF ((PARAMTYP <> 1) OR (STATUS <> 0)) THEN
+  WRITE('Invalid Call to DCPFault Program on Robot!', CR, 'Check argument 1 is an integer!')
+  STRDCPTEXT = 'Invalid Call to DCPFault Program on Robot'
+  ENDIF
+  IF (UNINIT(INTDCPFAULT)) THEN
+  INTDCPFAULT = 0
+  ENDIF
+  GET_TPE_PRM(2, PARAMTYP, INTARG, PARAMREAL, PARAMSTRING, STATUS)
+  CNV_INT_STR(INTARG, 5, 10, STRARG)
+  GET_VAR(ENTRY, '*SYSTEM*', '$ROBOT_NAME', ROBOTNAME, STATUS)
+  IF (UNINIT(ROBOTNAME)) THEN
+  ROBOTNAME = 'Unit'
+  ENDIF
+  GET_PORT_VAL(19, 3, INTTOOLID, STATUS)
+  CNV_INT_STR(INTTOOLID, 2, 10, TOOLID)
+  DCPTEXT_f00 = 0
+  DCPTEXT_f04 = ''
+  DCPTEXT_f30 = ''
+  DCPTEXT_f5c = ''
+  DCPTEXT_f88 = ''
+  DCPTEXT_fb4 = ''
+  FKEY_SEL = 0
+  FKEYS[1] = ''
+  FKEYS[2] = ''
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  FKEYS[5] = ''
+  FKEYS[6] = ''
+  FKEYS[7] = ''
+  FKEYS[8] = ''
+  FKEYS[9] = ''
+  FKEYS[10] = ''
+  FKEY_SEL = 0
+  DCPTEXT_f00 = INTDCPFAULT
+  DCPPLCTEXT = ROBOTNAME + ',Tool-' + TOOLID + ',' + DCPTEXT_f04 + DCPTEXT_f30
+  SET_PORT_VAL(19, 4, INTDCPFAULT, STATUS)
+  CNV_INT_STR(DCPTEXT_f00, 5, 10, DCPFAULTNUM1)
+  sv_s = sub_str(DCPFAULTNUM1, 2, 4)
+  DCPFAULTNUM1 = sv_s
+  DCPFAULTNUM = '0' + DCPFAULTNUM1
+  SET_STR_REG(9, DCPFAULTNUM, STATUS)
+  SET_STR_REG(10, DCPPLCTEXT, STATUS)
+  BLPLC = 1
+  BLSPR = 0
+  BLSPOT = 0
+  BLDISPENSE = 0
+  BLMH = 0
+  BLSTUD = 0
+  BLNUT = 0
+  BLISRA = 0
+  BLQUISS = 0
+  IF ((FKEY_SEL = 0)) THEN
+  FKEYS[1] = 'ACK'
+  FKEYS[2] = ''
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  FKEYS[5] = ''
+  ENDIF
+  SELECT DCPTEXT_f00 OF
+  CASE(7151):
+  DCPTEXT_f04 = 'Tool Stand ? : LH PP not on / GeoPP1 not on'
+  DCPTEXT_f00 = 7151
+  CASE(7152):
+  DCPTEXT_f04 = 'Tool Stand ? : LH PP not off / GeoPP1 not off'
+  DCPTEXT_f00 = 7152
+  CASE(7153):
+  DCPTEXT_f04 = 'Tool Stand ? : RH PP not on / GeoPP2 not on'
+  DCPTEXT_f00 = 7153
+  CASE(7154):
+  DCPTEXT_f04 = 'Tool Stand ? : RH PP not off / GeoPP2 not off'
+  DCPTEXT_f00 = 7154
+  CASE(7155):
+  DCPTEXT_f04 = 'Tool Stand ? : Flap closed not on'
+  DCPTEXT_f00 = 7155
+  CASE(7156):
+  DCPTEXT_f04 = 'Tool Stand ? : Flap closed not off'
+  DCPTEXT_f00 = 7156
+  CASE(7157):
+  DCPTEXT_f04 = 'Tool Stand ? : Flap open not on'
+  DCPTEXT_f00 = 7157
+  CASE(7158):
+  DCPTEXT_f04 = 'Tool Stand ? : Flap open not off'
+  DCPTEXT_f00 = 7158
+  CASE(7161):
+  DCPTEXT_f04 = 'Tool ? : Comms Fault - IO module not disabled'
+  DCPTEXT_f00 = 7161
+  CASE(7162):
+  DCPTEXT_f04 = 'Tool ? : Comms Fault - IO module not enabled'
+  DCPTEXT_f00 = 7162
+  CASE(7163):
+  DCPTEXT_f04 = 'Tool ? : Module stUnitName not valid'
+  DCPTEXT_f00 = 7163
+  CASE(7166):
+  DCPTEXT_f04 = 'Tool Chg: Selected tool <> Tool on robot'
+  DCPTEXT_f00 = 7166
+  CASE(7167):
+  DCPTEXT_f04 = 'Tool Chg: Part present not on'
+  DCPTEXT_f00 = 7167
+  CASE(7168):
+  DCPTEXT_f04 = 'Tool Chg: Part present not off'
+  DCPTEXT_f00 = 7168
+  CASE(7169):
+  DCPTEXT_f04 = 'Tool Chg: Locked not on'
+  DCPTEXT_f00 = 7169
+  CASE(7170):
+  DCPTEXT_f04 = 'Tool Chg: Locked not off'
+  DCPTEXT_f00 = 7170
+  CASE(7171):
+  DCPTEXT_f04 = 'Tool Chg: Unlocked not on'
+  DCPTEXT_f00 = 7171
+  CASE(7172):
+  DCPTEXT_f04 = 'Tool Chg: Unlocked not off'
+  DCPTEXT_f00 = 7172
+  CASE(7173):
+  DCPTEXT_f04 = 'Tool Chg: Schmersal switch not on'
+  DCPTEXT_f00 = 7173
+  CASE(7174):
+  DCPTEXT_f04 = 'Tool Chg: Tool BCD not off'
+  DCPTEXT_f00 = 7174
+  CASE(7175):
+  DCPTEXT_f04 = 'Tool Chg: Tool BCD valve out of range'
+  DCPTEXT_f00 = 7175
+  CASE(7176):
+  DCPTEXT_f04 = 'Tool Chg: Tool BCD mismatch'
+  DCPTEXT_f5c = 'Press Ack to Re-Check'
+  DCPTEXT_f88 = 'Press Cancel to Unlock'
+  DCPTEXT_f00 = 7176
+  FKEY_SEL = 5
+  CASE(7177):
+  DCPTEXT_f04 = 'Tool Chg: Tool BCD mismatch unlocked'
+  DCPTEXT_f5c = 'Press Ack to Lock & Try again'
+  DCPTEXT_f00 = 7177
+  CASE(7178):
+  DCPTEXT_f04 = 'Tool Chg: nTOOLS_REQ out of range'
+  DCPTEXT_f00 = 7178
+  CASE(7179):
+  DCPTEXT_f04 = 'Tool Chg: Selected tool out of range'
+  DCPTEXT_f00 = 7179
+  CASE(7180):
+  DCPTEXT_f04 = 'Tool Chg: Check tool out of range'
+  DCPTEXT_f00 = 7180
+  CASE(7181):
+  DCPTEXT_f04 = 'Tool Chg: TC Pressure OK not On'
+  DCPTEXT_f00 = 7181
+  CASE(7182):
+  DCPTEXT_f04 = 'Tool Chg: TC Pressure OK not Off'
+  DCPTEXT_f00 = 7182
+  CASE(7196):
+  DCPTEXT_f04 = 'Tool Std 1: LH PP not on/GeoPP1 not on'
+  DCPTEXT_f00 = 7196
+  CASE(7197):
+  DCPTEXT_f04 = 'Tool Std 1: LH PP not off/GeoPP1 not off'
+  DCPTEXT_f00 = 7197
+  CASE(7198):
+  DCPTEXT_f04 = 'Tool Std 1: RH PP not on/GeoPP2 not on'
+  DCPTEXT_f00 = 7198
+  CASE(7199):
+  DCPTEXT_f04 = 'Tool Std 1: RH PP not off/GeoPP2 not off'
+  DCPTEXT_f00 = 7199
+  CASE(7200):
+  DCPTEXT_f04 = 'Tool Std 1: Flap closed not on'
+  DCPTEXT_f00 = 7200
+  CASE(7201):
+  DCPTEXT_f04 = 'Tool Std 1: Flap closed not off'
+  DCPTEXT_f00 = 7201
+  CASE(7202):
+  DCPTEXT_f04 = 'Tool Std 1: Flap open not on'
+  DCPTEXT_f00 = 7202
+  CASE(7203):
+  DCPTEXT_f04 = 'Tool Std 1: Flap open not off'
+  DCPTEXT_f00 = 7203
+  CASE(7206):
+  DCPTEXT_f04 = 'Tool 1 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7206
+  CASE(7207):
+  DCPTEXT_f04 = 'Tool 1 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7207
+  CASE(7208):
+  DCPTEXT_f04 = 'Tool 1 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7208
+  CASE(7211):
+  DCPTEXT_f04 = 'Tool Std 2: LH PP not on/GeoPP1 not on'
+  DCPTEXT_f00 = 7211
+  CASE(7212):
+  DCPTEXT_f04 = 'Tool Std 2: LH PP not off/GeoPP1 not off'
+  DCPTEXT_f00 = 7212
+  CASE(7213):
+  DCPTEXT_f04 = 'Tool Std 2: RH PP not on/GeoPP2 not on'
+  DCPTEXT_f00 = 7213
+  CASE(7214):
+  DCPTEXT_f04 = 'Tool Std 2: RH PP not off/GeoPP2 not off'
+  DCPTEXT_f00 = 7214
+  CASE(7215):
+  DCPTEXT_f04 = 'Tool Std 2: Flap closed not on'
+  DCPTEXT_f00 = 7215
+  CASE(7216):
+  DCPTEXT_f04 = 'Tool Std 2: Flap closed not off'
+  DCPTEXT_f00 = 7216
+  CASE(7217):
+  DCPTEXT_f04 = 'Tool Std 2: Flap open not on'
+  DCPTEXT_f00 = 7217
+  CASE(7218):
+  DCPTEXT_f04 = 'Tool Std 2: Flap open not off'
+  DCPTEXT_f00 = 7218
+  CASE(7221):
+  DCPTEXT_f04 = 'Tool 2 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7221
+  CASE(7222):
+  DCPTEXT_f04 = 'Tool 2 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7222
+  CASE(7223):
+  DCPTEXT_f04 = 'Tool 2 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7223
+  CASE(7226):
+  DCPTEXT_f04 = 'Tool Std 3: LH PP not on/GeoPP1 not on'
+  DCPTEXT_f00 = 7226
+  CASE(7227):
+  DCPTEXT_f04 = 'Tool Std 3: LH PP not off/GeoPP1 not off'
+  DCPTEXT_f00 = 7227
+  CASE(7228):
+  DCPTEXT_f04 = 'Tool Std 3: RH PP not on/GeoPP2 not on'
+  DCPTEXT_f00 = 7228
+  CASE(7229):
+  DCPTEXT_f04 = 'Tool Std 3: RH PP not off/GeoPP2 not off'
+  DCPTEXT_f00 = 7229
+  CASE(7230):
+  DCPTEXT_f04 = 'Tool Std 3: Flap closed not on'
+  DCPTEXT_f00 = 7230
+  CASE(7231):
+  DCPTEXT_f04 = 'Tool Std 3: Flap closed not off'
+  DCPTEXT_f00 = 7231
+  CASE(7232):
+  DCPTEXT_f04 = 'Tool Std 3: Flap open not on'
+  DCPTEXT_f00 = 7232
+  CASE(7233):
+  DCPTEXT_f04 = 'Tool Std 3: Flap open not off'
+  DCPTEXT_f00 = 7233
+  CASE(7236):
+  DCPTEXT_f04 = 'Tool 3 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7236
+  CASE(7237):
+  DCPTEXT_f04 = 'Tool 3 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7237
+  CASE(7238):
+  DCPTEXT_f04 = 'Tool 3 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7238
+  CASE(7241):
+  DCPTEXT_f04 = 'Tool Std 4: LH PP not on/GeoPP1 not on'
+  DCPTEXT_f00 = 7241
+  CASE(7242):
+  DCPTEXT_f04 = 'Tool Std 4: LH PP not off/GeoPP1 not off'
+  DCPTEXT_f00 = 7242
+  CASE(7243):
+  DCPTEXT_f04 = 'Tool Std 4: RH PP not on/GeoPP4 not on'
+  DCPTEXT_f00 = 7243
+  CASE(7244):
+  DCPTEXT_f04 = 'Tool Std 4: RH PP not off/GeoPP4 not off'
+  DCPTEXT_f00 = 7244
+  CASE(7245):
+  DCPTEXT_f04 = 'Tool Std 4: Flap closed not on'
+  DCPTEXT_f00 = 7245
+  CASE(7246):
+  DCPTEXT_f04 = 'Tool Std 4: Flap closed not off'
+  DCPTEXT_f00 = 7246
+  CASE(7247):
+  DCPTEXT_f04 = 'Tool Std 4: Flap open not on'
+  DCPTEXT_f00 = 7247
+  CASE(7248):
+  DCPTEXT_f04 = 'Tool Std 4: Flap open not off'
+  DCPTEXT_f00 = 7248
+  CASE(7251):
+  DCPTEXT_f04 = 'Tool 4 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7251
+  CASE(7252):
+  DCPTEXT_f04 = 'Tool 4 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7252
+  CASE(7253):
+  DCPTEXT_f04 = 'Tool 4 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7253
+  CASE(7256):
+  DCPTEXT_f04 = 'Tool Std 5: LH PP not on/GeoPP5 not on'
+  DCPTEXT_f00 = 7256
+  CASE(7257):
+  DCPTEXT_f04 = 'Tool Std 5: LH PP not off/GeoPP5 not off'
+  DCPTEXT_f00 = 7257
+  CASE(7258):
+  DCPTEXT_f04 = 'Tool Std 5: RH PP not on/GeoPP2 not on'
+  DCPTEXT_f00 = 7258
+  CASE(7259):
+  DCPTEXT_f04 = 'Tool Std 5: RH PP not off/GeoPP2 not off'
+  DCPTEXT_f00 = 7259
+  CASE(7260):
+  DCPTEXT_f04 = 'Tool Std 5: Flap closed not on'
+  DCPTEXT_f00 = 7260
+  CASE(7261):
+  DCPTEXT_f04 = 'Tool Std 5: Flap closed not off'
+  DCPTEXT_f00 = 7261
+  CASE(7262):
+  DCPTEXT_f04 = 'Tool Std 5: Flap open not on'
+  DCPTEXT_f00 = 7262
+  CASE(7263):
+  DCPTEXT_f04 = 'Tool Std 5: Flap open not off'
+  DCPTEXT_f00 = 7263
+  CASE(7266):
+  DCPTEXT_f04 = 'Tool 5 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7266
+  CASE(7267):
+  DCPTEXT_f04 = 'Tool 5 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7267
+  CASE(7268):
+  DCPTEXT_f04 = 'Tool 5 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7268
+  CASE(7271):
+  DCPTEXT_f04 = 'Tool Std 6: LH PP not on/GeoPP1 not on'
+  DCPTEXT_f00 = 7271
+  CASE(7272):
+  DCPTEXT_f04 = 'Tool Std 6: LH PP not off/GeoPP1 not off'
+  DCPTEXT_f00 = 7272
+  CASE(7273):
+  DCPTEXT_f04 = 'Tool Std 6: RH PP not on/GeoPP6 not on'
+  DCPTEXT_f00 = 7273
+  CASE(7274):
+  DCPTEXT_f04 = 'Tool Std 6: RH PP not off/GeoPP6 not off'
+  DCPTEXT_f00 = 7274
+  CASE(7275):
+  DCPTEXT_f04 = 'Tool Std 6: Flap closed not on'
+  DCPTEXT_f00 = 7275
+  CASE(7276):
+  DCPTEXT_f04 = 'Tool Std 6: Flap closed not off'
+  DCPTEXT_f00 = 7276
+  CASE(7277):
+  DCPTEXT_f04 = 'Tool Std 6: Flap open not on'
+  DCPTEXT_f00 = 7277
+  CASE(7278):
+  DCPTEXT_f04 = 'Tool Std 6: Flap open not off'
+  DCPTEXT_f00 = 7278
+  CASE(7281):
+  DCPTEXT_f04 = 'Tool 6 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7281
+  CASE(7282):
+  DCPTEXT_f04 = 'Tool 6 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7282
+  CASE(7283):
+  DCPTEXT_f04 = 'Tool 6 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7283
+  CASE(7286):
+  DCPTEXT_f04 = 'Tool Std 7: LH PP not on/GeoPP7 not on'
+  DCPTEXT_f00 = 7286
+  CASE(7287):
+  DCPTEXT_f04 = 'Tool Std 7: LH PP not off/GeoPP7 not off'
+  DCPTEXT_f00 = 7287
+  CASE(7288):
+  DCPTEXT_f04 = 'Tool Std 7: RH PP not on/GeoPP2 not on'
+  DCPTEXT_f00 = 7288
+  CASE(7289):
+  DCPTEXT_f04 = 'Tool Std 7: RH PP not off/GeoPP2 not off'
+  DCPTEXT_f00 = 7289
+  CASE(7290):
+  DCPTEXT_f04 = 'Tool Std 7: Flap closed not on'
+  DCPTEXT_f00 = 7290
+  CASE(7291):
+  DCPTEXT_f04 = 'Tool Std 7: Flap closed not off'
+  DCPTEXT_f00 = 7291
+  CASE(7292):
+  DCPTEXT_f04 = 'Tool Std 7: Flap open not on'
+  DCPTEXT_f00 = 7292
+  CASE(7293):
+  DCPTEXT_f04 = 'Tool Std 7: Flap open not off'
+  DCPTEXT_f00 = 7293
+  CASE(7296):
+  DCPTEXT_f04 = 'Tool 7 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT disabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7296
+  CASE(7297):
+  DCPTEXT_f04 = 'Tool 7 : Comms Fault'
+  DCPTEXT_f30 = 'IO module NOT Enabled'
+  DCPTEXT_f5c = 'Ethernet Scanner No. = ' + STRARG
+  DCPTEXT_f00 = 7297
+  CASE(7298):
+  DCPTEXT_f04 = 'Tool 7 : Module stUnitName not valid'
+  DCPTEXT_f00 = 7298
+  ELSE:
+  DCPTEXT_f04 = 'Undefined DCP Fault Message'
+  ENDSELECT
+  IF ((FKEY_SEL = 5)) THEN
+  FKEYS[1] = 'ACK'
+  FKEYS[2] = 'CANCEL'
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  FKEYS[5] = ''
+  ENDIF
+  WRITE('DCP Fault: ', INTDCPFAULT, CR, DCPTEXT_f04, CR, DCPTEXT_f30, CR)
+  DCPPLCTEXT = ROBOTNAME + ',Tool-' + TOOLID + ',' + DCPTEXT_f04 + DCPTEXT_f30
+  SET_PORT_VAL(19, 4, INTDCPFAULT, STATUS)
+  CNV_INT_STR(DCPTEXT_f00, 5, 10, DCPFAULTNUM1)
+  sv_s = sub_str(DCPFAULTNUM1, 3, 3)
+  DCPFAULTNUM = sv_s
+  SET_STR_REG(9, DCPFAULTNUM, STATUS)
+  SET_STR_REG(10, DCPPLCTEXT, STATUS)
+  io_02[5] = 1
+  sv_i = DCPDISP(DCPTEXT)
+  -- stmt95 stray sv_i
+  RETURN(0)
+END POSTSTAT
+
+BEGIN
+END DCP_TC
