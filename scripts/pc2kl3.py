@@ -1810,14 +1810,38 @@ for lid, off, toks, is_empty, is_data in bodies:
 
 def block_struct(bis):
     close_of, open_stack = {}, []
+    _sel_base_bs = None   # SELECT 开启时的 open_stack 深度基线（SELECT_ENDS 空时禁用跟踪）
     for bi in bis:
         lid, off, toks, is_empty, is_data = bodies[bi]
         kinds = [t[1] for t in toks]
         jmp_only = bool(kinds) and ('JMP' in kinds) and all(k in ('JMP', 'INT', 'VAR', 'ARG', 'NOP', 'UNK', 'PAR', 'SEL40', 'SEL41', 'SEL42', 'SEL43') for k in kinds)
+        # 回跳定性（T_UNTIL 探针落锤）：
+        #  ① jmp-only 行的 JMP 目标 ≤ 自身 = WHILE 回边 → 闭合最近未闭 JZ 块；
+        #     旧口径「之后还有空锚点→ELSE」会被外层结构的空锚点误判（WHILE→IF…ELSE 实证）。
+        #  ② JZ 目标 ≤ 自身 = UNTIL 回边，不是块开启——按 IF 开启会让 REPEAT 尾凭空配 ENDIF。
+        if jmp_only and JMP_TO.get(bi, 1 << 30) <= bi:
+            if open_stack:
+                close_of[open_stack.pop()] = (bi, 'while')
+            continue
+        # 一体语句内藏回跳 JMP（SELECT 子句跳+循环回边合并，T_UNTIL2 WHILE{SELECT} 实证）：
+        # 同样是 WHILE 收口点——渲染段会剥掉段尾 JMP，块结构必须在这里闭合，
+        # 否则外层空锚点把 WHILE 块误收成 IF。
+        if bi in BACKJMP_STMT and open_stack and 'JZ' not in kinds:
+            close_of[open_stack.pop()] = (bi, 'while')
+            continue
         if is_empty and open_stack:
-            close_of[open_stack.pop()] = (bi, 'if')
-        elif 'JZ' in kinds:
+            # SELECT 感知（同渲染段 _sel_base_depth 手法）：SELECT 机制自身的空锚点
+            # 不许收【SELECT 开启前】的外层块（WHILE{SELECT} 误收成 IF 的第二污染源）
+            if _sel_base_bs is not None and len(open_stack) <= _sel_base_bs:
+                pass
+            else:
+                close_of[open_stack.pop()] = (bi, 'if')
+        elif 'JZ' in kinds and JZ_TO.get(bi, 1 << 30) > bi:
             open_stack.append(bi)
+        if SELECT_ENDS and any(k in kinds for k in ('SEL40', 'SEL41', 'SEL42', 'SEL43')) and _sel_base_bs is None:
+            _sel_base_bs = len(open_stack)
+        if _sel_base_bs is not None and bi in SELECT_ENDS:
+            _sel_base_bs = None
     for oi in open_stack:
         jmp_ci = None
         for bi in bis:
@@ -1830,7 +1854,10 @@ def block_struct(bis):
                 break
         if jmp_ci is None:
             continue
-        # jmp-only 行之后若还有空锚点 → 该 jmp 是 ELSE，块型 IF，收尾=空锚点；否则=WHILE 回边
+        # 方向定性优先（同主循环）：回跳=WHILE 回边；前跳才按「之后空锚点」判 ELSE/IF
+        if JMP_TO.get(jmp_ci, 1 << 30) <= jmp_ci:
+            close_of[oi] = (jmp_ci, 'while')
+            continue
         tail_empty = None
         for b2 in bis:
             if b2 > jmp_ci and bodies[b2][3]:
@@ -1903,6 +1930,8 @@ def _jt_stmt(targets_off):
 
 # 每语句的 JZ/JMP 目标语句号
 JZ_TO, JMP_TO = {}, {}
+BACKJMP_STMT = set()   # 含【逐 token】回跳 JMP 的语句（SELECT 子句跳与循环回边合并一体时，
+                       # JMP_TO 每语句只存最后一个目标——回边可能被前跳覆盖，须逐 token 记）
 if _JT_BASE is not None:
     for _bi, (_lid, _off, _toks, _ie, _id) in enumerate(bodies):
         for _t in _toks:
@@ -1910,6 +1939,8 @@ if _JT_BASE is not None:
                 _tgt = _jt_stmt(_JT[_t[2]] + _JT_BASE)
                 if _tgt is not None:
                     (JZ_TO if _t[1] == 'JZ' else JMP_TO)[_bi] = _tgt
+                    if _t[1] == 'JMP' and _tgt <= _bi:
+                        BACKJMP_STMT.add(_bi)
 # SELECT 收口点：select 语句内 JMP 的跳转目标 = ENDSELECT 处（跳转表精确落点）
 SELECT_ENDS = set()
 for _bi2, (_l2, _o2, _tk2, _ie2, _id2) in enumerate(bodies):
@@ -1917,28 +1948,52 @@ for _bi2, (_l2, _o2, _tk2, _ie2, _id2) in enumerate(bodies):
         if _bi2 in JMP_TO:
             SELECT_ENDS.add(JMP_TO[_bi2])
 
-# 回边：JZ 目标语句 ≤ 当前 → REPEAT 头/UNTIL 尾（护栏：头须为实语句且非跳转句）
+# 回边：JZ 目标语句 < 当前 → REPEAT 头/UNTIL 尾。护栏（T_UNTIL/T_UNTIL2 探针落锤）：
+#  ① 头须为实语句：只拒【纯跳转句】（jmp-only 且无 SEL 标记）。旧护栏连 JZ/JMP 一律拒，
+#     SELECT 子句体自带 JMP，REPEAT{SELECT} 被整体拒收 → UNTIL 回边退化成前向 IF
+#     并吞掉后继语句（用户实证 bug）。
+#  ② 块自含校验改用 close_of 精确配平（区内前向 JZ 的闭合须落区内）——
+#     旧口径数 JZ/空锚点，SELECT 机制的空锚点/子句跳转污染计数（同族击穿）。
+_si_of = {}
+for _si4, _bis4 in sec_stmts.items():
+    for _b4 in _bis4:
+        _si_of[_b4] = _si4
+_SEC_CLOSE = {si: block_struct(bis) for si, bis in sec_stmts.items()}
 REPEAT_HEADS, UNTIL_AT = set(), {}
 for _bi, _t in JZ_TO.items():
     if _t < _bi:
         _hk = [t[1] for t in bodies[_t][2]]
-        if bodies[_t][3] or any(k in _hk for k in ('JZ', 'JMP')):
+        if bodies[_t][3]:
             continue
-        # 块自含校验：区内 IF 开闭须配平（跨界 IF 会炸 KTRANS）
-        _depth, _ok = 0, True
+        if _hk and all(k in ('JMP', 'INT', 'VAR', 'ARG', 'NOP', 'UNK', 'PAR') for k in _hk):
+            continue
+        _co = _SEC_CLOSE.get(_si_of.get(_bi), {})
+        _ok = True
         for _r in range(_t, _bi):
             _k2 = [tt[1] for tt in bodies[_r][2]]
-            if 'JZ' in _k2:
-                _depth += 1
-            if bodies[_r][3]:
-                _depth -= 1
-            if _depth < 0:
-                _ok = False
-                break
-        if not (_ok and _depth == 0):
+            if 'JZ' in _k2 and JZ_TO.get(_r, 1 << 30) > _r:
+                _c = _co.get(_r)
+                if _c is None or _c[0] >= _bi:
+                    _ok = False
+                    break
+        if not _ok:
             continue
         REPEAT_HEADS.add(_t)
         UNTIL_AT[_bi] = _t
+
+# 调试：PC2KL_DEBUG=1 打印语句流/循环/SELECT 判定（T_UNTIL 探针排障用）
+if os.environ.get('PC2KL_DEBUG'):
+    import sys as _dbg_sys
+    for _bi, (_lid, _off, _toks, _ie, _id) in enumerate(bodies):
+        _k = [t[1] for t in _toks]
+        _tags = []
+        if _bi in REPEAT_HEADS: _tags.append('REPEAT')
+        if _bi in UNTIL_AT: _tags.append('UNTIL->%d' % UNTIL_AT[_bi])
+        if _bi in SELECT_ENDS: _tags.append('SELEND')
+        if _bi in BACKJMP_STMT: _tags.append('BACKJMP')
+        if _bi in JZ_TO: _tags.append('JZ->%d' % JZ_TO[_bi])
+        if _bi in JMP_TO: _tags.append('JMP->%d' % JMP_TO[_bi])
+        print('DBG %3d L%-4d %-4s [%s] %s' % (_bi, _lid, 'EMP' if _ie else '', ','.join(_tags), ' '.join(_k)[:110]), file=_dbg_sys.stderr)
 
 # 类型标记预热：KINDS/ARITY 就位后重跑一遍发射求值，让实参类型回传
 # （file/str/arr/bool_vars 标记）在【声明写出前】完成——声明先于发射，
@@ -2264,6 +2319,9 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                 _bounds = [0] + _idxs + [len(toks)]
                 _last_expr = None
                 _seg_written = []
+                _until_emitted = False   # UNTIL 尾与下个子句头合并一体时（T_UNTIL2/MI04 CHECKCAPVAL
+                # 实证），UNTIL 必须随含 JZ 的段立即落行——否则 CASE 标签先落，
+                # 出现「CASE(2): … UNTIL(…)」跨界嵌套，KTRANS 拒编
                 for _bi3 in range(len(_bounds) - 1):
                     _seg = toks[_bounds[_bi3]:_bounds[_bi3 + 1]]
                     if _seg and _seg[-1][1] == 'JMP':
@@ -2282,6 +2340,13 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                             _seg_written.append(_l)
                         if _ex and _ex != '0':
                             _last_expr = _ex
+                        if (not _until_emitted) and bi in UNTIL_AT and any(t[1] == 'JZ' for t in _seg):
+                            _uc = _ex if _ex and _ex != '0' else 'TRUE'
+                            if _uc != 'TRUE' and not re.search(r'[=<>]', _uc) and not _uc.startswith('UNINIT(') \
+                                    and not _uc.startswith('NOT (') and not boolish(_uc) and not _thas(_uc, 'b'):
+                                _uc = '(' + _uc + ' <> 0)'
+                            f.write('  UNTIL(' + _uc + ')\n')
+                            _until_emitted = True
                     if _bounds[_bi3 + 1] < len(toks):
                         _mk = toks[_bounds[_bi3 + 1]]
                         if _mk[1] == 'SEL41':
@@ -2311,7 +2376,7 @@ with open(out_path, 'w', encoding='gbk', errors='replace') as f:
                                 _sel_drain()
                             f.write('  ELSE:\n')
                         # SEL40 = 子句头（失败跳表指针，纯字节码控制流，无源码对应）
-                if bi in UNTIL_AT and _last_expr:
+                if bi in UNTIL_AT and _last_expr and not _until_emitted:
                     f.write('  UNTIL(' + _last_expr + ')\n')
                 # ⚠️ _seg_written 是 list，而 _emit_residue 用 written.count(子串) 判在场：
                 #    list.count 是"元素全等"、str.count 才是"子串"——传 list 会让在场数恒为 0，

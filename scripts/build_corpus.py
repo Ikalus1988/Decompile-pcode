@@ -16,7 +16,9 @@ EV_GLOB = r'D:\program\roboguide\WinOLPC\Versions\*\support\*.ev'
 # 配对语料（原件位置；jlr16 已抢救进 corpus/）
 PAIR_PC = {  # .pc 原件目录 → corpus 标签
     os.path.join(CORPUS, 'jlr16_pairs', 'raw'): 'jlr16',
-    r'D:\Downloads\_extract_shipban_pc\新建文件夹': 'shipban',
+    r'D:\Downloads\10_KAREL反编译\_extract_shipban_pc\新建文件夹': 'shipban',
+    r'D:\Downloads\10_KAREL反编译\_extract_FT20261102_bestfit': 'ft20_bestfit',
+    r'D:\Downloads\10_KAREL反编译\_extract_F_20261109\QOROS COMMON\CUSTOM\PC': 'qoros',
 }
 PAIR_DEC = {  # dec-only（原件 .pc 已被覆盖/未保留）→ corpus 标签
     r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\pc_dec_mm': 'm9_v174',
@@ -25,7 +27,9 @@ PAIR_DEC = {  # dec-only（原件 .pc 已被覆盖/未保留）→ corpus 标签
 SRC_DIRS = [  # 真源码目录（%INCLUDE 不展开，配对按文件名）
     (os.path.join(CORPUS, 'jlr16_pairs', 'src'), 'jlr16'),
     (r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\src_v174\src', 'm9_v174'),
-    (r'D:\Downloads\_extract_karel_src\karel\src', 'shipban'),
+    (r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src', 'shipban'),
+    (r'D:\Downloads\10_KAREL反编译\_src_pairs_spr_fds_20261105', 'sprfds_src'),
+    (r'D:\Downloads\10_KAREL反编译\_extract_F_20261109\KL', 'qoros'),
 ]
 
 

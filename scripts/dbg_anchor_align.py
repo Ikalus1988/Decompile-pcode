@@ -39,7 +39,7 @@ FAMILIES = [
              r'D:\Downloads\Decompile-pcode-tests\corpus\jlr16_pairs\dec'),
     ('M9',   r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\src_v174\src',
              r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\pc_dec_mm'),
-    ('饰板', r'D:\Downloads\_extract_karel_src\karel\src',
+    ('饰板', r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src',
              r'D:\Downloads\Decompile-pcode-tests\output_shipban'),
 ]
 

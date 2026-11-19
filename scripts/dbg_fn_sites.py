@@ -34,13 +34,13 @@ def expand(path, seen=None):
 
 
 MODULES = [
-    ('xyz_pkt', r'D:\Downloads\_extract_karel_src\karel\src\xyz_pkt.kl',
+    ('xyz_pkt', r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src\xyz_pkt.kl',
      r'D:\Downloads\Decompile-pcode-tests\output_shipban\XYZ_PKT.PC.dec'),
     ('dcpclear', r'D:\Downloads\Decompile-pcode-tests\corpus\jlr16_pairs\src\dcpclear.kl',
      r'D:\Downloads\Decompile-pcode-tests\corpus\jlr16_pairs\dec\dcpclear.pc.dec'),
-    ('xyz_bkgd', r'D:\Downloads\_extract_karel_src\karel\src\xyz_bkgd.kl',
+    ('xyz_bkgd', r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src\xyz_bkgd.kl',
      r'D:\Downloads\Decompile-pcode-tests\output_shipban\XYZ_BKGD.PC.dec'),
-    ('xyz_abt_bkgd', r'D:\Downloads\_extract_karel_src\karel\src\xyz_abt_bkgd.kl',
+    ('xyz_abt_bkgd', r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src\xyz_abt_bkgd.kl',
      r'D:\Downloads\Decompile-pcode-tests\output_shipban\XYZ_ABT_BKGD.PC.dec'),
 ]
 WANT = set(int(x) for x in (sys.argv[1:] or ['4', '14', '15', '20', '21']))

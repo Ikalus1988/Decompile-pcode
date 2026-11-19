@@ -18,7 +18,7 @@ FAMILIES = [
              os.path.join(TESTS, r'corpus\jlr16_pairs\dec')),
     ('M9',   r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\src_v174\src',
              r'D:\Downloads\凸点焊450_诊断分析_2026-10-28\work\pc_dec_mm'),
-    ('饰板', r'D:\Downloads\_extract_karel_src\karel\src',
+    ('饰板', r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src',
              os.path.join(TESTS, 'output_shipban')),
     ('探针', os.path.join(TESTS, 'probes'),
              os.path.join(TESTS, 'probes')),
