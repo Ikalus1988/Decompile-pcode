@@ -1,0 +1,216 @@
+PROGRAM DCP_SQ
+
+--Sends Quiss DCP Fault text to PLC using String Registers
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID,ReqThickness,ActThickness :INTEGER
+paramReal, realDummy, realActThk, realReqThk:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+strDCPText, strDCPText2, DCPPLCText: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	strDCPText = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(8801):
+	DCPText.DCPLine1 = 'Quiss Product Data is out of Range, 1-31'
+	DCPText.DCPLine2 = 'Check R[172] & AR[1] for GET_VISION_DSQ'
+	DCPText.DCPFaultNum = 08801
+	
+	CASE(8802):
+	DCPText.DCPLine1 = 'Quiss Type Data is out of Range, 1-31'
+	DCPText.DCPFaultNum = 08802
+	
+	CASE(8803):
+	DCPText.DCPLine1 = 'Quiss Ctrl not in AUTOMATIC'
+	DCPText.DCPFaultNum = 08803
+	
+	CASE(8804):
+	DCPText.DCPLine1 = 'Quiss Ctrl SYSTEM READY'
+	DCPText.DCPFaultNum = 08804
+	
+	CASE(8805):
+	DCPText.DCPLine1 = 'Quiss Ctrl in FAULT condition'
+	DCPText.DCPFaultNum = 08805
+	
+	CASE(8806):
+	DCPText.DCPLine1 = 'Quiss Ctrl RESULT OK not OFF'
+	DCPText.DCPFaultNum = 08806
+	
+	CASE(8807):
+	DCPText.DCPLine1 = 'Quiss Ctrl RESULT NOK not OFF'
+	DCPText.DCPFaultNum = 08807
+	
+	CASE(8808):
+	DCPText.DCPLine1 = 'Quiss Ctrl RESULT READY not OFF'
+	DCPText.DCPFaultNum = 08808
+	
+	CASE(8809):
+	DCPText.DCPLine1 = 'Quiss Ctrl PRODUCT data RESULT error'
+	DCPText.DCPFaultNum = 08809
+	
+	CASE(8810):
+	DCPText.DCPLine1 = 'Quiss Ctrl PRODUCT data SYSTEM error'
+	DCPText.DCPLine2 = 'Waiting for System Ready Input'
+	DCPText.DCPFaultNum = 08810
+	
+	CASE(8811):
+	DCPText.DCPLine1 = 'Quiss Ctrl PRODUCT QUALITY NOK'
+	DCPText.DCPFaultNum = 08811
+	
+	CASE(8812):
+	DCPText.DCPLine1 = 'Quiss Ctrl PRODUCT QUALITY RESULT not RECIEVED'
+	DCPText.DCPFaultNum = 08812
+	
+	CASE(8813):
+	DCPText.DCPLine1 = 'Quiss Ctrl PRODUCT RESULT RESET error'
+	DCPText.DCPFaultNum = 08813
+	
+	CASE(8814):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE data COMPLETE error'
+	DCPText.DCPFaultNum = 08814
+	
+	CASE(8815):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE data SYSTEM error'
+	DCPText.DCPFaultNum = 08815
+	
+	CASE(8816):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE data RESULT error'
+	DCPText.DCPFaultNum = 08816
+	
+	CASE(8817):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE QUALITY NOK'
+	DCPText.DCPFaultNum = 08817
+	
+	CASE(8818):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE QUALITY RESULT not RECEIVED'
+	DCPText.DCPFaultNum = 08818
+	
+	CASE(8819):
+	DCPText.DCPLine1 = 'Quiss Ctrl TYPE RESULT RESET error'
+	DCPText.DCPFaultNum = 08819
+	
+	CASE(8820):
+	DCPText.DCPLine1 = 'Quiss Ctrl INSPECTION COMPLETE not OFF'
+	DCPText.DCPFaultNum = 08820
+	
+
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+
+ENDSELECT
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+--Write DCP Fault to user screen
+DCPText.DCPLine3 = 'Check Quiss PC For Errors'
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = TRUE
+
+  	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+	ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+END DCP_SQ

@@ -1,0 +1,1024 @@
+-- DCP_TUCKER_1.KL (decompiled v3)
+PROGRAM DCP_TUCKER_1
+%COMMENT = 'Version 1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  INTPROGNUM : INTEGER
+  STATUS : INTEGER
+  STRPROGNUM : STRING[64]
+  INTAREAINREQ : INTEGER
+  REALDUMMY : REAL
+  STRAREAINREQ : STRING[64]
+  INTAREAOUTRL : INTEGER
+  STRAREAOUTRL : STRING[64]
+  INTTOOLREQ : INTEGER
+  STRTOOLREQ : STRING[64]
+  INTJOBDONE : INTEGER
+  STRJOBDONE : STRING[64]
+  INTCOLREQ : INTEGER
+  STRCOLREQ : STRING[64]
+  INTCOLREL : INTEGER
+  STRCOLREL : STRING[64]
+  INTRIVID : INTEGER
+  STRRIVID : STRING[64]
+  INTOPEN : INTEGER
+  STROPEN : STRING[64]
+  DCPTEXT : ALMDCP
+  STRDCPNUM : STRING[64]
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  FKEYS : ARRAY[10] OF STRING[12]
+  FKEY_SEL : INTEGER
+  BLPLC : BOOLEAN
+  BLSPR : BOOLEAN
+  BLSPOT : BOOLEAN
+  BLDISPENSE : BOOLEAN
+  BLMH : BOOLEAN
+  BLSTUD : BOOLEAN
+  BLNUT : BOOLEAN
+  BLISRA : BOOLEAN
+  BLQUISS : BOOLEAN
+  PARAMTYP : INTEGER
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTDCPFAULT : INTEGER
+  INTHENERROR : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[10]
+  DCPFAULTNUM : STRING[5]
+  STRAREANUM : STRING[3]
+  STRHENERROR : STRING[4]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STRADDDCPTXT : STRING[20]
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE G_DCP_SPR1_1 : INTEGER
+BEGIN
+  GET_PORT_VAL(18, 1, INTPROGNUM, STATUS)
+  CNV_INT_STR(INTPROGNUM, 3, 10, STRPROGNUM)
+  GET_REG(151, (0 <> 0), INTAREAINREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAINREQ, 3, 10, STRAREAINREQ)
+  GET_REG(152, (0 <> 0), INTAREAOUTRL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAOUTRL, 3, 10, STRAREAOUTRL)
+  GET_REG(153, (0 <> 0), INTTOOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLREQ, 3, 10, STRTOOLREQ)
+  GET_REG(154, (0 <> 0), INTJOBDONE, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTJOBDONE, 3, 10, STRJOBDONE)
+  GET_REG(156, (0 <> 0), INTCOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREQ, 3, 10, STRCOLREQ)
+  GET_REG(157, (0 <> 0), INTCOLREL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREL, 3, 10, STRCOLREL)
+  GET_REG(86, (0 <> 0), INTRIVID, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTRIVID, 3, 0, STRRIVID)
+  GET_REG(84, (0 <> 0), INTOPEN, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTOPEN, 3, 0, STROPEN)
+  SELECT DCPTEXT_f00 OF
+  CASE(101):
+  DCPTEXT_f04 = 'Timeout feeding cycle'
+  DCPTEXT_f00 = 101
+  CASE(102):
+  DCPTEXT_f04 = 'Timeout rivet program'
+  DCPTEXT_f00 = 102
+  CASE(103):
+  DCPTEXT_f04 = 'Timeout tolerance curve'
+  DCPTEXT_f00 = 103
+  CASE(104):
+  DCPTEXT_f04 = 'Timeout start rivet process'
+  DCPTEXT_f00 = 104
+  CASE(105):
+  DCPTEXT_f04 = 'Timeout end rivet process'
+  DCPTEXT_f00 = 105
+  CASE(106):
+  DCPTEXT_f04 = 'Timeout measurement data'
+  DCPTEXT_f00 = 106
+  CASE(107):
+  DCPTEXT_f04 = 'Rivet in receiver after rivet process'
+  DCPTEXT_f00 = 107
+  CASE(108):
+  DCPTEXT_f04 = 'Timeout spindle home position'
+  DCPTEXT_f00 = 108
+  CASE(109):
+  DCPTEXT_f04 = 'Timeout not ready for fixing linear slide'
+  DCPTEXT_f00 = 109
+  CASE(110):
+  DCPTEXT_f04 = 'Timeout fixing linear slide'
+  DCPTEXT_f00 = 110
+  CASE(111):
+  DCPTEXT_f04 = 'No program selection'
+  DCPTEXT_f00 = 111
+  CASE(112):
+  DCPTEXT_f04 = 'Program not active'
+  DCPTEXT_f00 = 112
+  CASE(113):
+  DCPTEXT_f04 = 'Start riveting on manual system'
+  DCPTEXT_f00 = 113
+  CASE(114):
+  DCPTEXT_f04 = 'RAM module erased'
+  DCPTEXT_f00 = 114
+  CASE(115):
+  DCPTEXT_f04 = 'Maintenance counter spindle erased'
+  DCPTEXT_f00 = 115
+  CASE(116):
+  DCPTEXT_f04 = 'Statistic data erased'
+  DCPTEXT_f00 = 116
+  CASE(117):
+  DCPTEXT_f04 = 'Fault memory erased'
+  DCPTEXT_f00 = 117
+  CASE(118):
+  DCPTEXT_f04 = 'ROP memory erased'
+  DCPTEXT_f00 = 118
+  CASE(119):
+  DCPTEXT_f04 = 'Maintenance counter feed tubes erased'
+  DCPTEXT_f00 = 119
+  CASE(120):
+  DCPTEXT_f04 = 'Maintenance counter general purpose erased'
+  DCPTEXT_f00 = 120
+  CASE(121):
+  DCPTEXT_f04 = 'Keyreader user data erased'
+  DCPTEXT_f00 = 121
+  CASE(122):
+  DCPTEXT_f04 = 'List of reasons for changes erased'
+  DCPTEXT_f00 = 122
+  CASE(123):
+  DCPTEXT_f04 = 'Insufficient memory capacity (RAM module)'
+  DCPTEXT_f00 = 123
+  CASE(124):
+  DCPTEXT_f04 = 'RAM module memory faultily'
+  DCPTEXT_f00 = 124
+  CASE(125):
+  DCPTEXT_f04 = 'RAM module faultily or missing'
+  DCPTEXT_f00 = 125
+  CASE(126):
+  DCPTEXT_f04 = 'Test operation conditions not met'
+  DCPTEXT_f00 = 126
+  CASE(127):
+  DCPTEXT_f04 = 'Fiber optic connection to customer interface disturbed'
+  DCPTEXT_f00 = 127
+  CASE(128):
+  DCPTEXT_f04 = 'Start rivet not reset'
+  DCPTEXT_f00 = 128
+  CASE(129):
+  DCPTEXT_f04 = 'Start rivet during test process'
+  DCPTEXT_f00 = 129
+  CASE(130):
+  DCPTEXT_f04 = 'Feeder not in automatic operation mode'
+  DCPTEXT_f00 = 130
+  CASE(131):
+  DCPTEXT_f04 = 'Wrong rivet in receiver'
+  DCPTEXT_f00 = 131
+  CASE(132):
+  DCPTEXT_f04 = 'Feeder master: Communication fault with slave feeder'
+  DCPTEXT_f00 = 132
+  CASE(133):
+  DCPTEXT_f04 = 'Feeder slave 1: Communication fault with slave'
+  DCPTEXT_f00 = 133
+  CASE(134):
+  DCPTEXT_f04 = 'Feeder slave 2: Communication fault with slave'
+  DCPTEXT_f00 = 134
+  CASE(135):
+  DCPTEXT_f04 = 'Feeder slave 3: Communication fault with slave'
+  DCPTEXT_f00 = 135
+  CASE(136):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated, inlet rail not filled'
+  DCPTEXT_f00 = 136
+  CASE(137):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet not separated, inlet rail not filled'
+  DCPTEXT_f00 = 137
+  CASE(138):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet not separated, inlet rail not filled'
+  DCPTEXT_f00 = 138
+  CASE(139):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet not separated, inlet rail not filled'
+  DCPTEXT_f00 = 139
+  CASE(140):
+  DCPTEXT_f04 = 'Feeder master: Rivet not separated'
+  DCPTEXT_f00 = 140
+  CASE(141):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet not separated'
+  DCPTEXT_f00 = 141
+  CASE(142):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet not separated'
+  DCPTEXT_f00 = 142
+  CASE(143):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet not separated'
+  DCPTEXT_f00 = 143
+  CASE(144):
+  DCPTEXT_f04 = 'Feeder master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 144
+  CASE(145):
+  DCPTEXT_f04 = 'Feeder slave 1: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 145
+  CASE(146):
+  DCPTEXT_f04 = 'Feeder slave 2: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 146
+  CASE(147):
+  DCPTEXT_f04 = 'Feeder slave 3: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 147
+  CASE(148):
+  DCPTEXT_f04 = 'Feeding process master: Timeout feeding in receiver'
+  DCPTEXT_f00 = 148
+  CASE(149):
+  DCPTEXT_f04 = 'Feeding process slave 1: Timeout feeding in receiver'
+  DCPTEXT_f00 = 149
+  CASE(150):
+  DCPTEXT_f04 = 'Feeding process slave 2: Timeout feeding in receiver'
+  DCPTEXT_f00 = 150
+  CASE(151):
+  DCPTEXT_f04 = 'Feeding process slave 3: Timeout feeding in receiver'
+  DCPTEXT_f00 = 151
+  CASE(152):
+  DCPTEXT_f04 = 'Customer interface: common fault for error codes larger 255'
+  DCPTEXT_f00 = 152
+  CASE(153):
+  DCPTEXT_f04 = 'Fiber optic data connection feeder'
+  DCPTEXT_f00 = 153
+  CASE(154):
+  DCPTEXT_f04 = 'Timeout fixing linear slide'
+  DCPTEXT_f00 = 154
+  CASE(155):
+  DCPTEXT_f04 = 'Timeout floating linear slide'
+  DCPTEXT_f00 = 155
+  CASE(156):
+  DCPTEXT_f04 = 'Spindle: Maintenance user counter 1 necessary'
+  DCPTEXT_f00 = 156
+  CASE(157):
+  DCPTEXT_f04 = 'Spindle: Maintenance spindle is necessary'
+  DCPTEXT_f00 = 157
+  CASE(158):
+  DCPTEXT_f04 = 'Spindle: Maintenance die is necessary'
+  DCPTEXT_f00 = 158
+  CASE(159):
+  DCPTEXT_f04 = 'Spindle: Maintenance punch is necessary'
+  DCPTEXT_f00 = 159
+  CASE(160):
+  DCPTEXT_f04 = 'Feeder Master: Maintenance feed tube is necessary'
+  DCPTEXT_f00 = 160
+  CASE(161):
+  DCPTEXT_f04 = 'Timeout disconnecting spindle (Docking)'
+  DCPTEXT_f00 = 161
+  CASE(162):
+  DCPTEXT_f04 = 'Timeout connecting spindle (Docking)'
+  DCPTEXT_f00 = 162
+  CASE(163):
+  DCPTEXT_f04 = 'Timeout spindle parameter (docking)'
+  DCPTEXT_f00 = 163
+  CASE(164):
+  DCPTEXT_f04 = 'Spindle (docking) number invalid'
+  DCPTEXT_f00 = 164
+  CASE(165):
+  DCPTEXT_f04 = 'SIC: Rivet parameters invalid'
+  DCPTEXT_f00 = 165
+  CASE(166):
+  DCPTEXT_f04 = 'SIC: Tolerance curve not loaded'
+  DCPTEXT_f00 = 166
+  CASE(167):
+  DCPTEXT_f04 = 'Timeout start signal "Spindle drive to position"'
+  DCPTEXT_f00 = 167
+  CASE(168):
+  DCPTEXT_f04 = 'Timeout spindle drive to position'
+  DCPTEXT_f00 = 168
+  CASE(169):
+  DCPTEXT_f04 = 'Timeout request "Spindle position"'
+  DCPTEXT_f00 = 169
+  CASE(170):
+  DCPTEXT_f04 = 'Fiber optic data connection SIC (servo drive)'
+  DCPTEXT_f00 = 170
+  CASE(171):
+  DCPTEXT_f04 = 'SIC: Spindle type changed'
+  DCPTEXT_f00 = 171
+  CASE(172):
+  DCPTEXT_f04 = 'Timeout spindle basic position run-up'
+  DCPTEXT_f00 = 172
+  CASE(173):
+  DCPTEXT_f04 = 'Timeout spindle drive to basic position'
+  DCPTEXT_f00 = 173
+  CASE(174):
+  DCPTEXT_f04 = 'Rivet process: Timeout linear slide floating'
+  DCPTEXT_f00 = 174
+  CASE(175):
+  DCPTEXT_f04 = 'Rivet process: Protection circuit or emergency stop triggered during riveting'
+  DCPTEXT_f00 = 175
+  CASE(176):
+  DCPTEXT_f04 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 176
+  CASE(177):
+  DCPTEXT_f04 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 177
+  CASE(178):
+  DCPTEXT_f04 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 178
+  CASE(179):
+  DCPTEXT_f04 = 'Preseperation: Proximity sensor "rivet in receiver" did not recognize a rivet'
+  DCPTEXT_f00 = 179
+  CASE(180):
+  DCPTEXT_f04 = 'Spindle: Maintenance user counter 2 necessary'
+  DCPTEXT_f00 = 180
+  CASE(181):
+  DCPTEXT_f04 = 'Spindle: Maintenance user counter 3 necessary'
+  DCPTEXT_f00 = 181
+  CASE(182):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 182
+  CASE(183):
+  DCPTEXT_f04 = 'Rivet process: Spindle does not achieve the basic position'
+  DCPTEXT_f00 = 183
+  CASE(184):
+  DCPTEXT_f04 = 'Rivet process: Fixing linear slide not allowed'
+  DCPTEXT_f00 = 184
+  CASE(185):
+  DCPTEXT_f04 = 'Feeder master: Rivet in tube not fed'
+  DCPTEXT_f00 = 185
+  CASE(186):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet in tube not fed'
+  DCPTEXT_f00 = 186
+  CASE(187):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet in tube not fed'
+  DCPTEXT_f00 = 187
+  CASE(188):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet in tube not fed'
+  DCPTEXT_f00 = 188
+  CASE(189):
+  DCPTEXT_f04 = 'Feeder master: Rivet to divider'
+  DCPTEXT_f00 = 189
+  CASE(190):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet to divider'
+  DCPTEXT_f00 = 190
+  CASE(191):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet to divider'
+  DCPTEXT_f00 = 191
+  CASE(192):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet to divider'
+  DCPTEXT_f00 = 192
+  CASE(193):
+  DCPTEXT_f04 = 'Feeder master: Drum motor lacks in supply voltage'
+  DCPTEXT_f00 = 193
+  CASE(194):
+  DCPTEXT_f04 = 'Feeder slave 1: Drum motor lacks supply voltage'
+  DCPTEXT_f00 = 194
+  CASE(195):
+  DCPTEXT_f04 = 'Feeder slave 2: Drum motor lacks in supply voltage'
+  DCPTEXT_f00 = 195
+  CASE(196):
+  DCPTEXT_f04 = 'Feeder slave 3: Drum motor lacks in supply voltage'
+  DCPTEXT_f00 = 196
+  CASE(197):
+  DCPTEXT_f04 = 'Feeder master: Divider not connected anymore'
+  DCPTEXT_f00 = 197
+  CASE(198):
+  DCPTEXT_f04 = 'Feeder slave 1: Divider not connected anymore'
+  DCPTEXT_f00 = 198
+  CASE(199):
+  DCPTEXT_f04 = 'Feeder slave 2: Divider not connected anymore'
+  DCPTEXT_f00 = 199
+  CASE(200):
+  DCPTEXT_f04 = 'Feeder slave 3: Divider not connected anymore'
+  DCPTEXT_f00 = 200
+  CASE(201):
+  DCPTEXT_f04 = 'Feeder master: Pre-separation not connected anymore'
+  DCPTEXT_f00 = 201
+  CASE(202):
+  DCPTEXT_f04 = 'Feeder slave 1: Pre-separation not connected anymore'
+  DCPTEXT_f00 = 202
+  CASE(203):
+  DCPTEXT_f04 = 'Feeder slave 2: Pre-separation not connected anymore'
+  DCPTEXT_f00 = 203
+  CASE(204):
+  DCPTEXT_f04 = 'Feeder slave 3: Pre-separation not connected anymore'
+  DCPTEXT_f00 = 204
+  CASE(205):
+  DCPTEXT_f04 = 'Feeder master: Linear slide control not connected anymore'
+  DCPTEXT_f00 = 205
+  CASE(206):
+  DCPTEXT_f04 = 'Feeder slave 1: Linear slide control not connected anymore'
+  DCPTEXT_f00 = 206
+  CASE(207):
+  DCPTEXT_f04 = 'Feeder slave 2: Linear slide control not connected anymore'
+  DCPTEXT_f00 = 207
+  CASE(208):
+  DCPTEXT_f04 = 'Feeder slave 3: Linear slide control not connected anymore'
+  DCPTEXT_f00 = 208
+  CASE(209):
+  DCPTEXT_f04 = 'Feeder master: 2-hand interface not connected anymore'
+  DCPTEXT_f00 = 209
+  CASE(210):
+  DCPTEXT_f04 = 'Feeder slave 1: 2-hand interface not connected anymore.'
+  DCPTEXT_f00 = 210
+  CASE(211):
+  DCPTEXT_f04 = 'Feeder slave 2: 2-hand interface not connected anymore'
+  DCPTEXT_f00 = 211
+  CASE(212):
+  DCPTEXT_f04 = 'Feeder slave 3: 2-hand interface not connected anymore'
+  DCPTEXT_f00 = 212
+  CASE(213):
+  DCPTEXT_f04 = 'Feeder master: An existing passive feeder is not connected anymore'
+  DCPTEXT_f00 = 213
+  CASE(214):
+  DCPTEXT_f04 = 'Feeder slave 1: An existing passive is not connected anymore'
+  DCPTEXT_f00 = 214
+  CASE(215):
+  DCPTEXT_f04 = 'Feeder slave 2: An existing passive feeder is not connected anymore'
+  DCPTEXT_f00 = 215
+  CASE(216):
+  DCPTEXT_f04 = 'Feeder slave 3: An existing passive feeder is not connected anymore'
+  DCPTEXT_f00 = 216
+  CASE(217):
+  DCPTEXT_f04 = 'Feeder master: Divider position incorrect for this feeder'
+  DCPTEXT_f00 = 217
+  CASE(218):
+  DCPTEXT_f04 = 'Feeder slave 1: Divider position incorrect for this feeder'
+  DCPTEXT_f00 = 218
+  CASE(219):
+  DCPTEXT_f04 = 'Feeder slave 2: Divider position incorrect for this feeder'
+  DCPTEXT_f00 = 219
+  CASE(220):
+  DCPTEXT_f04 = 'Feeder slave 3: Divider position incorrect for this feeder'
+  DCPTEXT_f00 = 220
+  CASE(221):
+  DCPTEXT_f04 = 'Feeder master: Chamber position of pre-separation faultily for this feeder'
+  DCPTEXT_f00 = 221
+  CASE(222):
+  DCPTEXT_f04 = 'Feeder slave 1: Chamber position of pre-separation faultily for this feeder'
+  DCPTEXT_f00 = 222
+  CASE(223):
+  DCPTEXT_f04 = 'Feeder slave 2: Chamber position of pre-separation faultily for this feeder'
+  DCPTEXT_f00 = 223
+  CASE(224):
+  DCPTEXT_f04 = 'Feeder slave 3: Chamber position of pre-separation faultily for this feeder'
+  DCPTEXT_f00 = 224
+  CASE(225):
+  DCPTEXT_f04 = 'Feeder master: Rivet not recognized in pre-separation'
+  DCPTEXT_f00 = 225
+  CASE(226):
+  DCPTEXT_f04 = 'Feeder slave 1: Rivet not recognized in pre-separation'
+  DCPTEXT_f00 = 226
+  CASE(227):
+  DCPTEXT_f04 = 'Feeder slave 2: Rivet not recognized in pre-separation'
+  DCPTEXT_f00 = 227
+  CASE(228):
+  DCPTEXT_f04 = 'Feeder slave 3: Rivet not recognized in pre-separation'
+  DCPTEXT_f00 = 228
+  CASE(229):
+  DCPTEXT_f04 = 'Feeding process master: Unknown rivet in receiver'
+  DCPTEXT_f00 = 229
+  CASE(230):
+  DCPTEXT_f04 = 'Feeding process slave 1: Unknown rivet in receiver'
+  DCPTEXT_f00 = 230
+  CASE(231):
+  DCPTEXT_f04 = 'Feeding process slave 2: Unknown rivet in receiver'
+  DCPTEXT_f00 = 231
+  CASE(232):
+  DCPTEXT_f04 = 'Feeding process slave 3: Unknown rivet in receiver'
+  DCPTEXT_f00 = 232
+  CASE(233):
+  DCPTEXT_f04 = 'Feeding process master: Unknown rivet in EPS'
+  DCPTEXT_f00 = 233
+  CASE(234):
+  DCPTEXT_f04 = 'Feeding process slave 1: Unknown rivet in EPS'
+  DCPTEXT_f00 = 234
+  CASE(235):
+  DCPTEXT_f04 = 'Feeding process slave 2: Unknown rivet in EPS'
+  DCPTEXT_f00 = 235
+  CASE(236):
+  DCPTEXT_f04 = 'Feeding process slave 3 Unknown rivet in EPS'
+  DCPTEXT_f00 = 236
+  CASE(237):
+  DCPTEXT_f04 = 'Controller fault F01: Heat sink temperature'
+  DCPTEXT_f00 = 237
+  CASE(238):
+  DCPTEXT_f04 = 'Controller fault F02: Overvoltage'
+  DCPTEXT_f00 = 238
+  CASE(239):
+  DCPTEXT_f04 = 'Controller fault F03: Following error'
+  DCPTEXT_f00 = 239
+  CASE(240):
+  DCPTEXT_f04 = 'Controller fault F04: Feedback fault'
+  DCPTEXT_f00 = 240
+  CASE(241):
+  DCPTEXT_f04 = 'Controller fault F05: Undervoltage'
+  DCPTEXT_f00 = 241
+  CASE(242):
+  DCPTEXT_f04 = 'Controller fault F06: Motor temperature'
+  DCPTEXT_f00 = 242
+  CASE(243):
+  DCPTEXT_f04 = 'Controller fault F07: Internal voltages'
+  DCPTEXT_f00 = 243
+  CASE(244):
+  DCPTEXT_f04 = 'Controller fault F07: Internal voltages'
+  DCPTEXT_f00 = 244
+  CASE(245):
+  DCPTEXT_f04 = 'Controller fault F09: EEPROM'
+  DCPTEXT_f00 = 245
+  CASE(246):
+  DCPTEXT_f04 = 'Controller fault F10: Flash EPROM'
+  DCPTEXT_f00 = 246
+  CASE(247):
+  DCPTEXT_f04 = 'Controller fault F10: Flash EPROM'
+  DCPTEXT_f00 = 247
+  CASE(248):
+  DCPTEXT_f04 = 'Controller fault F12: Motor phase'
+  DCPTEXT_f00 = 248
+  CASE(249):
+  DCPTEXT_f04 = 'Controller fault F13: Ambient temperature'
+  DCPTEXT_f00 = 249
+  CASE(250):
+  DCPTEXT_f04 = 'Controller fault F14: Output stage'
+  DCPTEXT_f00 = 250
+  CASE(251):
+  DCPTEXT_f04 = 'Controller fault F15: l2t max. exceeded'
+  DCPTEXT_f00 = 251
+  CASE(252):
+  DCPTEXT_f04 = 'Controller fault F16: Mains BTB'
+  DCPTEXT_f00 = 252
+  CASE(253):
+  DCPTEXT_f04 = 'Controller fault F17: AD converter'
+  DCPTEXT_f00 = 253
+  CASE(254):
+  DCPTEXT_f04 = 'Controller fault F18: Load circuit'
+  DCPTEXT_f00 = 254
+  CASE(255):
+  DCPTEXT_f04 = 'Controller fault F19: Missing mains phases'
+  DCPTEXT_f00 = 255
+  CASE(256):
+  DCPTEXT_f04 = 'Controller fault F20: Slot error'
+  DCPTEXT_f00 = 256
+  CASE(257):
+  DCPTEXT_f04 = 'Controller fault F21: Handling error'
+  DCPTEXT_f00 = 257
+  CASE(258):
+  DCPTEXT_f04 = 'Controller fault F22: Ground connection'
+  DCPTEXT_f00 = 258
+  CASE(259):
+  DCPTEXT_f04 = 'Controller fault F23: CANBUS OFF'
+  DCPTEXT_f00 = 259
+  CASE(260):
+  DCPTEXT_f04 = 'Controller fault F24: Warning instead of fault'
+  DCPTEXT_f00 = 260
+  CASE(261):
+  DCPTEXT_f04 = 'Controller fault F25: Commutation fault'
+  DCPTEXT_f00 = 261
+  CASE(262):
+  DCPTEXT_f04 = 'Controller fault F26: Hardware limit switch'
+  DCPTEXT_f00 = 262
+  CASE(263):
+  DCPTEXT_f04 = 'Controller fault F27: Fault AS option'
+  DCPTEXT_f00 = 263
+  CASE(264):
+  DCPTEXT_f04 = 'Controller fault F28: External trajectory'
+  DCPTEXT_f00 = 264
+  CASE(265):
+  DCPTEXT_f04 = 'Controller fault F29: Slot card fault'
+  DCPTEXT_f00 = 265
+  CASE(266):
+  DCPTEXT_f04 = 'Controller fault F30: Timeout emergency stop'
+  DCPTEXT_f00 = 266
+  CASE(267):
+  DCPTEXT_f04 = 'Controller fault F31: Fault MACRO'
+  DCPTEXT_f00 = 267
+  CASE(268):
+  DCPTEXT_f04 = 'Controller fault F32: System fault'
+  DCPTEXT_f00 = 268
+  CASE(269):
+  DCPTEXT_f04 = 'Controller: Fault in SDO communication'
+  DCPTEXT_f00 = 269
+  CASE(270):
+  DCPTEXT_f04 = 'Controller: Common fault'
+  DCPTEXT_f00 = 270
+  CASE(271):
+  DCPTEXT_f04 = 'Controller: Reset during operation'
+  DCPTEXT_f00 = 271
+  CASE(272):
+  DCPTEXT_f04 = 'Controller: Fault during basic position run'
+  DCPTEXT_f00 = 272
+  CASE(273):
+  DCPTEXT_f04 = 'SIC: Faulty mains'
+  DCPTEXT_f00 = 273
+  CASE(274):
+  DCPTEXT_f04 = 'SIC: Invalid spindle position'
+  DCPTEXT_f00 = 274
+  CASE(275):
+  DCPTEXT_f04 = 'SIC: Stored Force compensation value is too big'
+  DCPTEXT_f00 = 275
+  CASE(276):
+  DCPTEXT_f04 = 'SIC: Error while basic position drive. Guide bush tight'
+  DCPTEXT_f00 = 276
+  CASE(277):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 277
+  CASE(278):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 278
+  CASE(279):
+  DCPTEXT_f04 = 'SIC: Timeout SDO Communication'
+  DCPTEXT_f00 = 279
+  CASE(280):
+  DCPTEXT_f04 = 'SIC: SDO channel has wrong start value'
+  DCPTEXT_f00 = 280
+  CASE(281):
+  DCPTEXT_f04 = 'SIC: SDO channel is already occupied'
+  DCPTEXT_f00 = 281
+  CASE(282):
+  DCPTEXT_f04 = 'SIC: Unknown spindle configuration'
+  DCPTEXT_f00 = 282
+  CASE(283):
+  DCPTEXT_f04 = 'SIC: Wrong motor rotating direction'
+  DCPTEXT_f00 = 283
+  CASE(284):
+  DCPTEXT_f04 = 'SIC: Protective circuit interruption during spindle movement'
+  DCPTEXT_f00 = 284
+  CASE(285):
+  DCPTEXT_f04 = 'SIC: DDC communication faultily'
+  DCPTEXT_f00 = 285
+  CASE(286):
+  DCPTEXT_f04 = 'SIC: SDO communication faultily'
+  DCPTEXT_f00 = 286
+  CASE(287):
+  DCPTEXT_f04 = 'SIC: Fault during rivet process'
+  DCPTEXT_f00 = 287
+  CASE(288):
+  DCPTEXT_f04 = 'SIC: Unallowed process command'
+  DCPTEXT_f00 = 288
+  CASE(289):
+  DCPTEXT_f04 = 'SIC: Emergency stop prior to plate thickness measurement'
+  DCPTEXT_f00 = 289
+  CASE(290):
+  DCPTEXT_f04 = 'SIC: Emergency stop prior to rivet length measurement'
+  DCPTEXT_f00 = 290
+  CASE(291):
+  DCPTEXT_f04 = 'SIC: Emergency stop during rivet setting'
+  DCPTEXT_f00 = 291
+  CASE(292):
+  DCPTEXT_f04 = 'SIC: Emergency stop during backward driving'
+  DCPTEXT_f00 = 292
+  CASE(293):
+  DCPTEXT_f04 = 'SIC: Protective circuit prior to plate thickness measurement'
+  DCPTEXT_f00 = 293
+  CASE(294):
+  DCPTEXT_f04 = 'SIC: Protective circuit prior to rivet length measurement'
+  DCPTEXT_f00 = 294
+  CASE(295):
+  DCPTEXT_f04 = 'SIC: Protective circuit during rivet setting'
+  DCPTEXT_f00 = 295
+  CASE(296):
+  DCPTEXT_f04 = 'SIC: Protective circuit during backward driving'
+  DCPTEXT_f00 = 296
+  CASE(297):
+  DCPTEXT_f04 = 'SIC: Max. limit of C-Frame compensation exceeded'
+  DCPTEXT_f00 = 297
+  CASE(298):
+  DCPTEXT_f04 = 'SIC: Fault during electrical connecting of the SR600'
+  DCPTEXT_f00 = 298
+  CASE(299):
+  DCPTEXT_f04 = 'SIC: Fault during referencing of controller'
+  DCPTEXT_f00 = 299
+  CASE(300):
+  DCPTEXT_f04 = 'SIC: Max. limit of rivet setting depth regulation exceeded'
+  DCPTEXT_f00 = 300
+  CASE(301):
+  DCPTEXT_f04 = 'DDC: Unknown or no spindle configuration data'
+  DCPTEXT_f00 = 301
+  CASE(302):
+  DCPTEXT_f04 = 'DDC: 24V supply voltage too low'
+  DCPTEXT_f00 = 302
+  CASE(303):
+  DCPTEXT_f04 = 'DDC: Measured plate thickness too low'
+  DCPTEXT_f00 = 303
+  CASE(304):
+  DCPTEXT_f04 = 'DDC: Measured rivet length too low'
+  DCPTEXT_f00 = 304
+  CASE(305):
+  DCPTEXT_f04 = 'DDC: Calibration of max. force failed'
+  DCPTEXT_f00 = 305
+  CASE(306):
+  DCPTEXT_f04 = 'DDC: Max. force exceeded'
+  DCPTEXT_f00 = 306
+  CASE(307):
+  DCPTEXT_f04 = 'DDC: Measured setting path too low'
+  DCPTEXT_f00 = 307
+  CASE(308):
+  DCPTEXT_f04 = 'DDC: Communication to SPI expansion card faultily'
+  DCPTEXT_f00 = 308
+  CASE(309):
+  DCPTEXT_f04 = 'DDC: Rivet curve falls below tolerance curve'
+  DCPTEXT_f00 = 309
+  CASE(310):
+  DCPTEXT_f04 = 'DDC: Rivet curve rises above tolerance curve'
+  DCPTEXT_f00 = 310
+  CASE(311):
+  DCPTEXT_f04 = 'DDC: Protective end switch "Rear end position" triggered'
+  DCPTEXT_f00 = 311
+  CASE(312):
+  DCPTEXT_f04 = 'DDC: Measured setting path too large'
+  DCPTEXT_f00 = 312
+  CASE(313):
+  DCPTEXT_f04 = 'DDC: Rivet curve is longer than tolerance curve'
+  DCPTEXT_f00 = 313
+  CASE(314):
+  DCPTEXT_f04 = 'DDC: Offset adjustment failed'
+  DCPTEXT_f00 = 314
+  CASE(315):
+  DCPTEXT_f04 = 'DDC: Index Encoder 2 not detected'
+  DCPTEXT_f00 = 315
+  CASE(316):
+  DCPTEXT_f04 = 'DDC: Proximity switch "Rivet in receiver" is constantly high'
+  DCPTEXT_f00 = 316
+  CASE(317):
+  DCPTEXT_f04 = 'DDC: Measured rivet length too long'
+  DCPTEXT_f00 = 317
+  CASE(318):
+  DCPTEXT_f04 = 'DDC: Measured plate thickness too high'
+  DCPTEXT_f00 = 318
+  CASE(319):
+  DCPTEXT_f04 = 'DDC: Force measuring signal too low'
+  DCPTEXT_f00 = 319
+  CASE(320):
+  DCPTEXT_f04 = 'DDC: could not calculate energy level for JIC'
+  DCPTEXT_f00 = 320
+  CASE(321):
+  DCPTEXT_f04 = 'DDC: Broken cable encoder 1'
+  DCPTEXT_f00 = 321
+  CASE(322):
+  DCPTEXT_f04 = 'DDC: Broken cable encoder 2'
+  DCPTEXT_f00 = 322
+  CASE(323):
+  DCPTEXT_f04 = 'DDC: Function aborted'
+  DCPTEXT_f00 = 323
+  CASE(324):
+  DCPTEXT_f04 = 'DDC: Short circuit of an outlet on the SPI expansion card'
+  DCPTEXT_f00 = 324
+  CASE(325):
+  DCPTEXT_f04 = 'DDC: Measured punch contact point to large (only clinch system)'
+  DCPTEXT_f00 = 325
+  CASE(326):
+  DCPTEXT_f04 = 'DDC: Measured remaining bottom thickness too low (only clinch system)'
+  DCPTEXT_f00 = 326
+  CASE(327):
+  DCPTEXT_f04 = 'DDC: Measured remaining bottom thickness too high (only clinch system)'
+  DCPTEXT_f00 = 327
+  CASE(328):
+  DCPTEXT_f04 = 'DDC: No rivet in receiver'
+  DCPTEXT_f00 = 328
+  CASE(329):
+  DCPTEXT_f04 = 'DDC: reference curve not received'
+  DCPTEXT_f00 = 329
+  CASE(330):
+  DCPTEXT_f04 = 'DDC: Internal calculating error for the c-frame or pre clamping spring constant'
+  DCPTEXT_f00 = 330
+  CASE(331):
+  DCPTEXT_f04 = 'Force Correction: Error calculating delay between DDC and DF30CAN'
+  DCPTEXT_f00 = 331
+  CASE(332):
+  DCPTEXT_f04 = 'Force Correction: Runtime error DDC'
+  DCPTEXT_f00 = 332
+  CASE(333):
+  DCPTEXT_f04 = 'Feeding process master: Timeout feeding to EPS'
+  DCPTEXT_f00 = 333
+  CASE(334):
+  DCPTEXT_f04 = 'Feeding process slave 1: Timeout feeding to EPS'
+  DCPTEXT_f00 = 334
+  CASE(335):
+  DCPTEXT_f04 = 'Feeding process slave 2: Timeout feeding to EPS'
+  DCPTEXT_f00 = 335
+  CASE(336):
+  DCPTEXT_f04 = 'Feeding process slave 3: Timeout feeding to EPS'
+  DCPTEXT_f00 = 336
+  CASE(337):
+  DCPTEXT_f04 = 'Feeder Slave 1: Maintenance feed tube is necessary'
+  DCPTEXT_f00 = 337
+  CASE(338):
+  DCPTEXT_f04 = 'Feeder Slave 2: Maintenance feed tube is necessary'
+  DCPTEXT_f00 = 338
+  CASE(339):
+  DCPTEXT_f04 = 'Feeder Slave 3: Maintenance feed tube is necessary'
+  DCPTEXT_f00 = 339
+  CASE(340):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 340
+  CASE(341):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 341
+  CASE(342):
+  DCPTEXT_f04 = 'Wrong customer interface software'
+  DCPTEXT_f00 = 342
+  CASE(343):
+  DCPTEXT_f04 = 'Wrong feeder software'
+  DCPTEXT_f00 = 343
+  CASE(344):
+  DCPTEXT_f04 = 'Feeder master: Protective circuit interrupted'
+  DCPTEXT_f00 = 344
+  CASE(345):
+  DCPTEXT_f04 = 'Feeder slave 1: Protective circuit interrupted'
+  DCPTEXT_f00 = 345
+  CASE(346):
+  DCPTEXT_f04 = 'Feeder slave 2: Protective circuit interrupted'
+  DCPTEXT_f00 = 346
+  CASE(347):
+  DCPTEXT_f04 = 'Feeder slave 3: Protective circuit interrupted'
+  DCPTEXT_f00 = 347
+  CASE(348):
+  DCPTEXT_f04 = 'Feeding start for incorrect unit configuration'
+  DCPTEXT_f00 = 348
+  CASE(349):
+  DCPTEXT_f04 = 'Feeding process master: Timeout magazine feeding cycle'
+  DCPTEXT_f00 = 349
+  CASE(350):
+  DCPTEXT_f04 = 'Feeding process slave 1: Timeout magazine feeding cycle'
+  DCPTEXT_f00 = 350
+  CASE(351):
+  DCPTEXT_f04 = 'Feeding process slave 2: Timeout magazine feeding cycle'
+  DCPTEXT_f00 = 351
+  CASE(352):
+  DCPTEXT_f04 = 'Feeding process slave 3: Timeout magazine feeding cycle'
+  DCPTEXT_f00 = 352
+  CASE(353):
+  DCPTEXT_f04 = 'Feeding not possible in standby mode'
+  DCPTEXT_f00 = 353
+  CASE(354):
+  DCPTEXT_f04 = 'Maintenance counter scrap exhauster achieved'
+  DCPTEXT_f00 = 354
+  CASE(355):
+  DCPTEXT_f04 = 'Spindle parameter: Incorrect spindle type assignment'
+  DCPTEXT_f00 = 355
+  CASE(356):
+  DCPTEXT_f04 = 'Tucker Is Not Ready'
+  DCPTEXT_f00 = 356
+  CASE(357):
+  DCPTEXT_f04 = 'Tucker Is Not OK'
+  DCPTEXT_f00 = 357
+  CASE(358):
+  DCPTEXT_f04 = 'Magazine Is Not Ready'
+  DCPTEXT_f00 = 358
+  CASE(359):
+  DCPTEXT_f04 = 'Fill Station Is Not Ready Dock'
+  DCPTEXT_f00 = 359
+  CASE(360):
+  DCPTEXT_f04 = 'Magazine Is Not Full'
+  DCPTEXT_f00 = 360
+  CASE(361):
+  DCPTEXT_f04 = 'Magazine Undock Is NOK'
+  DCPTEXT_f00 = 361
+  CASE(362):
+  DCPTEXT_f04 = 'Tucker1 Homing Failed'
+  DCPTEXT_f00 = 362
+  CASE(363):
+  DCPTEXT_f04 = 'Tucker2 Homing Failed'
+  DCPTEXT_f00 = 363
+  CASE(364):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 364
+  CASE(365):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 365
+  CASE(366):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 366
+  CASE(367):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 367
+  CASE(368):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 368
+  CASE(369):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 369
+  CASE(370):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 370
+  CASE(371):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 371
+  CASE(372):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 372
+  CASE(373):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 373
+  CASE(374):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 374
+  CASE(375):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 375
+  CASE(376):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 376
+  CASE(377):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 377
+  CASE(378):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 378
+  CASE(379):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 379
+  CASE(380):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 380
+  CASE(381):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 381
+  CASE(382):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 382
+  CASE(383):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 383
+  CASE(384):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 384
+  CASE(385):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 385
+  CASE(386):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 386
+  CASE(387):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 387
+  CASE(388):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 388
+  CASE(389):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 389
+  CASE(390):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 390
+  CASE(391):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 391
+  CASE(392):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 392
+  CASE(393):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 393
+  CASE(394):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 394
+  CASE(395):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 395
+  CASE(396):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 396
+  CASE(397):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 397
+  CASE(398):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 398
+  CASE(399):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 399
+  CASE(400):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 400
+  ELSE:
+  DCPTEXT_f04 = 'Undefined SPR DCP Fault Message'
+  ENDSELECT
+  CNV_INT_STR(DCPTEXT_f00, 4, 10, STRDCPNUM)
+  SET_STR_REG(9, STRDCPNUM, STATUS)
+  RETURN(0)
+END G_DCP_SPR1_1
+
+BEGIN
+END DCP_TUCKER_1

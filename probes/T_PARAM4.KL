@@ -1,0 +1,39 @@
+PROGRAM T_PARAM4
+%COMMENT = 'param slot probe v4 widths'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  gv : INTEGER
+  gpos : POSITION
+  gjp : JOINTPOS
+  garr : ARRAY[8] OF INTEGER
+
+ROUTINE r_j(x : JOINTPOS)
+BEGIN
+  gv = 0
+  gjp = x
+END r_j
+
+ROUTINE r_ar(x : ARRAY OF INTEGER)
+BEGIN
+  gv = x[1]
+  x[2] = 3
+END r_ar
+
+ROUTINE r_pp(x : POSITION; y : POSITION)
+BEGIN
+  gpos = x
+  gpos = y
+END r_pp
+
+ROUTINE r_ps(x : POSITION; s : STRING)
+BEGIN
+  gpos = x
+  gv = STR_LEN(s)
+END r_ps
+
+BEGIN
+  gv = 0
+END T_PARAM4

@@ -1,0 +1,1687 @@
+-- ISV_VG_new.KL (decompiled v3)
+PROGRAM ISV_VG
+%COMMENT = 'IO 1.1b'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	VGRES = STRUCTURE
+	OFFSET: T_POS
+	VECT: INTEGER
+	ENDSTRUCTURE
+	OFFSETMAP = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	VECTORMAP = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	ENDSTRUCTURE
+	VGCFG = STRUCTURE
+	APP_ID: INTEGER
+	START_PT: INTEGER
+	VIN_PT: ARRAY[24] OF INTEGER
+	OFFSET_PT: OFFSETMAP
+	VECTOR_PT: VECTORMAP
+	FLAG_VGNOK: INTEGER
+	FLAG_IDNOK: INTEGER
+	FLAG_EVALNOK: INTEGER
+	MAX_OFFSET: T_POS
+	MIN_OFFSET: T_POS
+	COMTOUT: INTEGER
+	MEATOUT: INTEGER
+	RDY_CHK: INTEGER
+	ERR_CHK: INTEGER
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_23 : ARRAY[512] OF INTEGER
+  CURRES : ARRAY[64] OF VGRES
+  PRERES : ARRAY[64] OF VGRES
+  VGCONFIG : VGCFG
+  TIMER0 : INTEGER
+  STATUS : INTEGER
+  INTVAL1 : INTEGER
+  REALVAL : REAL
+  STRVAL : STRING[64]
+  INTVAL2 : INTEGER
+  INTVAL3 : INTEGER
+  TIMER1 : INTEGER
+  INTVAL4 : INTEGER
+  INTVAL5 : INTEGER
+  INTVAL6 : INTEGER
+  CURRES_f00 : ARRAY[64] OF INTEGER
+  CURRES_f00_f08 : ARRAY[64] OF REAL
+  CURRES_f00_f0c : ARRAY[64] OF REAL
+  CURRES_f00_f10 : ARRAY[64] OF REAL
+  CURRES_f00_f14 : ARRAY[64] OF REAL
+  CURRES_f00_f18 : ARRAY[64] OF REAL
+  CURRES_f00_f1c : ARRAY[64] OF REAL
+  CURRES_f24 : ARRAY[64] OF INTEGER
+  CURRES_f24_f00 : ARRAY[64] OF REAL
+  CURRES_f24_f04 : ARRAY[64] OF REAL
+  CURRES_f24_f08 : ARRAY[64] OF REAL
+  PRERES_f00 : ARRAY[64] OF INTEGER
+  PRERES_f00_f08 : ARRAY[64] OF INTEGER
+  PRERES_f00_f0c : ARRAY[64] OF INTEGER
+  PRERES_f00_f10 : ARRAY[64] OF INTEGER
+  PRERES_f00_f14 : ARRAY[64] OF INTEGER
+  PRERES_f00_f18 : ARRAY[64] OF INTEGER
+  PRERES_f00_f1c : ARRAY[64] OF INTEGER
+  VGCONFIG_f00 : INTEGER
+  VGCONFIG_f04 : INTEGER
+  VGCONFIG_f08 : ARRAY[64] OF INTEGER
+  VGCONFIG_f6c : INTEGER
+  VGCONFIG_f6c_f00 : INTEGER
+  VGCONFIG_f6c_f04 : INTEGER
+  VGCONFIG_f6c_f08 : INTEGER
+  VGCONFIG_f6c_f0c : INTEGER
+  VGCONFIG_f6c_f10 : INTEGER
+  VGCONFIG_f6c_f14 : INTEGER
+  VGCONFIG_f84 : INTEGER
+  VGCONFIG_f84_f00 : INTEGER
+  VGCONFIG_f84_f04 : INTEGER
+  VGCONFIG_f84_f08 : INTEGER
+  VGCONFIG_f90 : INTEGER
+  VGCONFIG_f94 : INTEGER
+  VGCONFIG_f98 : INTEGER
+  VGCONFIG_f9c : INTEGER
+  VGCONFIG_f9c_f08 : INTEGER
+  VGCONFIG_f9c_f0c : INTEGER
+  VGCONFIG_f9c_f10 : INTEGER
+  VGCONFIG_f9c_f14 : INTEGER
+  VGCONFIG_f9c_f18 : INTEGER
+  VGCONFIG_f9c_f1c : INTEGER
+  VGCONFIG_fc0 : INTEGER
+  VGCONFIG_fc0_f08 : INTEGER
+  VGCONFIG_fc0_f0c : INTEGER
+  VGCONFIG_fc0_f10 : INTEGER
+  VGCONFIG_fc0_f14 : INTEGER
+  VGCONFIG_fc0_f18 : INTEGER
+  VGCONFIG_fc0_f1c : INTEGER
+  VGCONFIG_fe4 : INTEGER
+  VGCONFIG_fe8 : INTEGER
+  VGCONFIG_fec : INTEGER
+  VGCONFIG_ff0 : INTEGER
+  r10_lc58_f08 : INTEGER
+  r10_lc58_f0c : INTEGER
+  r10_lc58_f10 : INTEGER
+  r10_lc58_f14 : INTEGER
+  r10_lc58_f18 : INTEGER
+  r10_lc58_f1c : INTEGER
+  r10_lc67_f08 : REAL
+  r10_lc67_f0c : REAL
+  r10_lc67_f10 : REAL
+  r11_lc51_f08 : INTEGER
+  r11_lc51_f0c : INTEGER
+  r11_lc51_f10 : INTEGER
+  r11_lc51_f14 : INTEGER
+  r11_lc51_f18 : INTEGER
+  r11_lc51_f1c : INTEGER
+  r11_lc60_f08 : INTEGER
+  r11_lc60_f0c : INTEGER
+  r11_lc60_f10 : INTEGER
+  r11_lc60_f14 : INTEGER
+  r11_lc60_f18 : INTEGER
+  r11_lc60_f1c : INTEGER
+  r11_lc72_f08 : REAL
+  r11_lc72_f0c : REAL
+  r11_lc72_f10 : REAL
+  r11_lc72_f14 : REAL
+  r11_lc72_f18 : REAL
+  r11_lc72_f1c : REAL
+  r12_lc58_f08 : INTEGER
+  r12_lc58_f0c : INTEGER
+  r12_lc58_f10 : INTEGER
+  r12_lc58_f14 : INTEGER
+  r12_lc58_f18 : INTEGER
+  r12_lc58_f1c : INTEGER
+  r13_lc58_f08 : INTEGER
+  r13_lc58_f0c : INTEGER
+  r13_lc58_f10 : INTEGER
+  r13_lc58_f14 : INTEGER
+  r13_lc58_f18 : INTEGER
+  r13_lc58_f1c : INTEGER
+  r14_lc58_f08 : INTEGER
+  r14_lc58_f0c : INTEGER
+  r14_lc58_f10 : INTEGER
+  r14_lc58_f14 : INTEGER
+  r14_lc58_f18 : INTEGER
+  r14_lc58_f1c : INTEGER
+  r15_lc78_f08 : INTEGER
+  r15_lc78_f0c : INTEGER
+  r15_lc78_f10 : INTEGER
+  r15_lc78_f14 : INTEGER
+  r15_lc78_f18 : INTEGER
+  r15_lc78_f1c : INTEGER
+  r15_lc87_f08 : REAL
+  r15_lc87_f0c : REAL
+  r15_lc87_f10 : REAL
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ISV2_GIN(p0, p1 : INTEGER) : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : INTEGER
+BEGIN
+  r0_lc1 = 0
+  IF ((p0 > 0) AND (p1 > 0)) THEN
+  r0_lc2 = 1
+  FOR r0_lc3 = 1 TO 3 DO
+  IF ((io_01[p0 + r0_lc3 - 1] <> 0)) THEN
+  r0_lc1 = r0_lc1 + r0_lc2
+  ENDIF
+  r0_lc2 = r0_lc2 * 2
+  ENDFOR
+  ENDIF
+  RETURN(r0_lc1)
+  RETURN(0)
+END ISV2_GIN
+
+ROUTINE ISV2_GOUT(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+  r1_lc3 : INTEGER
+  r1_lc4 : INTEGER
+BEGIN
+  IF ((p0 > 0) AND (p1 > 0) AND (p2 >= 0)) THEN
+  r1_lc1 = 1
+  FOR r1_lc2 = 1 TO 3 DO
+  r1_lc1 = r1_lc1 * 2
+  ENDFOR
+  IF ((p2 >= r1_lc1) OR (p2 < 0)) THEN
+  ELSE
+  r1_lc3 = p2
+  FOR r1_lc2 = 1 TO 3 DO
+  r1_lc4 = r1_lc3 MOD 2
+  IF ((r1_lc4 = 1)) THEN
+  io_02[p0 + r1_lc2 - 1] = 1
+  ELSE
+  io_02[p0 + r1_lc2 - 1] = 0
+  ENDIF
+  r1_lc3 = r1_lc3 DIV 2
+  ENDFOR
+  ENDIF
+  ENDIF
+  RETURN(0)
+END ISV2_GOUT
+
+ROUTINE ISV2_B2D1(p0, p1 : INTEGER) : REAL
+VAR
+  r2_lc1 : REAL
+BEGIN
+  IF ((p0 < 32768)) THEN
+  r2_lc1 = p0 / p1
+  ELSE
+  r2_lc1 = 32768 - p0 / p1
+  ENDIF
+  RETURN(r2_lc1)
+  RETURN(sv_r)
+END ISV2_B2D1
+
+ROUTINE ISV2_B2D(p0, p1 : INTEGER) : REAL
+VAR
+  r3_lc1 : REAL
+BEGIN
+  IF ((p0 < 32768)) THEN
+  r3_lc1 = p0 + p1 / 10000
+  ELSE
+  r3_lc1 = 32768 - p0 - p1 / 10000
+  ENDIF
+  RETURN(r3_lc1)
+  RETURN(sv_r)
+END ISV2_B2D
+
+ROUTINE ISV2_D2B(p0 : REAL; p1 : BOOLEAN) : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : REAL
+BEGIN
+  IF ((p1 = 1)) THEN
+  sv_i = trunc(p0)
+  r4_lc1 = sv_i
+  IF ((p0 < 0)) THEN
+  r4_lc2 = 32768 - r4_lc1
+  ELSE
+  r4_lc2 = r4_lc1
+  ENDIF
+  RETURN(r4_lc2)
+  IF ((p0 < 0)) THEN
+  sv_i = trunc(p0)
+  r4_lc3 = sv_i - p0
+  ELSE
+  sv_i = trunc(p0)
+  r4_lc3 = p0 - sv_i
+  ENDIF
+  sv_i = trunc(r4_lc3 * 10000)
+  r4_lc2 = sv_i
+  RETURN(r4_lc2)
+  ENDIF
+  RETURN(0)
+END ISV2_D2B
+
+ROUTINE VG_CHKOFFSET(p0 : INTEGER) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  r5_lc1 = 0
+  IF ((CURRES_f00_f08[p0] = 0) AND (CURRES_f00_f0c[p0] = 0) AND (CURRES_f00_f10[p0] = 0) AND (CURRES_f00_f14[p0] = 0) AND (CURRES_f00_f18[p0] = 0) AND (CURRES_f00_f1c[p0] = 0)) THEN
+  r5_lc1 = 92
+  RETURN(r5_lc1)
+  ENDIF
+  IF (UNINIT(PRERES_f00[p0])) THEN
+  PRERES_f00_f08[p0] = 0
+  PRERES_f00_f0c[p0] = 0
+  PRERES_f00_f10[p0] = 0
+  PRERES_f00_f14[p0] = 0
+  PRERES_f00_f18[p0] = 0
+  PRERES_f00_f1c[p0] = 0
+  ENDIF
+  IF ((CURRES_f00_f08[p0] = PRERES_f00_f08[p0]) AND (CURRES_f00_f0c[p0] = PRERES_f00_f0c[p0]) AND (CURRES_f00_f10[p0] = PRERES_f00_f10[p0]) AND (CURRES_f00_f14[p0] = PRERES_f00_f14[p0]) AND (CURRES_f00_f18[p0] = PRERES_f00_f18[p0]) AND 
+(CURRES_f00_f1c[p0] = PRERES_f00_f1c[p0])) THEN
+  r5_lc1 = 93
+  RETURN(r5_lc1)
+  ENDIF
+  IF ((CURRES_f00_f08[p0] > VGCONFIG_f9c_f08) OR (CURRES_f00_f08[p0] < VGCONFIG_fc0_f08)) THEN
+  r5_lc1 = 91
+  ENDIF
+  IF ((CURRES_f00_f0c[p0] > VGCONFIG_f9c_f0c) OR (CURRES_f00_f0c[p0] < VGCONFIG_fc0_f0c)) THEN
+  r5_lc1 = 91
+  ENDIF
+  IF ((CURRES_f00_f10[p0] > VGCONFIG_f9c_f10) OR (CURRES_f00_f10[p0] < VGCONFIG_fc0_f10)) THEN
+  r5_lc1 = 91
+  ENDIF
+  IF ((CURRES_f00_f14[p0] > VGCONFIG_f9c_f14) OR (CURRES_f00_f14[p0] < VGCONFIG_fc0_f14)) THEN
+  r5_lc1 = 91
+  ENDIF
+  IF ((CURRES_f00_f18[p0] > VGCONFIG_f9c_f18) OR (CURRES_f00_f18[p0] < VGCONFIG_fc0_f18)) THEN
+  r5_lc1 = 91
+  ENDIF
+  IF ((CURRES_f00_f1c[p0] > VGCONFIG_f9c_f1c) OR (CURRES_f00_f1c[p0] < VGCONFIG_fc0_f1c)) THEN
+  r5_lc1 = 91
+  ENDIF
+  -- stmt16 stray CURRES[p0] | PRERES[p0]
+  RETURN(r5_lc1)
+  RETURN(0)
+END VG_CHKOFFSET
+
+ROUTINE VG_CYCEND(p0 : INTEGER) : INTEGER
+BEGIN
+  io_02[VGCONFIG_f04 + 5] = 1
+  IF ((p0 = 2)) THEN
+  DELAY 100
+  io_02[VGCONFIG_f04 + 6] = 1
+  WRITE('ISV_VG: Wait for CYC_END...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt31 stray VGCONFIG_f04 + 6
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 6] = 0)) THEN
+  WRITE('ISV_VG: Wait for CYC_END TIMEOUT.', CR)
+  ENDIF
+  ELSE
+  WRITE('ISV_VG: Wait for CYC_END...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt42 stray VGCONFIG_f04 + 6
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 6] = 0)) THEN
+  WRITE('ISV_VG: Wait for CYC_END TIMEOUT.', CR)
+  ENDIF
+  io_02[VGCONFIG_f04 + 6] = 1
+  WRITE('ISV_VG: Wait for NOT CYC_END...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt53 stray VGCONFIG_f04 + 6
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 6] <> 0)) THEN
+  WRITE('ISV_VG: Wait for NOT CYC_END TIMEOUT.', CR)
+  ENDIF
+  ENDIF
+  io_02[VGCONFIG_f04 + 3] = 0
+  io_02[VGCONFIG_f04 + 5] = 0
+  io_02[VGCONFIG_f04 + 6] = 0
+  RETURN(0)
+END VG_CYCEND
+
+ROUTINE VG_CYCEND2(p0, p1 : INTEGER) : INTEGER
+VAR
+  r7_lc1 : INTEGER
+BEGIN
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 8, 8, 0)
+  -- stmt70 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, p0)
+  -- stmt71 stray sv_i
+  io_02[VGCONFIG_f04 + 3] = 0
+  IF ((p1 <> 0)) THEN
+  io_02[VGCONFIG_f04 + 225] = 1
+  ENDIF
+  io_02[VGCONFIG_f04 + 5] = 1
+  WRITE('ISV_VG: Wait for CYC_END...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt80 stray VGCONFIG_f04 + 6
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 6] = 0)) THEN
+  WRITE('ISV_VG: Wait for CYC_END TIMEOUT.', CR)
+  ELSE
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  r7_lc1 = sv_i
+  IF ((r7_lc1 = 0)) THEN
+  IF ((p1 <> 0) AND (io_01[VGCONFIG_f04 + 225] = 0)) THEN
+  WRITE('ISV_VG: Disconnect sensor FAILED.', CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  io_02[VGCONFIG_f04 + 225] = 0
+  io_02[VGCONFIG_f04 + 5] = 0
+  RETURN(0)
+END VG_CYCEND2
+
+ROUTINE VG_READY(p0, p1 : INTEGER) : INTEGER
+VAR
+  r8_lc1 : INTEGER
+  r8_lc2 : INTEGER
+  r8_lc3 : INTEGER
+  r8_lc5 : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  WRITE(CR, '------------------------------', CR)
+  r8_lc1 = 0
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f94] = 1
+  io_23[VGCONFIG_f98] = 1
+  FOR r8_lc3 = 1 TO 3 DO
+  io_02[VGCONFIG_f04 + r8_lc3] = 0
+  ENDFOR
+  io_02[VGCONFIG_f04 + 0] = 1
+  IF ((io_01[VGCONFIG_f04 + 0] = 0)) THEN
+  WRITE('ISV_VG: Vision offline.', CR)
+  WRITE('ISV_VG: Wait for SYS_OK...', CR)
+  -- stmt120 stray VGCONFIG_f04 + 0
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ENDIF
+  IF ((io_01[VGCONFIG_f04 + 1] <> 0)) THEN
+  WRITE('ISV_VG: Reset vision.', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  io_02[VGCONFIG_f04 + 226] = 1
+  IF ((sv_i <> 1) AND (TIMER0 < 0)) THEN
+  DELAY 100
+  ELSE
+  io_02[VGCONFIG_f04 + 226] = 0
+  IF ((sv_i <> 1)) THEN
+  WRITE('ISV_VG: Reset vision failed.', CR)
+  ELSE
+  ENDIF
+  ENDIF
+  ENDIF
+  FOR r8_lc3 = 1 TO 3 DO
+  IF (NOT (UNINIT(VGCONFIG_f08[r8_lc3]))) THEN
+  IF ((VGCONFIG_f08[r8_lc3] > 0)) THEN
+  sv_i = ISV2_GIN((VGCONFIG_f08[r8_lc3]), 8)
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 32 + 8 * r8_lc3 - 1, 8, sv_i)
+  -- stmt142 stray sv_i
+  ENDIF
+  ENDIF
+  ENDFOR
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, p0)
+  -- stmt146 stray sv_i
+  DELAY 0
+  io_02[VGCONFIG_f04 + 1] = 1
+  WRITE('ISV_VG: Wait for ID_ACCEPT...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt152 stray VGCONFIG_f04 + 1
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 1] = 0)) THEN
+  r8_lc1 = 0
+  WRITE('ISV_VG: Wait for ID_ACCEPT TIMEOUT.', CR)
+  ELSE
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  r8_lc5 = sv_i
+  IF ((r8_lc5 <> 0)) THEN
+  r8_lc1 = 0
+  WRITE('ISV_VG: Vision system NOT ready. ERR:', r8_lc5, CR)
+  ELSE
+  r8_lc1 = 1
+  WRITE('ISV_VG: Vision ready.', CR)
+  IF ((p1 <> 0)) THEN
+  ENDIF
+  REPEAT
+  r8_lc2 = 1
+  io_02[VGCONFIG_f04 + 224] = 1
+  WRITE('ISV_VG: Connecting sensor...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt176 stray VGCONFIG_f04 + 224
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 224] = 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  r8_lc2 = 0
+  WRITE('ISV_VG: Connect sensor FAILED.', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  io_02[VGCONFIG_f04 + 224] = 0
+  -- stmt187 stray VGCONFIG_f04 + 224
+  UNTIL((r8_lc2 <> 0))
+  ENDIF
+  ENDIF
+  io_02[VGCONFIG_f04 + 1] = 0
+  IF ((r8_lc1 = 0) AND (VGCONFIG_ff0 <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'Acknowledge ready ERROR')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt198 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  ENDIF
+  RETURN(0)
+END VG_READY
+
+ROUTINE VG_READY2(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+  r9_lc4 : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  WRITE(CR, '------------------------------', CR)
+  r9_lc1 = 0
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f98] = 1
+  FOR r9_lc2 = 1 TO 3 DO
+  io_02[VGCONFIG_f04 + r9_lc2] = 0
+  ENDFOR
+  io_02[VGCONFIG_f04 + 0] = 1
+  IF ((io_01[VGCONFIG_f04 + 0] = 0)) THEN
+  WRITE('ISV_VG: Vision offline.', CR)
+  WRITE('ISV_VG: Wait for SYS_OK...', CR)
+  -- stmt227 stray VGCONFIG_f04 + 0
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ENDIF
+  IF ((io_01[VGCONFIG_f04 + 6] = 0)) THEN
+  WRITE('ISV_VG: Reset vision.', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  io_02[VGCONFIG_f04 + 7] = 1
+  IF ((sv_i <> 1) AND (TIMER0 < 0)) THEN
+  DELAY 100
+  ELSE
+  io_02[VGCONFIG_f04 + 7] = 0
+  IF ((sv_i <> 1)) THEN
+  WRITE('ISV_VG: Reset vision failed.', CR)
+  ELSE
+  ENDIF
+  ENDIF
+  ENDIF
+  FOR r9_lc2 = 1 TO 3 DO
+  IF (NOT (UNINIT(VGCONFIG_f08[r9_lc2]))) THEN
+  IF ((VGCONFIG_f08[r9_lc2] > 0)) THEN
+  sv_i = ISV2_GIN((VGCONFIG_f08[r9_lc2]), 8)
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 32 + 8 * r9_lc2 - 1, 8, sv_i)
+  -- stmt248 stray sv_i
+  ENDIF
+  ENDIF
+  ENDFOR
+  IF ((VGCONFIG_f00 = 3)) THEN
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 248, 8, p1)
+  -- stmt253 stray sv_i
+  ENDIF
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, p0)
+  -- stmt255 stray sv_i
+  IF ((p2 <> 0)) THEN
+  io_02[VGCONFIG_f04 + 224] = 1
+  ENDIF
+  DELAY 0
+  io_02[VGCONFIG_f04 + 1] = 1
+  WRITE('ISV_VG: Wait for ID_ACCEPT...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt8 stray VGCONFIG_f04 + 1
+  IF ((io_01[VGCONFIG_f04 + 1] = 0)) THEN
+  r9_lc1 = 0
+  WRITE('ISV_VG: Wait for ID_ACCEPT TIMEOUT.', CR)
+  ELSE
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  r9_lc4 = sv_i
+  IF ((r9_lc4 <> 0)) THEN
+  r9_lc1 = 0
+  WRITE('ISV_VG: Vision system NOT ready. ERR:', r9_lc4, CR)
+  ELSE
+  IF ((p2 <> 0) AND (io_01[VGCONFIG_f04 + 224] = 0)) THEN
+  r9_lc1 = 0
+  WRITE('ISV_VG: Connect sensor FAILED.', CR)
+  ELSE
+  r9_lc1 = 1
+  WRITE('ISV_VG: Vision ready.', CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  io_02[VGCONFIG_f04 + 224] = 0
+  io_02[VGCONFIG_f04 + 1] = 0
+  IF ((r9_lc1 = 0) AND (VGCONFIG_ff0 <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'Acknowledge ready ERROR')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt37 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  ENDIF
+  RETURN(0)
+END VG_READY2
+
+ROUTINE VG_SETUF(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r10_lc19 : POSITION
+  r10_lc34 : POSITION
+  r10_lc4 : STRING[64]
+  r10_lc49 : POSITION
+  r10_lc58 : POSITION
+  r10_lc67 : POSITION
+  r10_lc76 : POSITION
+  r10_lc77 : INTEGER
+  r10_lc78 : INTEGER
+  r10_lc79 : INTEGER
+BEGIN
+  io_23[VGCONFIG_f90] = 1
+  GET_VAR(r10_lc77, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r10_lc78, STATUS)
+  r10_lc79 = p2
+  IF ((r10_lc79 > 0) AND (r10_lc79 <= r10_lc78)) THEN
+  CNV_INT_STR(r10_lc79, 1, 0, r10_lc4)
+  GET_VAR(r10_lc77, '*SYSTEM*', '$MNUFRAME[1,' + r10_lc4 + ']', r10_lc19, STATUS)
+  r10_lc58 = r10_lc19
+  ELSE
+  r10_lc58_f08 = 0
+  r10_lc58_f0c = 0
+  r10_lc58_f10 = 0
+  r10_lc58_f14 = 0
+  r10_lc58_f18 = 0
+  r10_lc58_f1c = 0
+  r10_lc19 = r10_lc58
+  ENDIF
+  IF ((p3 <= 0) OR (p3 > r10_lc78)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Invalid Arg 5(UFrame Nr).', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  CNV_INT_STR(p3, 1, 0, r10_lc4)
+  SET_VAR(r10_lc77, '*SYSTEM*', '$MNUFRAME[1,' + r10_lc4 + ']', r10_lc19, STATUS)
+  ENDIF
+  IF ((p1 > 0)) THEN
+  r10_lc76 = CURRES_f00[p1]
+  r10_lc49 = r10_lc76
+  r10_lc34 = r10_lc49
+  -- stmt88 stray r10_lc19
+  r10_lc67 = r10_lc34
+  r10_lc67_f08 = r10_lc67_f08 + p0 * CURRES_f24_f00[p1]
+  r10_lc67_f0c = r10_lc67_f0c + p0 * CURRES_f24_f04[p1]
+  r10_lc67_f10 = r10_lc67_f10 + p0 * CURRES_f24_f08[p1]
+  r10_lc34 = r10_lc67
+  CNV_INT_STR(p3, 1, 0, r10_lc4)
+  SET_VAR(r10_lc77, '*SYSTEM*', '$MNUFRAME[1,' + r10_lc4 + ']', r10_lc34, STATUS)
+  ENDIF
+  IF ((STATUS = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  WRITE('Set user frame', p3, ' success.', CR)
+  ELSE
+  io_23[VGCONFIG_f90] = 1
+  WRITE('Set user frame', p3, ' failed.', CR)
+  FORCE_SPMENU(1, 37, 1)
+  PAUSE
+  ENDIF
+  RETURN(0)
+END VG_SETUF
+
+ROUTINE VG_CAPTURE(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r11_lc12 : STRING[64]
+  r11_lc2 : ARRAY[64] OF INTEGER
+  r11_lc27 : POSITION
+  r11_lc42 : POSITION
+  r11_lc51 : INTEGER
+  r11_lc60 : INTEGER
+  r11_lc72 : POSITION
+  r11_lc73 : INTEGER
+  r11_lc74 : INTEGER
+  r11_lc75 : INTEGER
+  r11_lc76 : INTEGER
+  r11_lc77 : INTEGER
+  r11_lc78 : INTEGER
+  r11_lc79 : INTEGER
+  r11_lc80 : INTEGER
+  r11_lc81 : INTEGER
+BEGIN
+  r11_lc73 = 0
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f94] = 1
+  io_23[VGCONFIG_f98] = 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, 0)
+  -- stmt123 stray sv_i
+  io_02[VGCONFIG_f04 + 2] = 0
+  IF ((p0 = 90)) THEN
+  GET_VAR(r11_lc77, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r11_lc78, STATUS)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$MNUFRAMENUM', r11_lc2, STATUS)
+  r11_lc79 = 0
+  -- stmt129 stray r11_lc2[1]
+  IF ((r11_lc79 > 0) AND (r11_lc79 <= r11_lc78)) THEN
+  CNV_INT_STR(r11_lc79, 1, 0, r11_lc12)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$MNUFRAME[1,' + r11_lc12 + ']', r11_lc27, STATUS)
+  ELSE
+  r11_lc51_f08 = 0
+  r11_lc51_f0c = 0
+  r11_lc51_f10 = 0
+  r11_lc51_f14 = 0
+  r11_lc51_f18 = 0
+  r11_lc51_f1c = 0
+  r11_lc27 = r11_lc51
+  ENDIF
+  SET_VAR(r11_lc77, '*SYSTEM*', '$GROUP[1].$UFRAME', r11_lc27, STATUS)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', r11_lc80, STATUS)
+  r11_lc81 = p3
+  IF ((r11_lc81 > 0) AND (r11_lc81 <= r11_lc80)) THEN
+  CNV_INT_STR(r11_lc81, 1, 0, r11_lc12)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$MNUTOOL[1,' + r11_lc12 + ']', r11_lc42, STATUS)
+  ELSE
+  r11_lc60_f08 = 0
+  r11_lc60_f0c = 0
+  r11_lc60_f10 = 0
+  r11_lc60_f14 = 0
+  r11_lc60_f18 = 0
+  r11_lc60_f1c = 0
+  r11_lc42 = r11_lc60
+  ENDIF
+  SET_VAR(r11_lc77, '*SYSTEM*', '$GROUP[1].$UTOOL', r11_lc42, STATUS)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r11_lc78, STATUS)
+  r11_lc79 = p3
+  IF ((r11_lc79 > 0) AND (r11_lc79 <= r11_lc78)) THEN
+  CNV_INT_STR(r11_lc79, 1, 0, r11_lc12)
+  GET_VAR(r11_lc77, '*SYSTEM*', '$MNUFRAME[1,' + r11_lc12 + ']', r11_lc27, STATUS)
+  ELSE
+  r11_lc51_f08 = 0
+  r11_lc51_f0c = 0
+  r11_lc51_f10 = 0
+  r11_lc51_f14 = 0
+  r11_lc51_f18 = 0
+  r11_lc51_f1c = 0
+  r11_lc27 = r11_lc51
+  ENDIF
+  SET_VAR(r11_lc77, '*SYSTEM*', '$GROUP[1].$UFRAME', r11_lc27, STATUS)
+  r11_lc60_f08 = 0
+  r11_lc60_f0c = 0
+  r11_lc60_f10 = 0
+  r11_lc60_f14 = 0
+  r11_lc60_f18 = 0
+  r11_lc60_f1c = 0
+  r11_lc42 = r11_lc60
+  SET_VAR(r11_lc77, '*SYSTEM*', '$GROUP[1].$UTOOL', r11_lc42, STATUS)
+  ENDIF
+  sv_p = curpos(r11_lc75, r11_lc76)
+  r11_lc72 = sv_p
+  -- stmt203 stray VGCONFIG_f04 + 3
+  sv_i = ISV2_D2B(r11_lc72_f08, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 32, 16, sv_i)
+  -- stmt205 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f08, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 48, 16, sv_i)
+  -- stmt206 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f0c, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 64, 16, sv_i)
+  -- stmt207 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f0c, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 80, 16, sv_i)
+  -- stmt208 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f10, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 96, 16, sv_i)
+  -- stmt209 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f10, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 112, 16, sv_i)
+  -- stmt210 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f14, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 128, 16, sv_i)
+  -- stmt211 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f14, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 144, 16, sv_i)
+  -- stmt212 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f18, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 160, 16, sv_i)
+  -- stmt213 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f18, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 176, 16, sv_i)
+  -- stmt214 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f1c, (1 <> 0))
+  -- 弃参原式: 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 192, 16, sv_i)
+  -- stmt215 stray sv_i
+  sv_i = ISV2_D2B(r11_lc72_f1c, (0 <> 0))
+  -- 弃参原式: 0
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 208, 16, sv_i)
+  -- stmt216 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, p1)
+  -- stmt218 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 8, 8, p0)
+  -- stmt219 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, p2)
+  -- stmt220 stray sv_i
+  DELAY 0
+  io_02[VGCONFIG_f04 + 2] = 1
+  WRITE('ISV_VG: Measuring POS', p2, ' ...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe8)
+  -- stmt226 stray VGCONFIG_f04 + 3
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 3] = 0)) THEN
+  r11_lc73 = 0
+  WRITE('ISV_VG: Measuring POS', p2, ' TIMEOUT.', CR)
+  ELSE
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  r11_lc74 = sv_i
+  IF ((r11_lc74 = 0)) THEN
+  IF ((sv_i = p2)) THEN
+  r11_lc73 = 1
+  WRITE('ISV_VG:POS', p2, ' measured.', CR)
+  ELSE
+  r11_lc73 = 0
+  WRITE('ISV_VG: POS', p2, ' id not match.', CR)
+  ENDIF
+  r11_lc73 = 0
+  WRITE('ISV_VG: Measuring POS', p2, ' FAILED. ERR:', r11_lc74, CR)
+  ENDIF
+  ENDIF
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, 0)
+  -- stmt250 stray sv_i
+  io_02[VGCONFIG_f04 + 2] = 0
+  IF ((r11_lc73 = 0) AND (VGCONFIG_ff0 <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'Acknowledge capture ERROR')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt0 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  RETURN(0)
+END VG_CAPTURE
+
+ROUTINE VG_MEAEND(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER
+VAR
+  r12_lc19 : POSITION
+  r12_lc34 : POSITION
+  r12_lc4 : STRING[64]
+  r12_lc49 : POSITION
+  r12_lc58 : POSITION
+  r12_lc68 : INTEGER
+  r12_lc69 : INTEGER
+  r12_lc70 : INTEGER
+  r12_lc71 : INTEGER
+BEGIN
+  r12_lc71 = 0
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f94] = 1
+  io_23[VGCONFIG_f98] = 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, 0)
+  -- stmt21 stray sv_i
+  io_02[VGCONFIG_f04 + 2] = 0
+  CURRES_f00_f08[p2] = 0
+  CURRES_f00_f0c[p2] = 0
+  CURRES_f00_f10[p2] = 0
+  CURRES_f00_f14[p2] = 0
+  CURRES_f00_f18[p2] = 0
+  CURRES_f00_f1c[p2] = 0
+  CURRES_f24_f00[p2] = 0
+  CURRES_f24_f04[p2] = 0
+  CURRES_f24_f08[p2] = 0
+  IF ((p0 = 91)) THEN
+  GET_VAR(r12_lc69, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', r12_lc70, STATUS)
+  IF ((p3 > 0) AND (p3 <= r12_lc70)) THEN
+  CNV_INT_STR(p3, 1, 0, r12_lc4)
+  GET_VAR(r12_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r12_lc4 + ']', r12_lc19, STATUS)
+  r12_lc58 = r12_lc19
+  ELSE
+  r12_lc58_f08 = 0
+  r12_lc58_f0c = 0
+  r12_lc58_f10 = 0
+  r12_lc58_f14 = 0
+  r12_lc58_f18 = 0
+  r12_lc58_f1c = 0
+  r12_lc19 = r12_lc58
+  ENDIF
+  GET_VAR(r12_lc69, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r12_lc70, STATUS)
+  IF ((p3 > 0) AND (p3 <= r12_lc70)) THEN
+  CNV_INT_STR(p3, 1, 0, r12_lc4)
+  GET_VAR(r12_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r12_lc4 + ']', r12_lc19, STATUS)
+  r12_lc58 = r12_lc19
+  ELSE
+  r12_lc58_f08 = 0
+  r12_lc58_f0c = 0
+  r12_lc58_f10 = 0
+  r12_lc58_f14 = 0
+  r12_lc58_f18 = 0
+  r12_lc58_f1c = 0
+  r12_lc19 = r12_lc58
+  ENDIF
+  ENDIF
+  IF ((p4 <> 0)) THEN
+  IF ((p4 < 0) OR (p4 > r12_lc70)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Invalid Arg 5(UFrame Nr).', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  CNV_INT_STR(p4, 1, 0, r12_lc4)
+  IF ((p0 = 91)) THEN
+  SET_VAR(r12_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r12_lc4 + ']', r12_lc19, STATUS)
+  ELSE
+  SET_VAR(r12_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r12_lc4 + ']', r12_lc19, STATUS)
+  ENDIF
+  ENDIF
+  ENDIF
+  -- stmt84 stray VGCONFIG_f04 + 3
+  IF ((p5 <> 0)) THEN
+  ENDIF
+  REPEAT
+  r12_lc68 = 1
+  io_02[VGCONFIG_f04 + 225] = 1
+  WRITE('ISV_VG: Disconnecting sensor...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt93 stray VGCONFIG_f04 + 225
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((io_01[VGCONFIG_f04 + 225] = 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  r12_lc68 = 0
+  WRITE('ISV_VG: Disconnect sensor FAILED.', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  io_02[VGCONFIG_f04 + 225] = 0
+  -- stmt104 stray VGCONFIG_f04 + 225
+  UNTIL((r12_lc68 <> 0))
+  DELAY 0
+  io_02[VGCONFIG_f04 + 3] = 1
+  WRITE('ISV_VG: Wait for result...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe4)
+  -- stmt124 stray VGCONFIG_f04 + 4 | 0 + 5
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((p1 < 200)) THEN
+  sv_i = VG_CYCEND(1)
+  -- stmt128 stray sv_i
+  ELSE
+  sv_i = VG_CYCEND(2)
+  -- stmt130 stray sv_i
+  ENDIF
+  IF (NOT ((io_01[VGCONFIG_f04 + 4] <> 0) OR (io_01[VGCONFIG_f04 + 5] <> 0))) THEN
+  r12_lc71 = 1
+  WRITE('ISV_VG: Wait for result TIMEOUT.', CR)
+  ELSE
+  IF ((io_01[VGCONFIG_f04 + 4] <> 0) AND (io_01[VGCONFIG_f04 + 5] = 0)) THEN
+  r12_lc71 = 0
+  IF ((p0 = 41) OR (p0 = 51)) THEN
+  IF ((io_01[VGCONFIG_f04 + 227] <> 0) AND (io_01[VGCONFIG_f04 + 228] = 0)) THEN
+  io_23[VGCONFIG_f94] = 0
+  WRITE('ISV_VG: Part check PASS.', CR)
+  ELSE
+  io_23[VGCONFIG_f94] = 1
+  WRITE('ISV_VG: Part check NOK.', CR)
+  ENDIF
+  ENDIF
+  io_23[VGCONFIG_f98] = 0
+  IF ((p4 = 0)) THEN
+  WRITE('ISV_VG: Evaluate PASS.', CR)
+  ELSE
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 32, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 48, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f08[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 64, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 80, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f0c[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 96, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 112, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f10[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 128, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 144, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f14[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 160, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 176, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f18[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 192, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 208, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f1c[p2] = sv_r
+  sv_i = VG_CHKOFFSET(p2)
+  r12_lc71 = sv_i
+  SELECT r12_lc71 OF
+  CASE(0):
+  r12_lc49 = CURRES_f00[p2]
+  r12_lc34 = r12_lc49
+  -- stmt165 stray r12_lc19
+  CNV_INT_STR(p4, 1, 0, r12_lc4)
+  IF ((p0 = 91)) THEN
+  SET_VAR(r12_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r12_lc4 + ']', r12_lc34, STATUS)
+  ELSE
+  SET_VAR(r12_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r12_lc4 + ']', r12_lc34, STATUS)
+  ENDIF
+  IF ((STATUS = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  WRITE('Set user frame', p4, ' success.', CR)
+  ELSE
+  r12_lc71 = 90
+  WRITE('Set user frame', p4, ' failed.', CR)
+  ENDIF
+  CASE(91):
+  WRITE('ISV_VG: Offset value exceeds limits.', CR)
+  CASE(92):
+  WRITE('ISV_VG: Null offset value.', CR)
+  CASE(93):
+  WRITE('ISV_VG: Duplicate offset value.', CR)
+  ELSE:
+  r12_lc71 = 99
+  WRITE('ISV_VG: Unknown offset error.', CR)
+  ENDSELECT
+  ENDIF
+  ENDIF
+  r12_lc71 = 11
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  WRITE('ISV_VG: Result NOK. ERR:', sv_i, CR)
+  ENDIF
+  IF ((r12_lc71 <> 0) AND (VGCONFIG_ff0 <> 0)) THEN
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f98] = 1
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'Acknowledge result ERROR')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt207 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  RETURN(0)
+END VG_MEAEND
+
+ROUTINE VG_MEAEND2(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  r13_lc19 : POSITION
+  r13_lc34 : POSITION
+  r13_lc4 : STRING[64]
+  r13_lc49 : POSITION
+  r13_lc58 : POSITION
+  r13_lc69 : INTEGER
+  r13_lc70 : INTEGER
+  r13_lc71 : INTEGER
+BEGIN
+  r13_lc71 = 0
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f98] = 1
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, 0)
+  -- stmt228 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, 0)
+  -- stmt229 stray sv_i
+  io_02[VGCONFIG_f04 + 2] = 0
+  io_02[VGCONFIG_f04 + 3] = 0
+  CURRES_f00_f08[p2] = 0
+  CURRES_f00_f0c[p2] = 0
+  CURRES_f00_f10[p2] = 0
+  CURRES_f00_f14[p2] = 0
+  CURRES_f00_f18[p2] = 0
+  CURRES_f00_f1c[p2] = 0
+  CURRES_f24_f00[p2] = 0
+  CURRES_f24_f04[p2] = 0
+  CURRES_f24_f08[p2] = 0
+  IF ((p0 = 91)) THEN
+  GET_VAR(r13_lc69, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', r13_lc70, STATUS)
+  IF ((p3 > 0) AND (p3 <= r13_lc70)) THEN
+  CNV_INT_STR(p3, 1, 0, r13_lc4)
+  GET_VAR(r13_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r13_lc4 + ']', r13_lc19, STATUS)
+  r13_lc58 = r13_lc19
+  ELSE
+  r13_lc58_f08 = 0
+  r13_lc58_f0c = 0
+  r13_lc58_f10 = 0
+  r13_lc58_f14 = 0
+  r13_lc58_f18 = 0
+  r13_lc58_f1c = 0
+  r13_lc19 = r13_lc58
+  ENDIF
+  GET_VAR(r13_lc69, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r13_lc70, STATUS)
+  IF ((p3 > 0) AND (p3 <= r13_lc70)) THEN
+  CNV_INT_STR(p3, 1, 0, r13_lc4)
+  GET_VAR(r13_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r13_lc4 + ']', r13_lc19, STATUS)
+  r13_lc58 = r13_lc19
+  ELSE
+  r13_lc58_f08 = 0
+  r13_lc58_f0c = 0
+  r13_lc58_f10 = 0
+  r13_lc58_f14 = 0
+  r13_lc58_f18 = 0
+  r13_lc58_f1c = 0
+  r13_lc19 = r13_lc58
+  ENDIF
+  ENDIF
+  IF ((p4 <> 0)) THEN
+  IF ((p4 < 0) OR (p4 > r13_lc70)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Invalid Arg 5(UFrame Nr).', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  CNV_INT_STR(p4, 1, 0, r13_lc4)
+  IF ((p0 = 91)) THEN
+  SET_VAR(r13_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r13_lc4 + ']', r13_lc19, STATUS)
+  ELSE
+  SET_VAR(r13_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r13_lc4 + ']', r13_lc19, STATUS)
+  ENDIF
+  ENDIF
+  ENDIF
+  -- stmt37 stray VGCONFIG_f04 + 3
+  -- stmt38 stray VGCONFIG_f04 + 4 | 0 + 5 | 0 + 228 | 0 + 229
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 8, 8, p0 - 1)
+  -- stmt51 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, p1)
+  -- stmt52 stray sv_i
+  IF ((VGCONFIG_f00 = 3)) THEN
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 248, 8, p2)
+  -- stmt54 stray sv_i
+  ELSE
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, p2)
+  -- stmt56 stray sv_i
+  ENDIF
+  DELAY 0
+  io_02[VGCONFIG_f04 + 3] = 1
+  WRITE('ISV_VG: Wait for result...', CR)
+  TIMER0 = (0 - 1000 * VGCONFIG_fe8)
+  -- stmt63 stray VGCONFIG_f04 + 4 | 0 + 5 | 0 + 228 | 0 + 229
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((TIMER0 > 0)) THEN
+  r13_lc71 = 1
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f98] = 1
+  WRITE('ISV_VG: Wait for result TIMEOUT.', CR)
+  ELSE
+  IF ((io_01[VGCONFIG_f04 + 4] <> 0) AND (io_01[VGCONFIG_f04 + 5] <> 0) OR (io_01[VGCONFIG_f04 + 228] <> 0) AND (io_01[VGCONFIG_f04 + 229] <> 0)) THEN
+  r13_lc71 = 1
+  io_23[VGCONFIG_f90] = 1
+  io_23[VGCONFIG_f98] = 1
+  WRITE('ISV_VG: Invalid result.', CR)
+  ELSE
+  IF ((io_01[VGCONFIG_f04 + 4] <> 0) AND (io_01[VGCONFIG_f04 + 5] = 0)) THEN
+  r13_lc71 = 0
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 32, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 48, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f08[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 64, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 80, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f0c[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 96, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 112, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f10[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 128, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 144, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f14[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 160, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 176, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f18[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 192, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 208, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f00_f1c[p2] = sv_r
+  IF ((VGCONFIG_f00 = 3)) THEN
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 256, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 272, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f24_f00[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 288, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 304, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f24_f04[p2] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 320, 16)
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 336, 16)
+  sv_r = ISV2_B2D(sv_i, sv_i)
+  CURRES_f24_f08[p2] = sv_r
+  ENDIF
+  IF ((p4 > 0) OR (VGCONFIG_f00 = 3)) THEN
+  sv_i = VG_CHKOFFSET(p2)
+  r13_lc71 = sv_i
+  SELECT r13_lc71 OF
+  CASE(0):
+  IF ((VGCONFIG_f00 = 3) AND (p4 = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  ELSE
+  r13_lc49 = CURRES_f00[p2]
+  r13_lc34 = r13_lc49
+  -- stmt101 stray r13_lc19
+  CNV_INT_STR(p4, 1, 0, r13_lc4)
+  IF ((p0 = 91)) THEN
+  SET_VAR(r13_lc69, '*SYSTEM*', '$MNUTOOL[1,' + r13_lc4 + ']', r13_lc34, STATUS)
+  ELSE
+  SET_VAR(r13_lc69, '*SYSTEM*', '$MNUFRAME[1,' + r13_lc4 + ']', r13_lc34, STATUS)
+  ENDIF
+  IF ((STATUS = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  WRITE('Set user frame', p4, ' success.', CR)
+  ELSE
+  r13_lc71 = 90
+  io_23[VGCONFIG_f90] = 1
+  WRITE('Set user frame', p4, ' failed.', CR)
+  ENDIF
+  ENDIF
+  CASE(91):
+  io_23[VGCONFIG_f90] = 1
+  WRITE('ISV_VG: Offset value exceeds limits.', CR)
+  CASE(92):
+  io_23[VGCONFIG_f90] = 1
+  WRITE('ISV_VG: Null offset value.', CR)
+  CASE(93):
+  io_23[VGCONFIG_f90] = 1
+  WRITE('ISV_VG: Duplicate offset value.', CR)
+  ELSE:
+  r13_lc71 = 99
+  io_23[VGCONFIG_f90] = 1
+  WRITE('ISV_VG: Unknown offset error.', CR)
+  ENDSELECT
+  ENDIF
+  ENDIF
+  io_23[VGCONFIG_f90] = 1
+  IF ((io_01[VGCONFIG_f04 + 5] <> 0)) THEN
+  r13_lc71 = 9
+  sv_i = ISV2_GIN(VGCONFIG_f04 + 16, 8)
+  WRITE('ISV_VG: Result NOK. ERR:', sv_i, CR)
+  ELSE
+  IF ((p4 > 0)) THEN
+  r13_lc71 = 9
+  WRITE('ISV_VG: Wait for result TIMEOUT.', CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  IF ((io_01[VGCONFIG_f04 + 228] <> 0) AND (io_01[VGCONFIG_f04 + 229] = 0)) THEN
+  io_23[VGCONFIG_f98] = 0
+  WRITE('ISV_VG: Evaluate PASS.', CR)
+  ELSE
+  io_23[VGCONFIG_f98] = 1
+  IF ((io_01[VGCONFIG_f04 + 229] <> 0)) THEN
+  r13_lc71 = 10
+  WRITE('ISV_VG: Evaluate NOK.', CR)
+  ELSE
+  IF ((p4 = 0)) THEN
+  r13_lc71 = 10
+  WRITE('ISV_VG: Evaluate TIMEOUT.', CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 16, 8, 0)
+  -- stmt171 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04 + 24, 8, 0)
+  -- stmt172 stray sv_i
+  io_02[VGCONFIG_f04 + 3] = 0
+  IF ((r13_lc71 <> 0) AND (VGCONFIG_ff0 <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'Acknowledge result ERROR')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt178 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  RETURN(0)
+END VG_MEAEND2
+
+ROUTINE VG_CP(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r14_lc19 : POSITION
+  r14_lc34 : POSITION
+  r14_lc4 : STRING[64]
+  r14_lc49 : POSITION
+  r14_lc58 : POSITION
+  r14_lc68 : INTEGER
+  r14_lc69 : INTEGER
+  r14_lc70 : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  WRITE(CR, '------------------------------', CR)
+  io_23[VGCONFIG_f90] = 1
+  CURRES_f00_f08[1] = 0
+  CURRES_f00_f0c[1] = 0
+  CURRES_f00_f10[1] = 0
+  CURRES_f00_f14[1] = 0
+  CURRES_f00_f18[1] = 0
+  CURRES_f00_f1c[1] = 0
+  CURRES_f24_f00[1] = 0
+  CURRES_f24_f04[1] = 0
+  CURRES_f24_f08[1] = 0
+  GET_VAR(r14_lc68, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r14_lc69, STATUS)
+  IF ((p1 > 0) AND (p1 <= r14_lc69)) THEN
+  CNV_INT_STR(p1, 1, 0, r14_lc4)
+  GET_VAR(r14_lc68, '*SYSTEM*', '$MNUFRAME[1,' + r14_lc4 + ']', r14_lc19, STATUS)
+  r14_lc58 = r14_lc19
+  ELSE
+  r14_lc58_f08 = 0
+  r14_lc58_f0c = 0
+  r14_lc58_f10 = 0
+  r14_lc58_f14 = 0
+  r14_lc58_f18 = 0
+  r14_lc58_f1c = 0
+  r14_lc19 = r14_lc58
+  ENDIF
+  IF ((p2 <= 0) OR (p2 > r14_lc69)) THEN
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Invalid Arg 3(UFrame Nr).', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  CNV_INT_STR(p2, 1, 0, r14_lc4)
+  SET_VAR(r14_lc68, '*SYSTEM*', '$MNUFRAME[1,' + r14_lc4 + ']', r14_lc19, STATUS)
+  ENDIF
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f00, 16)
+  sv_r = ISV2_B2D1(sv_i, 100)
+  CURRES_f00_f08[1] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f04, 16)
+  sv_r = ISV2_B2D1(sv_i, 100)
+  CURRES_f00_f0c[1] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f08, 16)
+  sv_r = ISV2_B2D1(sv_i, 100)
+  CURRES_f00_f10[1] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f0c, 16)
+  sv_r = ISV2_B2D1(sv_i, 1000)
+  CURRES_f00_f14[1] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f10, 16)
+  sv_r = ISV2_B2D1(sv_i, 1000)
+  CURRES_f00_f18[1] = sv_r
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f14, 16)
+  sv_r = ISV2_B2D1(sv_i, 1000)
+  CURRES_f00_f1c[1] = sv_r
+  sv_i = VG_CHKOFFSET(1)
+  r14_lc70 = sv_i
+  SELECT r14_lc70 OF
+  CASE(0):
+  r14_lc49 = CURRES_f00[1]
+  r14_lc34 = r14_lc49
+  -- stmt253 stray r14_lc19
+  CNV_INT_STR(p2, 1, 0, r14_lc4)
+  SET_VAR(r14_lc68, '*SYSTEM*', '$MNUFRAME[1,' + r14_lc4 + ']', r14_lc34, STATUS)
+  IF ((STATUS = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  WRITE('Set user frame', p2, ' success.', CR)
+  ELSE
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('Set user frame', p2, ' failed.', CR)
+  ENDIF
+  CASE(91):
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Offset value exceeds limits.', CR)
+  CASE(92):
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Null offset value.', CR)
+  CASE(93):
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Duplicate offset value.', CR)
+  ELSE:
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Unknown offset error.', CR)
+  ENDSELECT
+  RETURN(0)
+END VG_CP
+
+ROUTINE VG_RP(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r15_lc100 : INTEGER
+  r15_lc13 : ARRAY[64] OF INTEGER
+  r15_lc20 : ARRAY[64] OF INTEGER
+  r15_lc24 : STRING[64]
+  r15_lc39 : POSITION
+  r15_lc54 : POSITION
+  r15_lc69 : POSITION
+  r15_lc78 : POSITION
+  r15_lc87 : POSITION
+  r15_lc96 : POSITION
+  r15_lc97 : INTEGER
+  r15_lc98 : INTEGER
+  r15_lc99 : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  WRITE(CR, '------------------------------', CR)
+  io_23[VGCONFIG_f90] = 1
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f00, 32, 0)
+  -- stmt46 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f04, 32, 0)
+  -- stmt47 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f08, 32, 0)
+  -- stmt48 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f0c, 32, 0)
+  -- stmt49 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f10, 32, 0)
+  -- stmt50 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f14, 32, 0)
+  -- stmt51 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f00, 32, 0)
+  -- stmt52 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f04, 32, 0)
+  -- stmt53 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f08, 32, 0)
+  -- stmt54 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04, 8, 0)
+  -- stmt55 stray sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f04, 8)
+  r15_lc100 = sv_i
+  CURRES_f00_f08[r15_lc100] = 0
+  CURRES_f00_f0c[r15_lc100] = 0
+  CURRES_f00_f10[r15_lc100] = 0
+  CURRES_f00_f14[r15_lc100] = 0
+  CURRES_f00_f18[r15_lc100] = 0
+  CURRES_f00_f1c[r15_lc100] = 0
+  CURRES_f24_f00[r15_lc100] = 0
+  CURRES_f24_f04[r15_lc100] = 0
+  CURRES_f24_f08[r15_lc100] = 0
+  GET_VAR(r15_lc97, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r15_lc98, STATUS)
+  r15_lc99 = p1
+  IF ((r15_lc99 > 0) AND (r15_lc99 <= r15_lc98)) THEN
+  CNV_INT_STR(r15_lc99, 1, 0, r15_lc24)
+  GET_VAR(r15_lc97, '*SYSTEM*', '$MNUFRAME[1,' + r15_lc24 + ']', r15_lc39, STATUS)
+  r15_lc78 = r15_lc39
+  ELSE
+  r15_lc78_f08 = 0
+  r15_lc78_f0c = 0
+  r15_lc78_f10 = 0
+  r15_lc78_f14 = 0
+  r15_lc78_f18 = 0
+  r15_lc78_f1c = 0
+  r15_lc39 = r15_lc78
+  ENDIF
+  IF ((p2 <= 0) OR (p2 > r15_lc98)) THEN
+  io_23[VGCONFIG_f90] = 1
+  FORCE_SPMENU(1, 37, 1)
+  WRITE('ISV_VG: Invalid Arg 3(UFrame Nr).', CR)
+  PAUSE
+  FORCE_SPMENU(1, 64, 1)
+  ELSE
+  CNV_INT_STR(p2, 1, 0, r15_lc24)
+  SET_VAR(r15_lc97, '*SYSTEM*', '$MNUFRAME[1,' + r15_lc24 + ']', r15_lc39, STATUS)
+  ENDIF
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f00, 16)
+  r15_lc13[1] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f00 + 16, 16)
+  r15_lc13[2] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f04, 16)
+  r15_lc13[3] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f04 + 16, 16)
+  r15_lc13[4] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f08, 16)
+  r15_lc13[5] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f08 + 16, 16)
+  r15_lc13[6] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f0c, 16)
+  r15_lc13[7] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f0c + 16, 16)
+  r15_lc13[8] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f10, 16)
+  r15_lc13[9] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f10 + 16, 16)
+  r15_lc13[10] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f14, 16)
+  r15_lc13[11] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f6c_f14 + 16, 16)
+  r15_lc13[12] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f00, 16)
+  r15_lc20[1] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f00 + 16, 16)
+  r15_lc20[2] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f04, 16)
+  r15_lc20[3] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f04 + 16, 16)
+  r15_lc20[4] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f08, 16)
+  r15_lc20[5] = sv_i
+  sv_i = ISV2_GIN(VGCONFIG_f84_f08 + 16, 16)
+  r15_lc20[6] = sv_i
+  sv_r = ISV2_B2D((r15_lc13[1]), (r15_lc13[2]))
+  CURRES_f00_f08[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc13[3]), (r15_lc13[4]))
+  CURRES_f00_f0c[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc13[5]), (r15_lc13[6]))
+  CURRES_f00_f10[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc13[7]), (r15_lc13[8]))
+  CURRES_f00_f14[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc13[9]), (r15_lc13[10]))
+  CURRES_f00_f18[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc13[11]), (r15_lc13[12]))
+  CURRES_f00_f1c[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc20[1]), (r15_lc20[2]))
+  CURRES_f24_f00[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc20[3]), (r15_lc20[4]))
+  CURRES_f24_f04[r15_lc100] = sv_r
+  sv_r = ISV2_B2D((r15_lc20[5]), (r15_lc20[6]))
+  CURRES_f24_f08[r15_lc100] = sv_r
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f00, 16, (r15_lc13[1]))
+  -- stmt129 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f00 + 16, 16, (r15_lc13[2]))
+  -- stmt130 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f04, 16, (r15_lc13[3]))
+  -- stmt131 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f04 + 16, 16, (r15_lc13[4]))
+  -- stmt132 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f08, 16, (r15_lc13[5]))
+  -- stmt133 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f08 + 16, 16, (r15_lc13[6]))
+  -- stmt134 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f0c, 16, (r15_lc13[7]))
+  -- stmt135 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f0c + 16, 16, (r15_lc13[8]))
+  -- stmt136 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f10, 16, (r15_lc13[9]))
+  -- stmt137 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f10 + 16, 16, (r15_lc13[10]))
+  -- stmt138 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f14, 16, (r15_lc13[11]))
+  -- stmt139 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f6c_f14 + 16, 16, (r15_lc13[12]))
+  -- stmt140 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f00, 16, (r15_lc20[1]))
+  -- stmt142 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f00 + 16, 16, (r15_lc20[2]))
+  -- stmt143 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f04, 16, (r15_lc20[3]))
+  -- stmt144 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f04 + 16, 16, (r15_lc20[4]))
+  -- stmt145 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f08, 16, (r15_lc20[5]))
+  -- stmt146 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f84_f08 + 16, 16, (r15_lc20[6]))
+  -- stmt147 stray sv_i
+  sv_i = ISV2_GOUT(VGCONFIG_f04, 8, r15_lc100)
+  -- stmt149 stray sv_i
+  r15_lc96 = CURRES_f00[r15_lc100]
+  r15_lc69 = r15_lc96
+  r15_lc54 = r15_lc69
+  -- stmt153 stray r15_lc39
+  r15_lc87 = r15_lc54
+  r15_lc87_f08 = r15_lc87_f08 + r15_lc100 * CURRES_f24_f00[r15_lc100]
+  r15_lc87_f0c = r15_lc87_f0c + r15_lc100 * CURRES_f24_f04[r15_lc100]
+  r15_lc87_f10 = r15_lc87_f10 + r15_lc100 * CURRES_f24_f08[r15_lc100]
+  r15_lc54 = r15_lc87
+  CNV_INT_STR(p2, 1, 0, r15_lc24)
+  SET_VAR(r15_lc97, '*SYSTEM*', '$MNUFRAME[1,' + r15_lc24 + ']', r15_lc54, STATUS)
+  IF ((STATUS = 0)) THEN
+  io_23[VGCONFIG_f90] = 0
+  WRITE('Set user frame', p2, ' success.', CR)
+  ELSE
+  io_23[VGCONFIG_f90] = 1
+  WRITE('Set user frame', p2, ' failed.', CR)
+  FORCE_SPMENU(1, 37, 1)
+  PAUSE
+  ENDIF
+  IF (UNINIT(VGCONFIG_f00)) THEN
+  VGCONFIG_f00 = 1
+  ENDIF
+  IF (UNINIT(VGCONFIG_f94)) THEN
+  VGCONFIG_f94 = VGCONFIG_f90
+  ENDIF
+  IF (UNINIT(VGCONFIG_f98)) THEN
+  VGCONFIG_f98 = VGCONFIG_f90
+  ENDIF
+  IF (UNINIT(VGCONFIG_fe4)) THEN
+  VGCONFIG_fe4 = 5
+  ELSE
+  IF ((VGCONFIG_fe4 <= 0)) THEN
+  VGCONFIG_fe4 = 5
+  ENDIF
+  ENDIF
+  IF (UNINIT(VGCONFIG_fe8)) THEN
+  VGCONFIG_fe8 = 30
+  ELSE
+  IF ((VGCONFIG_fe8 <= 0)) THEN
+  VGCONFIG_fe8 = 30
+  ENDIF
+  ENDIF
+  IF (UNINIT(VGCONFIG_fec)) THEN
+  VGCONFIG_fec = 0
+  ENDIF
+  GET_TPE_PRM(1, 1, INTVAL1, REALVAL, STRVAL, STATUS)
+  SELECT INTVAL1 OF
+  CASE(1):
+  IF ((VGCONFIG_f00 > 1)) THEN
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  sv_i = VG_CYCEND2(INTVAL2, INTVAL3)
+  -- stmt246 stray sv_i
+  ENDIF
+  CASE(2):
+  IF ((VGCONFIG_fec <> 0)) THEN
+  IF ((io_23[VGCONFIG_f90] <> 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'ISV_VG: Confirm all clear BEFORE press "OK"')
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, 'OK')
+  -- stmt254 stray 129
+  ENDIF
+  ENDIF
+  RETURN(0)
+  ENDSELECT
+END VG_RP
+
+BEGIN
+END ISV_VG

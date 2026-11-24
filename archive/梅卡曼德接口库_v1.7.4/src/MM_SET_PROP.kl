@@ -1,0 +1,17 @@
+PROGRAM  MM_Set_Prop
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Set_Property'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Set_VizProp FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Set_VizProp
+END MM_Set_Prop

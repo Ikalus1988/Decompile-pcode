@@ -1,0 +1,43 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_u_obj_ih
+-- 
+-- brief: xyz_u_obj_ih,
+--        update object pose in hand
+--------------------------------------------------------------------------------
+PROGRAM xyz_u_obj_ih
+
+
+%COMMENT = 'update object pose in hand'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+VAR
+    ret      : INTEGER
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+ResetOutData
+ret = AddInttoArr(CMD_U_OBJ_IH)
+IF (ret <> 0) THEN
+    log_error('[U_OBJ_OH] fail to pack cmd')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_u_obj_ih

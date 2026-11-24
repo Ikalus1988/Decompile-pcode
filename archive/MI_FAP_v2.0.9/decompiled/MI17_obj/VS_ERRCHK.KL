@@ -1,0 +1,63 @@
+-- VS_ERRCHK.KL (decompiled v3)
+PROGRAM VS_ERRCHK
+%COMMENT = 'Vs Chk Err V1.4'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : ARRAY[64] OF STRING[64]
+  v4 : ARRAY[64] OF STRING[64]
+  v5 : INTEGER
+  UALARM_NO : INTEGER
+  STATUS : INTEGER
+  ERROR_VAL : INTEGER
+  ERR_MSG : ARRAY[20] OF STRING[29]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE DIS_UALM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  sv_i = GET_PARM(1, v1, v2)
+  -- stmt20 stray sv_i
+  v3[v1] = '   '
+  v4[1] = 'ERROR_TELID'
+  v4[2] = 'ERROR_JOBID'
+  v4[3] = 'ERROR_REFERENCE'
+  v4[4] = 'ERROR_PRODUCTION'
+  v4[5] = 'ERROR_REALIGN'
+  v4[6] = 'ERROR_MEASURE'
+  v4[7] = 'ERROR_PRODUCTIONEND'
+  v4[8] = 'ERROR_CALCULATION'
+  v4[9] = '                   '
+  v4[10] = '                   '
+  v4[11] = '                   '
+  v4[12] = '                   '
+  v4[13] = '                   '
+  v4[14] = 'TIMEOUT'
+  v4[15] = 'XYZ CORRECTION IS TOO LARGE'
+  v4[16] = 'WPR CORRECTION IS TOO LARGE'
+  v4[17] = '                   '
+  v4[18] = '                   '
+  v4[19] = '                   '
+  v4[20] = '                   '
+  IF ((v5 <> 0)) THEN
+  WRITE('Unuccessful', CR)
+  v3[v1] = ''
+  -- stmt44 stray v4[v5]
+  sv_i = DIS_UALM(0)
+  -- stmt45 stray sv_i
+  ELSE
+  WRITE('Successful,Ok To Continue', CR)
+  ENDIF
+END VS_ERRCHK
+

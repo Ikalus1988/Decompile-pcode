@@ -1,0 +1,18 @@
+PROGRAM  MM_SET_INT
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Set_Int'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Set_Int FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Set_Int
+END MM_SET_INT

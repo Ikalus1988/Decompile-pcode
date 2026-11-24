@@ -1,0 +1,292 @@
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This program
+-- a) is the central module in the 'Rivet Data'/Henrob SPR project.
+-- b) declares arrRivetData, array of Rivet Data sets stored in none-volatile memory CMOS, which is shared using with other programs.
+-- c) provides convenient UIF to arrRivetData by controlling the user form 'SPRD' (custom menu 'Rivet Data') defined in RTSPRDEG.ftx.
+-- d) provides APIs for external programs
+--    - to initialize arrRivetData: ROUTINE InitRivData
+--    - to get a certain Rivet Data: ROUTINE GetRivData
+
+-- Potential issues:
+-- - This program does not ensure that Rivet Data IDs are all unique!
+--------------------------------------------------------------------------------------------------------------------------------------------
+PROGRAM RTDataDisp
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TRANSLATOR DIRECTIVES (except %INCLUDE)
+--------------------------------------------------------------------------------------------------------------------------------------------
+%COMMENT = 'Version 1.6'
+%ALPHABETIZE
+--%INVISIBLE
+%NOLOCKGROUP
+%NOABORT = COMMAND + ERROR
+%NOPAUSE = COMMAND + ERROR + TPENABLE
+%NOBUSYLAMP
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 CONSTANT DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_constants
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_types
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_variables
+VAR
+  top_array   : ARRAY[TOPARRAYSIZE] OF STRING[40] -- array of names of variables which values are to be displayed in the Main screen
+  det_array   : ARRAY[DETARRAYSIZE] OF STRING[40] -- array of names of variables which values are to be displayed in the Detail screen
+  inact_array : ARRAY[1] OF BOOLEAN               -- please refer to documentation of DISCTRL_FORM
+  change_array: ARRAY[1] OF BOOLEAN               -- please refer to documentation of DISCTRL_FORM
+  def_item    : INTEGER                           -- index of the item to be highlighted (i.e. selected) when DISCTRL_FORM displays a form
+  term_char   : INTEGER                           -- code indicating the character or other condition that terminated the form
+  intSchedule : INTEGER                           -- rivet data schedule number
+  strSchedule : STRING[4]                         -- rivet data schedule number as string
+  entry       : INTEGER                           -- entry number in the variable data table (used by GET_VAR etc.)
+  status      : INTEGER                           -- execution status of a called routine, for general purpose
+  stat_disctrl: INTEGER                           -- execution status of the form manager, DISCTRL_FORM
+  nextscreen  : INTEGER                           -- which screen should be displayed next: RTDataTop or RTDetail
+  blDone      : BOOLEAN                           -- indicates that the program has to be finished
+  
+  -- Softpart ID and screen ID of the menu displayed before 'Rivet Data' menu has been started                              
+  prev_menu   : INTEGER                           -- softpart ID of the previous menu
+  prev_screen : INTEGER                           -- ID of the previous screen       
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS & DEFINITIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This procedure routine initializes all yet uninitialized Rivet Data.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE InitRivData
+BEGIN
+  FOR intSchedule = 1 TO MAXSCHEDULES DO
+    IF(UNINIT(arrRivetData[intSchedule].Comment)) THEN
+      CNV_INT_STR(intSchedule,3,10,strSchedule)
+      arrRivetData[intSchedule].Comment ='Schedule' + strSchedule
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].RivetID)) THEN
+      arrRivetData[intSchedule].RivetID = 0
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].ContID)) THEN
+      arrRivetData[intSchedule].ContID = 1
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].ToolID)) THEN
+      arrRivetData[intSchedule].ToolID = 1
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].RivType)) THEN
+      arrRivetData[intSchedule].RivType = 1
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].PMOffset)) THEN
+      arrRivetData[intSchedule].PMOffset = 0
+    ENDIF
+    IF(UNINIT(arrRivetData[intSchedule].PMOpen)) THEN
+      arrRivetData[intSchedule].PMOpen = 1
+    ENDIF
+  ENDFOR
+END InitRivData
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This function routine gets data from arrRivetData based on the schedule number.
+-- It returns data of type rivetData.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE GetRivData(Schedule:INTEGER) :rivetData
+VAR
+  retVal : rivetData
+BEGIN
+  WRITE(CHR(128))
+  IF(UNINIT(arrRivetData[Schedule].Comment)) THEN
+    retVal.Comment =''
+  ELSE
+    retVal.Comment = arrRivetData[Schedule].Comment
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].RivetID)) THEN
+    WRITE('Rivet ID in Schedule[' , Schedule, ']', CR, 'is not initialized.',CR, 'Please set it in DATA Screen',CR)
+    WRITE TPPROMPT(CHR(128))
+    WRITE TPERROR(CHR(128))
+    WRITE TPERROR('Rivet Schedule ', Schedule, ' contains no Data')
+    --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+    retVal.RivetID = arrRivetData[Schedule].RivetID
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].ContID)) THEN
+    WRITE('Controller ID in Schedule[' , Schedule, ']', CR, 'is not initialized.',CR, 'Please set it IN DATA Screen',CR)
+      --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+    retVal.ContID = arrRivetData[Schedule].ContID
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].ToolID)) THEN
+    WRITE('Tool ID in Schedule[' , Schedule, ']', CR, 'is not initialized.' , CR,  'Please set it in DATA Screen',CR)
+    --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+      retVal.ToolID = arrRivetData[Schedule].ToolID
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].RivType)) THEN
+    WRITE('Rivet Type in Schedule[' , Schedule, ']' , CR,  'is not initialized.' , CR,  'Please set it in DATA Screen',CR)
+    --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+    retVal.RivType = arrRivetData[Schedule].RivType
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].PMOffset)) THEN
+    WRITE('Post Move Offset in Schedule[' , Schedule, ']' , CR , 'is not initialized.' , CR, 'Please set it in DATA Screen',CR)
+    --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+    retVal.PMOffset = arrRivetData[Schedule].PMOffset
+  ENDIF
+  IF(UNINIT(arrRivetData[Schedule].PMOpen)) THEN
+    WRITE('Post Move Open in Schedule[' , Schedule, ']' , CR ,  'is not initialized.' , CR, 'Please set it in DATA Screen',CR)
+    --Dont want to force the uer Screen
+    --FORCE_SPMENU(TP_PANEL, SPI_TPUSER,1); ABORT
+  ELSE
+    retVal.PMOpen = arrRivetData[Schedule].PMOpen
+  ENDIF
+  RETURN (retVal)
+END GetRivData
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This function routine maps schedule number to the first displayable item of this schedule in the main(top) form and vice versa.
+-- It returns data of type integer.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE get_indx(indx_type: INTEGER): INTEGER
+VAR indx: INTEGER
+BEGIN
+  SELECT indx_type OF
+    CASE (INDX_ITEM):    indx = (2*intSchedule) - 1   -- get index of the displayable item corresponding to the specified schedule
+    CASE (INDX_SCHEDUL): indx = (def_item + 1) DIV 2  -- get index of the schedule corresponding to the specified displayable item
+    ELSE:                indx = 1                     -- default index in any case
+  ENDSELECT
+  RETURN(indx)
+END get_indx
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This procedure routine shows the main screen of the Rivet Data menu.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE DispTop
+VAR schedule_idx :INTEGER
+BEGIN
+  --Populate Value Array for top form.
+  FOR schedule_idx =1 TO MAXSCHEDULES DO
+    CNV_INT_STR(schedule_idx,3,10,strSchedule)
+    top_array[(2*schedule_idx) - 1] = '[RIVET]arrRivetData[' + strSchedule + '].RivetID'
+    top_array[2*schedule_idx]       = '[RIVET]arrRivetData[' + strSchedule + '].Comment'
+  ENDFOR
+  DISCTRL_FORM(DICT_NAME, RTDataTop, top_array, inact_array, change_array, kc_func_key, def_item, term_char, stat_disctrl);
+  intSchedule = get_indx(INDX_SCHEDUL)
+  
+  -- logic to handle the reason of DISCTRL_FORM termination
+  SELECT term_char OF
+  CASE (KY_F1):         -- user has pressed F1 key, [EXIT]
+    blDone = TRUE
+  CASE (KY_F2):         -- user has pressed F2 key, [DETAIL]
+    IF (stat_disctrl = 0) THEN
+      nextscreen = RTDetail
+      def_item = 1
+    ELSE
+      blDone = TRUE
+    ENDIF
+  CASE (KY_NEW_MENU):   -- user selected another menu
+    blDone = TRUE
+  ELSE:                 -- other termination reason
+    IF (stat_disctrl = 0) THEN
+      -- stay in this menu
+    ELSE
+       blDone = TRUE
+    ENDIF
+  ENDSELECT
+END DispTop
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This procedure routine shows Details screen of a certain Rivet Data set/schedule.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE DispDet
+BEGIN
+  -- Populate Value Array
+  CNV_INT_STR(intSchedule,2,10,strSchedule)
+  det_array[1] = 'intSchedule'
+  det_array[2] = '[RIVET]arrRivetData[' + strSchedule + '].Comment'
+  det_array[3] = '[RIVET]arrRivetData[' + strSchedule + '].RivetID'
+  det_array[4] = '[RIVET]arrRivetData[' + strSchedule + '].ContID'
+  det_array[5] = '[RIVET]arrRivetData[' + strSchedule + '].ToolID'
+  det_array[6] = '[RIVET]arrRivetData[' + strSchedule + '].RivType'
+  det_array[7] = '[RIVET]arrRivetData[' + strSchedule + '].PMOffset'
+  det_array[8] = '[RIVET]arrRivetData[' + strSchedule + '].PMOpen'
+  DISCTRL_FORM(DICT_NAME, RTDetail, det_array, inact_array, change_array, kc_func_key + kc_prev_key, def_item, term_char, stat_disctrl);
+
+  -- logic to handle the reason of DISCTRL_FORM termination
+  SELECT term_char OF
+    CASE (KY_PREV, KY_F2):        -- user has pressed PREV key or F2 key, [DETAIL]
+      IF (stat_disctrl = 0) THEN
+        nextscreen = RTDataTop
+        def_item = get_indx(INDX_ITEM)
+      ELSE
+        blDone = TRUE
+      ENDIF
+    CASE (KY_NEW_MENU):           -- user selected another menu
+      blDone = TRUE
+    ELSE:                         -- other termination reason
+      IF (stat_disctrl = 0) THEN
+        -- stay in this menu
+      ELSE
+         blDone = TRUE
+      ENDIF
+  ENDSELECT
+END DispDet
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- This procedure routine ensures reasonable initial state of the program.
+--------------------------------------------------------------------------------------------------------------------------------------------
+ROUTINE init_check
+BEGIN
+  IF UNINIT(stat_disctrl) THEN stat_disctrl = 0; ENDIF
+  IF (stat_disctrl <> 0) OR UNINIT(nextscreen) OR UNINIT(def_item) THEN
+    -- start with item 1 in top menu
+    nextscreen = RTDataTop
+    def_item = 1;
+  ENDIF
+  IF NOT ((nextscreen = RTDataTop) OR (nextscreen = RTDetail)) THEN
+    nextscreen = RTDataTop
+  ENDIF
+  SELECT nextscreen OF
+    CASE (RTDataTop):
+      intSchedule = get_indx(INDX_SCHEDUL)
+      IF NOT((intSchedule >= 1) AND (intSchedule <= MAXSCHEDULES)) THEN
+        def_item = 1;
+      ENDIF
+    CASE (RTDetail):
+      IF NOT((def_item >= 1) AND (def_item <= DETARRAYSIZE)) THEN
+        def_item = 1;
+      ENDIF
+  ENDSELECT
+END init_check
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 PROGRAM BODY
+--------------------------------------------------------------------------------------------------------------------------------------------
+BEGIN
+  init_check -- ensure reasonable initial state of the program
+  -- save information about which menu is currently dispayed in pane 1
+  GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', prev_menu, status)
+  GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', prev_screen, status)
+  FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- switch to the USER2 screen
+  blDone = FALSE
+  REPEAT
+    SELECT nextscreen OF
+      CASE (RTDataTop): DispTop -- Display the Top Menu
+      CASE (RTDetail) : DispDet -- Display the Detail Menu
+      ELSE: blDone = TRUE
+    ENDSELECT
+  UNTIL(blDone)
+  -- display previous menu, unless user selected another menu
+  IF term_char <> KY_NEW_MENU THEN
+    FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)
+  ENDIF
+END RTDataDisp

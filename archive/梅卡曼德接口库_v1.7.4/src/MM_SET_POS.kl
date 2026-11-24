@@ -1,0 +1,18 @@
+PROGRAM  MM_SET_POS
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Set_Pos'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Set_Pos FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Set_Pos
+END MM_SET_POS

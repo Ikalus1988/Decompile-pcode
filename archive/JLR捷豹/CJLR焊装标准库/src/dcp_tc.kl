@@ -1,0 +1,609 @@
+PROGRAM DCP_TC
+
+--Sends Tool Changer DCP Fault text to PLC using String Registers
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID, intArg :INTEGER
+paramReal, realDummy, realActThk, realReqThk:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1, strArg: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+strDCPText, strDCPText2, DCPPLCText: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	strDCPText = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+ GET_TPE_PRM(2,paramTyp,intArg,paramReal,paramString,STATUS)
+ CNV_INT_STR(intArg,5,10,strArg)
+ 
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+--Write DCP Fault to user screen
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = TRUE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss = FALSE
+
+  	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+		FKEYS[2] = ''
+		FKEYS[3] = ''
+		FKEYS[4] = ''
+		FKEYS[5] = ''
+  	ENDIF
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(7151):
+	DCPText.DCPLine1 = 'Tool Stand ? : LH PP not on / GeoPP1 not on'
+	DCPText.DCPFaultNum = 07151
+	
+	CASE(7152):
+	DCPText.DCPLine1 = 'Tool Stand ? : LH PP not off / GeoPP1 not off'
+	DCPText.DCPFaultNum = 07152
+	
+	CASE(7153):
+	DCPText.DCPLine1 = 'Tool Stand ? : RH PP not on / GeoPP2 not on'
+	DCPText.DCPFaultNum = 07153
+	
+	CASE(7154):
+	DCPText.DCPLine1 = 'Tool Stand ? : RH PP not off / GeoPP2 not off'
+	DCPText.DCPFaultNum = 07154
+	
+	CASE(7155):
+	DCPText.DCPLine1 = 'Tool Stand ? : Flap closed not on'
+	DCPText.DCPFaultNum = 07155
+	
+	CASE(7156):
+	DCPText.DCPLine1 = 'Tool Stand ? : Flap closed not off'
+	DCPText.DCPFaultNum = 07156
+	
+	CASE(7157):
+	DCPText.DCPLine1 = 'Tool Stand ? : Flap open not on'
+	DCPText.DCPFaultNum = 07157
+	
+	CASE(7158):
+	DCPText.DCPLine1 = 'Tool Stand ? : Flap open not off'
+	DCPText.DCPFaultNum = 07158
+	
+	CASE(7161):
+	DCPText.DCPLine1 = 'Tool ? : Comms Fault - IO module not disabled'
+	DCPText.DCPFaultNum = 07161
+	
+	CASE(7162):
+	DCPText.DCPLine1 = 'Tool ? : Comms Fault - IO module not enabled'
+	DCPText.DCPFaultNum = 07162
+	
+	CASE(7163):
+	DCPText.DCPLine1 = 'Tool ? : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07163
+	
+	CASE(7166):
+	DCPText.DCPLine1 = 'Tool Chg: Selected tool <> Tool on robot'
+	DCPText.DCPFaultNum = 07166
+	
+	CASE(7167):
+	DCPText.DCPLine1 = 'Tool Chg: Part present not on'
+	DCPText.DCPFaultNum = 07167
+	
+	CASE(7168):
+	DCPText.DCPLine1 = 'Tool Chg: Part present not off'
+	DCPText.DCPFaultNum = 07168
+	
+	CASE(7169):
+	DCPText.DCPLine1 = 'Tool Chg: Locked not on'
+	DCPText.DCPFaultNum = 07169
+	
+	CASE(7170):
+	DCPText.DCPLine1 = 'Tool Chg: Locked not off'
+	DCPText.DCPFaultNum = 07170
+	
+	CASE(7171):
+	DCPText.DCPLine1 = 'Tool Chg: Unlocked not on'
+	DCPText.DCPFaultNum = 07171
+	
+	CASE(7172):
+	DCPText.DCPLine1 = 'Tool Chg: Unlocked not off'
+	DCPText.DCPFaultNum = 07172
+	
+	CASE(7173):
+	DCPText.DCPLine1 = 'Tool Chg: Schmersal switch not on'
+	DCPText.DCPFaultNum = 07173
+	
+	CASE(7174):
+	DCPText.DCPLine1 = 'Tool Chg: Tool BCD not off'
+	DCPText.DCPFaultNum = 07174
+	
+	CASE(7175):
+	DCPText.DCPLine1 = 'Tool Chg: Tool BCD valve out of range'
+	DCPText.DCPFaultNum = 07175
+	
+	CASE(7176):
+	DCPText.DCPLine1 = 'Tool Chg: Tool BCD mismatch'
+	DCPText.DCPLine3 = 'Press Ack to Re-Check'
+	DCPText.DCPLine4 = 'Press Cancel to Unlock'
+	DCPText.DCPFaultNum = 07176
+	FKEY_SEL = 5
+	
+	CASE(7177):
+	DCPText.DCPLine1 = 'Tool Chg: Tool BCD mismatch unlocked'
+	DCPText.DCPLine3 = 'Press Ack to Lock & Try again'
+	DCPText.DCPFaultNum = 07177
+	
+	CASE(7178):
+	DCPText.DCPLine1 = 'Tool Chg: nTOOLS_REQ out of range'
+	DCPText.DCPFaultNum = 07178
+	
+	CASE(7179):
+	DCPText.DCPLine1 = 'Tool Chg: Selected tool out of range'
+	DCPText.DCPFaultNum = 07179
+	
+	CASE(7180):
+	DCPText.DCPLine1 = 'Tool Chg: Check tool out of range'
+	DCPText.DCPFaultNum = 07180
+
+	CASE(7181):
+	DCPText.DCPLine1 = 'Tool Chg: TC Pressure OK not On'
+	DCPText.DCPFaultNum = 07181
+	
+	CASE(7182):
+	DCPText.DCPLine1 = 'Tool Chg: TC Pressure OK not Off'
+	DCPText.DCPFaultNum = 07182	
+	
+	CASE(7196):
+	DCPText.DCPLine1 = 'Tool Std 1: LH PP not on/GeoPP1 not on'
+	DCPText.DCPFaultNum = 07196
+	
+	CASE(7197):
+	DCPText.DCPLine1 = 'Tool Std 1: LH PP not off/GeoPP1 not off'
+	DCPText.DCPFaultNum = 07197
+	
+	CASE(7198):
+	DCPText.DCPLine1 = 'Tool Std 1: RH PP not on/GeoPP2 not on'
+	DCPText.DCPFaultNum = 07198
+	
+	CASE(7199):
+	DCPText.DCPLine1 = 'Tool Std 1: RH PP not off/GeoPP2 not off'
+	DCPText.DCPFaultNum = 07199
+	
+	CASE(7200):
+	DCPText.DCPLine1 = 'Tool Std 1: Flap closed not on'
+	DCPText.DCPFaultNum = 07200
+	
+	CASE(7201):
+	DCPText.DCPLine1 = 'Tool Std 1: Flap closed not off'
+	DCPText.DCPFaultNum = 07201
+	
+	CASE(7202):
+	DCPText.DCPLine1 = 'Tool Std 1: Flap open not on'
+	DCPText.DCPFaultNum = 07202
+	
+	CASE(7203):
+	DCPText.DCPLine1 = 'Tool Std 1: Flap open not off'
+	DCPText.DCPFaultNum = 07203
+	
+	CASE(7206):
+	DCPText.DCPLine1 = 'Tool 1 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07206
+	
+	CASE(7207):
+	DCPText.DCPLine1 = 'Tool 1 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07207
+	
+	CASE(7208):
+	DCPText.DCPLine1 = 'Tool 1 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07208
+	
+	CASE(7211):
+	DCPText.DCPLine1 = 'Tool Std 2: LH PP not on/GeoPP1 not on'
+	DCPText.DCPFaultNum = 07211
+	
+	CASE(7212):
+	DCPText.DCPLine1 = 'Tool Std 2: LH PP not off/GeoPP1 not off'
+	DCPText.DCPFaultNum = 07212
+	
+	CASE(7213):
+	DCPText.DCPLine1 = 'Tool Std 2: RH PP not on/GeoPP2 not on'
+	DCPText.DCPFaultNum = 07213
+	
+	CASE(7214):
+	DCPText.DCPLine1 = 'Tool Std 2: RH PP not off/GeoPP2 not off'
+	DCPText.DCPFaultNum = 07214
+	
+	CASE(7215):
+	DCPText.DCPLine1 = 'Tool Std 2: Flap closed not on'
+	DCPText.DCPFaultNum = 07215
+	
+	CASE(7216):
+	DCPText.DCPLine1 = 'Tool Std 2: Flap closed not off'
+	DCPText.DCPFaultNum = 07216
+	
+	CASE(7217):
+	DCPText.DCPLine1 = 'Tool Std 2: Flap open not on'
+	DCPText.DCPFaultNum = 07217
+	
+	CASE(7218):
+	DCPText.DCPLine1 = 'Tool Std 2: Flap open not off'
+	DCPText.DCPFaultNum = 07218
+	
+	CASE(7221):
+	DCPText.DCPLine1 = 'Tool 2 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07221
+	
+	CASE(7222):
+	DCPText.DCPLine1 = 'Tool 2 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07222
+	
+	CASE(7223):
+	DCPText.DCPLine1 = 'Tool 2 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07223
+	
+	CASE(7226):
+	DCPText.DCPLine1 = 'Tool Std 3: LH PP not on/GeoPP1 not on'
+	DCPText.DCPFaultNum = 07226
+	
+	CASE(7227):
+	DCPText.DCPLine1 = 'Tool Std 3: LH PP not off/GeoPP1 not off'
+	DCPText.DCPFaultNum = 07227
+	
+	CASE(7228):
+	DCPText.DCPLine1 = 'Tool Std 3: RH PP not on/GeoPP2 not on'
+	DCPText.DCPFaultNum = 07228
+	
+	CASE(7229):
+	DCPText.DCPLine1 = 'Tool Std 3: RH PP not off/GeoPP2 not off'
+	DCPText.DCPFaultNum = 07229
+	
+	CASE(7230):
+	DCPText.DCPLine1 = 'Tool Std 3: Flap closed not on'
+	DCPText.DCPFaultNum = 07230
+	
+	CASE(7231):
+	DCPText.DCPLine1 = 'Tool Std 3: Flap closed not off'
+	DCPText.DCPFaultNum = 07231
+	
+	CASE(7232):
+	DCPText.DCPLine1 = 'Tool Std 3: Flap open not on'
+	DCPText.DCPFaultNum = 07232
+	
+	CASE(7233):
+	DCPText.DCPLine1 = 'Tool Std 3: Flap open not off'
+	DCPText.DCPFaultNum = 07233
+	
+	CASE(7236):
+	DCPText.DCPLine1 = 'Tool 3 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07236
+	
+	CASE(7237):
+	DCPText.DCPLine1 = 'Tool 3 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07237
+	
+	CASE(7238):
+	DCPText.DCPLine1 = 'Tool 3 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07238
+	
+	CASE(7241):
+	DCPText.DCPLine1 = 'Tool Std 4: LH PP not on/GeoPP1 not on'
+	DCPText.DCPFaultNum = 07241
+	
+	CASE(7242):
+	DCPText.DCPLine1 = 'Tool Std 4: LH PP not off/GeoPP1 not off'
+	DCPText.DCPFaultNum = 07242
+	
+	CASE(7243):
+	DCPText.DCPLine1 = 'Tool Std 4: RH PP not on/GeoPP4 not on'
+	DCPText.DCPFaultNum = 07243
+	
+	CASE(7244):
+	DCPText.DCPLine1 = 'Tool Std 4: RH PP not off/GeoPP4 not off'
+	DCPText.DCPFaultNum = 07244
+	
+	CASE(7245):
+	DCPText.DCPLine1 = 'Tool Std 4: Flap closed not on'
+	DCPText.DCPFaultNum = 07245
+	
+	CASE(7246):
+	DCPText.DCPLine1 = 'Tool Std 4: Flap closed not off'
+	DCPText.DCPFaultNum = 07246
+	
+	CASE(7247):
+	DCPText.DCPLine1 = 'Tool Std 4: Flap open not on'
+	DCPText.DCPFaultNum = 07247
+	
+	CASE(7248):
+	DCPText.DCPLine1 = 'Tool Std 4: Flap open not off'
+	DCPText.DCPFaultNum = 07248
+	
+	CASE(7251):
+	DCPText.DCPLine1 = 'Tool 4 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07251
+	
+	CASE(7252):
+	DCPText.DCPLine1 = 'Tool 4 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07252
+	
+	CASE(7253):
+	DCPText.DCPLine1 = 'Tool 4 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07253
+	
+	CASE(7256):
+	DCPText.DCPLine1 = 'Tool Std 5: LH PP not on/GeoPP5 not on'
+	DCPText.DCPFaultNum = 07256
+	
+	CASE(7257):
+	DCPText.DCPLine1 = 'Tool Std 5: LH PP not off/GeoPP5 not off'
+	DCPText.DCPFaultNum = 07257
+	
+	CASE(7258):
+	DCPText.DCPLine1 = 'Tool Std 5: RH PP not on/GeoPP2 not on'
+	DCPText.DCPFaultNum = 07258
+	
+	CASE(7259):
+	DCPText.DCPLine1 = 'Tool Std 5: RH PP not off/GeoPP2 not off'
+	DCPText.DCPFaultNum = 07259
+	
+	CASE(7260):
+	DCPText.DCPLine1 = 'Tool Std 5: Flap closed not on'
+	DCPText.DCPFaultNum = 07260
+	
+	CASE(7261):
+	DCPText.DCPLine1 = 'Tool Std 5: Flap closed not off'
+	DCPText.DCPFaultNum = 07261
+	
+	CASE(7262):
+	DCPText.DCPLine1 = 'Tool Std 5: Flap open not on'
+	DCPText.DCPFaultNum = 07262
+	
+	CASE(7263):
+	DCPText.DCPLine1 = 'Tool Std 5: Flap open not off'
+	DCPText.DCPFaultNum = 07263
+	
+	CASE(7266):
+	DCPText.DCPLine1 = 'Tool 5 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07266
+	
+	CASE(7267):
+	DCPText.DCPLine1 = 'Tool 5 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07267
+	
+	CASE(7268):
+	DCPText.DCPLine1 = 'Tool 5 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07268
+	
+	CASE(7271):
+	DCPText.DCPLine1 = 'Tool Std 6: LH PP not on/GeoPP1 not on'
+	DCPText.DCPFaultNum = 07271
+	
+	CASE(7272):
+	DCPText.DCPLine1 = 'Tool Std 6: LH PP not off/GeoPP1 not off'
+	DCPText.DCPFaultNum = 07272
+	
+	CASE(7273):
+	DCPText.DCPLine1 = 'Tool Std 6: RH PP not on/GeoPP6 not on'
+	DCPText.DCPFaultNum = 07273
+	
+	CASE(7274):
+	DCPText.DCPLine1 = 'Tool Std 6: RH PP not off/GeoPP6 not off'
+	DCPText.DCPFaultNum = 07274
+	
+	CASE(7275):
+	DCPText.DCPLine1 = 'Tool Std 6: Flap closed not on'
+	DCPText.DCPFaultNum = 07275
+	
+	CASE(7276):
+	DCPText.DCPLine1 = 'Tool Std 6: Flap closed not off'
+	DCPText.DCPFaultNum = 07276
+	
+	CASE(7277):
+	DCPText.DCPLine1 = 'Tool Std 6: Flap open not on'
+	DCPText.DCPFaultNum = 07277
+	
+	CASE(7278):
+	DCPText.DCPLine1 = 'Tool Std 6: Flap open not off'
+	DCPText.DCPFaultNum = 07278
+	
+	CASE(7281):
+	DCPText.DCPLine1 = 'Tool 6 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07281
+	
+	CASE(7282):
+	DCPText.DCPLine1 = 'Tool 6 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07282
+	
+	CASE(7283):
+	DCPText.DCPLine1 = 'Tool 6 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07283
+	
+	CASE(7286):
+	DCPText.DCPLine1 = 'Tool Std 7: LH PP not on/GeoPP7 not on'
+	DCPText.DCPFaultNum = 07286
+	
+	CASE(7287):
+	DCPText.DCPLine1 = 'Tool Std 7: LH PP not off/GeoPP7 not off'
+	DCPText.DCPFaultNum = 07287
+	
+	CASE(7288):
+	DCPText.DCPLine1 = 'Tool Std 7: RH PP not on/GeoPP2 not on'
+	DCPText.DCPFaultNum = 07288
+	
+	CASE(7289):
+	DCPText.DCPLine1 = 'Tool Std 7: RH PP not off/GeoPP2 not off'
+	DCPText.DCPFaultNum = 07289
+	
+	CASE(7290):
+	DCPText.DCPLine1 = 'Tool Std 7: Flap closed not on'
+	DCPText.DCPFaultNum = 07290
+	
+	CASE(7291):
+	DCPText.DCPLine1 = 'Tool Std 7: Flap closed not off'
+	DCPText.DCPFaultNum = 07291
+	
+	CASE(7292):
+	DCPText.DCPLine1 = 'Tool Std 7: Flap open not on'
+	DCPText.DCPFaultNum = 07292
+	
+	CASE(7293):
+	DCPText.DCPLine1 = 'Tool Std 7: Flap open not off'
+	DCPText.DCPFaultNum = 07293
+	
+	CASE(7296):
+	DCPText.DCPLine1 = 'Tool 7 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT disabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07296
+	
+	CASE(7297):
+	DCPText.DCPLine1 = 'Tool 7 : Comms Fault'
+	DCPText.DCPLine2 = 'IO module NOT Enabled'
+	DCPText.DCPLine3 = 'Ethernet Scanner No. = ' +  strArg
+	DCPText.DCPFaultNum = 07297
+	
+	CASE(7298):
+	DCPText.DCPLine1 = 'Tool 7 : Module stUnitName not valid'
+	DCPText.DCPFaultNum = 07298
+
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+	
+ENDSELECT
+  	
+	IF FKEY_SEL = 5 THEN
+		FKEYS[1] = 'ACK'
+		FKEYS[2] = 'CANCEL'
+		FKEYS[3] = ''
+		FKEYS[4] = ''
+		FKEYS[5] = ''
+  	ENDIF  	
+WRITE('DCP Fault: ', intDCPFault,CR, DCPText.DCPLine1, CR, DCPText.DCPLine2,CR)
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum = SUB_STR(DCPFaultNum1,3,3)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+END DCP_TC

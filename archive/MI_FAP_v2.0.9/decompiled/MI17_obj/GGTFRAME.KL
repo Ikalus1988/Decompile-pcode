@@ -1,0 +1,144 @@
+-- GGTFRAME.KL (decompiled v3)
+PROGRAM GGTFRAME
+%COMMENT = 'Cnv Uframe V1.0'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : POSITION
+  v7 : ARRAY[64] OF INTEGER
+  v8 : POSITION
+  v9 : POSITION
+  v10 : ARRAY[64] OF INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v10_f00 : ARRAY[64] OF INTEGER
+  v11 : POSITION
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE TP_CLS : INTEGER
+BEGIN
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 37, 1)
+  RETURN(0)
+END TP_CLS
+
+ROUTINE WRITE_MSG(p0 : STRING) : INTEGER
+BEGIN
+  WRITE('  ', p0, CR)
+  RETURN(0)
+END WRITE_MSG
+
+ROUTINE CHK_STAT(p0 : INTEGER; p1 : STRING; p2 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  sv_i = TP_CLS
+  -- stmt45 stray sv_i
+  sv_i = WRITE_MSG('       ** ERROR **')
+  -- stmt46 stray sv_i
+  sv_i = WRITE_MSG(p1)
+  -- stmt47 stray sv_i
+  POST_ERR(p0, '', 0, p2)
+  ENDIF
+  RETURN(0)
+END CHK_STAT
+
+ROUTINE GET_IPARM(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r3_lc2 : STRING[64]
+  r3_lc3 : INTEGER
+  r3_lc4 : INTEGER
+  r3_lc5 : REAL
+BEGIN
+  GET_TPE_PRM(p0, r3_lc3, r3_lc4, r3_lc5, r3_lc2, v1)
+  IF ((r3_lc3 <> 1)) THEN
+  sv_i = TP_CLS
+  -- stmt62 stray sv_i
+  WRITE('            *** ERROR ***              ', CR)
+  WRITE('       Invalid Parm (Integer)', CR)
+  WRITE('       Abort', CR)
+  ABORT_TASK('*ALL*', (0 <> 0), (1 <> 0), v1)
+  -- Æú²ÎÔ­Ê½: 0 | 1
+  ENDIF
+  IF ((v1 <> 0)) THEN
+  p2 = v1
+  ENDIF
+  p1 = r3_lc4
+  p2 = 0
+  RETURN(0)
+END GET_IPARM
+
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING
+VAR
+  r4_lc2 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 1, 0, r4_lc2)
+  sv_i = str_len(r4_lc2)
+  sv_s = sub_str(r4_lc2, 2, sv_i - 1)
+  r4_lc2 = sv_s
+  -- stmt82 stray r4_lc2
+  sv_i = GET_IPARM(1, v2, v1)
+  -- stmt88 stray sv_i
+  sv_i = CHK_STAT(v1, 'Get Parm1 Failed', 2)
+  -- stmt88 stray sv_i
+  sv_i = GET_IPARM(2, v3, v1)
+  -- stmt89 stray sv_i
+  sv_i = CHK_STAT(v1, 'Get Parm2 Failed', 2)
+  -- stmt89 stray sv_i
+  sv_i = GET_IPARM(3, v4, v1)
+  -- stmt90 stray sv_i
+  sv_i = CHK_STAT(v1, 'Get Parm3 Failed', 2)
+  -- stmt90 stray sv_i
+  sv_i = GET_IPARM(4, v5, v1)
+  -- stmt92 stray sv_i
+  sv_i = CHK_STAT(v1, 'Get Parm4 Failed', 2)
+  -- stmt92 stray sv_i
+  sv_p = GET_POS_REG(v2, v1)
+  v6 = sv_p
+  sv_i = CHK_STAT(v1, 'Get Offset Pr Failed', 2)
+  -- stmt94 stray sv_i
+  PURGE CONDITION[1]
+  v8 = v7[1][v3]
+  PURGE CONDITION[1]
+  v9 = v7[1][v5]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt98 stray v10_f00[1] | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt98 stray v10_f00[1] | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v8 = sv_p
+  sv_p = inv(v9)
+  v8 = sv_p
+  -- stmt100 stray v8
+  v11 = v6
+  -- stmt102 stray v8
+  PURGE CONDITION[1]
+  -- stmt103 stray v11 | v7[1][v4]
+  RETURN(sv_s)
+END INTTOSTR
+
+BEGIN
+END GGTFRAME

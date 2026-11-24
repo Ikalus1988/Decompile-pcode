@@ -1,0 +1,10 @@
+PROGRAM TCONST
+%COMMENT = 'const probe'
+CONST
+  a = 1
+  b = 2
+VAR
+  x : INTEGER
+BEGIN
+  x = a + b
+END TCONST

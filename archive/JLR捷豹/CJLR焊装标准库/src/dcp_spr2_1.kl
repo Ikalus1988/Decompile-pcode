@@ -1,0 +1,1399 @@
+PROGRAM DCP_SPR2_1
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+--Version 1.2 Added in Die Check Retry
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, intRivID,intOpen :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+DCPFaultNum: STRING[5]
+strDCPNum,strOpen : STRING[4]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL, strRivID:STRING[3]
+strHis1, strHis2,strHis3: STRING[82]
+strAddDCPTxt:STRING[20]
+
+--Delcare Internal Routines
+ROUTINE G_DCP_SPR2_1
+BEGIN 
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+--Get Rivet ID From R[86]
+GET_REG(86,FALSE,intRivID, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intRivID,3,0,strRivID)
+--Get Tool Partial
+GET_REG(84,FALSE,intOpen, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intOpen,3,0,strOpen)
+
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(2211):
+	DCPText.DCPLine1 = 'Bus Tool 1 Cube A'
+	DCPText.DCPFaultNum = 02211
+	
+	CASE(2212):
+	DCPText.DCPLine1 = 'Bus Tool 1 Cube B'
+	DCPText.DCPFaultNum = 02212
+	
+	CASE(2213):
+	DCPText.DCPLine1 = 'Bus Tool 2 Cube A'
+	DCPText.DCPFaultNum = 02213
+	
+	CASE(2214):
+	DCPText.DCPLine1 = 'Bus Tool 2 Cube B'
+	DCPText.DCPFaultNum = 02214
+	
+	CASE(2215):
+	DCPText.DCPLine1 = 'Bus Tool 3 Cube A'
+	DCPText.DCPFaultNum = 02215
+	
+	CASE(2216):
+	DCPText.DCPLine1 = 'Bus Stand Tool 1'
+	DCPText.DCPFaultNum = 02216
+	
+	CASE(2217):
+	DCPText.DCPLine1 = 'Bus Stand Tool 2'
+	DCPText.DCPFaultNum = 02217
+	
+	CASE(2218):
+	DCPText.DCPLine1 = 'Bus Stand Tool 3'
+	DCPText.DCPFaultNum = 02218
+	
+	CASE(2219):
+	DCPText.DCPLine1 = 'Bus BL20toDrive'
+	DCPText.DCPFaultNum = 02219
+	
+	CASE(2220):
+	DCPText.DCPLine1 = 'Bus Tool 3 Cube B'
+	DCPText.DCPFaultNum = 02220
+	
+	CASE(2221):
+	DCPText.DCPLine1 = 'Bus Tool'
+	DCPText.DCPFaultNum = 02221
+	
+	CASE(2222):
+	DCPText.DCPLine1 = 'Bus Selector'
+	DCPText.DCPFaultNum = 02222
+	
+	CASE(2223):
+	DCPText.DCPLine1 = 'Bus IBUS Gateway'
+	DCPText.DCPFaultNum = 02223
+	
+	CASE(2224):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02224
+	
+	CASE(2225):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02225
+	
+	CASE(2226):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02226
+	
+	CASE(2227):
+	DCPText.DCPLine1 = 'Following Error'
+	DCPText.DCPFaultNum = 02227
+	
+	CASE(2228):
+	DCPText.DCPLine1 = 'Encoder HW'
+	DCPText.DCPFaultNum = 02228
+	
+	CASE(2229):
+	DCPText.DCPLine1 = 'Drive Over Temp'
+	DCPText.DCPFaultNum = 02229
+	
+	CASE(2230):
+	DCPText.DCPLine1 = 'Drive UnderVoltage'
+	DCPText.DCPFaultNum = 02230
+	
+	CASE(2231):
+	DCPText.DCPLine1 = 'Control Voltage'
+	DCPText.DCPFaultNum = 02231
+	
+	CASE(2232):
+	DCPText.DCPLine1 = 'Motor OverTemp'
+	DCPText.DCPFaultNum = 02232
+	
+	CASE(2233):
+	DCPText.DCPLine1 = 'Drive OverCurrent'
+	DCPText.DCPFaultNum = 02233
+	
+	CASE(2234):
+	DCPText.DCPLine1 = 'Home Failed'
+	DCPText.DCPFaultNum = 02234
+	
+	CASE(2235):
+	DCPText.DCPLine1 = 'Cannot Verify Home'
+	DCPText.DCPFaultNum = 02235
+	
+	CASE(2236):
+	DCPText.DCPLine1 = 'Home Required'
+	DCPText.DCPFaultNum = 02236
+	
+	CASE(2237):
+	DCPText.DCPLine1 = 'Over Travel'
+	DCPText.DCPFaultNum = 02237
+	
+	CASE(2238):
+	DCPText.DCPLine1 = 'Under Travel'
+	DCPText.DCPFaultNum = 02238
+	
+	CASE(2239):
+	DCPText.DCPLine1 = 'Compliant Pressure Low'
+	DCPText.DCPFaultNum = 02239
+	
+	CASE(2240):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02240
+	
+	CASE(2241):
+	DCPText.DCPLine1 = 'Invalid Partial'
+	DCPText.DCPFaultNum = 02241
+	
+	CASE(2242):
+	DCPText.DCPLine1 = 'Drive'
+	DCPText.DCPFaultNum = 02242
+	
+	CASE(2243):
+	DCPText.DCPLine1 = 'No App Sel'
+	DCPText.DCPFaultNum = 02243
+	
+	CASE(2244):
+	DCPText.DCPLine1 = 'Invalid Force'
+	DCPText.DCPFaultNum = 02244
+	
+	CASE(2245):
+	DCPText.DCPLine1 = 'No Tool Sel'
+	DCPText.DCPFaultNum = 02245
+	
+	CASE(2246):
+	DCPText.DCPLine1 = 'Feed Nose Switch'
+	DCPText.DCPFaultNum = 02246
+	
+	CASE(2247):
+	DCPText.DCPLine1 = 'No Riv Type Sel'
+	DCPText.DCPFaultNum = 02247
+	
+	CASE(2248):
+	DCPText.DCPLine1 = 'Cab Disabled'
+	DCPText.DCPFaultNum = 02248
+	
+	CASE(2249):
+	DCPText.DCPLine1 = 'Excessive Cycle Time'
+	DCPText.DCPFaultNum = 02249
+	
+	CASE(2250):
+	DCPText.DCPLine1 = 'Unable To Power Down'
+	DCPText.DCPFaultNum = 02250
+	
+	CASE(2251):
+	DCPText.DCPLine1 = 'Remove Rivets B4'
+	DCPText.DCPFaultNum = 02251
+	
+	CASE(2252):
+	DCPText.DCPLine1 = 'Incorrect Cal'
+	DCPText.DCPFaultNum = 02252
+	
+	CASE(2253):
+	DCPText.DCPLine1 = 'CB F1 Tripped'
+	DCPText.DCPFaultNum = 02253
+	
+	CASE(2254):
+	DCPText.DCPLine1 = 'CB F4 Tripped'
+	DCPText.DCPFaultNum = 02254
+	
+	CASE(2255):
+	DCPText.DCPLine1 = 'System Fault'
+	DCPText.DCPFaultNum = 02255
+	
+	CASE(2256):
+	DCPText.DCPLine1 = 'RivMon Not Triggered'
+	DCPText.DCPFaultNum = 02256
+	
+	CASE(2257):
+	DCPText.DCPLine1 = 'RivMon Not Ready'
+	DCPText.DCPFaultNum = 02257
+	
+	CASE(2258):
+	DCPText.DCPLine1 = 'RivMon Comms'
+	DCPText.DCPFaultNum = 02258
+	
+	CASE(2259):
+	DCPText.DCPLine1 = 'Transfer Fail 1'
+	DCPText.DCPFaultNum = 02259
+	
+	CASE(2260):
+	DCPText.DCPLine1 = 'Transfer Fail 2'
+	DCPText.DCPFaultNum = 02260
+	
+	CASE(2261):
+	DCPText.DCPLine1 = 'Transfer Fail 3'
+	DCPText.DCPFaultNum = 02261
+	
+	CASE(2262):
+	DCPText.DCPLine1 = 'Selector Not At A'
+	DCPText.DCPFaultNum = 02262
+	
+	CASE(2263):
+	DCPText.DCPLine1 = 'Selector Not At B'
+	DCPText.DCPFaultNum = 02263
+	
+	CASE(2264):
+	DCPText.DCPLine1 = 'SelRivDetectSenMissed'
+	DCPText.DCPFaultNum = 02264
+	
+	CASE(2265):
+	DCPText.DCPLine1 = 'Selector Not At AorB'
+	DCPText.DCPFaultNum = 02265
+	
+	CASE(2266):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 1A'
+	DCPText.DCPFaultNum = 02266
+	
+	CASE(2267):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 1A'
+	DCPText.DCPFaultNum = 02267
+	
+	CASE(2268):
+	DCPText.DCPLine1 = 'RLC No Rivet To Measure 1A'
+	DCPText.DCPFaultNum = 02268
+	
+	CASE(2269):
+	DCPText.DCPLine1 = 'RLC Probe Failed 1A'
+	DCPText.DCPFaultNum = 02269
+	
+	CASE(2270):
+	DCPText.DCPLine1 = 'Feed Riv Not Esc'
+	DCPText.DCPFaultNum = 02270
+	
+	CASE(2271):
+	DCPText.DCPLine1 = 'Feed RIF'
+	DCPText.DCPFaultNum = 02271
+	
+	CASE(2272):
+	DCPText.DCPLine1 = 'Feed MRIN'
+	DCPText.DCPFaultNum = 02272
+	
+	CASE(2273):
+	DCPText.DCPLine1 = 'Feed Probe Back'
+	DCPText.DCPFaultNum = 02273
+	
+	CASE(2274):
+	DCPText.DCPLine1 = 'Feed Probe Not Back'
+	DCPText.DCPFaultNum = 02274
+	
+	CASE(2275):
+	DCPText.DCPLine1 = 'Feed RIT'
+	DCPText.DCPFaultNum = 02275
+	
+	CASE(2276):
+	DCPText.DCPLine1 = 'Unknown Rivet IN Nose'
+	DCPText.DCPFaultNum = 02276
+	
+	CASE(2277):
+	DCPText.DCPLine1 = 'Feed Wrong Riv In Nose'
+	DCPText.DCPFaultNum = 02277
+	
+	CASE(2278):
+	DCPText.DCPLine1 = 'Cube 1A Riv Not Escaped'
+	DCPText.DCPFaultNum = 02278
+	
+	CASE(2279):
+	DCPText.DCPLine1 = 'Cube 1A Bowl Run'
+	DCPText.DCPFaultNum = 02279
+	
+	CASE(2280):
+	DCPText.DCPLine1 = 'Cube 1A Esc Sensor'
+	DCPText.DCPFaultNum = 02280
+	
+	CASE(2281):
+	DCPText.DCPLine1 = 'Cube 1B Riv Not Escaped'
+	DCPText.DCPFaultNum = 02281
+	
+	CASE(2282):
+	DCPText.DCPLine1 = 'Cube 1B Bowl Run'
+	DCPText.DCPFaultNum = 02282
+	
+	CASE(2283):
+	DCPText.DCPLine1 = 'Cube 1B Esc Sensor'
+	DCPText.DCPFaultNum = 02283
+	
+	CASE(2284):
+	DCPText.DCPLine1 = 'Cube 2A Riv Not Escaped'
+	DCPText.DCPFaultNum = 02284
+	
+	CASE(2285):
+	DCPText.DCPLine1 = 'Cube 2A Bowl Run'
+	DCPText.DCPFaultNum = 02285
+	
+	CASE(2286):
+	DCPText.DCPLine1 = 'Cube 2A Esc Sensor'
+	DCPText.DCPFaultNum = 02286
+	
+	CASE(2287):
+	DCPText.DCPLine1 = 'Cube 2B Riv Not Escaped'
+	DCPText.DCPFaultNum = 02287
+	
+	CASE(2288):
+	DCPText.DCPLine1 = 'Cube 2B Bowl Run'
+	DCPText.DCPFaultNum = 02288
+	
+	CASE(2289):
+	DCPText.DCPLine1 = 'Cube 2B Esc Sensor'
+	DCPText.DCPFaultNum = 02289
+	
+	CASE(2290):
+	DCPText.DCPLine1 = 'Cube 3A Riv Not Escaped'
+	DCPText.DCPFaultNum = 02290
+	
+	CASE(2291):
+	DCPText.DCPLine1 = 'Cube 3A Bowl Run'
+	DCPText.DCPFaultNum = 02291
+	
+	CASE(2292):
+	DCPText.DCPLine1 = 'Cube 3A Esc Sensor'
+	DCPText.DCPFaultNum = 02292
+	
+	CASE(2293):
+	DCPText.DCPLine1 = 'Stand1 Gate Not Closed'
+	DCPText.DCPFaultNum = 02293
+	
+	CASE(2294):
+	DCPText.DCPLine1 = 'Stand1 Gate Not Open'
+	DCPText.DCPFaultNum = 02294
+	
+	CASE(2295):
+	DCPText.DCPLine1 = 'Stand1 Dock Sensor On B4'
+	DCPText.DCPFaultNum = 02295
+	
+	CASE(2296):
+	DCPText.DCPLine1 = 'Mag1 Mag Gate Wrong B4'
+	DCPText.DCPFaultNum = 02296
+	
+	CASE(2297):
+	DCPText.DCPLine1 = 'Mag1 Stand Gate Wrong B4'
+	DCPText.DCPFaultNum = 02297
+	
+	CASE(2298):
+	DCPText.DCPLine1 = 'Mag1 Probe Not Back A'
+	DCPText.DCPFaultNum = 02298
+	
+	CASE(2299):
+	DCPText.DCPLine1 = 'Mag1 Probe Not Back B'
+	DCPText.DCPFaultNum = 02299
+	
+	CASE(2300):
+	DCPText.DCPLine1 = 'Mag1 Shuttle Not Closed'
+	DCPText.DCPFaultNum = 02300
+	
+	CASE(2301):
+	DCPText.DCPLine1 = 'Mag1 Shuttle Not Open'
+	DCPText.DCPFaultNum = 02301
+	
+	CASE(2302):
+	DCPText.DCPLine1 = 'Stand1 Probe Not Back'
+	DCPText.DCPFaultNum = 02302
+	
+	CASE(2303):
+	DCPText.DCPLine1 = 'Mag2 Gate Not Closed'
+	DCPText.DCPFaultNum = 02303
+	
+	CASE(2304):
+	DCPText.DCPLine1 = 'Mag2 Gate Not Open'
+	DCPText.DCPFaultNum = 02304
+	
+	CASE(2305):
+	DCPText.DCPLine1 = 'Stand2 Dock Sensor On B4'
+	DCPText.DCPFaultNum = 02305
+	
+	CASE(2306):
+	DCPText.DCPLine1 = 'Mag2 Mag Gate Wrong B4'
+	DCPText.DCPFaultNum = 02306
+	
+	CASE(2307):
+	DCPText.DCPLine1 = 'Mag2 Stand Gate Wrong B4'
+	DCPText.DCPFaultNum = 02307
+	
+	CASE(2308):
+	DCPText.DCPLine1 = 'Mag2 Probe Not Back A'
+	DCPText.DCPFaultNum = 02308
+	
+	CASE(2309):
+	DCPText.DCPLine1 = 'Mag2 Probe Not Back B'
+	DCPText.DCPFaultNum = 02309
+	
+	CASE(2310):
+	DCPText.DCPLine1 = 'Mag2 Shuttle Not Closed'
+	DCPText.DCPFaultNum = 02310
+	
+	CASE(2311):
+	DCPText.DCPLine1 = 'Mag2 Shuttle Not Open'
+	DCPText.DCPFaultNum = 02311
+	
+	CASE(2312):
+	DCPText.DCPLine1 = 'Stand2 Probe Not Back'
+	DCPText.DCPFaultNum = 02312
+	
+	CASE(2313):
+	DCPText.DCPLine1 = 'Mag3 Gate Not Closed'
+	DCPText.DCPFaultNum = 02313
+	
+	CASE(2314):
+	DCPText.DCPLine1 = 'Mag3 Gate Not Open'
+	DCPText.DCPFaultNum = 02314
+	
+	CASE(2315):
+	DCPText.DCPLine1 = 'Stand3 Dock Sensor On B4'
+	DCPText.DCPFaultNum = 02315
+	
+	CASE(2316):
+	DCPText.DCPLine1 = 'Mag3 Mag Gate Wrong B4'
+	DCPText.DCPFaultNum = 02316
+	
+	CASE(2317):
+	DCPText.DCPLine1 = 'Mag3 Stand Gate Wrong B4'
+	DCPText.DCPFaultNum = 02317
+	
+	CASE(2318):
+	DCPText.DCPLine1 = 'Mag3 Probe Back A'
+	DCPText.DCPFaultNum = 02318
+	
+	CASE(2319):
+	DCPText.DCPLine1 = 'Mag3 Shuttle Not Closed'
+	DCPText.DCPFaultNum = 02319
+	
+	CASE(2320):
+	DCPText.DCPLine1 = 'Mag3 Shuttle Not Open'
+	DCPText.DCPFaultNum = 02320
+	
+	CASE(2321):
+	DCPText.DCPLine1 = 'Stand3 Probe Not Back'
+	DCPText.DCPFaultNum = 02321
+	
+	CASE(2322):
+	DCPText.DCPLine1 = 'Tape Cut Fault'
+	DCPText.DCPFaultNum = 02322
+	
+	CASE(2323):
+	DCPText.DCPLine1 = 'Sprocket Nose Switch Fault'
+	DCPText.DCPFaultNum = 02323
+	
+	CASE(2324):
+	DCPText.DCPLine1 = 'Sprocket Feed Fault'
+	DCPText.DCPFaultNum = 02324
+	
+	CASE(2325):
+	DCPText.DCPLine1 = 'Sprocket Cont Feed Fault'
+	DCPText.DCPFaultNum = 02325
+	
+	CASE(2326):
+	DCPText.DCPLine1 = 'RIN Dry Cycle Mode'
+	DCPText.DCPFaultNum = 02326
+	
+	CASE(2327):
+	DCPText.DCPLine1 = 'RLC Track Fail 1A'
+	DCPText.DCPFaultNum = 02327
+	
+	CASE(2328):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 1B'
+	DCPText.DCPFaultNum = 02328
+	
+	CASE(2329):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 1B'
+	DCPText.DCPFaultNum = 02329
+	
+	CASE(2330):
+	DCPText.DCPLine1 = 'RLC No Rivet to Measure 1B'
+	DCPText.DCPFaultNum = 02330
+	
+	CASE(2331):
+	DCPText.DCPLine1 = 'RLC Probe Failed 1B'
+	DCPText.DCPFaultNum = 02331
+	
+	CASE(2332):
+	DCPText.DCPLine1 = 'RLC Track Fail 1B'
+	DCPText.DCPFaultNum = 02332
+	
+	CASE(2333):
+	DCPText.DCPLine1 = 'Stand FOPD Adv Sens Stuck ON'
+	DCPText.DCPFaultNum = 02333
+	
+	CASE(2334):
+	DCPText.DCPLine1 = 'Stand1 FOPD Cyl Stuck Fwd'
+	DCPText.DCPFaultNum = 02334
+	
+	CASE(2335):
+	DCPText.DCPLine1 = 'Stand1 FOPD Ret Sens Stuck ON'
+	DCPText.DCPFaultNum = 02335
+	
+	CASE(2336):
+	DCPText.DCPLine1 = 'Stand1 FOPD Adv Sens Not ON'
+	DCPText.DCPFaultNum = 02336
+	
+	CASE(2337):
+	DCPText.DCPLine1 = 'Stand1 No Robot Clear Sig'
+	DCPText.DCPFaultNum = 02337
+	
+	CASE(2338):
+	DCPText.DCPLine1 = 'Unknown Rivet IN Nose Track'
+	DCPText.DCPFaultNum = 02338
+	
+	CASE(2339):
+	DCPText.DCPLine1 = 'Process Missing Rivet'
+	DCPText.DCPFaultNum = 02339
+	
+	CASE(2340):
+	DCPText.DCPLine1 = 'Process Double Rivet'
+	DCPText.DCPFaultNum = 02340
+	
+	CASE(2341):
+	DCPText.DCPLine1 = 'Process Velocity Too Fast'
+	DCPText.DCPFaultNum = 02341
+	
+	CASE(2342):
+	DCPText.DCPLine1 = 'Process Velocity Too Slow'
+	DCPText.DCPFaultNum = 02342
+	
+	CASE(2343):
+	DCPText.DCPLine1 = 'Process Material Too Thin'
+	DCPText.DCPFaultNum = 02343
+	
+	CASE(2344):
+	DCPText.DCPLine1 = 'Process Material Too Thick'
+	DCPText.DCPFaultNum = 02344
+	
+	CASE(2345):
+	DCPText.DCPLine1 = 'Process Rivet Too Long'
+	DCPText.DCPFaultNum = 02345
+	
+	CASE(2346):
+	DCPText.DCPLine1 = 'Process Rivet Too Short'
+	DCPText.DCPFaultNum = 02346
+	
+	CASE(2347):
+	DCPText.DCPLine1 = 'Process Head Height Too High'
+	DCPText.DCPFaultNum = 02347
+	
+	CASE(2348):
+	DCPText.DCPLine1 = 'Process Head Height Too Low'
+	DCPText.DCPFaultNum = 02348
+	
+	CASE(2349):
+	DCPText.DCPLine1 = 'Process Insertion Time'
+	DCPText.DCPFaultNum = 02349
+	
+	CASE(2350):
+	DCPText.DCPLine1 = 'Process Material Too Hard'
+	DCPText.DCPFaultNum = 02350
+	
+	CASE(2351):
+	DCPText.DCPLine1 = 'Process Material Too Soft'
+	DCPText.DCPFaultNum = 02351
+	
+	CASE(2352):
+	DCPText.DCPLine1 = 'Process Wrong Material 1'
+	DCPText.DCPFaultNum = 02352
+	
+	CASE(2353):
+	DCPText.DCPLine1 = 'Process Wrong Material 2'
+	DCPText.DCPFaultNum = 02353
+	
+	CASE(2354):
+	DCPText.DCPLine1 = 'Process Tol Error'
+	DCPText.DCPFaultNum = 02354
+	
+	CASE(2355):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 2A'
+	DCPText.DCPFaultNum = 02355
+	
+	CASE(2356):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 2A'
+	DCPText.DCPFaultNum = 02356
+	
+	CASE(2357):
+	DCPText.DCPLine1 = 'RLC No Rivet to Measure 2A'
+	DCPText.DCPFaultNum = 02357
+	
+	CASE(2358):
+	DCPText.DCPLine1 = 'RLC Probe Failed 2A'
+	DCPText.DCPFaultNum = 02358
+	
+	CASE(2359):
+	DCPText.DCPLine1 = 'RLC Track Fail 2A'
+	DCPText.DCPFaultNum = 02359
+	
+	CASE(2360):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 2B'
+	DCPText.DCPFaultNum = 02360
+	
+	CASE(2361):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 2B'
+	DCPText.DCPFaultNum = 02361
+	
+	CASE(2362):
+	DCPText.DCPLine1 = 'RLC No Rivet to Measure 2B'
+	DCPText.DCPFaultNum = 02362
+	
+	CASE(2363):
+	DCPText.DCPLine1 = 'RLC Probe Failed 2B'
+	DCPText.DCPFaultNum = 02363
+	
+	CASE(2364):
+	DCPText.DCPLine1 = 'RLC Track Fail 2B'
+	DCPText.DCPFaultNum = 02364
+	
+	CASE(2365):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 3A'
+	DCPText.DCPFaultNum = 02365
+	
+	CASE(2366):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 3A'
+	DCPText.DCPFaultNum = 02366
+	
+	CASE(2367):
+	DCPText.DCPLine1 = 'RLC No Rivet to Measure 3A'
+	DCPText.DCPFaultNum = 02367
+	
+	CASE(2368):
+	DCPText.DCPLine1 = 'RLC Probe Failed 3A'
+	DCPText.DCPFaultNum = 02368
+	
+	CASE(2369):
+	DCPText.DCPLine1 = 'RLC Track Fail 3A'
+	DCPText.DCPFaultNum = 02369
+	
+	CASE(2370):
+	DCPText.DCPLine1 = 'RLC Wrong Rivet 3B'
+	DCPText.DCPFaultNum = 02370
+	
+	CASE(2371):
+	DCPText.DCPLine1 = 'RLC Incorrect Fixed Limits 3B'
+	DCPText.DCPFaultNum = 02371
+	
+	CASE(2372):
+	DCPText.DCPLine1 = 'RLC No Rivet to Measure 3B'
+	DCPText.DCPFaultNum = 02372
+	
+	CASE(2373):
+	DCPText.DCPLine1 = 'Cube 1A Rivet In Tube '
+	DCPText.DCPFaultNum = 02373
+	
+	CASE(2374):
+	DCPText.DCPLine1 = 'Cube 1B Rivet In Tube'
+	DCPText.DCPFaultNum = 02374
+	
+	CASE(2375):
+	DCPText.DCPLine1 = 'Feed No Riv In Gate'
+	DCPText.DCPFaultNum = 02375
+	
+	CASE(2376):
+	DCPText.DCPLine1 = 'Feed RIMT'
+	DCPText.DCPFaultNum = 02376
+	
+	CASE(2377):
+	DCPText.DCPLine1 = 'Stand1 Dock Sensor OFF'
+	DCPText.DCPFaultNum = 02377
+	
+	CASE(2378):
+	DCPText.DCPLine1 = 'Stand2 Dock Sensor OFF'
+	DCPText.DCPFaultNum = 02378
+	
+	CASE(2379):
+	DCPText.DCPLine1 = 'Stand3 Dock Sensor OFF'
+	DCPText.DCPFaultNum = 02379
+	
+	CASE(2380):
+	DCPText.DCPLine1 = 'Mag Gate Not At Mid'
+	DCPText.DCPFaultNum = 02380
+	
+	CASE(2381):
+	DCPText.DCPLine1 = 'Mag Probe A Stuck Back'
+	DCPText.DCPFaultNum = 02381
+	
+	CASE(2382):
+	DCPText.DCPLine1 = 'Mag Probe B Stuck Back'
+	DCPText.DCPFaultNum = 02382
+	
+	CASE(2383):
+	DCPText.DCPLine1 = 'Feed Riv In Gate B4'
+	DCPText.DCPFaultNum = 02383
+	
+	CASE(2384):
+	DCPText.DCPLine1 = 'Cube1ARivInTubeSen'
+	DCPText.DCPFaultNum = 02384
+	
+	CASE(2385):
+	DCPText.DCPLine1 = 'Cube1AEscGateNotATtrack'
+	DCPText.DCPFaultNum = 02385
+	
+	CASE(2386):
+	DCPText.DCPLine1 = 'Cube1AEscGateNotATtube'
+	DCPText.DCPFaultNum = 02386
+	
+	CASE(2387):
+	DCPText.DCPLine1 = 'Cube1ARivStuckInGate'
+	DCPText.DCPFaultNum = 02387
+	
+	CASE(2388):
+	DCPText.DCPLine1 = 'Cube1BRivInTubeSen'
+	DCPText.DCPFaultNum = 02388
+	
+	CASE(2389):
+	DCPText.DCPLine1 = 'Cube1BEscGateNotATtrack'
+	DCPText.DCPFaultNum = 02389
+	
+	CASE(2390):
+	DCPText.DCPLine1 = 'Cube1BEscGateNotATtube'
+	DCPText.DCPFaultNum = 02390
+	
+	CASE(2391):
+	DCPText.DCPLine1 = 'Cube1BRivStuckInGate'
+	DCPText.DCPFaultNum = 02391
+	
+	CASE(2392):
+	DCPText.DCPLine1 = 'ToolRivDetectSenMissed'
+	DCPText.DCPFaultNum = 02392
+	
+	CASE(2393):
+	DCPText.DCPLine1 = 'PY 1A: Platform failed to vent'
+	DCPText.DCPFaultNum = 02393
+	
+	CASE(2394):
+	DCPText.DCPLine1 = 'PY 1A: UDP Communication Error'
+	DCPText.DCPFaultNum = 02394
+	
+	CASE(2395):
+	DCPText.DCPLine1 = 'PY 1B: Incorrect Tag detected'
+	DCPText.DCPFaultNum = 02395
+	
+	CASE(2396):
+	DCPText.DCPLine1 = 'PY 1B: Cylinder not at Ready position'
+	DCPText.DCPFaultNum = 02396
+	
+	CASE(2397):
+	DCPText.DCPLine1 = 'PY 1B: Cylinder not at Locked position'
+	DCPText.DCPFaultNum = 02397
+	
+	CASE(2398):
+	DCPText.DCPLine1 = 'PY 1B: RFID Reader Error'
+	DCPText.DCPFaultNum = 02398
+	
+	CASE(2399):
+	DCPText.DCPLine1 = 'PY 1B: Low Level Sensor Error'
+	DCPText.DCPFaultNum = 02399
+	
+	CASE(2400):
+	DCPText.DCPLine1 = 'PY 1B: Rivets failed to enter Hopper'
+	DCPText.DCPFaultNum = 02400
+	
+	CASE(2401):
+	DCPText.DCPLine1 = 'PY 1B: Platform failed to vent'
+	DCPText.DCPFaultNum = 02401
+	
+	CASE(2402):
+	DCPText.DCPLine1 = 'PY 1B: UDP Communication Error'
+	DCPText.DCPFaultNum = 02402
+	
+	CASE(2403):
+	DCPText.DCPLine1 = 'PY 2A: Incorrect Tag detected'
+	DCPText.DCPFaultNum = 02403
+	
+	CASE(2404):
+	DCPText.DCPLine1 = 'PY 2A: Cylinder not at Ready position'
+	DCPText.DCPFaultNum = 02404
+	
+	CASE(2405):
+	DCPText.DCPLine1 = 'PY 2A: Cylinder not at Locked position'
+	DCPText.DCPFaultNum = 02405
+	
+	CASE(2406):
+	DCPText.DCPLine1 = 'PY 2A: RFID Reader Error'
+	DCPText.DCPFaultNum = 02406
+	
+	CASE(2407):
+	DCPText.DCPLine1 = 'PY 2A: Low Level Sensor Error'
+	DCPText.DCPFaultNum = 02407
+	
+	CASE(2408):
+	DCPText.DCPLine1 = 'PY 2A: Rivets failed to enter Hopper'
+	DCPText.DCPFaultNum = 02408
+	
+	CASE(2409):
+	DCPText.DCPLine1 = 'PY 2A: Platform failed to vent'
+	DCPText.DCPFaultNum = 02409
+	
+	CASE(2410):
+	DCPText.DCPLine1 = 'PY 2A: UDP Communication Error'
+	DCPText.DCPFaultNum = 02410
+	
+	CASE(2411):
+	DCPText.DCPLine1 = 'PY 2B: Incorrect Tag detected'
+	DCPText.DCPFaultNum = 02411
+	
+	CASE(2412):
+	DCPText.DCPLine1 = 'PY 2B: Cylinder not at Ready position'
+	DCPText.DCPFaultNum = 02412
+	
+	CASE(2413):
+	DCPText.DCPLine1 = 'PY 2B: Cylinder not at Locked position'
+	DCPText.DCPFaultNum = 02413
+	
+	CASE(2414):
+	DCPText.DCPLine1 = 'PY 2B: RFID Reader Error'
+	DCPText.DCPFaultNum = 02414
+	
+	CASE(2415):
+	DCPText.DCPLine1 = 'PY 2B: Low Level Sensor Error'
+	DCPText.DCPFaultNum = 02415
+	
+	CASE(2416):
+	DCPText.DCPLine1 = 'PY 2B: Rivets failed to enter Hopper'
+	DCPText.DCPFaultNum = 02416
+	
+	CASE(2417):
+	DCPText.DCPLine1 = 'PY 2B: Platform failed to vent'
+	DCPText.DCPFaultNum = 02417
+	
+	CASE(2418):
+	DCPText.DCPLine1 = 'PY 2B: UDP Communication Error'
+	DCPText.DCPFaultNum = 02418
+	
+	CASE(2419):
+	DCPText.DCPLine1 = 'PY 3A: Incorrect Tag detected'
+	DCPText.DCPFaultNum = 02419
+	
+	CASE(2420):
+	DCPText.DCPLine1 = 'PY 3A: Cylinder not at Ready position'
+	DCPText.DCPFaultNum = 02420
+	
+	CASE(2421):
+	DCPText.DCPLine1 = 'PY 3A: Cylinder not at Locked position'
+	DCPText.DCPFaultNum = 02421
+	
+	CASE(2422):
+	DCPText.DCPLine1 = 'PY 3A: RFID Reader Error'
+	DCPText.DCPFaultNum = 02422
+	
+	CASE(2423):
+	DCPText.DCPLine1 = 'PY 3A: Low Level Sensor Error'
+	DCPText.DCPFaultNum = 02423
+	
+	CASE(2424):
+	DCPText.DCPLine1 = 'PY 3A: Rivets failed to enter Hopper'
+	DCPText.DCPFaultNum = 02424
+	
+	CASE(2425):
+	DCPText.DCPLine1 = 'PY 3A: Platform failed to vent'
+	DCPText.DCPFaultNum = 02425
+	
+	CASE(2426):
+	DCPText.DCPLine1 = 'PY 3A: UDP Communication Error'
+	DCPText.DCPFaultNum = 02426
+	
+	CASE(2427):
+	DCPText.DCPLine1 = 'PY 3B: Incorrect Tag detected'
+	DCPText.DCPFaultNum = 02427
+	
+	CASE(2428):
+	DCPText.DCPLine1 = 'PY 3B: Cylinder not at Ready position'
+	DCPText.DCPFaultNum = 02428
+	
+	CASE(2429):
+	DCPText.DCPLine1 = 'PY 3B: Cylinder not at Locked position'
+	DCPText.DCPFaultNum = 02429
+	
+	CASE(2430):
+	DCPText.DCPLine1 = 'PY 3B: RFID Reader Error'
+	DCPText.DCPFaultNum = 02430
+	
+	CASE(2431):
+	DCPText.DCPLine1 = 'Die Check Camera: Communications Failure'
+	DCPText.DCPFaultNum = 02431
+	
+	CASE(2432):
+	DCPText.DCPLine1 = 'Die Check Camera: Configuration Incorrect'
+	DCPText.DCPFaultNum = 02432
+	
+	CASE(2433):
+	DCPText.DCPLine1 = 'Cube - Stand: No Rivet seen by Stand 2At'
+	DCPText.DCPFaultNum = 02433
+	
+	CASE(2434):
+	DCPText.DCPLine1 = 'Cube - Stand: No Rivet seen by Stand 2Br'
+	DCPText.DCPFaultNum = 02434
+	
+	CASE(2435):
+	DCPText.DCPLine1 = 'Robot Mode Selection Error'
+	DCPText.DCPFaultNum = 02435
+	
+	CASE(2436):
+	DCPText.DCPLine1 = 'Selector not at A or B'
+	DCPText.DCPFaultNum = 02436
+	
+	CASE(2437):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02437
+	
+	CASE(2438):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02438
+	
+	CASE(2439):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02439
+	
+	CASE(2440):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02440
+	
+	CASE(2441):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02441
+	
+	CASE(2442):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02442
+	
+	CASE(2443):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02443
+	
+	CASE(2444):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02444
+	
+	CASE(2445):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02445
+	
+	CASE(2446):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02446
+	
+	CASE(2447):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02447
+	
+	CASE(2448):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02448
+	
+	CASE(2449):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02449
+	
+	CASE(2450):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02450
+	
+	CASE(2451):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02451
+	
+	CASE(2452):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02452
+	
+	CASE(2453):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02453
+	
+	CASE(2454):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02454
+	
+	CASE(2455):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02455
+	
+	CASE(2456):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02456
+	
+	CASE(2457):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02457
+	
+	CASE(2458):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02458
+	
+	CASE(2459):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02459
+	
+	CASE(2460):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02460
+	
+	CASE(2461):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02461
+	
+	CASE(2462):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02462
+	
+	CASE(2463):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02463
+	
+	CASE(2464):
+	DCPText.DCPLine1 = 'Spare'
+	DCPText.DCPFaultNum = 02464
+	
+	CASE(2465):
+	DCPText.DCPLine1 = 'E-Stop Active, Robot Fault Reset Required'
+	DCPText.DCPFaultNum = 02465
+	
+	CASE(2466):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02466
+	
+	CASE(2467):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02467
+	
+	CASE(2468):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02468
+	
+	CASE(2469):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02469
+	
+	CASE(2470):
+	DCPText.DCPLine1 = 'This SPR tool out of range : 1 to MAX'
+	DCPText.DCPFaultNum = 02470
+	
+	CASE(2471):
+	DCPText.DCPLine1 = 'Select toolID out of range : 1 to MAX'
+	DCPText.DCPFaultNum = 02471
+	
+	CASE(2472):
+	DCPText.DCPLine1 = 'This SPR rivetID < 1 or > MAX'
+	DCPText.DCPFaultNum = 02472
+
+	CASE(2473):
+	DCPText.DCPLine1 = 'This SPR rivet type invalid'
+	DCPText.DCPFaultNum = 02473
+	
+	CASE(2474):
+	DCPText.DCPLine1 = 'Equalization type not valid'
+	DCPText.DCPFaultNum = 02474
+	
+	CASE(2475):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02475
+	
+	CASE(2476):
+	DCPText.DCPLine1 = 'Previous Rivet not Reset (Ok/NOK)'
+	DCPText.DCPLine2 = 'Check if Current Rivet has been Set'
+	DCPText.DCPLine3 = 'Ack = Set           Retry = Not Set' 
+	DCPText.DCPFaultNum = 02476
+	FKEY_SEL = 3
+	
+	CASE(2477):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02477
+	
+	CASE(2478):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02478
+	
+	CASE(2479):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02479
+	
+	CASE(2480):
+	DCPText.DCPLine1 = 'This pre opening < MIN'
+	DCPText.DCPFaultNum = 02480
+	
+	CASE(2481):
+	DCPText.DCPLine1 = 'This pre opening > MAX'
+	DCPText.DCPFaultNum = 02481
+	
+	CASE(2482):
+	DCPText.DCPLine1 = 'This pre opening is INVALID'
+	DCPText.DCPFaultNum = 02482
+	
+	CASE(2483):
+	DCPText.DCPLine1 = 'This post opening < MIN'
+	DCPText.DCPFaultNum = 02483
+	
+	CASE(2484):
+	DCPText.DCPLine1 = 'This post opening > MAX'
+	DCPText.DCPFaultNum = 02484
+	
+	CASE(2485):
+	DCPText.DCPLine1 = 'This post opening is INVALID'
+	DCPText.DCPFaultNum = 02485
+	
+	CASE(2486):
+	DCPText.DCPLine1 = 'Next post opening < MIN'
+	DCPText.DCPFaultNum = 02486
+	
+	CASE(2487):
+	DCPText.DCPLine1 = 'Next post opening > MAX'
+	DCPText.DCPFaultNum = 02487
+	
+	CASE(2488):
+	DCPText.DCPLine1 = 'Next post opening is INVALID'
+	DCPText.DCPFaultNum = 02488
+	
+	CASE(2489):
+	DCPText.DCPLine1 = 'This ControllerID <> Next ControllerID'
+	DCPText.DCPFaultNum = 02489
+	
+	CASE(2490):
+	DCPText.DCPLine1 = 'This TooID <> Next ToolID'
+	DCPText.DCPFaultNum = 02490
+	
+	CASE(2491):
+	DCPText.DCPLine1 = 'This post <> Next pre'
+	DCPText.DCPFaultNum = 02491
+	
+	CASE(2492):
+	DCPText.DCPLine1 = 'Selected pre opening < MIN'
+	DCPText.DCPFaultNum = 02492
+	
+	CASE(2493):
+	DCPText.DCPLine1 = 'Selected pre opening > MAX'
+	DCPText.DCPFaultNum = 02493
+	
+	CASE(2494):
+	DCPText.DCPLine1 = 'Selected pre opening is INVALID'
+	DCPText.DCPFaultNum = 02494
+	
+	CASE(2495):
+	DCPText.DCPLine1 = 'Fill Station < 1'
+	DCPText.DCPFaultNum = 02495
+	
+	CASE(2496):
+	DCPText.DCPLine1 = 'Fill Station > MAX'
+	DCPText.DCPFaultNum = 02496
+	
+	CASE(2497):
+	DCPText.DCPLine1 = 'Error out of range'
+	DCPText.DCPFaultNum = 02497
+	
+	CASE(2498):
+	DCPText.DCPLine1 = 'Tool still POWERED DOWN'
+	DCPText.DCPFaultNum = 02498
+	
+	CASE(2499):
+	DCPText.DCPLine1 = 'Controller not OK'
+	DCPText.DCPFaultNum = 02499
+	
+	CASE(2500):
+	DCPText.DCPLine1 = 'Controller not READY'
+	DCPText.DCPFaultNum = 02500
+	
+	CASE(2501):
+	DCPText.DCPLine1 = 'Rivet Type A not selected'
+	DCPText.DCPFaultNum = 02501
+	FKEY_SEL = 1
+	
+	CASE(2502):
+	DCPText.DCPLine1 = 'Rivet Type B not selected'
+	DCPText.DCPFaultNum = 02502
+	FKEY_SEL = 1
+	
+	CASE(2503):
+	DCPText.DCPLine1 = 'Rivet Type C not selected'
+	DCPText.DCPFaultNum = 02503
+	FKEY_SEL = 1
+	
+	CASE(2504):
+	DCPText.DCPLine1 = 'Rivet Type D not selected'
+	DCPText.DCPFaultNum = 02504
+	FKEY_SEL = 1
+	
+	CASE(2505):
+	DCPText.DCPLine1 = 'Anti repeat rivet, Rivet ID' + strRivID
+	DCPText.DCPFaultNum = 02505 
+	FKEY_SEL = 2
+	
+	CASE(2506):
+	DCPText.DCPLine1 = 'Rivet array dnHenRivetNum not cleared'
+	DCPText.DCPFaultNum = 02506
+	
+	CASE(2507):
+	DCPText.DCPLine1 = 'EOS timed out.'
+	DCPText.DCPLine2 = 'Check if Current Rivet has been Set'
+	DCPText.DCPLine3 = 'Ack = Set           Retry = Not Set' 
+	DCPText.DCPFaultNum = 02507
+	FKEY_SEL = 3
+		
+	CASE(2508):
+	DCPText.DCPLine1 = 'Tool NOT at PARTIAL'
+	DCPText.DCPFaultNum = 02508
+	DCPText.DCPLine2 = 'Requested Partial = ' +strOpen
+	IF intOpen = 0 THEN
+		DCPText.DCPLine2 = 'Requested Partial = Home'
+	ENDIF
+	
+	CASE(2509):
+	DCPText.DCPLine1 = 'Rivet quality is UNKNOWN'
+	DCPText.DCPFaultNum = 02509
+	
+	CASE(2510):
+	DCPText.DCPLine1 = 'Soft Move not tuned'
+	DCPText.DCPFaultNum = 02510
+	
+	CASE(2511):
+	DCPText.DCPLine1 = 'Soft Move tuned failed'
+	DCPText.DCPFaultNum = 02511
+	
+	CASE(2512):
+	DCPText.DCPLine1 = 'Rivet quality NOT OK'
+	DCPText.DCPFaultNum = 02512
+	
+	CASE(2513):
+	DCPText.DCPLine1 = 'Tool NOT at HOME'
+	DCPText.DCPFaultNum = 02513
+	
+	CASE(2514):
+	DCPText.DCPLine1 = 'Waiting Ready to Dock to be ON'
+	DCPText.DCPFaultNum = 02514
+	
+	CASE(2515):
+	DCPText.DCPLine1 = 'Waiting Ready to Dock to be OFF'
+	DCPText.DCPFaultNum = 02515
+	
+	CASE(2516):
+	DCPText.DCPLine1 = 'Waiting End of Dock to be ON'
+	DCPText.DCPFaultNum = 02516
+	
+	CASE(2517):
+	DCPText.DCPLine1 = 'Waiting End of Dock to be OFF'
+	DCPText.DCPFaultNum = 02517
+	
+	CASE(2518):
+	DCPText.DCPLine1 = 'Die check signals not OFF'
+	DCPText.DCPFaultNum = 02518
+	
+	CASE(2519):
+	DCPText.DCPLine1 = 'Henrob not in auto to move tool HOME'
+	DCPText.DCPFaultNum = 02519
+	
+	CASE(2520):
+	DCPText.DCPLine1 = 'Die check signals not ON'
+	DCPText.DCPFaultNum = 02520
+	
+	CASE(2521):
+	DCPText.DCPLine1 = 'Henrob not in auto to move tool PARTIAL'
+	DCPText.DCPFaultNum = 02521
+	
+	CASE(2522):
+	DCPText.DCPLine1 = 'Tool not POWERED DOWN'
+	DCPText.DCPFaultNum = 02522
+	
+	CASE(2523):
+	DCPText.DCPLine1 = 'Tool Stand 1 is not OK to dock on'
+	DCPText.DCPFaultNum = 02523
+	
+	CASE(2524):
+	DCPText.DCPLine1 = 'Tool Stand 2 is not OK to dock on'
+	DCPText.DCPFaultNum = 02524
+	
+	CASE(2525):
+	DCPText.DCPLine1 = 'Tool Stand 3 is not OK to dock on'
+	DCPText.DCPFaultNum = 02525
+	
+	CASE(2526):
+	DCPText.DCPLine1 = 'Die check tool 1 not OK'
+	DCPText.DCPFaultNum = 02526
+	FKEY_SEL = 4
+	
+	CASE(2527):
+	DCPText.DCPLine1 = 'Die check tool 2 not OK'
+	DCPText.DCPFaultNum = 02527
+	FKEY_SEL = 4
+	
+	CASE(2528):
+	DCPText.DCPLine1 = 'Die check tool 3 not OK'
+	DCPText.DCPFaultNum = 02528
+	FKEY_SEL = 4
+	
+	CASE(2529):
+	DCPText.DCPLine1 = ''
+	DCPText.DCPFaultNum = 02529
+	
+	CASE(2530):
+	DCPText.DCPLine1 = 'E-STOP Active During Rivet, '
+	DCPText.DCPLine2 = 'Choose Re-Rivet or Skip'
+	DCPText.DCPFaultNum = 02530
+	FKEY_SEL = 2
+	else:
+	DCPText.DCPLine1 = 'Undefined SPR DCP Fault Message'
+	
+ENDSELECT
+
+CNV_INT_STR(DCPText.DCPFaultNum,4,10,strDCPNum)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,strDCPNum,STATUS)
+
+	
+END G_DCP_SPR2_1
+
+--Begin Prog
+BEGIN
+
+ 
+ 
+END DCP_SPR2_1

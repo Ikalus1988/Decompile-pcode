@@ -1,0 +1,368 @@
+-- DCP_TUCKER_3.KL (decompiled v3)
+PROGRAM DCP_TUCKER_3
+%COMMENT = 'Version 1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  INTPROGNUM : INTEGER
+  STATUS : INTEGER
+  STRPROGNUM : STRING[64]
+  INTAREAINREQ : INTEGER
+  REALDUMMY : REAL
+  STRAREAINREQ : STRING[64]
+  INTAREAOUTRL : INTEGER
+  STRAREAOUTRL : STRING[64]
+  INTTOOLREQ : INTEGER
+  STRTOOLREQ : STRING[64]
+  INTJOBDONE : INTEGER
+  STRJOBDONE : STRING[64]
+  INTCOLREQ : INTEGER
+  STRCOLREQ : STRING[64]
+  INTCOLREL : INTEGER
+  STRCOLREL : STRING[64]
+  DCPTEXT : ALMDCP
+  STRDCPNUM : STRING[64]
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  FKEYS : ARRAY[10] OF STRING[12]
+  FKEY_SEL : INTEGER
+  BLPLC : BOOLEAN
+  BLSPR : BOOLEAN
+  BLSPOT : BOOLEAN
+  BLDISPENSE : BOOLEAN
+  BLMH : BOOLEAN
+  BLSTUD : BOOLEAN
+  BLNUT : BOOLEAN
+  BLISRA : BOOLEAN
+  BLQUISS : BOOLEAN
+  PARAMTYP : INTEGER
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  INTDCPFAULT : INTEGER
+  INTRIVID : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[10]
+  STRAREANUM : STRING[3]
+  STRRIVID : STRING[3]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STRADDDCPTXT : STRING[20]
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE G_DCP_SPR1_3 : INTEGER
+BEGIN
+  GET_PORT_VAL(18, 1, INTPROGNUM, STATUS)
+  CNV_INT_STR(INTPROGNUM, 3, 10, STRPROGNUM)
+  GET_REG(151, (0 <> 0), INTAREAINREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAINREQ, 3, 10, STRAREAINREQ)
+  GET_REG(152, (0 <> 0), INTAREAOUTRL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAOUTRL, 3, 10, STRAREAOUTRL)
+  GET_REG(153, (0 <> 0), INTTOOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLREQ, 3, 10, STRTOOLREQ)
+  GET_REG(154, (0 <> 0), INTJOBDONE, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTJOBDONE, 3, 10, STRJOBDONE)
+  GET_REG(156, (0 <> 0), INTCOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREQ, 3, 10, STRCOLREQ)
+  GET_REG(157, (0 <> 0), INTCOLREL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREL, 3, 10, STRCOLREL)
+  SELECT DCPTEXT_f00 OF
+  CASE(701):
+  DCPTEXT_f04 = 'Feeder slave 1: Filling station does not reach basic position'
+  DCPTEXT_f00 = 701
+  CASE(702):
+  DCPTEXT_f04 = 'Feeder slave 2: Filling station does not reach basic position'
+  DCPTEXT_f00 = 702
+  CASE(703):
+  DCPTEXT_f04 = 'Feeder slave 3: Filling station does not reach basic position'
+  DCPTEXT_f00 = 703
+  CASE(704):
+  DCPTEXT_f04 = 'Feeder master: Timeout slave feeder'
+  DCPTEXT_f00 = 704
+  CASE(705):
+  DCPTEXT_f04 = 'Feeder slave 1: Timeout slave feeder'
+  DCPTEXT_f00 = 705
+  CASE(706):
+  DCPTEXT_f04 = 'Feeder slave 2: Timeout slave feeder'
+  DCPTEXT_f00 = 706
+  CASE(707):
+  DCPTEXT_f04 = 'Feeder slave 3: Timeout slave feeder'
+  DCPTEXT_f00 = 707
+  CASE(708):
+  DCPTEXT_f04 = 'Feeder master: Invalid configuration'
+  DCPTEXT_f00 = 708
+  CASE(709):
+  DCPTEXT_f04 = 'Feeder slave1: Invalid configuration'
+  DCPTEXT_f00 = 709
+  CASE(710):
+  DCPTEXT_f04 = 'Feeder slave2: Invalid configuration'
+  DCPTEXT_f00 = 710
+  CASE(711):
+  DCPTEXT_f04 = 'Feeder slave3: Invalid configuration'
+  DCPTEXT_f00 = 711
+  CASE(712):
+  DCPTEXT_f04 = 'Process: Timeout feeder not ready for process'
+  DCPTEXT_f00 = 712
+  CASE(713):
+  DCPTEXT_f04 = 'Process: Timeout SIC (controller) not ready for process'
+  DCPTEXT_f00 = 713
+  CASE(714):
+  DCPTEXT_f04 = 'Process: SIC (controller) process not finished yet'
+  DCPTEXT_f00 = 714
+  CASE(715):
+  DCPTEXT_f04 = 'Process: Adjustment drive necessary'
+  DCPTEXT_f00 = 715
+  CASE(716):
+  DCPTEXT_f04 = 'Start riveting during protective circuit or emergency stop'
+  DCPTEXT_f00 = 716
+  CASE(717):
+  DCPTEXT_f04 = 'SIC: Programmed value Speed riveting too small'
+  DCPTEXT_f00 = 717
+  CASE(718):
+  DCPTEXT_f04 = 'SIC: Programmed value Speed driving too small'
+  DCPTEXT_f00 = 718
+  CASE(719):
+  DCPTEXT_f04 = 'Timeout overhead floating linear slide'
+  DCPTEXT_f00 = 719
+  CASE(720):
+  DCPTEXT_f04 = 'Hardware configuration of the controller has changed'
+  DCPTEXT_f00 = 720
+  CASE(721):
+  DCPTEXT_f04 = 'Hardware configuration of the spindle has changed'
+  DCPTEXT_f00 = 721
+  CASE(722):
+  DCPTEXT_f04 = 'Hardware configuration of the feeders have changed'
+  DCPTEXT_f00 = 722
+  CASE(723):
+  DCPTEXT_f04 = 'SIC: Programmed value Spindle home POSITION too big'
+  DCPTEXT_f00 = 723
+  CASE(724):
+  DCPTEXT_f04 = 'SIC: Reference curve has invalid values'
+  DCPTEXT_f00 = 724
+  CASE(725):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode activated for spindel 1'
+  DCPTEXT_f00 = 725
+  CASE(726):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode activated for spindel 2'
+  DCPTEXT_f00 = 726
+  CASE(727):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode activated for spindel 3'
+  DCPTEXT_f00 = 727
+  CASE(728):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode activated for spindel 4'
+  DCPTEXT_f00 = 728
+  CASE(729):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 1'
+  DCPTEXT_f00 = 729
+  CASE(730):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 2'
+  DCPTEXT_f00 = 730
+  CASE(731):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 3'
+  DCPTEXT_f00 = 731
+  CASE(732):
+  DCPTEXT_f04 = 'ZCPU: Stealth-Mode deactivated for spindel 4'
+  DCPTEXT_f00 = 732
+  CASE(733):
+  DCPTEXT_f04 = 'Spindle 1: Maintenance magazine-tube 1 is necessary'
+  DCPTEXT_f00 = 733
+  CASE(734):
+  DCPTEXT_f04 = 'Spindle 2: Maintenance magazine-tube 1 is necessary'
+  DCPTEXT_f00 = 734
+  CASE(735):
+  DCPTEXT_f04 = 'Spindle 3: Maintenance magazine-tube 1 is necessary'
+  DCPTEXT_f00 = 735
+  CASE(736):
+  DCPTEXT_f04 = 'Spindle 4: Maintenance magazine-tube 1 is necessary'
+  DCPTEXT_f00 = 736
+  CASE(737):
+  DCPTEXT_f04 = 'Spindle 1: Maintenance magazine-tube 2 is necessary'
+  DCPTEXT_f00 = 737
+  CASE(738):
+  DCPTEXT_f04 = 'Spindle 2: Maintenance magazine-tube 2 is necessary'
+  DCPTEXT_f00 = 738
+  CASE(739):
+  DCPTEXT_f04 = 'Spindle 3: Maintenance magazine-tube 2 is necessary'
+  DCPTEXT_f00 = 739
+  CASE(740):
+  DCPTEXT_f04 = 'Spindle 4: Maintenance magazine-tube 2 is necessary'
+  DCPTEXT_f00 = 740
+  CASE(741):
+  DCPTEXT_f04 = 'Spindle 1: Maintenance magazine-tube behind separation is necessary'
+  DCPTEXT_f00 = 741
+  CASE(742):
+  DCPTEXT_f04 = 'Spindle 2: Maintenance magazine-tube behind separation is necessary'
+  DCPTEXT_f00 = 742
+  CASE(743):
+  DCPTEXT_f04 = 'Spindle 3: Maintenance magazine-tube behind separation is necessary'
+  DCPTEXT_f00 = 743
+  CASE(744):
+  DCPTEXT_f04 = 'Spindle 4: Maintenance magazine-tube behind separation is necessary'
+  DCPTEXT_f00 = 744
+  CASE(745):
+  DCPTEXT_f04 = 'Prozess: JIC Criteria 1 is out of tolerance threshold'
+  DCPTEXT_f00 = 745
+  CASE(746):
+  DCPTEXT_f04 = 'DDC: magazine lock not opened'
+  DCPTEXT_f00 = 746
+  CASE(747):
+  DCPTEXT_f04 = 'DDC: magazine lock not sealed'
+  DCPTEXT_f00 = 747
+  CASE(748):
+  DCPTEXT_f04 = 'DDC: Magazine slide 1 has not reached magazine position'
+  DCPTEXT_f00 = 748
+  CASE(749):
+  DCPTEXT_f04 = 'DDC: Magazine slide 1 has not reached receiver position'
+  DCPTEXT_f00 = 749
+  CASE(750):
+  DCPTEXT_f04 = 'DDC: Magazine slide 2 has not reached magazine position'
+  DCPTEXT_f00 = 750
+  CASE(751):
+  DCPTEXT_f04 = 'DDC: Magazine slide 2 has not reached receiver position'
+  DCPTEXT_f00 = 751
+  CASE(752):
+  DCPTEXT_f04 = 'DDC: Rivet in receiver not recognized'
+  DCPTEXT_f00 = 752
+  CASE(753):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 753
+  CASE(754):
+  DCPTEXT_f04 = 'Force Correction: Communication to DF30CAN is faulty'
+  DCPTEXT_f00 = 754
+  CASE(755):
+  DCPTEXT_f04 = 'DDC: Corrected max. force exceeded (FC)'
+  DCPTEXT_f00 = 755
+  CASE(756):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 756
+  CASE(757):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 757
+  CASE(758):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 758
+  CASE(759):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 759
+  CASE(760):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 760
+  CASE(761):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 761
+  CASE(762):
+  DCPTEXT_f04 = 'Prozess: JIC Criteria 2 is out of tolerance threshold'
+  DCPTEXT_f00 = 762
+  CASE(763):
+  DCPTEXT_f04 = 'Feeder: Die changer not connected anymore'
+  DCPTEXT_f00 = 763
+  CASE(764):
+  DCPTEXT_f04 = 'Feeder: Communication fault with die changer'
+  DCPTEXT_f00 = 764
+  CASE(765):
+  DCPTEXT_f04 = 'Die changer: Station not closed'
+  DCPTEXT_f00 = 765
+  CASE(766):
+  DCPTEXT_f04 = 'Die changer: Station not opened'
+  DCPTEXT_f00 = 766
+  CASE(767):
+  DCPTEXT_f04 = 'Die changer: selected die position is occupied'
+  DCPTEXT_f00 = 767
+  CASE(768):
+  DCPTEXT_f04 = 'Die changer: selected die position is vacant'
+  DCPTEXT_f00 = 768
+  CASE(769):
+  DCPTEXT_f04 = 'Die changer: selected die position is out of range'
+  DCPTEXT_f00 = 769
+  CASE(770):
+  DCPTEXT_f04 = 'Die changer: deposited die not in position'
+  DCPTEXT_f00 = 770
+  CASE(771):
+  DCPTEXT_f04 = 'Die changer: die not picked up'
+  DCPTEXT_f00 = 771
+  CASE(772):
+  DCPTEXT_f04 = 'Die changer: coded plug is missing'
+  DCPTEXT_f00 = 772
+  CASE(773):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 773
+  CASE(774):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 774
+  CASE(775):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 775
+  CASE(776):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 776
+  CASE(777):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 777
+  CASE(778):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 778
+  CASE(779):
+  DCPTEXT_f04 = 'Die changer process: Cycle Timeout'
+  DCPTEXT_f00 = 779
+  CASE(780):
+  DCPTEXT_f04 = 'Die changer process: No valid die-number detected'
+  DCPTEXT_f00 = 780
+  CASE(781):
+  DCPTEXT_f04 = 'Process: Incorrect die-assignment'
+  DCPTEXT_f00 = 781
+  CASE(782):
+  DCPTEXT_f04 = 'Force correction: data do not match'
+  DCPTEXT_f00 = 782
+  CASE(783):
+  DCPTEXT_f04 = 'Force Correction: SIC command not supported by the DDC'
+  DCPTEXT_f00 = 783
+  CASE(784):
+  DCPTEXT_f04 = 'Force Correction: Time out DDC'
+  DCPTEXT_f00 = 784
+  CASE(785):
+  DCPTEXT_f04 = 'Force Correction: Runtime error SIC'
+  DCPTEXT_f00 = 785
+  ELSE:
+  DCPTEXT_f04 = 'Undefined SPR DCP Fault Message'
+  ENDSELECT
+  CNV_INT_STR(DCPTEXT_f00, 4, 10, STRDCPNUM)
+  SET_STR_REG(9, STRDCPNUM, STATUS)
+  RETURN(0)
+END G_DCP_SPR1_3
+
+BEGIN
+END DCP_TUCKER_3

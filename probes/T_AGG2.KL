@@ -1,0 +1,25 @@
+PROGRAM T_AGG2
+%COMMENT = 'aggregate copy probe v2 returns and param write'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  gp : POSITION
+  iv : INTEGER
+  rv : REAL
+
+ROUTINE r_w(x : POSITION) : INTEGER
+BEGIN
+  x = gp
+  RETURN(7)
+END r_w
+
+ROUTINE r_r : REAL
+BEGIN
+  RETURN(rv)
+END r_r
+
+BEGIN
+  iv = r_w(gp)
+END T_AGG2

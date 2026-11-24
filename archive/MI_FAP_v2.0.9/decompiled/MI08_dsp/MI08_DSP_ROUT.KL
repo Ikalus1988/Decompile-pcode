@@ -1,0 +1,654 @@
+-- MI08_DSP_ROUT.KL (decompiled v3)
+PROGRAM MI08_DSP_ROUT
+%COMMENT = 'MI08 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  I_MI01_DI : INTEGER
+  AR_I_NEW_BSN_IN : ARRAY[64] OF INTEGER
+  I_MI08_DO : ARRAY[64] OF INTEGER
+  AR_I_NEW_BSN_OUT : ARRAY[64] OF INTEGER
+  I_DISPENSER : INTEGER
+  I_MI08_DI : ARRAY[64] OF INTEGER
+  I_MI01_GO : INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  I_PURGE_ENB : INTEGER
+  I_STATUS : INTEGER
+  I_MI08_GO : ARRAY[64] OF INTEGER
+  I_MI08_GI : ARRAY[64] OF INTEGER
+  I_COMPONET : INTEGER
+  I_T_DSP : INTEGER
+  I_TIMEOUT_APP_OK : INTEGER
+  I_PROCESSTIM : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  B_MON_08 : BOOLEAN
+  I_ACT_TOOL : INTEGER
+  I_GUNNUMBER : INTEGER
+  I_MON : INTEGER
+  B_SCA : BOOLEAN
+  I_SCA_TYPE : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INTERCONNECT(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[p0] <> 0)) THEN
+  io_02[p1] = 1
+  ELSE
+  io_02[p1] = 0
+  ENDIF
+  RETURN(0)
+END INTERCONNECT
+
+ROUTINE CREATENEWSCABSN(p0 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  r1_lc1 = 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 4
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 1
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 5
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 2
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 6
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 3
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 7
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 8
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 9
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 1
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 10
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 2
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 11
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 3
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 16
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 12
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 17
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 13
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 18
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 14
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 19
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 15
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 24
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 8
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 25
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 9
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 26
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 10
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 27
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 11
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 32
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 20
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 33
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 21
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 34
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 22
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 35
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 23
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 40
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 16
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 41
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 17
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 42
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 18
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 43
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 19
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 48
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 28
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 49
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 29
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 50
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 30
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 51
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 31
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 56
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 24
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 57
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 25
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 58
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 26
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 59
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 27
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 64
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 36
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 65
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 37
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 66
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 38
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 67
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 39
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 72
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 32
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 73
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 33
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 74
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 34
+  r1_lc1 = r1_lc1 + 1
+  AR_I_NEW_BSN_IN[r1_lc1] = I_MI01_DI + 129 + 75
+  AR_I_NEW_BSN_OUT[r1_lc1] = I_MI08_DO[p0] + 81 + 35
+  r1_lc1 = r1_lc1 + 1
+  RETURN(0)
+END CREATENEWSCABSN
+
+ROUTINE MI08_SENDBSNUM(p0 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+  r2_lc3 : INTEGER
+  r2_lc4 : INTEGER
+BEGIN
+  IF ((I_DISPENSER = 1)) THEN
+  sv_i = round(64 / 8)
+  FOR r2_lc2 = 1 TO 3 DO
+  FOR r2_lc1 = 1 TO 3 DO
+  r2_lc3 = I_MI01_DI + 129 + r2_lc1 - 1 + r2_lc2 - 1 * 8
+  r2_lc4 = I_MI08_DO[p0] + 81 + r2_lc1 - 1 + 8 - r2_lc2 * 4
+  sv_i = INTERCONNECT(r2_lc3, r2_lc4)
+  -- stmt225 stray sv_i
+  ENDFOR
+  ENDFOR
+  ENDIF
+  RETURN(0)
+END MI08_SENDBSNUM
+
+ROUTINE MI08_SENDBSNUM_NEW(p0 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  sv_i = INTERCONNECT((AR_I_NEW_BSN_IN[r3_lc1]), (AR_I_NEW_BSN_OUT[r3_lc1]))
+  -- stmt244 stray sv_i
+  ENDFOR
+  RETURN(0)
+END MI08_SENDBSNUM_NEW
+
+ROUTINE MI08_FILL(p0, p1 : INTEGER) : INTEGER
+VAR
+  r8_lc1 : INTEGER
+  r8_lc2 : INTEGER
+BEGIN
+  io_02[I_MI08_DO[p0] + 5] = 1
+  io_02[I_MI08_DO[p0] + 8] = 1
+  IF ((io_01[I_MI08_DI[p0] + 13] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 55 + p0 - 1 * 10
+  r8_lc2 = 13
+  LST_ERROR_f00[r8_lc2] = 'DSP'
+  LST_ERROR_f10[r8_lc2] = 0
+  LST_ERROR_f14[r8_lc2] = 'fill error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r8_lc2] = 'GLUE' + sv_s + ' fill error'
+  sv_i = WAIT_SIGNAL(r8_lc2, 1, I_MI08_DI[p0] + 13, 1, p1, 1)
+  r8_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI08_DO[p0] + 5] = 0
+  RETURN(0)
+END MI08_FILL
+
+ROUTINE MI08_PURGE_SCA(p0, p1 : INTEGER) : INTEGER
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+BEGIN
+  r6_lc3 = 0
+  IF ((I_COMPONET = 2)) THEN
+  IF ((I_T_DSP = 0)) THEN
+  r6_lc3 = 1
+  ENDIF
+  ENDIF
+  io_02[I_MI08_DO[p0] + 11] = 1
+  io_02[I_MI08_DO[p0] + 8] = 1
+  IF ((r6_lc3 <> 0)) THEN
+  io_02[I_MI08_DO[p0] + 41] = 1
+  ELSE
+  io_02[I_MI08_DO[p0] + 9] = 1
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 14] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 54 + p0 - 1 * 10
+  r6_lc2 = 12
+  LST_ERROR_f00[r6_lc2] = 'DSP'
+  LST_ERROR_f10[r6_lc2] = 0
+  LST_ERROR_f14[r6_lc2] = 'purge error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r6_lc2] = 'GLUE' + sv_s + ' purge error'
+  sv_i = WAIT_SIGNAL(r6_lc2, 1, I_MI08_DI[p0] + 14, 1, p1, 1)
+  r6_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  IF ((r6_lc3 <> 0)) THEN
+  io_02[I_MI08_DO[p0] + 41] = 0
+  ELSE
+  io_02[I_MI08_DO[p0] + 9] = 0
+  ENDIF
+  RETURN(0)
+END MI08_PURGE_SCA
+
+ROUTINE MI08_PURGE_DMTS(p0, p1 : INTEGER) : INTEGER
+VAR
+  r7_lc1 : INTEGER
+  r7_lc2 : INTEGER
+BEGIN
+  io_02[I_MI08_DO[p0] + 11] = 1
+  io_02[I_MI08_DO[p0] + 8] = 1
+  -- stmt34 residue 2000
+  IF ((io_01[I_MI08_DI[p0] + 14] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 54 + p0 - 1 * 10
+  r7_lc2 = 12
+  LST_ERROR_f00[r7_lc2] = 'DSP'
+  LST_ERROR_f10[r7_lc2] = 0
+  LST_ERROR_f14[r7_lc2] = 'purge error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r7_lc2] = 'GLUE' + sv_s + ' purge error'
+  sv_i = WAIT_SIGNAL(r7_lc2, 1, I_MI08_DI[p0] + 14, 1, p1, 1)
+  r7_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI08_DO[p0] + 9] = 0
+  RETURN(0)
+END MI08_PURGE_DMTS
+
+ROUTINE MI08_INIT(p0, p1 : INTEGER) : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+BEGIN
+  io_02[I_MI08_DO[p0] + 11] = 1
+  io_02[I_MI08_DO[p0] + 9] = 0
+  io_02[I_MI08_DO[p0] + 1] = 0
+  io_02[I_MI08_DO[p0] + 5] = 0
+  io_02[I_MI08_DO[p0] + 14] = 1
+  io_02[I_MI08_DO[p0] + 8] = 1
+  io_02[I_MI08_DO[p0] + 12] = 0
+  -- stmt13 residue 1000
+  -- stmt14 residue 1000
+  -- stmt15 residue 1000
+  IF ((io_01[I_MI08_DI[p0] + 34] = 0) OR (io_01[I_MI08_DI[p0] + 37] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 51 + p0 - 1 * 10
+  IF ((io_01[I_MI08_DI[p0] + 34] = 0)) THEN
+  r4_lc2 = 1
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'Wait pump on'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'Wait Glue' + sv_s + ' pump on'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 34, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 37] = 0)) THEN
+  r4_lc2 = 2
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'Wait heating ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'Wait Glue' + sv_s + ' heating ready'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 37, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  IF ((I_PURGE_ENB = 1)) THEN
+  IF ((io_01[I_MI08_DI[p0] + 10] <> 0)) THEN
+  SELECT I_DISPENSER OF
+  CASE(1):
+  sv_i = MI08_PURGE_SCA(p0, p1 * 1000)
+  CASE(2):
+  sv_i = MI08_PURGE_DMTS(p0, p1 * 1000)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 10] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 54 + p0 - 1 * 10
+  r4_lc2 = 3
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'purge timeout'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' purge timeout'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 10, 0, p1, 2)
+  r4_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 9] <> 0)) THEN
+  sv_i = MI08_FILL(p0, p1)
+  -- stmt69 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 9] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 55 + p0 - 1 * 10
+  r4_lc2 = 4
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'fill timeout'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' fill timeout'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 9, 0, p1, 2)
+  r4_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  r4_lc3 = 1
+  IF ((io_01[I_MI08_DI[p0] + 1] = 0) OR (io_01[I_MI08_DI[p0] + 5] = 0) OR (io_01[I_MI08_DI[p0] + 8] = 0) OR (r4_lc3 = 0)) THEN
+  io_13[I_MI01_GO + 6] = 52 + p0 - 1 * 10
+  IF ((io_01[I_MI08_DI[p0] + 1] = 0)) THEN
+  r4_lc2 = 5
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'system not ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' system not ready'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 1, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 5] = 0)) THEN
+  r4_lc2 = 6
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'system not ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' system not ready'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 5, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 8] = 0)) THEN
+  r4_lc2 = 7
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'system not ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' system not ready'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 8, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  IF ((r4_lc3 = 0)) THEN
+  r4_lc2 = 8
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'system not ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' system not ready'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 49, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 33] = 0)) THEN
+  r4_lc2 = 9
+  LST_ERROR_f00[r4_lc2] = 'DSP'
+  LST_ERROR_f10[r4_lc2] = 0
+  LST_ERROR_f14[r4_lc2] = 'mode incorrect'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r4_lc2] = 'GLUE' + sv_s + ' mode incorrect'
+  sv_i = WAIT_SIGNAL(r4_lc2, 1, I_MI08_DI[p0] + 33, 1, p1, 2)
+  r4_lc1 = sv_i
+  ENDIF
+  RETURN(0)
+END MI08_INIT
+
+ROUTINE MI08_START(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+BEGIN
+  SET_INT_REG(28, 0, I_STATUS)
+  io_13[I_MI08_GO[p0] + 1] = p1
+  IF ((io_12[I_MI08_GI[p0] + 1] <> p1)) THEN
+  io_13[I_MI01_GO + 6] = 58 + p0 - 1 * 10
+  r5_lc2 = 10
+  LST_ERROR_f00[r5_lc2] = 'DSP'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'ProgNum echo error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r5_lc2] = 'GLUE' + sv_s + ' ProgNum echo error'
+  sv_i = WAIT_SIGNAL(r5_lc2, 3, I_MI08_GI[p0] + 1, p1, p3, 1)
+  r5_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_13[I_MI08_GO[p0] + 2] = p2
+  IF ((io_12[I_MI08_GI[p0] + 2] <> p2)) THEN
+  io_13[I_MI01_GO + 6] = 59 + p0 - 1 * 10
+  r5_lc2 = 10
+  LST_ERROR_f00[r5_lc2] = 'DSP'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'ParaNum echo error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r5_lc2] = 'GLUE' + sv_s + ' ParaNum echo error'
+  sv_i = WAIT_SIGNAL(r5_lc2, 3, I_MI08_GI[p0] + 2, p2, p3, 1)
+  r5_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI08_DO[p0] + 1] = 1
+  IF ((io_01[I_MI08_DI[p0] + 16] = 0) OR (io_01[I_MI08_DI[p0] + 1] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 60 + p0 - 1 * 10
+  IF ((io_01[I_MI08_DI[p0] + 16] = 0)) THEN
+  r5_lc2 = 11
+  LST_ERROR_f00[r5_lc2] = 'DSP'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'not ready for app'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r5_lc2] = 'GLUE' + sv_s + ' not ready for app'
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, I_MI08_DI[p0] + 16, 1, p3, 1)
+  r5_lc1 = sv_i
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 1] = 0)) THEN
+  r5_lc2 = 5
+  LST_ERROR_f00[r5_lc2] = 'DSP'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'system not ready'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r5_lc2] = 'GLUE' + sv_s + ' system not ready'
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, I_MI08_DI[p0] + 1, 1, p3, 1)
+  r5_lc1 = sv_i
+  ENDIF
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  RETURN(0)
+END MI08_START
+
+ROUTINE MI08_END(p0, p1 : INTEGER) : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+BEGIN
+  IF (UNINIT(I_TIMEOUT_APP_OK)) THEN
+  I_TIMEOUT_APP_OK = 1000
+  ENDIF
+  io_02[I_MI08_DO[p0] + 1] = 0
+  io_02[I_MI08_DO[p0] + 12] = 1
+  IF ((I_DISPENSER = 2)) THEN
+  DELAY 500
+  ENDIF
+  IF ((io_01[I_MI08_DI[p0] + 15] = 0)) THEN
+  io_13[I_MI01_GO + 6] = 57 + p0 - 1 * 10
+  r9_lc2 = 14
+  LST_ERROR_f00[r9_lc2] = 'DSP'
+  LST_ERROR_f10[r9_lc2] = 0
+  LST_ERROR_f14[r9_lc2] = 'cycle end error'
+  sv_s = INTTOSTR(p0)
+  LST_ERROR_f38[r9_lc2] = 'GLUE' + sv_s + ' cycle end error'
+  sv_i = WAIT_SIGNAL(r9_lc2, 1, I_MI08_DI[p0] + 15, 1, p1, 1)
+  r9_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  IF ((I_DISPENSER = 2)) THEN
+  I_PROCESSTIM = 0
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[I_MI08_DI[p0] + 7] = 1) OR (I_PROCESSTIM > I_TIMEOUT_APP_OK))
+  IF ((I_PROCESSTIM > I_TIMEOUT_APP_OK)) THEN
+  SET_INT_REG(28, 1, I_STATUS)
+  ENDIF
+  io_02[I_MI08_DO[p0] + 12] = 0
+  DELAY 300
+  io_02[I_MI08_DO[p0] + 11] = 1
+  IF ((io_01[I_MI08_DI[p0] + 2] = 0) OR (io_01[I_MI08_DI[p0] + 3] = 0)) THEN
+  SET_INT_REG(28, 1, I_STATUS)
+  ENDIF
+  -- stmt148 residue 1000
+  io_13[I_MI08_GO[p0] + 1] = 0
+  io_13[I_MI08_GO[p0] + 2] = 0
+  RETURN(0)
+END MI08_END
+
+BEGIN
+END MI08_DSP_ROUT

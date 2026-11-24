@@ -1,0 +1,58 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_g_g_pose
+-- 
+-- brief: xyz_g_g_pose,
+--        get grasp pose result
+--------------------------------------------------------------------------------
+PROGRAM xyz_g_g_pose
+
+
+%COMMENT = 'get grasp pose'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+CONST
+    PARAM_NUM = 1
+
+VAR
+    ret      : INTEGER
+    data_type: INTEGER
+    token    : INTEGER
+    real_NA  : REAL
+    str_NA   : STRING[1]
+
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+BEGIN
+GET_TPE_PRM(PARAM_NUM, data_type, token, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[G_G_POSE] fail to get token')
+ENDIF
+ResetOutData
+ret = AddInttoArr(CMD_G_G_POSE)
+IF (ret <> 0) THEN
+    log_error('[G_G_POSE] fail to pack cmd')
+ENDIF
+ret = AddInttoArr(token)
+IF (ret <> 0) THEN
+    log_error('[G_G_POSE] fail to pack token')
+ENDIF
+FLG[F_BKGD_COMM] = ON
+WAIT FOR FLG[F_BKGD_COMM] = OFF
+END xyz_g_g_pose

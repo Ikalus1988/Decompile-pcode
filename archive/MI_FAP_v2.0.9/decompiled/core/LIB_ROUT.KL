@@ -1,0 +1,764 @@
+-- LIB_ROUT.KL (decompiled v3)
+PROGRAM LIB_ROUT
+%COMMENT = 'LIB 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_03 : ARRAY[512] OF INTEGER
+  io_04 : ARRAY[512] OF INTEGER
+  io_0c : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : ARRAY[64] OF STRING[64]
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v10 : INTEGER
+  v11 : ARRAY[64] OF INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : ARRAY[64] OF STRING[64]
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : ARRAY[64] OF STRING[64]
+  v11_f00 : ARRAY[64] OF STRING[64]
+  v11_f10 : ARRAY[64] OF INTEGER
+  v11_f14 : ARRAY[64] OF STRING[64]
+  v11_f38 : ARRAY[64] OF STRING[64]
+  v19_f0c : INTEGER
+  v6_f00 : STRING[64]
+  v9_f04 : ARRAY[64] OF INTEGER
+  v9_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+
+ROUTINE APPL_ERROR(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(2):
+  CASE(4):
+  CASE(14):
+  CASE(15):
+  CASE(2):
+  CASE(14):
+  CASE(1):
+  CASE(12):
+  CASE(13):
+  CASE(1):
+  CASE(12):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END APPL_ERROR
+
+ROUTINE RESET_APPLERROR : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END RESET_APPLERROR
+
+ROUTINE WRITEUSERSCRN(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+  r2_lc3 : INTEGER
+BEGIN
+  IF ((sv_i <> 3)) THEN
+  SET_VAR(v2, '*SYSTEM*', '$UI_CONFIG.$ICON_EDIT[1]', 0, v3)
+  IF ((v3 <> 0)) THEN
+  POST_ERR(38100, 'Could not disable Icon editor', 0, 0)
+  POST_ERR(v3, '', 0, 0)
+  ENDIF
+  DELAY 64
+  ENDIF
+  SELECT p2 OF
+  CASE(3):
+  CASE(1):
+  CASE(12):
+  CASE(13):
+  CASE(1):
+  CASE(12):
+  r2_lc2 = 55
+  r2_lc3 = 48
+  CASE(2):
+  CASE(4):
+  CASE(14):
+  CASE(15):
+  CASE(2):
+  CASE(14):
+  r2_lc2 = 48
+  r2_lc3 = 49
+  CASE(10):
+  CASE(11):
+  CASE(0):
+  CASE(10):
+  r2_lc2 = 55
+  r2_lc3 = 52
+  ELSE:
+  r2_lc2 = 55
+  r2_lc3 = 48
+  ENDSELECT
+  IF (('' <> '')) THEN
+  sv_s = chr(155)
+  sv_s = chr(r2_lc2)
+  sv_s = chr(156)
+  sv_s = chr(r2_lc3)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt178 stray p0[1]
+  sv_s = chr(155)
+  sv_s = chr(127)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt181 stray p0[2]
+  ELSE
+  sv_s = chr(155)
+  sv_s = chr(r2_lc2)
+  sv_s = chr(156)
+  sv_s = chr(r2_lc3)
+  WRITE(sv_s, sv_s, sv_s, sv_s, 0, CR)
+  -- stmt186 stray p0[1]
+  ENDIF
+  FOR r2_lc1 = 1 TO 3 DO
+  IF (('' <> '')) THEN
+  WRITE(0, CR)
+  -- stmt193 stray p1[r2_lc1]
+  ENDIF
+  ENDFOR
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt198 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt200 stray sv_i
+  RETURN(0)
+END WRITEUSERSCRN
+
+ROUTINE CLEARFUNCKEYSUSERSCRN : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v4[r3_lc1] = '        '
+  ENDFOR
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt223 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  RETURN(0)
+END CLEARFUNCKEYSUSERSCRN
+
+ROUTINE WAITFORFKEY(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(129):
+  IF ((io_0e[129] = 1)) THEN
+  IF ((sv_i = 3)) THEN
+  POST_ERR(38100, 'Selection not allowed in automatic mode', 0, 0)
+  v5 = 0
+  ELSE
+  sv_i = UNHOLDMOTION(0)
+  -- stmt253 stray sv_i
+  v5 = 129
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt0 stray sv_i
+  ENDIF
+  ENDIF
+  v5 = 0
+  CASE(138):
+  IF ((io_0e[138] = 1)) THEN
+  IF ((sv_i = 3)) THEN
+  POST_ERR(38100, 'Selection not allowed in automatic mode', 0, 0)
+  v5 = 0
+  ELSE
+  sv_i = UNHOLDMOTION(0)
+  -- stmt16 stray sv_i
+  v5 = 138
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt19 stray sv_i
+  ENDIF
+  v5 = 0
+  ENDIF
+  ELSE:
+  POST_ERR(38100, 'Option not available', 0, 0)
+  v5 = 0
+  ENDSELECT
+  RETURN(v5)
+  RETURN(0)
+END WAITFORFKEY
+
+ROUTINE INLOGBOOK(p0, p1 : INTEGER) : INTEGER
+VAR
+  r5_lc10 : STRING[64]
+  r5_lc11 : INTEGER
+  r5_lc12 : INTEGER
+  r5_lc6 : STRING[64]
+BEGIN
+  GET_TIME(r5_lc12)
+  CNV_TIME_STR(r5_lc12, r5_lc6)
+  IF (UNINIT(v6_f00)) THEN
+  r5_lc10 = 'No user'
+  ELSE
+  r5_lc10 = v6_f00
+  ENDIF
+  FOR r5_lc11 = 0 TO 3 DO
+  IF (('' <> '')) THEN
+  POST_ERR(38100, '', 0, 0)
+  -- 弃参原式: (p1[9 - r5_lc11])
+  ENDIF
+  ENDFOR
+  IF (('' <> '')) THEN
+  POST_ERR(38100, '', 0, 0)
+  -- 弃参原式: (p0[2])
+  ENDIF
+  POST_ERR(38100, '[UserMsg]', p0[1] + 0, 0)
+  RETURN(0)
+END INLOGBOOK
+
+ROUTINE RESET_WAIT : INTEGER
+BEGIN
+  v7 = 0
+  v8 = 0
+  sv_i = RESET_APPLERROR
+  -- stmt84 stray sv_i
+  FORCE_MENU(1, 252)
+  IF ((v9_f04[1] = 190) OR (v9_f04[1] = 37)) THEN
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  RETURN(0)
+END RESET_WAIT
+
+ROUTINE GETWAITSTATE(p0 : BOOLEAN) : STRING
+BEGIN
+  IF ((p0 <> 0)) THEN
+  -- stmt105 stray 'ON'
+  ELSE
+  -- stmt107 stray 'OFF'
+  ENDIF
+  RETURN(sv_s)
+END GETWAITSTATE
+
+ROUTINE LASTLINEMSG(p0, p1, p2 : INTEGER; p3 : BOOLEAN) : STRING
+VAR
+  r8_lc1 : STRING[64]
+  r8_lc13 : STRING[64]
+  r8_lc27 : STRING[64]
+  r8_lc28 : INTEGER
+  r8_lc4 : STRING[64]
+  r8_lc6 : STRING[64]
+BEGIN
+  r8_lc1 = '='
+  SELECT p0 OF
+  CASE(2):
+  sv_s = GETWAITSTATE((p3 <> 0))
+  -- 弃参原式: p3
+  r8_lc4 = sv_s
+  r8_lc28 = 2
+  r8_lc6 = 'DO'
+  CASE(1):
+  sv_s = GETWAITSTATE((p3 <> 0))
+  -- 弃参原式: p3
+  r8_lc4 = sv_s
+  r8_lc28 = 1
+  r8_lc6 = 'DI'
+  CASE(4):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 19
+  r8_lc6 = 'GO'
+  CASE(3):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 18
+  r8_lc6 = 'GI'
+  CASE(6):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 4
+  r8_lc6 = 'AO'
+  CASE(5):
+  sv_s = INTTOSTR(p2)
+  r8_lc4 = sv_s
+  r8_lc28 = 3
+  r8_lc6 = 'AI'
+  ELSE:
+  POST_ERR(38100, 'Invalid signal type', 0, 1)
+  ENDSELECT
+  GET_PORT_CMT(r8_lc28, 0, r8_lc13, v3)
+  -- 弃参原式: p1
+  IF ((v3 <> 0)) THEN
+  r8_lc13 = ''
+  ENDIF
+  sv_s = INTTOSTR(0)
+  -- 弃参原式: p1
+  r8_lc27 = '[' + sv_s + ']'
+  -- stmt166 stray '' + ' ' + r8_lc1 + ' ' + r8_lc4 + ';' + ' (' + r8_lc13 + ')'
+  RETURN(sv_s)
+END LASTLINEMSG
+
+ROUTINE SETWAITTIME(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 < 0)) THEN
+  IF ((sv_i = 3)) THEN
+  v10 = 5000
+  ELSE
+  v10 = 500
+  ENDIF
+  v10 = p0
+  ENDIF
+  RETURN(v10)
+  RETURN(0)
+END SETWAITTIME
+
+ROUTINE MSGPARSE(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r10_lc1 : INTEGER
+BEGIN
+  FOR r10_lc1 = 1 TO 3 DO
+  IF (UNINIT(v11_f00[r10_lc1])) THEN
+  v11_f00[r10_lc1] = '0000'
+  ENDIF
+  IF (UNINIT(v11_f10[r10_lc1])) THEN
+  v11_f10[r10_lc1] = 0
+  ENDIF
+  IF (UNINIT(v11_f14[r10_lc1])) THEN
+  v11_f14[r10_lc1] = '0000'
+  ENDIF
+  IF (UNINIT(v11_f38[r10_lc1])) THEN
+  v11_f38[r10_lc1] = '******************'
+  ENDIF
+  ENDFOR
+  IF (NOT (UNINIT(p0))) THEN
+  IF ((p0 > 256) OR (p0 < 0)) THEN
+  p1[1] = '000|000|0000|Error index not found'
+  p1[2] = '000|000|0000|Please check error number'
+  ELSE
+  sv_s = INTTOSTR((v11_f10[p0]))
+  p1[1] = v11_f00[p0] + '|' + sv_s + '|' + v11_f14[p0]
+  p1[2] = v11_f38[p0]
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MSGPARSE
+
+ROUTINE CHECKPORTSTATE(p0, p1 : INTEGER; p2 : BOOLEAN; p3 : INTEGER) : BOOLEAN
+VAR
+  r11_lc1 : INTEGER
+BEGIN
+  r11_lc1 = 0
+  SELECT p0 OF
+  CASE(1):
+  IF ((io_01[p1] = p2)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(2):
+  IF ((io_02[p1] = p2)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(3):
+  IF ((io_12[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(4):
+  IF ((io_13[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(5):
+  IF ((io_03[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  CASE(6):
+  IF ((io_04[p1] = p3)) THEN
+  r11_lc1 = 1
+  ENDIF
+  ELSE:
+  POST_ERR(38100, 'Invalid signal type choice to be wait for', 0, 2)
+  ENDSELECT
+  RETURN(r11_lc1)
+  RETURN(sv_b)
+END CHECKPORTSTATE
+
+ROUTINE PORTCONDMONITOR(p0, p1, p2 : INTEGER; p3 : BOOLEAN; p4 : INTEGER) : INTEGER
+BEGIN
+  IF (NOT (UNINIT(p3))) THEN
+  v12 = p3
+  ENDIF
+  IF (NOT (UNINIT(p4))) THEN
+  v13 = p4
+  ENDIF
+  PURGE CONDITION[1]
+  SELECT v14 OF
+  CASE(1):
+  CASE(2):
+  CASE(3):
+  ENABLE CONDITION[1]
+  CASE(4):
+  ENABLE CONDITION[1]
+  CASE(5):
+  CASE(6):
+  ELSE:
+  ENDSELECT
+  ENABLE CONDITION[1]
+  RETURN(0)
+END PORTCONDMONITOR
+
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER
+VAR
+  r13_lc15 : STRING[64]
+  r13_lc16 : INTEGER
+  r13_lc17 : INTEGER
+  r13_lc18 : INTEGER
+  r13_lc19 : INTEGER
+  r13_lc20 : INTEGER
+BEGIN
+  FOR r13_lc20 = 1 TO 3 DO
+  v16[r13_lc20] = ''
+  ENDFOR
+  -- stmt134 stray 2
+  PURGE CONDITION[1]
+  -- stmt137 stray 1
+  PURGE CONDITION[1]
+  -- stmt140 stray 4
+  PURGE CONDITION[1]
+  -- stmt143 stray 3
+  PURGE CONDITION[1]
+  -- stmt146 stray 6
+  PURGE CONDITION[1]
+  -- stmt148 stray 5
+  PURGE CONDITION[1]
+  v17 = v9_f04[1]
+  v18 = v9_f08[1]
+  IF (UNINIT(p2)) THEN
+  POST_ERR(38100, 'CMN: Signal number uninitialized', 0, 0)
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 0
+  -- stmt156 stray '' + sv_s
+  -- stmt156 residue 'CMN: Signal Type = '
+  ABORT
+  ENDIF
+  v14 = p1
+  SELECT p1 OF
+  CASE(1):
+  CASE(2):
+  IF ((p3 = 0)) THEN
+  r13_lc18 = 0
+  ELSE
+  r13_lc18 = 1
+  ENDIF
+  CASE(3):
+  CASE(4):
+  CASE(5):
+  CASE(6):
+  ELSE:
+  ENDSELECT
+  IF (sv_b) THEN
+  RETURN(1)
+  ENDIF
+  v1 = 0
+  SELECT p5 OF
+  CASE(0):
+  CASE(1):
+  CASE(2):
+  r13_lc16 = 1
+  CASE(10):
+  CASE(12):
+  CASE(14):
+  r13_lc16 = 0
+  ELSE:
+  POST_ERR(38100, 'Invalid option for message type', 0, 2)
+  ENDSELECT
+  v15 = 0
+  v8 = 0
+  v7 = 0
+  r13_lc17 = 2 * v19_f0c
+  IF (NOT (sv_b)) THEN
+  sv_i = PORTCONDMONITOR(0, p2, r13_lc17, (r13_lc18 <> 0), p3)
+  -- 弃参原式: p1 | r13_lc18
+  -- stmt201 stray sv_i
+  IF ((v8 <> 0)) THEN
+  DELAY 10
+  ELSE
+  IF ((v15 = 0)) THEN
+  IF ((v15 = 0) AND (v7 > sv_i)) THEN
+  v15 = 2
+  ENDIF
+  DELAY 1 * v19_f0c
+  ELSE
+  v15 = 1
+  ENDIF
+  SELECT v15 OF
+  CASE(1):
+  CASE(2):
+  v8 = 1
+  r13_lc19 = 0
+  sv_s = LASTLINEMSG(0, p2, p3, (r13_lc18 <> 0))
+  -- 弃参原式: p1 | r13_lc18
+  r13_lc15 = sv_s
+  v16[8] = 'WAITING FOR:'
+  v16[9] = r13_lc15
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt235 stray sv_i
+  CASE(1):
+  IF ((sv_i <> 3)) THEN
+  sv_s = chr(156)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  v4[2] = '' + 'SIMULATE' + sv_s + sv_s
+  ENDIF
+  v1 = 1
+  CASE(2):
+  v4[2] = '  LIST  '
+  ELSE:
+  ENDSELECT
+  ENDIF
+  sv_i = MSGPARSE(0, 0, 0)
+  -- 弃参原式: p0 | v20 | v16
+  -- stmt253 stray sv_i
+  IF ((io_0c[7] <> 0)) THEN
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt3 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  ENDIF
+  sv_i = WRITEUSERSCRN(0, 0, p5)
+  -- 弃参原式: v20 | v16
+  -- stmt7 stray sv_i
+  ENDIF
+  REPEAT
+  sv_i = PORTCONDMONITOR(0, p2, r13_lc17, (r13_lc18 <> 0), p3)
+  -- 弃参原式: p1 | r13_lc18
+  -- stmt13 stray sv_i
+  ENABLE CONDITION[1]
+  SELECT r13_lc16 OF
+  CASE(1):
+  IF ((sv_i = 138)) THEN
+  FOR r13_lc20 = 1 TO 3 DO
+  v16[r13_lc20] = ''
+  ENDFOR
+  v16[1] = 'Signal SIMULATED to :' + r13_lc15
+  sv_i = INLOGBOOK(0, 0)
+  -- 弃参原式: v20 | v16
+  -- stmt25 stray sv_i
+  v15 = 5
+  v8 = 0
+  ENDIF
+  CASE(2):
+  v15 = 6
+  r13_lc19 = 1
+  ELSE:
+  v8 = 1
+  r13_lc19 = 0
+  ENDSELECT
+  DELAY 16
+  sv_i = APPL_ERROR(p5)
+  -- stmt45 stray sv_i
+  UNTIL((v8 = 0) OR (r13_lc19 <> 0))
+  FORCE_SPMENU(1, 64, 1)
+  sv_i = RESET_APPLERROR
+  -- stmt53 stray sv_i
+  IF (UNINIT(r13_lc15)) THEN
+  r13_lc15 = ' '
+  ENDIF
+  IF (UNINIT(v20[1])) THEN
+  v20[1] = ''
+  v20[2] = ''
+  ENDIF
+  v16[1] = 'Signal OK ' + r13_lc15
+  sv_i = INLOGBOOK(0, 0)
+  -- 弃参原式: v20 | v16
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 0
+  -- stmt67 stray '' + sv_s
+  -- stmt67 residue 'Wrong exit -> Reason: '
+  ABORT
+  -- stmt72 stray p1
+  PURGE CONDITION[1]
+  sv_i = UNHOLDMOTION(0)
+  -- stmt76 stray sv_i
+  RETURN(v15)
+  RETURN(0)
+END WAIT_SIGNAL
+
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER
+VAR
+  r14_lc1 : STRING[64]
+  r14_lc2 : INTEGER
+BEGIN
+  FOR r14_lc2 = 1 TO 3 DO
+  v16[r14_lc2] = ''
+  ENDFOR
+  v1 = 0
+  r14_lc1 = ''
+  sv_i = RESET_APPLERROR
+  -- stmt122 stray sv_i
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = CLEARFUNCKEYSUSERSCRN
+  -- stmt124 stray sv_i
+  IF ((p1 = 3) OR (p1 = 11) OR (p1 = 13) OR (p1 = 15)) THEN
+  IF ((sv_i <> 3)) THEN
+  sv_s = chr(156)
+  sv_s = chr(51)
+  sv_s = chr(156)
+  sv_s = chr(127)
+  v4[1] = '' + ' ACKN   ' + sv_s + sv_s
+  ENDIF
+  v1 = 129
+  ENDIF
+  sv_i = MSGPARSE(0, 0, 0)
+  -- 弃参原式: p0 | v20 | v16
+  -- stmt134 stray sv_i
+  v17 = v9_f04[1]
+  v18 = v9_f08[1]
+  IF ((io_0c[7] <> 0)) THEN
+  SET_CURSOR(1, 1, v3, 0)
+  WRITE(0, 0, 0, 0, 0)
+  -- stmt144 stray v4[1] | v4[2] | v4[3] | v4[4] | v4[5]
+  ENDIF
+  IF (NOT ((p1 = 0))) THEN
+  sv_i = WRITEUSERSCRN(0, 0, 0)
+  -- 弃参原式: v20 | v16 | p1
+  -- stmt149 stray sv_i
+  ENDIF
+  SELECT p1 OF
+  CASE(0):
+  v5 = 129
+  CASE(2):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt157 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt158 stray sv_i
+  sv_i = CTRLACTPROGTPE('ABORT')
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt159 stray sv_i
+  v5 = 129
+  CASE(4):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt162 stray sv_i
+  sv_i = CTRLACTPROGTPE('NO_ABORT')
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt163 stray sv_i
+  v5 = 129
+  CASE(1):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt166 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt167 stray sv_i
+  sv_i = CTRLACTPROGTPE('PAUSE')
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt168 stray sv_i
+  DELAY 10
+  sv_i = UNHOLDMOTION(0)
+  -- stmt170 stray sv_i
+  v5 = 129
+  CASE(3):
+  CASE(11):
+  CASE(13):
+  CASE(15):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt173 stray sv_i
+  sv_i = HOLDMOTION(0)
+  -- stmt174 stray sv_i
+  sv_i = WAITFORFKEY(129)
+  v5 = sv_i
+  CASE(10):
+  CASE(12):
+  CASE(14):
+  sv_i = SETTPUSERSCREEN(1)
+  -- stmt177 stray sv_i
+  v5 = 129
+  ELSE:
+  v5 = 129
+  ENDSELECT
+  DELAY 8
+  sv_i = APPL_ERROR(0)
+  -- 弃参原式: p1
+  -- stmt185 stray sv_i
+  IF ((v5 = 129) OR (v5 = 129)) THEN
+  IF (NOT ((p1 = 0) OR (p1 = 10) OR (p1 = 12) OR (p1 = 14))) THEN
+  FORCE_SPMENU(1, 64, 1)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_i = UNHOLDMOTION(0)
+  -- stmt195 stray sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MSG_WRITE
+
+BEGIN
+END LIB_ROUT

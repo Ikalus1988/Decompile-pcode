@@ -1,0 +1,84 @@
+PROGRAM SPRManual
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TRANSLATOR DIRECTIVES (except %INCLUDE)
+--------------------------------------------------------------------------------------------------------------------------------------------
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT = ERROR  + COMMAND
+%NOBUSYLAMP
+%NOPAUSE = error + tpenable + command
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 CONSTANT DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_constants
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_types
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+VAR
+  status      : INTEGER
+  intSchedule : INTEGER
+  paramReal   : REAL
+  rivDat      : rivetData
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE rtd_routines
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 PROGRAM BODY
+--------------------------------------------------------------------------------------------------------------------------------------------
+BEGIN
+  WHILE(TRUE) DO
+    --Get register value that holds manual SPR schedule number
+    GET_REG(97,FALSE,intSchedule,paramReal,status); PostStat(status)
+    
+    IF((intSchedule >= 1) AND (intSchedule <= MAXSCHEDULES)) THEN
+      -- Get Rivet Data
+      rivDat = GetRivData(intSchedule)
+  
+      -------------------------------------------------
+      --Set Numeric Registers with Schedule Data......
+      -------------------------------------------------
+      -- Controller ID
+      IF (NOT UNINIT(rivDat.ContID)) THEN
+      	SET_INT_REG(80, rivDat.ContID,STATUS); PostStat(STATUS)
+      ENDIF
+      -- Tool ID
+       IF (NOT UNINIT(rivDat.ToolID)) THEN
+      	SET_INT_REG(81, rivDat.ToolID,STATUS); PostStat(STATUS)
+       ENDIF
+  
+      -- Rivet Type
+      IF (NOT UNINIT(rivDat.RivType)) THEN
+      	SET_INT_REG(82, rivDat.RivType,STATUS); PostStat(STATUS)
+      ENDIF
+  
+      -- Post Move Offset
+       IF (NOT UNINIT(rivDat.PMOffset)) THEN
+     	 SET_INT_REG(83, rivDat.PMOffset,STATUS); PostStat(STATUS)
+       ENDIF
+  
+      --Post Move Open      
+      IF (NOT UNINIT(rivDat.PMOpen)) THEN
+     	 IF (rivDat.PMOpen >= 1) AND (rivDat.PMOpen <= 7) THEN
+       	 SET_INT_REG(84, 20*rivDat.PMOpen, STATUS); PostStat(STATUS)
+     	 ENDIF
+      ENDIF
+  
+      -- Set Rivet ID. This is also used in PMC Internal IO Assg. It is mapped F52
+       IF (NOT UNINIT(rivDat.RivetID)) THEN
+      SET_INT_REG(86,rivDat.RivetID,STATUS); PostStat(STATUS)
+       ENDIF
+    
+    ENDIF
+    DELAY(100)
+  ENDWHILE
+END SPRManual

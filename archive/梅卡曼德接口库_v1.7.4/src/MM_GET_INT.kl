@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_INT
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_Int'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_Int FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_Int
+END  MM_GET_INT

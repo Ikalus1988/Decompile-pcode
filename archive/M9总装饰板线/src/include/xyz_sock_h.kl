@@ -1,0 +1,85 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Constructor: setup SockInfo member variables and initialises related robot
+-- system variable.
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_ctor(xsock : xyz_sock_t; tag_idx : INTEGER; type_ : STRING) : INTEGER FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- 
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_conn(xsock : xyz_sock_t; sock_fd_ : FILE) : INTEGER FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- 
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_close(xsock : xyz_sock_t; sock_fd_ : FILE) FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Set socket recv timeout
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_set_rt(sock_fd_ : FILE; time_out : INTEGER) FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Open file descriptor on given socket instance
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_opfd(sock_fd_ : FILE; tag_str : STRING) : INTEGER FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Close file description on the given socket instance
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_clfd(sock_fd_ : FILE) : INTEGER FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Send msg
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_send(sock_fd_ : FILE; msg : STRING) : INTEGER FROM xyz_sock
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Recv. recved data will store in msg
+-- 
+--------------------------------------------------------------------------------
+ROUTINE sock_recv(sock_fd_ : FILE; msg : STRING; msg_len : INTEGER) : INTEGER FROM xyz_sock

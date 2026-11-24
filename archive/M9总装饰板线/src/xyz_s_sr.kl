@@ -1,0 +1,53 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: MinWu <<EMAIL>>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_s_sr
+-- 
+-- brief: xyz_s_sr,
+--        set SR[]
+--------------------------------------------------------------------------------
+PROGRAM xyz_s_sr
+
+
+%COMMENT = 'set sr'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+
+CONST
+    P_SREG_NUM = 1
+    P_STR_NUM = 2
+
+VAR
+    ret         : INTEGER
+    data_type   : INTEGER
+    sreg_id     : INTEGER
+    sr_value    : STRING[100]
+    int_NA      : INTEGER
+    real_NA     : REAL
+    str_NA      : STRING[1]
+
+%INCLUDE include\xyz_log_h
+
+BEGIN
+GET_TPE_PRM(P_SREG_NUM, data_type, sreg_id, real_NA, str_NA, ret)
+IF (ret <> 0) OR (data_type <> 1) THEN
+    log_error('[S_SR] fail to get sreg_id')
+ENDIF
+GET_TPE_PRM(P_STR_NUM, data_type, int_NA, real_NA, sr_value, ret)
+IF (ret <> 0) OR (data_type <> 3) THEN
+    log_error('[S_SR] fail to get SR value')
+ENDIF
+SET_STR_REG(sreg_id,sr_value,ret)
+IF (ret <> 0) THEN
+    log_error('[S_SR] fail to set SR value')
+ENDIF
+END xyz_s_sr

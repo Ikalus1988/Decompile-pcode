@@ -1,0 +1,48 @@
+PROGRAM  MM_RCV_NTFY
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Recv_Notify'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+%INCLUDE mm_module_h
+--------------------------------------------------------------------------------
+-- Recv Notify
+--------------------------------------------------------------------------------
+ROUTINE Recv_Notify
+VAR
+n_bytes:INTEGER
+tim_acc:INTEGER
+BEGIN
+-- Get  Tp  Parameter
+    Get_Arg(1, 1, Reg_Notify, Real_Value, Str_Value) 
+    Set_IntReg(Reg_Notify,0)
+--Receive
+	Open_Socket
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    tim_acc=0
+    REPEAT
+	    BYTES_AHEAD(Sock_Rcv, n_bytes, MM_Status)
+	    IF (n_bytes <> 0) THEN
+		    READ Sock_Rcv(MM_CMD,MM_Status)
+		    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_RCV_NTFY) THEN
+		        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+		    ENDIF
+		    Set_IntReg(Reg_Notify,MM_Status)
+		    GOTO ENDLOOP
+	    ENDIF
+	    DELAY 10
+	    tim_acc=tim_acc+10
+    UNTIL (tim_acc > 5000)
+    Set_IntReg(Reg_Notify,0)
+ENDLOOP::
+    CLOSE FILE Sock_Rcv
+    MSG_DISCO(C_Tag_S,Status)
+END Recv_Notify
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Recv_Notify
+END MM_RCV_NTFY

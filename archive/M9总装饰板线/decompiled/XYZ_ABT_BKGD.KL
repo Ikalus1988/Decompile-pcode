@@ -1,0 +1,58 @@
+-- XYZ_ABT_BKGD.KL (decompiled v3)
+PROGRAM XYZ_ABT_BKGD
+%COMMENT = 'xyz abort bkgd'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  LOADED : INTEGER
+  INITED : INTEGER
+  STATE_ : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE LOG_CLEAR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_FORCE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_INFO_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_WARN_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE LOG_ERROR_A(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+
+BEGIN
+  LOADED = 0
+  INITED = 0
+  LOAD_STATUS('XYZ_BKGD', (LOADED <> 0), (INITED <> 0))
+  -- 弃参原式: LOADED | INITED
+  IF ((LOADED <> 0)) THEN
+  sv_i = LOG_INFO('xyz_bkgd loaded')
+  -- stmt36 stray sv_i
+  ELSE
+  sv_i = LOG_INFO('xyz_bkgd not loaded')
+  -- stmt38 stray sv_i
+  ENDIF
+  IF ((INITED <> 0)) THEN
+  sv_i = LOG_INFO('xyz_bkgd initialized')
+  -- stmt42 stray sv_i
+  ELSE
+  sv_i = LOG_INFO('xyz_bkgd not initialized')
+  -- stmt44 stray sv_i
+  ENDIF
+  ABORT_TASK('XYZ_BKGD', (1 <> 0), (1 <> 0), STATE_)
+  -- 弃参原式: 1 | 1
+  IF ((STATE_ <> 0)) THEN
+  sv_i = LOG_INFO('abort xyz_bkgd failed')
+  -- stmt49 stray sv_i
+  ELSE
+  sv_i = LOG_INFO('abort xyz_bkgd success')
+  -- stmt51 stray sv_i
+  ENDIF
+END XYZ_ABT_BKGD
+

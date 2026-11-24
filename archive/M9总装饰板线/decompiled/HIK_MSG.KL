@@ -1,0 +1,1137 @@
+-- HIK_MSG.KL (decompiled v3)
+PROGRAM HIK_MSG
+%COMMENT = 'HIK_MSG'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : FILE
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : STRING[64]
+  v7 : STRING[64]
+  v8 : STRING[64]
+  v9 : ARRAY[64] OF INTEGER
+  v10 : ARRAY[64] OF INTEGER
+  v11 : POSITION
+  v12 : ARRAY[64] OF STRING[64]
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : STRING[64]
+  v16 : ARRAY[64] OF INTEGER
+  v17 : JOINTPOS
+  v18 : ARRAY[64] OF REAL
+  v19 : ARRAY[64] OF INTEGER
+  v20 : STRING[64]
+  v21 : STRING[64]
+  v22 : INTEGER
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : INTEGER
+  v27 : REAL
+  v28 : STRING[64]
+  v29 : STRING[64]
+  v30 : STRING[64]
+  v31 : STRING[64]
+  r8_lc74_f08 : REAL
+  r8_lc74_f0c : REAL
+  r8_lc74_f10 : REAL
+  r8_lc74_f14 : REAL
+  r8_lc74_f18 : REAL
+  r8_lc74_f1c : REAL
+  v0_f58 : ARRAY[64] OF INTEGER
+  v10_f00 : ARRAY[64] OF INTEGER
+  v11_f08 : REAL
+  v11_f0c : REAL
+  v11_f10 : REAL
+  v11_f14 : REAL
+  v11_f18 : REAL
+  v11_f1c : REAL
+  v19_f09 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE HIK_TP_PRM(p0, p1, p2 : INTEGER; p3 : REAL; p4, p5 : STRING) : INTEGER
+VAR
+  r0_lc1 : STRING[64]
+BEGIN
+  IF (UNINIT(p0)) THEN
+  POST_ERR(38000, 'hik-err:socket order params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p1)) THEN
+  POST_ERR(38000, 'hik-err:socket type_ params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p3)) THEN
+  POST_ERR(38000, 'hik-err:socket realv params not init.', 0, 2)
+  ENDIF
+  IF (UNINIT(p4)) THEN
+  POST_ERR(38000, 'hik-err:socket strv params not init.', 0, 2)
+  ENDIF
+  IF ((p0 > 6)) THEN
+  POST_ERR(38000, 'hik-err:params once set more than 6(x).', 0, 2)
+  ENDIF
+  GET_TPE_PRM(p0, p1, p2, p3, p4, 0)
+  -- 弃参原式: r0_lc1
+  IF ((r0_lc1 <> '')) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[SetParams] ' + p5 + ' set err', CR)
+  POST_ERR(38000, 'hik-err:set ' + p5 + ' config err.', 0, 2)
+  ENDIF
+  RETURN(0)
+END HIK_TP_PRM
+
+ROUTINE GVAR_INIT(p0 : INTEGER; p1 : REAL; p2 : STRING) : INTEGER
+BEGIN
+  IF (UNINIT(p0)) THEN
+  p0 = 0
+  ENDIF
+  IF (UNINIT(p1)) THEN
+  p1 = 0
+  ENDIF
+  IF (UNINIT(p2)) THEN
+  p2 = ''
+  ENDIF
+  RETURN(0)
+END GVAR_INIT
+
+ROUTINE DISCONRBT(p0 : STRING) : INTEGER
+BEGIN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RbtDisCon]', p0, CR)
+  -- stmt109 stray v1
+  MSG_DISCO(p0, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RbtDisCon]Disco err', CR)
+  ENDIF
+  RETURN(0)
+END DISCONRBT
+
+ROUTINE REFRESHFILE(p0 : STRING) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[fresh]', p0, CR)
+  -- stmt122 stray v1
+  CLR_IO_STAT(v1)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[fresh]Close File Failed.', CR)
+  ENDIF
+  IF ((v3 <= 0)) THEN
+  SET_FILE_ATR(v1, 6, 1)
+  ELSE
+  IF ((v3 > 120)) THEN
+  v3 = 120
+  ENDIF
+  r3_lc1 = v3 * 1000
+  SET_FILE_ATR(v1, 5, r3_lc1)
+  ENDIF
+  OPEN FILE v1('RW', p0)
+  CLR_IO_STAT(v1)
+  RETURN(0)
+END REFRESHFILE
+
+ROUTINE CONNECTRBT(p0 : STRING) : INTEGER
+VAR
+  r4_lc1 : INTEGER
+BEGIN
+  v4 = 0
+  MSG_CONNECT(p0, v2)
+  IF ((v2 <> 0)) THEN
+  MSG_DISCO(p0, v2)
+  DELAY 2
+  v4 = v4 + 1
+  IF ((v4 > 2)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RbtCon]Rbt Connect Err.', CR)
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ELSE
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, '[RbtCon]Rbt Connected', CR)
+  ENDIF
+  IF ((v3 <= 0)) THEN
+  SET_FILE_ATR(v1, 6, 1)
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RbtCon]ATR_FIELD', CR)
+  ELSE
+  IF ((v3 > 120)) THEN
+  v3 = 120
+  ENDIF
+  r4_lc1 = v3 * 1000
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RbtCon]ATR_TIMEOUT', CR)
+  SET_FILE_ATR(v1, 5, r4_lc1)
+  ENDIF
+  OPEN FILE v1('RW', p0)
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  -- stmt181 stray v1
+  CLR_IO_STAT(v1)
+  OPEN FILE v1('RW', p0)
+  ENDIF
+  RETURN(0)
+END CONNECTRBT
+
+ROUTINE MSG_SEND : INTEGER
+BEGIN
+  IF ((v5 = 0)) THEN
+  v8 = ''
+  ENDIF
+  IF ((v5 >= 1) AND (v5 <= 10)) THEN
+  IF ((v5 <> 10)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt201 stray v9[1][v5] | v0_f58[1]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt203 stray v10_f00[1] | v0_f58[1]
+  ENDIF
+  sv_p = curpos(0, 0)
+  v11 = sv_p
+  CNV_REAL_STR(v11_f08, 10, 5, '')
+  -- 弃参原式: (v12[1])
+  CNV_REAL_STR(v11_f0c, 10, 5, '')
+  -- 弃参原式: (v12[2])
+  CNV_REAL_STR(v11_f10, 10, 5, '')
+  -- 弃参原式: (v12[3])
+  CNV_REAL_STR(v11_f14, 10, 5, '')
+  -- 弃参原式: (v12[4])
+  CNV_REAL_STR(v11_f18, 10, 5, '')
+  -- 弃参原式: (v12[5])
+  CNV_REAL_STR(v11_f1c, 10, 5, '')
+  -- 弃参原式: (v12[6])
+  FOR v13 = 1 TO 3 DO
+  sv_i = index('', ' ')
+  -- 弃参原式: (v12[v13])
+  v14 = sv_i
+  IF ((v14 > 0)) THEN
+  IF ((v14 = 1)) THEN
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = sv_s
+  ELSE
+  sv_s = sub_str('', 1, v14 - 1)
+  -- 弃参原式: (v12[v13])
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  v12[v13] = v12[v13] + ''
+  -- stmt227 stray '0'
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  IF ((sv_i = 2)) THEN
+  sv_s = sub_str('', 2, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = '-0' + sv_s
+  ENDIF
+  ENDIF
+  ENDFOR
+  v8 = v12[6] + '' + v7
+  -- stmt236 stray v6 + v15 | v12[1] + '' + v15 | v12[2] + '' + v15 | v12[3] + '' + v15 | v12[4] + '' + v15 | v12[5] + '' + v15
+  IF ((v5 = 20)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt242 stray v9[1] | v16[1][0] | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v11 = sv_p
+  CNV_REAL_STR(v11_f08, 10, 5, '')
+  -- 弃参原式: (v12[1])
+  CNV_REAL_STR(v11_f0c, 10, 5, '')
+  -- 弃参原式: (v12[2])
+  CNV_REAL_STR(v11_f10, 10, 5, '')
+  -- 弃参原式: (v12[3])
+  CNV_REAL_STR(v11_f14, 10, 5, '')
+  -- 弃参原式: (v12[4])
+  CNV_REAL_STR(v11_f18, 10, 5, '')
+  -- 弃参原式: (v12[5])
+  CNV_REAL_STR(v11_f1c, 10, 5, '')
+  -- 弃参原式: (v12[6])
+  FOR v13 = 1 TO 3 DO
+  sv_i = index('', ' ')
+  -- 弃参原式: (v12[v13])
+  v14 = sv_i
+  IF ((v14 > 0)) THEN
+  IF ((v14 = 1)) THEN
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = sv_s
+  ELSE
+  sv_s = sub_str('', 1, v14 - 1)
+  -- 弃参原式: (v12[v13])
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  v12[v13] = v12[v13] + ''
+  -- stmt9 stray '0'
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  IF ((sv_i = 2)) THEN
+  sv_s = sub_str('', 2, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = '-0' + sv_s
+  ENDIF
+  ENDIF
+  ENDFOR
+  v8 = v12[6] + '' + v7
+  -- stmt18 stray v6 + v15 | v12[1] + '' + v15 | v12[2] + '' + v15 | v12[3] + '' + v15 | v12[4] + '' + v15 | v12[5] + '' + v15
+  IF ((v5 = 30)) THEN
+  sv_j = curjpos(0, 0)
+  v17 = sv_j
+  cnv_jpos_rel(v17, v18, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGSEND]Joints get err', CR)
+  ENDIF
+  CNV_REAL_STR((v18[1]), 10, 5, '')
+  -- 弃参原式: (v12[1])
+  CNV_REAL_STR((v18[2]), 10, 5, '')
+  -- 弃参原式: (v12[2])
+  CNV_REAL_STR((v18[3]), 10, 5, '')
+  -- 弃参原式: (v12[3])
+  CNV_REAL_STR((v18[4]), 10, 5, '')
+  -- 弃参原式: (v12[4])
+  IF ((0 = 6)) THEN
+  CNV_REAL_STR((v18[5]), 10, 5, '')
+  -- 弃参原式: (v12[5])
+  CNV_REAL_STR((v18[6]), 10, 5, '')
+  -- 弃参原式: (v12[6])
+  v8 = v6
+  FOR v13 = 1 TO 3 DO
+  sv_i = index('', ' ')
+  -- 弃参原式: (v12[v13])
+  v14 = sv_i
+  IF ((v14 > 0)) THEN
+  IF ((v14 = 1)) THEN
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = sv_s
+  ELSE
+  sv_s = sub_str('', 1, v14 - 1)
+  -- 弃参原式: (v12[v13])
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  v12[v13] = v12[v13] + ''
+  -- stmt54 stray '0'
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  IF ((sv_i = 2)) THEN
+  sv_s = sub_str('', 2, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = '-0' + sv_s
+  ENDIF
+  ENDIF
+  v8 = v12[v13] + ''
+  -- stmt62 stray v8 + v15
+  ENDFOR
+  v8 = ''
+  v8 = v6
+  FOR v13 = 1 TO 3 DO
+  sv_i = index('', ' ')
+  -- 弃参原式: (v12[v13])
+  v14 = sv_i
+  IF ((v14 > 0)) THEN
+  IF ((v14 = 1)) THEN
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = sv_s
+  ELSE
+  sv_s = sub_str('', 1, v14 - 1)
+  -- 弃参原式: (v12[v13])
+  sv_s = sub_str('', v14 + 1, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  v12[v13] = v12[v13] + ''
+  -- stmt83 stray '0'
+  ENDIF
+  IF ((sv_i = 1)) THEN
+  IF ((sv_i = 2)) THEN
+  sv_s = sub_str('', 2, 20)
+  -- 弃参原式: (v12[v13])
+  v12[v13] = '-0' + sv_s
+  ENDIF
+  ENDIF
+  v8 = v12[v13] + ''
+  -- stmt91 stray v8 + v15
+  ENDFOR
+  v8 = ''
+  WRITE(v8, CR)
+  -- stmt97 stray v1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGSEND]Request Send err', CR)
+  ENDIF
+  sv_i = REFRESHFILE(v20)
+  -- stmt103 stray sv_i
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MSG_SEND
+
+ROUTINE RECV_SINGLE : INTEGER
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+  r6_lc5 : INTEGER
+BEGIN
+  v21 = ''
+  -- stmt117 stray v1 | r6_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  v21 = v21 + ''
+  IF (('' = v7)) THEN
+  ELSE
+  ENDIF
+  sv_i = str_len(v21)
+  r6_lc5 = sv_i
+  sv_i = index(v21, ' ')
+  r6_lc2 = sv_i
+  IF ((r6_lc2 > 0)) THEN
+  IF ((r6_lc2 = 1)) THEN
+  sv_s = sub_str(v21, r6_lc2 + 1, r6_lc5)
+  v21 = sv_s
+  ELSE
+  sv_s = sub_str(v21, 1, r6_lc2 - 1)
+  sv_s = sub_str(v21, r6_lc2 + 1, r6_lc5)
+  v21 = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  sv_i = index(v21, v7)
+  r6_lc2 = sv_i
+  IF ((r6_lc2 <= 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,no endians.', CR)
+  ENDIF
+  sv_i = REFRESHFILE(v20)
+  -- stmt159 stray sv_i
+  sv_i = index(v21, v15)
+  r6_lc3 = sv_i
+  IF ((r6_lc3 > 0)) THEN
+  sv_s = sub_str(v21, 1, r6_lc3 - 1)
+  v21 = sv_s
+  ELSE
+  sv_s = sub_str(v21, 1, r6_lc2 - 1)
+  v21 = sv_s
+  ENDIF
+  sv_i = index(v21, '.')
+  r6_lc2 = sv_i
+  IF ((r6_lc2 > 0)) THEN
+  IF ((r6_lc2 = 1)) THEN
+  v21 = '0'
+  ELSE
+  sv_i = index(v21, '-')
+  r6_lc3 = sv_i
+  IF ((r6_lc3 > 0) AND (r6_lc3 = r6_lc2 - 1)) THEN
+  v21 = '0'
+  ELSE
+  sv_s = sub_str(v21, 1, r6_lc2 - 1)
+  v21 = sv_s
+  ENDIF
+  ENDIF
+  ENDIF
+  CNV_STR_INT(v21, r6_lc4)
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]data:', v21, CR)
+  SET_INT_REG(v23, r6_lc4, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set reg err.', CR)
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, '[MSGRECV]set_single_finish.', CR)
+  RETURN(0)
+END RECV_SINGLE
+
+ROUTINE RECV_MULTI : INTEGER
+VAR
+  r7_lc1 : INTEGER
+  r7_lc52 : STRING[64]
+  r7_lc53 : INTEGER
+  r7_lc54 : INTEGER
+  r7_lc55 : INTEGER
+  r7_lc56 : INTEGER
+  r7_lc58 : REAL
+  r7_lc59 : INTEGER
+BEGIN
+  v21 = ''
+  -- stmt212 stray v1 | r7_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  v21 = v21 + ''
+  IF (('' = v7)) THEN
+  DELAY 2
+  ELSE
+  ENDIF
+  sv_i = str_len(v21)
+  r7_lc59 = sv_i
+  sv_i = index(v21, ' ')
+  r7_lc55 = sv_i
+  IF ((r7_lc55 > 0)) THEN
+  IF ((r7_lc55 = 1)) THEN
+  sv_s = sub_str(v21, r7_lc55 + 1, r7_lc59)
+  v21 = sv_s
+  ELSE
+  sv_s = sub_str(v21, 1, r7_lc55 - 1)
+  sv_s = sub_str(v21, r7_lc55 + 1, r7_lc59)
+  v21 = ''
+  ENDIF
+  DELAY 1
+  ENDIF
+  sv_i = index(v21, v7)
+  r7_lc55 = sv_i
+  IF ((r7_lc55 <= 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]buf_read_err,no endians.', CR)
+  ENDIF
+  sv_s = sub_str(v21, 1, r7_lc55 - 1)
+  v21 = sv_s
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]datawhole:', v21, CR)
+  sv_i = REFRESHFILE(v20)
+  -- stmt2 stray sv_i
+  sv_i = index(v21, v15)
+  r7_lc55 = sv_i
+  v13 = 0
+  IF ((r7_lc55 > 0)) THEN
+  sv_i = index(v21, v15)
+  r7_lc55 = sv_i
+  IF ((r7_lc55 <= 1)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]no splits.', CR)
+  ELSE
+  ENDIF
+  sv_s = sub_str(v21, 1, r7_lc55 - 1)
+  r7_lc52 = sv_s
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]data1:', r7_lc52, CR)
+  sv_i = index(r7_lc52, '.')
+  r7_lc53 = sv_i
+  IF ((r7_lc53 > 0)) THEN
+  IF ((r7_lc53 = 1)) THEN
+  r7_lc52 = '0' + r7_lc52
+  ENDIF
+  sv_i = index(r7_lc52, '-')
+  r7_lc54 = sv_i
+  IF ((r7_lc54 > 0) AND (r7_lc54 = r7_lc53 - 1)) THEN
+  sv_s = sub_str(r7_lc52, r7_lc54, 1)
+  sv_s = sub_str(r7_lc52, r7_lc53, 100)
+  r7_lc52 = sv_s + '0' + sv_s
+  ENDIF
+  CNV_STR_REAL(r7_lc52, r7_lc58)
+  SET_REAL_REG(v23 + v13, r7_lc58, v2)
+  ELSE
+  CNV_STR_INT(r7_lc52, r7_lc56)
+  SET_INT_REG(v23 + v13, r7_lc56, v2)
+  ENDIF
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]set data to reg err.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  sv_s = sub_str(v21, r7_lc55 + 1, 200)
+  v21 = sv_s
+  v13 = v13 + 1
+  ENDIF
+  IF ((sv_i > 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[RECV_MULTI]final_data:', v21, CR)
+  sv_i = index(v21, '.')
+  r7_lc53 = sv_i
+  IF ((r7_lc53 > 0)) THEN
+  CNV_STR_REAL(v21, r7_lc58)
+  SET_REAL_REG(v23 + v13, r7_lc58, v2)
+  ELSE
+  CNV_STR_INT(v21, r7_lc56)
+  SET_INT_REG(v23 + v13, r7_lc56, v2)
+  ENDIF
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set data to reg err.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  SET_INT_REG(v22, v13 + 1, v2)
+  IF ((v2 <> 0)) THEN
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  v21 = ''
+  SET_INT_REG(v22, v13, v2)
+  IF ((v2 <> 0)) THEN
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, '[MSGRECV]set_multi_finish.', CR)
+  RETURN(0)
+END RECV_MULTI
+
+ROUTINE RECV_POSN : INTEGER
+VAR
+  r8_lc1 : INTEGER
+  r8_lc62 : ARRAY[64] OF REAL
+  r8_lc74 : POSITION
+  r8_lc85 : INTEGER
+  r8_lc88 : INTEGER
+  r8_lc89 : REAL
+BEGIN
+  v21 = ''
+  -- stmt140 stray v1 | r8_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  IF (('' = v15)) THEN
+  DELAY 1
+  ELSE
+  ENDIF
+  IF (('' = v7)) THEN
+  DELAY 1
+  ELSE
+  ENDIF
+  v21 = v21 + ''
+  DELAY 1
+  CNV_STR_INT(v21, r8_lc88)
+  IF ((r8_lc88 <= 0) OR (r8_lc88 > 100)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]recv ErrCode.', CR)
+  SET_INT_REG(v22, r8_lc88, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ELSE
+  ENDIF
+  v21 = ''
+  v13 = 0
+  v24 = 1
+  -- stmt191 stray v1 | r8_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  IF (('' = v15) OR ('' = v7)) THEN
+  CNV_STR_REAL(v21, r8_lc89)
+  IF ((v24 >= 7)) THEN
+  v24 = 1
+  ENDIF
+  IF ((v24 < 7)) THEN
+  r8_lc62[v24] = r8_lc89
+  IF ((v24 = 6)) THEN
+  IF ((v25 = 3)) THEN
+  sv_p = GET_POS_REG(v23 + v13, v2)
+  r8_lc74 = sv_p
+  r8_lc74_f08 = r8_lc62[1]
+  r8_lc74_f0c = r8_lc62[2]
+  r8_lc74_f10 = r8_lc62[3]
+  r8_lc74_f14 = r8_lc62[4]
+  r8_lc74_f18 = r8_lc62[5]
+  r8_lc74_f1c = r8_lc62[6]
+  SET_EPOS_REG(v23 + v13, r8_lc74, v2)
+  ENDIF
+  IF ((v25 = 4)) THEN
+  r8_lc62[7] = 0
+  r8_lc62[8] = 0
+  r8_lc62[9] = 0
+  cnv_rel_jpos(r8_lc62, sv_j, v2)
+  -- 弃参原式: r8_lc85 | r8_lc85
+  SET_JPOS_REG(v23 + v13, sv_j, v2)
+  -- 弃参原式: r8_lc85 | r8_lc85
+  ENDIF
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]SET_POS_REG_err.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  IF ((v13 >= r8_lc88)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]SET_POS_REG_over.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  DELAY 1
+  ELSE
+  ENDIF
+  v13 = v13 + 1
+  ENDIF
+  v24 = v24 + 1
+  ENDIF
+  v21 = ''
+  IF (('' = v7) AND (v24 < 7)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]not recv whole pos.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  IF (('' = v7)) THEN
+  IF ((v13 < r8_lc88) OR (v13 > r8_lc88)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]finish at less than num.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  DELAY 1
+  ELSE
+  ENDIF
+  SET_INT_REG(v22, v13, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  DELAY 1
+  ENDIF
+  ENDIF
+  v21 = v21 + ''
+  sv_i = REFRESHFILE(v20)
+  -- stmt47 stray sv_i
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, '[MSGRECV]set_pos_finish.', CR)
+  RETURN(0)
+END RECV_POSN
+
+ROUTINE RECV_STR : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+BEGIN
+  v21 = ''
+  -- stmt61 stray v1 | r9_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  v21 = v21 + ''
+  IF (('' = v7)) THEN
+  DELAY 2
+  ELSE
+  ENDIF
+  DELAY 1
+  sv_i = index(v21, v7)
+  r9_lc2 = sv_i
+  IF ((r9_lc2 <= 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,no endians.', CR)
+  ENDIF
+  sv_s = sub_str(v21, 1, r9_lc2 - 1)
+  v21 = sv_s
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]data:', v21, CR)
+  SET_STR_REG(v23, v21, v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set reg err.', CR)
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, '[MSGRECV]set_single_finish.', CR)
+  RETURN(0)
+END RECV_STR
+
+ROUTINE MSG_RECV : INTEGER
+VAR
+  r10_lc1 : INTEGER
+  r10_lc5 : INTEGER
+BEGIN
+  sv_i = GVAR_INIT(v26, 0, '')
+  -- stmt110 stray sv_i
+  sv_i = GVAR_INIT(0, v27, '')
+  -- stmt111 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v28)
+  -- stmt112 stray sv_i
+  sv_i = GVAR_INIT(v25, 0, '')
+  -- stmt113 stray sv_i
+  sv_i = GVAR_INIT(v22, 0, '')
+  -- stmt114 stray sv_i
+  sv_i = GVAR_INIT(v23, 0, '')
+  -- stmt115 stray sv_i
+  v21 = ''
+  sv_i = str_len(v6)
+  r10_lc5 = sv_i
+  IF ((r10_lc5 = 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set buf_head_length:0.', CR)
+  ELSE
+  ENDIF
+  -- stmt126 stray v1 | r10_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]', v2, CR)
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read_err,check connection.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  IF (('' = sv_s)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read SPACE not use.', CR)
+  DELAY 1
+  ELSE
+  ENDIF
+  IF (('' = sv_s)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read CR not use.', CR)
+  DELAY 1
+  ELSE
+  ENDIF
+  IF (('' = sv_s)) THEN
+  sv_s = chr(155)
+  sv_s = chr(48)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_read LF not use.', CR)
+  DELAY 1
+  ELSE
+  ENDIF
+  IF (('' = v15)) THEN
+  ELSE
+  ENDIF
+  IF (('' = v7)) THEN
+  ELSE
+  ENDIF
+  v21 = v21 + ''
+  DELAY 1
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]recv_head:', CR)
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]set:', v6, CR)
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]get:', v21, CR)
+  IF ((r10_lc5 <> 0)) THEN
+  IF ((v21 <> v6)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]buf_head_recv_not_same.', CR)
+  SET_INT_REG(v22, (0 - 999999), v2)
+  IF ((v2 <> 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]set fault reg err.', CR)
+  ENDIF
+  ENDIF
+  -- stmt181 stray v1 | r10_lc1 | 1
+  sv_i = IO_STATUS(v1)
+  v2 = sv_i
+  IF ((v2 <> 0)) THEN
+  SET_INT_REG(v22, (0 - 999999), v2)
+  PAUSE
+  ABORT
+  POST_ERR(38000, '', 0, 0)
+  -- 弃参原式: 0
+  ENDIF
+  IF (('' <> v7)) THEN
+  DELAY 1
+  ELSE
+  ENDIF
+  ENDIF
+  IF ((sv_i = 0)) THEN
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, '[MSGRECV]read_bufhead len : 0.', CR)
+  ENDIF
+  IF ((v25 = 1)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]in order1', CR)
+  sv_i = RECV_SINGLE
+  -- stmt232 stray sv_i
+  ENDIF
+  IF ((v25 = 2)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]in order2', CR)
+  sv_i = RECV_MULTI
+  -- stmt236 stray sv_i
+  ENDIF
+  IF ((v25 = 3) OR (v25 = 4)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]in order3-4', CR)
+  sv_i = RECV_POSN
+  -- stmt240 stray sv_i
+  ENDIF
+  IF ((v25 = 5)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGRECV]in order5', CR)
+  sv_i = RECV_STR
+  -- stmt244 stray sv_i
+  ENDIF
+  sv_i = GVAR_INIT(v26, 0, '')
+  -- stmt255 stray sv_i
+  sv_i = GVAR_INIT(0, v27, '')
+  -- stmt0 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v28)
+  -- stmt1 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v29)
+  -- stmt2 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v30)
+  -- stmt3 stray sv_i
+  sv_i = GVAR_INIT(v4, 0, '')
+  -- stmt4 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v15)
+  -- stmt5 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v7)
+  -- stmt6 stray sv_i
+  sv_i = GVAR_INIT(0, 0, v6)
+  -- stmt7 stray sv_i
+  sv_i = GVAR_INIT(v5, 0, '')
+  -- stmt8 stray sv_i
+  sv_i = GVAR_INIT(v25, 0, '')
+  -- stmt9 stray sv_i
+  sv_i = GVAR_INIT(v22, 0, '')
+  -- stmt10 stray sv_i
+  sv_i = GVAR_INIT(v23, 0, '')
+  -- stmt11 stray sv_i
+  sv_i = GVAR_INIT(v3, 0, '')
+  -- stmt13 stray sv_i
+  sv_i = HIK_TP_PRM(1, 3, v26, v27, v30, 'order')
+  -- stmt15 stray sv_i
+  IF ((v30 = 'CONNECT')) THEN
+  sv_i = HIK_TP_PRM(2, 3, v26, v27, v28, 'port')
+  -- stmt17 stray sv_i
+  v31 = v28
+  v20 = 'C' + v31 + ':'
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGSEND]tcp:', v20, CR)
+  sv_i = HIK_TP_PRM(3, 1, v26, v27, v28, 'timeout')
+  -- stmt21 stray sv_i
+  v3 = v26
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGSEND]timeout:', v3, CR)
+  sv_i = CONNECTRBT(v20)
+  -- stmt24 stray sv_i
+  ENDIF
+  IF ((v30 = 'DISCONNECT')) THEN
+  sv_i = HIK_TP_PRM(2, 3, v26, v27, v28, 'port')
+  -- stmt28 stray sv_i
+  v31 = v28
+  v20 = 'C' + v31 + ':'
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGSEND]', v20, CR)
+  sv_i = DISCONRBT(v20)
+  -- stmt32 stray sv_i
+  ENDIF
+  IF ((v30 = 'SEND')) THEN
+  sv_i = HIK_TP_PRM(2, 1, v5, v27, v28, 'ifsendpos')
+  -- stmt36 stray sv_i
+  sv_i = HIK_TP_PRM(3, 3, v26, v27, v15, 'split')
+  -- stmt37 stray sv_i
+  sv_i = HIK_TP_PRM(4, 3, v26, v27, v7, 'end')
+  -- stmt38 stray sv_i
+  sv_i = HIK_TP_PRM(5, 3, v26, v27, v6, 'head')
+  -- stmt39 stray sv_i
+  sv_i = MSG_SEND
+  -- stmt40 stray sv_i
+  ENDIF
+  IF ((v30 = 'READ')) THEN
+  sv_i = HIK_TP_PRM(2, 3, v26, v27, v6, 'head')
+  -- stmt45 stray sv_i
+  sv_i = HIK_TP_PRM(3, 1, v25, v27, v28, 'order')
+  -- stmt46 stray sv_i
+  IF ((v25 = 1) OR (v25 = 5)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGREAD]1_4', CR)
+  sv_i = HIK_TP_PRM(4, 1, v23, v27, v28, 'regstart')
+  -- stmt49 stray sv_i
+  ENDIF
+  IF ((v25 = 2) OR (v25 = 3) OR (v25 = 4)) THEN
+  sv_s = chr(155)
+  sv_s = chr(52)
+  WRITE(sv_s, sv_s, '[MSGREAD]2_3', CR)
+  sv_i = HIK_TP_PRM(4, 1, v22, v27, v28, 'num')
+  -- stmt53 stray sv_i
+  sv_i = HIK_TP_PRM(5, 1, v23, v27, v28, 'regstart')
+  -- stmt54 stray sv_i
+  ENDIF
+  sv_i = MSG_RECV
+  -- stmt56 stray sv_i
+  ENDIF
+  RETURN(0)
+END MSG_RECV
+
+BEGIN
+END HIK_MSG
+-- module-residue '.', '.', '.', '.', '.', '.', '.', '.', '-', '-', '-', '-'

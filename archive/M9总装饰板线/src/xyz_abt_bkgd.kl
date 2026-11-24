@@ -1,0 +1,53 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <<EMAIL>>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_abort_bkgd
+-- 
+-- brief: abort xyz_bkgd ,
+--        
+--------------------------------------------------------------------------------
+PROGRAM xyz_abt_bkgd
+
+
+%COMMENT = 'xyz abort bkgd'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+VAR
+    state_ : INTEGER
+    loaded : BOOLEAN
+    inited : BOOLEAN
+
+
+%INCLUDE include\xyz_log_h
+
+BEGIN
+    loaded = FALSE
+    inited = FALSE
+    LOAD_STATUS('XYZ_BKGD', loaded, inited)
+    IF loaded THEN
+        log_info('xyz_bkgd loaded')
+    ELSE
+        log_info('xyz_bkgd not loaded')
+    ENDIF
+
+    IF inited THEN
+        log_info('xyz_bkgd initialized')
+    ELSE
+        log_info('xyz_bkgd not initialized')
+    ENDIF
+
+    ABORT_TASK('XYZ_BKGD', TRUE, TRUE, state_)
+    IF state_ <> 0 THEN
+        log_info('abort xyz_bkgd failed')
+    ELSE
+        log_info('abort xyz_bkgd success')
+    ENDIF
+END xyz_abt_bkgd

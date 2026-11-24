@@ -1,0 +1,771 @@
+-- DCPFAULT_MH.KL (decompiled v3)
+PROGRAM DCPFAULT_MH
+%COMMENT = 'Version 1.1'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[40]
+	DCPLINE2: STRING[40]
+	DCPLINE3: STRING[40]
+	DCPLINE4: STRING[40]
+	DCPLINE5: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_02 : ARRAY[512] OF INTEGER
+  PARAMTYP : INTEGER
+  INTDCPFAULT : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[64]
+  STATUS : INTEGER
+  DCPTEXT : ALMDCP
+  EPLANIO : INTEGER
+  EPLANREF : STRING[64]
+  INTPROGNUM : INTEGER
+  STRPROGNUM : STRING[64]
+  INTAREAINREQ : INTEGER
+  REALDUMMY : REAL
+  STRAREAINREQ : STRING[64]
+  INTAREAOUTRL : INTEGER
+  STRAREAOUTRL : STRING[64]
+  INTTOOLREQ : INTEGER
+  STRTOOLREQ : STRING[64]
+  INTJOBDONE : INTEGER
+  STRJOBDONE : STRING[64]
+  INTCOLREQ : INTEGER
+  STRCOLREQ : STRING[64]
+  INTCOLREL : INTEGER
+  STRCOLREL : STRING[64]
+  ENTRY : INTEGER
+  ROBOTNAME : STRING[64]
+  INTTOOLID : INTEGER
+  TOOLID : STRING[64]
+  FKEY_SEL : INTEGER
+  FKEYS : ARRAY[64] OF STRING[64]
+  DCPPLCTEXT : STRING[64]
+  DCPFAULTNUM1 : STRING[64]
+  DCPFAULTNUM : STRING[64]
+  EPLANPAGE : STRING[64]
+  EPLANTYPE : STRING[64]
+  STREPLANIO : STRING[64]
+  BLPLC : INTEGER
+  BLSPR : INTEGER
+  BLSPOT : INTEGER
+  BLDISPENSE : INTEGER
+  BLMH : INTEGER
+  BLSTUD : INTEGER
+  BLNUT : INTEGER
+  BLISRA : INTEGER
+  BLQUISS : INTEGER
+  DCPTEXTHIST : ARRAY[64] OF INTEGER
+  DCPTIMEHIST : ARRAY[20] OF STRING[18]
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  STRAREANUM : STRING[3]
+  STRHIS1 : STRING[82]
+  STRHIS2 : STRING[82]
+  STRHIS3 : STRING[82]
+  STR11 : STRING[82]
+  STR12 : STRING[82]
+  STR13 : STRING[82]
+  STRTPFUNC : ARRAY[5] OF STRING[8]
+  BLKEYPRESSED : BOOLEAN
+  DCPTEXT_f00 : INTEGER
+  DCPTEXT_f04 : STRING[64]
+  DCPTEXT_f30 : STRING[64]
+  DCPTEXT_f5c : STRING[64]
+  DCPTEXT_f88 : STRING[64]
+  DCPTEXT_fb4 : STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE DCPDISP(p0 : ALMDCP) : INTEGER FROM MI_LIB
+ROUTINE DCPDISPALM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DCP_CLR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GET_EPLANREF(p0 : INTEGER) : STRING FROM MI_LIB
+
+ROUTINE POSTSTAT(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  POST_ERR(p0, '', 0, 2)
+  ENDIF
+  FORCE_SPMENU(1, 37, 1)
+  GET_TPE_PRM(1, PARAMTYP, INTDCPFAULT, PARAMREAL, PARAMSTRING, STATUS)
+  IF ((PARAMTYP <> 1) OR (STATUS <> 0)) THEN
+  WRITE('Invalid Call to DCPFault Program on Robot!', CR, 'Check argument 1 is an integer!')
+  DCPTEXT_f04 = 'Invalid Call to DCPFault Program on Robot'
+  ENDIF
+  IF (UNINIT(INTDCPFAULT)) THEN
+  INTDCPFAULT = 0
+  ENDIF
+  GET_TPE_PRM(2, 1, EPLANIO, PARAMREAL, EPLANREF, STATUS)
+  GET_PORT_VAL(18, 1, INTPROGNUM, STATUS)
+  CNV_INT_STR(INTPROGNUM, 3, 10, STRPROGNUM)
+  GET_REG(151, (0 <> 0), INTAREAINREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAINREQ, 3, 10, STRAREAINREQ)
+  GET_REG(152, (0 <> 0), INTAREAOUTRL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAOUTRL, 3, 10, STRAREAOUTRL)
+  GET_REG(153, (0 <> 0), INTTOOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLREQ, 3, 10, STRTOOLREQ)
+  GET_REG(154, (0 <> 0), INTJOBDONE, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTJOBDONE, 3, 10, STRJOBDONE)
+  GET_REG(156, (0 <> 0), INTCOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREQ, 3, 10, STRCOLREQ)
+  GET_REG(157, (0 <> 0), INTCOLREL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREL, 3, 10, STRCOLREL)
+  GET_VAR(ENTRY, '*SYSTEM*', '$ROBOT_NAME', ROBOTNAME, STATUS)
+  IF (UNINIT(ROBOTNAME)) THEN
+  ROBOTNAME = 'Unit'
+  ENDIF
+  GET_REG(81, (0 <> 0), INTTOOLID, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLID, 2, 10, TOOLID)
+  DCPTEXT_f00 = 0
+  DCPTEXT_f04 = ''
+  DCPTEXT_f30 = ''
+  DCPTEXT_f5c = ''
+  DCPTEXT_f88 = ''
+  DCPTEXT_fb4 = ''
+  FKEY_SEL = 0
+  FKEYS[1] = ''
+  FKEYS[2] = ''
+  FKEYS[3] = ''
+  FKEYS[4] = ''
+  FKEYS[5] = ''
+  FKEYS[6] = ''
+  FKEYS[7] = ''
+  FKEYS[8] = ''
+  FKEYS[9] = ''
+  FKEYS[10] = ''
+  FKEY_SEL = 0
+  DCPTEXT_f00 = INTDCPFAULT
+  SELECT DCPTEXT_f00 OF
+  CASE(6351):
+  DCPTEXT_f04 = 'Gripper 1 : Number of cylinders is out of range'
+  DCPTEXT_f00 = 6351
+  CASE(6352):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 1 at work not on'
+  DCPTEXT_f00 = 6352
+  CASE(6353):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 2 at work not on'
+  DCPTEXT_f00 = 6353
+  CASE(6354):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 3 at work not on'
+  DCPTEXT_f00 = 6354
+  CASE(6355):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 4 at work not on'
+  DCPTEXT_f00 = 6355
+  CASE(6356):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 5 at work not on'
+  DCPTEXT_f00 = 6356
+  CASE(6357):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 6 at work not on'
+  DCPTEXT_f00 = 6357
+  CASE(6358):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 7 at work not on'
+  DCPTEXT_f00 = 6358
+  CASE(6359):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 8 at work not on'
+  DCPTEXT_f00 = 6359
+  CASE(6362):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 1 at work not off'
+  DCPTEXT_f00 = 6362
+  CASE(6363):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 2 at work not off'
+  DCPTEXT_f00 = 6363
+  CASE(6364):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 3 at work not off'
+  DCPTEXT_f00 = 6364
+  CASE(6365):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 4 at work not off'
+  DCPTEXT_f00 = 6365
+  CASE(6366):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 5 at work not off'
+  DCPTEXT_f00 = 6366
+  CASE(6367):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 6 at work not off'
+  DCPTEXT_f00 = 6367
+  CASE(6368):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 7 at work not off'
+  DCPTEXT_f00 = 6368
+  CASE(6369):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 8 at work not off'
+  DCPTEXT_f00 = 6369
+  CASE(6372):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 1 at rest not on'
+  DCPTEXT_f00 = 6372
+  CASE(6373):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 2 at rest not on'
+  DCPTEXT_f00 = 6373
+  CASE(6374):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 3 at rest not on'
+  DCPTEXT_f00 = 6374
+  CASE(6375):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 4 at rest not on'
+  DCPTEXT_f00 = 6375
+  CASE(6376):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 5 at rest not on'
+  DCPTEXT_f00 = 6376
+  CASE(6377):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 6 at rest not on'
+  DCPTEXT_f00 = 6377
+  CASE(6378):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 7 at rest not on'
+  DCPTEXT_f00 = 6378
+  CASE(6379):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 8 at rest not on'
+  DCPTEXT_f00 = 6379
+  CASE(6382):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 1 at rest not off'
+  DCPTEXT_f00 = 6382
+  CASE(6383):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 2 at rest not off'
+  DCPTEXT_f00 = 6383
+  CASE(6384):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 3 at rest not off'
+  DCPTEXT_f00 = 6384
+  CASE(6385):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 4 at rest not off'
+  DCPTEXT_f00 = 6385
+  CASE(6386):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 5 at rest not off'
+  DCPTEXT_f00 = 6386
+  CASE(6387):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 6 at rest not off'
+  DCPTEXT_f00 = 6387
+  CASE(6388):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 7 at rest not off'
+  DCPTEXT_f00 = 6388
+  CASE(6389):
+  DCPTEXT_f04 = 'Gripper 1 : Cylinder 8 at rest not off'
+  DCPTEXT_f00 = 6389
+  CASE(6400):
+  DCPTEXT_f04 = 'Gripper 1 : Number of PP is out of range'
+  DCPTEXT_f00 = 6400
+  CASE(6401):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 1 not off'
+  DCPTEXT_f00 = 6401
+  CASE(6402):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 2 not off'
+  DCPTEXT_f00 = 6402
+  CASE(6403):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 3 not off'
+  DCPTEXT_f00 = 6403
+  CASE(6404):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 4 not off'
+  DCPTEXT_f00 = 6404
+  CASE(6405):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 5 not off'
+  DCPTEXT_f00 = 6405
+  CASE(6406):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 6 not off'
+  DCPTEXT_f00 = 6406
+  CASE(6407):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 7 not off'
+  DCPTEXT_f00 = 6407
+  CASE(6408):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 8 not off'
+  DCPTEXT_f00 = 6408
+  CASE(6409):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 9 not off'
+  DCPTEXT_f00 = 6409
+  CASE(6410):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 10 not off'
+  DCPTEXT_f00 = 6410
+  CASE(6411):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 1 not on'
+  DCPTEXT_f00 = 6411
+  CASE(6412):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 2 not on'
+  DCPTEXT_f00 = 6412
+  CASE(6413):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 3 not on'
+  DCPTEXT_f00 = 6413
+  CASE(6414):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 4 not on'
+  DCPTEXT_f00 = 6414
+  CASE(6415):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 5 not on'
+  DCPTEXT_f00 = 6415
+  CASE(6416):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 6 not on'
+  DCPTEXT_f00 = 6416
+  CASE(6417):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 7 not on'
+  DCPTEXT_f00 = 6417
+  CASE(6418):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 8 not on'
+  DCPTEXT_f00 = 6418
+  CASE(6419):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 9 not on'
+  DCPTEXT_f00 = 6419
+  CASE(6420):
+  DCPTEXT_f04 = 'Gripper 1 : Part Present 10 not on'
+  DCPTEXT_f00 = 6420
+  CASE(6422):
+  DCPTEXT_f04 = 'Gripper 1 : Vacuum 1 not off'
+  DCPTEXT_f00 = 6422
+  CASE(6423):
+  DCPTEXT_f04 = 'Gripper 1 : Vacuum 2 not off'
+  DCPTEXT_f00 = 6423
+  CASE(6424):
+  DCPTEXT_f04 = 'Gripper 1 : Vacuum 1 not on'
+  DCPTEXT_f00 = 6424
+  CASE(6425):
+  DCPTEXT_f04 = 'Gripper 1 : Vacuum 2 not on'
+  DCPTEXT_f00 = 6425
+  CASE(6431):
+  DCPTEXT_f04 = 'Gripper 1 : Not all PPs off'
+  DCPTEXT_f00 = 6431
+  CASE(6432):
+  DCPTEXT_f04 = 'Gripper 1 : Not all PPs on'
+  DCPTEXT_f00 = 6432
+  CASE(6433):
+  DCPTEXT_f04 = 'Gripper 1 : Not all cylinders at rest'
+  DCPTEXT_f00 = 6433
+  CASE(6434):
+  DCPTEXT_f04 = 'Gripper 1 : Not all cylinders at work'
+  DCPTEXT_f00 = 6434
+  CASE(6451):
+  DCPTEXT_f04 = 'Gripper 2 : Number of cylinders is out of range'
+  DCPTEXT_f00 = 6451
+  CASE(6452):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 1 at work not on'
+  DCPTEXT_f00 = 6452
+  CASE(6453):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 2 at work not on'
+  DCPTEXT_f00 = 6453
+  CASE(6454):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 3 at work not on'
+  DCPTEXT_f00 = 6454
+  CASE(6455):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 4 at work not on'
+  DCPTEXT_f00 = 6455
+  CASE(6456):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 5 at work not on'
+  DCPTEXT_f00 = 6456
+  CASE(6457):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 6 at work not on'
+  DCPTEXT_f00 = 6457
+  CASE(6458):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 7 at work not on'
+  DCPTEXT_f00 = 6458
+  CASE(6459):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 8 at work not on'
+  DCPTEXT_f00 = 6459
+  CASE(6462):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 1 at work not off'
+  DCPTEXT_f00 = 6462
+  CASE(6463):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 2 at work not off'
+  DCPTEXT_f00 = 6463
+  CASE(6464):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 3 at work not off'
+  DCPTEXT_f00 = 6464
+  CASE(6465):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 4 at work not off'
+  DCPTEXT_f00 = 6465
+  CASE(6466):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 5 at work not off'
+  DCPTEXT_f00 = 6466
+  CASE(6467):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 6 at work not off'
+  DCPTEXT_f00 = 6467
+  CASE(6468):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 7 at work not off'
+  DCPTEXT_f00 = 6468
+  CASE(6469):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 8 at work not off'
+  DCPTEXT_f00 = 6469
+  CASE(6472):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 1 at rest not on'
+  DCPTEXT_f00 = 6472
+  CASE(6473):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 2 at rest not on'
+  DCPTEXT_f00 = 6473
+  CASE(6474):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 3 at rest not on'
+  DCPTEXT_f00 = 6474
+  CASE(6475):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 4 at rest not on'
+  DCPTEXT_f00 = 6475
+  CASE(6476):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 5 at rest not on'
+  DCPTEXT_f00 = 6476
+  CASE(6477):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 6 at rest not on'
+  DCPTEXT_f00 = 6477
+  CASE(6478):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 7 at rest not on'
+  DCPTEXT_f00 = 6478
+  CASE(6479):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 8 at rest not on'
+  DCPTEXT_f00 = 6479
+  CASE(6482):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 1 at rest not off'
+  DCPTEXT_f00 = 6482
+  CASE(6483):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 2 at rest not off'
+  DCPTEXT_f00 = 6483
+  CASE(6484):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 3 at rest not off'
+  DCPTEXT_f00 = 6484
+  CASE(6485):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 4 at rest not off'
+  DCPTEXT_f00 = 6485
+  CASE(6486):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 5 at rest not off'
+  DCPTEXT_f00 = 6486
+  CASE(6487):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 6 at rest not off'
+  DCPTEXT_f00 = 6487
+  CASE(6488):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 7 at rest not off'
+  DCPTEXT_f00 = 6488
+  CASE(6489):
+  DCPTEXT_f04 = 'Gripper 2 : Cylinder 8 at rest not off'
+  DCPTEXT_f00 = 6489
+  CASE(6500):
+  DCPTEXT_f04 = 'Gripper 2 : Number of PP is out of range'
+  DCPTEXT_f00 = 6500
+  CASE(6501):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 1 not off'
+  DCPTEXT_f00 = 6501
+  CASE(6502):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 2 not off'
+  DCPTEXT_f00 = 6502
+  CASE(6503):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 3 not off'
+  DCPTEXT_f00 = 6503
+  CASE(6504):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 4 not off'
+  DCPTEXT_f00 = 6504
+  CASE(6505):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 5 not off'
+  DCPTEXT_f00 = 6505
+  CASE(6506):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 6 not off'
+  DCPTEXT_f00 = 6506
+  CASE(6507):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 7 not off'
+  DCPTEXT_f00 = 6507
+  CASE(6508):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 8 not off'
+  DCPTEXT_f00 = 6508
+  CASE(6509):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 9 not off'
+  DCPTEXT_f00 = 6509
+  CASE(6510):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 10 not off'
+  DCPTEXT_f00 = 6510
+  CASE(6511):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 1 not on'
+  DCPTEXT_f00 = 6511
+  CASE(6512):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 2 not on'
+  DCPTEXT_f00 = 6512
+  CASE(6513):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 3 not on'
+  DCPTEXT_f00 = 6513
+  CASE(6514):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 4 not on'
+  DCPTEXT_f00 = 6514
+  CASE(6515):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 5 not on'
+  DCPTEXT_f00 = 6515
+  CASE(6516):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 6 not on'
+  DCPTEXT_f00 = 6516
+  CASE(6517):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 7 not on'
+  DCPTEXT_f00 = 6517
+  CASE(6518):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 8 not on'
+  DCPTEXT_f00 = 6518
+  CASE(6519):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 9 not on'
+  DCPTEXT_f00 = 6519
+  CASE(6520):
+  DCPTEXT_f04 = 'Gripper 2 : Part Present 10 not on'
+  DCPTEXT_f00 = 6520
+  CASE(6521):
+  DCPTEXT_f04 = ''
+  DCPTEXT_f00 = 6521
+  CASE(6522):
+  DCPTEXT_f04 = 'Gripper 2 : Vacuum 1 not off'
+  DCPTEXT_f00 = 6522
+  CASE(6523):
+  DCPTEXT_f04 = 'Gripper 2 : Vacuum 2 not off'
+  DCPTEXT_f00 = 6523
+  CASE(6524):
+  DCPTEXT_f04 = 'Gripper 2 : Vacuum 1 not on'
+  DCPTEXT_f00 = 6524
+  CASE(6525):
+  DCPTEXT_f04 = 'Gripper 2 : Vacuum 2 not on'
+  DCPTEXT_f00 = 6525
+  CASE(6531):
+  DCPTEXT_f04 = 'Gripper 2 : Not all PPs off'
+  DCPTEXT_f00 = 6531
+  CASE(6532):
+  DCPTEXT_f04 = 'Gripper 2 : Not all PPs on'
+  DCPTEXT_f00 = 6532
+  CASE(6533):
+  DCPTEXT_f04 = 'Gripper 2 : Not all cylinders at rest'
+  DCPTEXT_f00 = 6533
+  CASE(6534):
+  DCPTEXT_f04 = 'Gripper 2 : Not all cylinders at work'
+  DCPTEXT_f00 = 6534
+  CASE(6551):
+  DCPTEXT_f04 = 'Gripper 3 : Number of cylinders is out of range'
+  DCPTEXT_f00 = 6551
+  CASE(6552):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 1 at work not on'
+  DCPTEXT_f00 = 6552
+  CASE(6553):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 2 at work not on'
+  DCPTEXT_f00 = 6553
+  CASE(6554):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 3 at work not on'
+  DCPTEXT_f00 = 6554
+  CASE(6555):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 4 at work not on'
+  DCPTEXT_f00 = 6555
+  CASE(6556):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 5 at work not on'
+  DCPTEXT_f00 = 6556
+  CASE(6557):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 6 at work not on'
+  DCPTEXT_f00 = 6557
+  CASE(6558):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 7 at work not on'
+  DCPTEXT_f00 = 6558
+  CASE(6559):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 8 at work not on'
+  DCPTEXT_f00 = 6559
+  CASE(6562):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 1 at work not off'
+  DCPTEXT_f00 = 6562
+  CASE(6563):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 2 at work not off'
+  DCPTEXT_f00 = 6563
+  CASE(6564):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 3 at work not off'
+  DCPTEXT_f00 = 6564
+  CASE(6565):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 4 at work not off'
+  DCPTEXT_f00 = 6565
+  CASE(6566):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 5 at work not off'
+  DCPTEXT_f00 = 6566
+  CASE(6567):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 6 at work not off'
+  DCPTEXT_f00 = 6567
+  CASE(6568):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 7 at work not off'
+  DCPTEXT_f00 = 6568
+  CASE(6569):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 8 at work not off'
+  DCPTEXT_f00 = 6569
+  CASE(6572):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 1 at rest not on'
+  DCPTEXT_f00 = 6572
+  CASE(6573):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 2 at rest not on'
+  DCPTEXT_f00 = 6573
+  CASE(6574):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 3 at rest not on'
+  DCPTEXT_f00 = 6574
+  CASE(6575):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 4 at rest not on'
+  DCPTEXT_f00 = 6575
+  CASE(6576):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 5 at rest not on'
+  DCPTEXT_f00 = 6576
+  CASE(6577):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 6 at rest not on'
+  DCPTEXT_f00 = 6577
+  CASE(6578):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 7 at rest not on'
+  DCPTEXT_f00 = 6578
+  CASE(6579):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 8 at rest not on'
+  DCPTEXT_f00 = 6579
+  CASE(6582):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 1 at rest not off'
+  DCPTEXT_f00 = 6582
+  CASE(6583):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 2 at rest not off'
+  DCPTEXT_f00 = 6583
+  CASE(6584):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 3 at rest not off'
+  DCPTEXT_f00 = 6584
+  CASE(6585):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 4 at rest not off'
+  DCPTEXT_f00 = 6585
+  CASE(6586):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 5 at rest not off'
+  DCPTEXT_f00 = 6586
+  CASE(6587):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 6 at rest not off'
+  DCPTEXT_f00 = 6587
+  CASE(6588):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 7 at rest not off'
+  DCPTEXT_f00 = 6588
+  CASE(6589):
+  DCPTEXT_f04 = 'Gripper 3 : Cylinder 8 at rest not off'
+  DCPTEXT_f00 = 6589
+  CASE(6600):
+  DCPTEXT_f04 = 'Gripper 3 : Number of PP is out of range'
+  DCPTEXT_f00 = 6600
+  CASE(6601):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 1 not off'
+  DCPTEXT_f00 = 6601
+  CASE(6602):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 2 not off'
+  DCPTEXT_f00 = 6602
+  CASE(6603):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 3 not off'
+  DCPTEXT_f00 = 6603
+  CASE(6604):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 4 not off'
+  DCPTEXT_f00 = 6604
+  CASE(6605):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 5 not off'
+  DCPTEXT_f00 = 6605
+  CASE(6606):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 6 not off'
+  DCPTEXT_f00 = 6606
+  CASE(6607):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 7 not off'
+  DCPTEXT_f00 = 6607
+  CASE(6608):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 8 not off'
+  DCPTEXT_f00 = 6608
+  CASE(6609):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 9 not off'
+  DCPTEXT_f00 = 6609
+  CASE(6610):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 10 not off'
+  DCPTEXT_f00 = 6610
+  CASE(6611):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 1 not on'
+  DCPTEXT_f00 = 6611
+  CASE(6612):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 2 not on'
+  DCPTEXT_f00 = 6612
+  CASE(6613):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 3 not on'
+  DCPTEXT_f00 = 6613
+  CASE(6614):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 4 not on'
+  DCPTEXT_f00 = 6614
+  CASE(6615):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 5 not on'
+  DCPTEXT_f00 = 6615
+  CASE(6616):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 6 not on'
+  DCPTEXT_f00 = 6616
+  CASE(6617):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 7 not on'
+  DCPTEXT_f00 = 6617
+  CASE(6618):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 8 not on'
+  DCPTEXT_f00 = 6618
+  CASE(6619):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 9 not on'
+  DCPTEXT_f00 = 6619
+  CASE(6620):
+  DCPTEXT_f04 = 'Gripper 3 : Part Present 10 not on'
+  DCPTEXT_f00 = 6620
+  CASE(6622):
+  DCPTEXT_f04 = 'Gripper 3 : Vacuum 1 not off'
+  DCPTEXT_f00 = 6622
+  CASE(6623):
+  DCPTEXT_f04 = 'Gripper 3 : Vacuum 2 not off'
+  DCPTEXT_f00 = 6623
+  CASE(6624):
+  DCPTEXT_f04 = 'Gripper 3 : Vacuum 1 not on'
+  DCPTEXT_f00 = 6624
+  CASE(6625):
+  DCPTEXT_f04 = 'Gripper 3 : Vacuum 2 not on'
+  DCPTEXT_f00 = 6625
+  CASE(6631):
+  DCPTEXT_f04 = 'Gripper 3 : Not all PPs off'
+  DCPTEXT_f00 = 6631
+  CASE(6632):
+  DCPTEXT_f04 = 'Gripper 3 : Not all PPs on'
+  DCPTEXT_f00 = 6632
+  CASE(6633):
+  DCPTEXT_f04 = 'Gripper 3 : Not all cylinders at rest'
+  DCPTEXT_f00 = 6633
+  CASE(6634):
+  DCPTEXT_f04 = 'Gripper 3 : Not all cylinders at work'
+  DCPTEXT_f00 = 6634
+  ELSE:
+  DCPTEXT_f04 = 'Undefined DCP Fault Message'
+  ENDSELECT
+  DCPPLCTEXT = ROBOTNAME + ',Tool-' + TOOLID + ',' + DCPTEXT_f04 + DCPTEXT_f30
+  CNV_INT_STR(DCPTEXT_f00, 5, 10, DCPFAULTNUM1)
+  sv_s = sub_str(DCPFAULTNUM1, 2, 4)
+  DCPFAULTNUM1 = sv_s
+  DCPFAULTNUM = '0' + DCPFAULTNUM1
+  SET_PORT_VAL(19, 4, INTDCPFAULT, STATUS)
+  SET_STR_REG(9, DCPFAULTNUM, STATUS)
+  SET_STR_REG(10, DCPPLCTEXT, STATUS)
+  sv_s = GET_EPLANREF(EPLANIO)
+  EPLANREF = sv_s
+  sv_s = sub_str(EPLANREF, 17, 20)
+  EPLANPAGE = sv_s
+  sv_s = sub_str(EPLANREF, 22, 40)
+  EPLANTYPE = sv_s
+  sv_s = sub_str(EPLANREF, 1, 16)
+  EPLANREF = sv_s
+  CNV_INT_STR(EPLANIO, 3, 0, STREPLANIO)
+  DCPTEXT_f5c = 'GRIPPER FAULT'
+  DCPTEXT_f88 = 'DI' + STREPLANIO + '  ' + EPLANTYPE
+  DCPTEXT_fb4 = 'Eplan Ref = P.' + EPLANPAGE + EPLANREF
+  SET_STR_REG(11, DCPTEXT_f5c, STATUS)
+  SET_STR_REG(12, DCPTEXT_f88, STATUS)
+  SET_STR_REG(13, DCPTEXT_fb4, STATUS)
+  BLPLC = 0
+  BLSPR = 0
+  BLSPOT = 0
+  BLDISPENSE = 0
+  BLMH = 1
+  BLSTUD = 0
+  BLNUT = 0
+  BLISRA = 0
+  BLQUISS = 0
+  IF ((FKEY_SEL = 0)) THEN
+  FKEYS[1] = 'ACK'
+  ENDIF
+  io_02[5] = 1
+  sv_i = DCPDISP(DCPTEXT)
+  -- stmt165 stray sv_i
+  RETURN(0)
+END POSTSTAT
+
+BEGIN
+END DCPFAULT_MH

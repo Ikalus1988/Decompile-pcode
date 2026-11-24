@@ -1,0 +1,50 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Liu Xiang <xiang.liu@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_ck_err
+-- 
+-- brief: xyz_ck_err,
+--        xyz check error code
+--------------------------------------------------------------------------------
+PROGRAM xyz_ck_err
+
+%COMMENT = 'check error code'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+
+
+VAR
+    real_flag : BOOLEAN
+    err_code  : INTEGER
+    real_na   : REAL
+    status    : INTEGER
+    err_msg   : STRING[50]
+
+%INCLUDE include\xyz_log_h
+
+BEGIN
+
+real_flag = FALSE
+err_code = 0
+err_msg = ''
+GET_REG(REG_NO_ERR, real_flag, err_code, real_na, status)
+IF status <> 0 THEN
+    log_error('[CK_ERR] get err reg value failed')
+ELSE
+    CNV_INT_STR(err_code, 1, 10, err_msg)
+    err_msg = 'error code:' + err_msg
+    IF err_code <> 0 THEN
+        POST_ERR(38092, err_msg, 0, 2)
+    ENDIF
+ENDIF
+
+END xyz_ck_err

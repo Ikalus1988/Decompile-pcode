@@ -1,0 +1,192 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_sock
+-- 
+-- brief: xyz_sock,
+--        socket function
+--------------------------------------------------------------------------------
+PROGRAM xyz_sock
+
+
+%COMMENT = 'socket'
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_sock_t
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+
+
+BEGIN
+END xyz_sock
+
+ROUTINE sock_ctor
+VAR
+    state_    : INTEGER
+    entry     : INTEGER
+    tmp_str_  : STRING[1]
+    host_cfg_ : STRING[30]
+    tag_stat_ : INTEGER
+BEGIN
+    xsock.type_ = type_
+    xsock.connected_ = FALSE
+    xsock.status_ = 0
+    xsock.tag_idx_ = 0
+    xsock.tag_str_ = ''
+    xsock.port_ = 0
+    xsock.host_ = ''
+
+    host_cfg_ = ''
+    
+    -- tag_idx only in [1, 8]
+    IF (tag_idx < 1) OR (tag_idx > 8) THEN
+        log_error_a('[SOCK] invalid tag id ', tag_idx)
+        RETURN(1)
+    ENDIF
+    xsock.tag_idx_ = tag_idx
+
+    tmp_str_ = CHR (xsock.tag_idx_ + ORD('0', 1))
+    xsock.tag_str_ = xsock.type_ + tmp_str_ + ':'
+
+    host_cfg_ = '$HOST' + xsock.type_ + '_CFG[' + tmp_str_ + ']'
+
+    GET_VAR(entry, '*SYSTEM*', host_cfg_ + '.$STATE', tag_stat_, state_)
+    IF (state_ <> 0) OR (tag_stat_ <> 3) THEN -- 3 is tag started flag
+        log_error('[SOCK] tag conf error')
+        RETURN(1)
+    ENDIF
+
+    GET_VAR(entry, '*SYSTEM*', host_cfg_ + '.$SERVER_PORT', xsock.port_, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[SOCK] cannot get $SERVER_PORT')
+        RETURN(state_)
+    ENDIF
+
+    -- GET_VAR(entry, '*SYSTEM*', host_cfg_ + '.$STRT_REMOTE', xsock.host_, state_)
+    -- IF (state_ <> 0) THEN
+    --     log_error('[SOCK] cannot get $STRT_REMOTE')
+    --     RETURN(state_)
+    -- ENDIF
+    RETURN(0)
+
+END sock_ctor
+
+
+ROUTINE sock_conn
+VAR
+    state_ : INTEGER
+BEGIN
+    -- disconect first no mater connection
+    MSG_DISCO(xsock.tag_str_, state_)
+    DELAY 500
+    IF NOT xsock.connected_ THEN
+        MSG_CONNECT(xsock.tag_str_, state_)
+        IF state_ = 0 THEN
+            xsock.connected_ = TRUE
+            -- open sock fd
+            state_ = sock_opfd(sock_fd_, xsock.tag_str_)
+            RETURN(state_)
+        ELSE
+            xsock.connected_ = FALSE
+            log_error('[SOCK] connect failed')
+            RETURN(state_)
+        ENDIF
+    ENDIF
+
+END sock_conn
+
+
+ROUTINE sock_close
+VAR
+    state_ : INTEGER
+BEGIN
+    -- close socket fd first
+    state_ = sock_clfd(sock_fd_)
+    IF state_ <> 0 THEN
+        log_error('[SOCK] close sock_fd failed')
+    ENDIF
+    
+    -- disconnect socket
+    MSG_DISCO(xsock.tag_str_, state_)
+    IF state_ = 0 THEN
+        xsock.connected_ = FALSE
+    ELSE
+        log_error('[SOCK] disconnect failed')
+    ENDIF
+
+END sock_close
+
+
+ROUTINE sock_set_rt
+BEGIN
+    -- set timeout
+    IF time_out > 0 THEN
+        SET_FILE_ATR(sock_fd_, ATR_TIMEOUT, time_out)
+    ENDIF
+
+END sock_set_rt
+
+ROUTINE sock_opfd
+VAR
+    state_ : INTEGER
+BEGIN
+    -- set attribute
+    SET_FILE_ATR(sock_fd_, ATR_IA)
+    SET_FILE_ATR(sock_fd_, ATR_READAHD, 2)
+    
+    -- open socket
+    OPEN FILE sock_fd_('RW', tag_str)
+
+    state_ = IO_STATUS(sock_fd_)
+    RETURN(state_)
+
+END sock_opfd
+
+
+ROUTINE sock_clfd
+VAR
+    state_ : INTEGER
+BEGIN
+    CLOSE FILE sock_fd_
+    state_ = IO_STATUS(sock_fd_)
+    RETURN(state_)
+END sock_clfd
+
+
+ROUTINE sock_send
+VAR
+    state_ : INTEGER
+BEGIN
+    WRITE sock_fd_(msg)
+    state_ = IO_STATUS(sock_fd_)
+    RETURN(state_)
+END sock_send
+
+
+ROUTINE sock_recv
+VAR
+    state_    : INTEGER
+    buff_len_ : INTEGER
+BEGIN
+    -- 
+    buff_len_ = 0
+    WHILE buff_len_ = 0 DO
+        BYTES_AHEAD(sock_fd_, buff_len_, state_)
+        IF state_ <> 0 THEN
+            RETURN(state_)
+        ENDIF
+        DELAY 20
+    ENDWHILE
+
+    READ sock_fd_(msg::msg_len)
+    state_ =  IO_STATUS(sock_fd_)
+    RETURN(state_)
+END sock_recv

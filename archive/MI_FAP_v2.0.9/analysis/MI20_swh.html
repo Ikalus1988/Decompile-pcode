@@ -1,0 +1,2337 @@
+<!doctype html><meta charset=utf-8><title>SWH 螺柱焊</title>
+<style>
+body{font:14px/1.55 ui-monospace,Consolas,monospace;margin:24px auto;max-width:1100px;
+ background:#fafafa;color:#222}
+h1{font-size:20px} h2{font-size:16px;border-bottom:1px solid #ccc;padding-bottom:4px}
+.note{background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;margin:8px 0} td,th{border:1px solid #ccc;padding:3px 10px;font-size:12px}
+pre{background:#fff;border:1px solid #ddd;padding:10px;overflow:auto;font-size:12px;line-height:1.45}
+.k{color:#7a3;font-weight:600}.s{color:#c39}.c{color:#888}.n{color:#36c}
+details{margin:10px 0} summary{cursor:pointer;font-weight:600}
+</style>
+<h1>MI_FAP v2.0.9 · SWH 螺柱焊</h1>
+<div class=note><b>应用定位</b>：螺柱焊（Stud Welding）工位 1：螺柱送料/焊接、Stud 系统故障处理。【串证：Stud System is in Fault】</div>
+<p>TP 程序 4 个：BG_MI_STUD.LS, R01_SWH_XX.LS, R01_SWH_XX.TP, bg_mi_stud.tp</p>
+<h2>模块与例程</h2>
+<table><tr><th>模块</th><th>例程</th><th>SELECT</th><th>例程名</th><th>IO</th></tr><tr><td>MI20_SWH.KL</td><td>61</td><td>1</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02</td></tr><tr><td>MI20_SWH_DCP.KL</td><td>1</td><td>2</td><td>ERROR_MSG</td><td></td></tr><tr><td>MI20_SWH_GUI.KL</td><td>67</td><td>3</td><td>CLR_FSCR, KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE</td><td></td></tr><tr><td>MI20_SWH_MON.KL</td><td>6</td><td>0</td><td>MI20_SENDBSNUM, MI20_INIT, MI20_START, DCPFAULTREFRESH, ERROR_MSG, MI20_FAULTDISP</td><td>io_12</td></tr><tr><td>MI20_SWH_ROUT.KL</td><td>60</td><td>0</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02, io_12, io_13</td></tr><tr><td>MI20_SWH_VAR.KL</td><td>0</td><td>0</td><td></td><td></td></tr></table>
+<h2>调用与消息</h2>
+<table><tr><th>模块</th><th>外部调用/消息</th></tr><tr><td>MI20_SWH.KL</td><td>CNV_STR_INT, UNINIT</td></tr><tr><td>MI20_SWH.KL 消息</td><td>MI20 2.0.9 | MI20_swh_mon | Stud ID Error | Stud ID Out of range</td></tr><tr><td>MI20_SWH_DCP.KL 消息</td><td>MI20 2.0.9 | 
+  -- stmt61 stray ALMDCP_f04
+  CASE(3):
+  ALMDCP_f04 =  | 
+  -- stmt62 stray ALMDCP_f04
+  CASE(4):
+  ALMDCP_f04 =  | 
+  -- stmt63 stray ALMDCP_f04
+  CASE(5):
+  ALMDCP_f04 =  | 
+  -- stmt64 stray ALMDCP_f04
+  CASE(6):
+  ALMDCP_f04 =  | 
+  -- stmt65 stray ALMDCP_f04
+  CASE(7):
+  ALMDCP_f04 =  | 
+  -- stmt66 stray ALMDCP_f04
+  CASE(13):
+  ALMDCP_f04 =  | 
+  -- stmt67 stray ALMDCP_f04
+  CASE(14):
+  ALMDCP_f04 = </td></tr><tr><td>MI20_SWH_GUI.KL</td><td>ADD_DICT, DISCTRL_FORM, FORCE_SPMENU, GET_DEV_INFO, SET_LANG, UNINIT, WRITE_DICT</td></tr><tr><td>MI20_SWH_GUI.KL 消息</td><td>MI20 2.0.9 | *SYSTEM* | $VIRTUALEDIT | *SYSTEM* | $LANGUAGE | )) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG( | , r1_lc10)
+  -- stmt116 stray  | 
+  ELSE
+  -- stmt118 stray </td></tr><tr><td>MI20_SWH_MON.KL</td><td>UNINIT</td></tr><tr><td>MI20_SWH_MON.KL 消息</td><td>MI20 2.0.9</td></tr><tr><td>MI20_SWH_ROUT.KL</td><td>UNINIT</td></tr><tr><td>MI20_SWH_ROUT.KL 消息</td><td>MI20 2.0.9 | 
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] =  | 
+  LST_ERROR_f38[r2_lc3] =  | 
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] =  | 
+  LST_ERROR_f38[r2_lc3] =  | 
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] =  | 
+  LST_ERROR_f38[r2_lc3] =  | 
+  LST_ERROR_f10[r3_lc3] = 0
+  LST_ERROR_f14[r3_lc3] = </td></tr><tr><td>MI20_SWH_VAR.KL 消息</td><td>MI20 2.0.9</td></tr></table>
+<h2>源码（反编译 .KL）</h2>
+<details><summary>MI20_SWH.KL（61 例程）</summary><pre><span class=c>-- MI20_SWH.KL (decompiled v3)
+PROGRAM MI20_SWH
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  I_MI20_DI : INTEGER
+  I_MI20_DO : INTEGER
+  I_MI20_GI : INTEGER
+  I_MI20_GO : INTEGER
+  B_MON_20 : INTEGER
+  I_MI01_DO : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DI : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MON : INTEGER
+  R_WC_TIMEOUT : REAL
+  I_BNSTYPE : INTEGER
+  I_GUNNUM : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI20_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI20_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI20_START(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INIT : INTEGER
+BEGIN
+  IF (UNINIT(I_MI20_DI)) THEN
+  I_MI20_DI = 640
+  ENDIF
+  IF (UNINIT(I_MI20_DO)) THEN
+  I_MI20_DO = 640
+  ENDIF
+  IF (UNINIT(I_MI20_GI)) THEN
+  I_MI20_GI = 40
+  ENDIF
+  IF (UNINIT(I_MI20_GO)) THEN
+  I_MI20_GO = 40
+  ENDIF
+  RETURN(0)
+END INIT
+
+ROUTINE ACTIONSELECT : INTEGER
+VAR
+  r1_lc6 : STRING[64]
+  r1_lc7 : INTEGER
+  r1_lc8 : INTEGER
+  r1_lc9 : INTEGER
+BEGIN
+  sv_i = GETTPEPRMINT(1)
+  r1_lc7 = sv_i
+  SELECT r1_lc7 OF
+  CASE(1):
+  sv_i = BSN_ENABLE(0)
+  -- stmt83 stray sv_i
+  B_MON_20 = 1
+  io_02[I_MI20_DO + 15] = 1
+  sv_i = RUN_MONITOR(&#x27;MI20_swh_mon&#x27;)
+  CASE(2):
+  IF ((io_01[I_MI01_DO + 35] = 0)) THEN
+  sv_i = MI20_INIT(0)
+  -- stmt91 stray sv_i
+  ENDIF
+  CASE(3):
+  sv_i = GETTPEPRMINT(2)
+  r1_lc8 = sv_i
+  sv_s = GETTPEPRMSTR(3)
+  r1_lc6 = sv_s
+  CNV_STR_INT(r1_lc6, r1_lc9)
+  sv_i = ROBOTINPROC(1)
+  -- stmt99 stray sv_i
+  IF (UNINIT(r1_lc9)) THEN
+  POST_ERR(38100, &#x27;Stud ID Error&#x27;, 0, 2)
+  ELSE
+  IF ((r1_lc9 &lt; 1) OR (r1_lc9 &gt; 134217728)) THEN
+  POST_ERR(38100, &#x27;Stud ID Out of range&#x27;, 0, 2)
+  ENDIF
+  ENDIF
+  IF ((io_01[I_MI01_DO + 35] = 0)) THEN
+  sv_i = MI20_START(r1_lc8, r1_lc9)
+  -- stmt110 stray sv_i
+  ELSE
+  DELAY 3000
+  ENDIF
+  sv_i = ROBOTINPROC(2)
+  ELSE:
+  ENDSELECT
+  sv_i = INIT
+  -- stmt128 stray sv_i
+  sv_i = ACTIONSELECT
+  -- stmt130 stray sv_i
+  RETURN(0)
+END ACTIONSELECT
+
+BEGIN
+END MI20_SWH
+</span></pre></details><details><summary>MI20_SWH_DCP.KL（1 例程）</summary><pre><span class=c>-- MI20_SWH_DCP.KL (decompiled v3)
+PROGRAM MI20_SWH_DCP
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALARMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[128]
+	DCPLINE2: STRING[128]
+	DCPLINE3: STRING[128]
+	DCPLINE4: STRING[128]
+	DCPLINE5: STRING[128]
+	ENDSTRUCTURE
+VAR
+  ALMDCP : ALARMDCP
+  ALMDCP_f04 : STRING[64]
+  pp00 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING
+BEGIN
+  SELECT sv_i OF
+  CASE(2):
+  ALMDCP_f04 = &#x27;No SOW&#x27;
+  -- stmt61 stray ALMDCP_f04
+  CASE(3):
+  ALMDCP_f04 = &#x27;Weld tool not in R position&#x27;
+  -- stmt62 stray ALMDCP_f04
+  CASE(4):
+  ALMDCP_f04 = &#x27;SOW not reset&#x27;
+  -- stmt63 stray ALMDCP_f04
+  CASE(5):
+  ALMDCP_f04 = &#x27;Weld procedure sequence fault&#x27;
+  -- stmt64 stray ALMDCP_f04
+  CASE(6):
+  ALMDCP_f04 = &#x27;Program not selected&#x27;
+  -- stmt65 stray ALMDCP_f04
+  CASE(7):
+  ALMDCP_f04 = &#x27;Program not active&#x27;
+  -- stmt66 stray ALMDCP_f04
+  CASE(13):
+  ALMDCP_f04 = &#x27;SMPS: Lift fault&#x27;
+  -- stmt67 stray ALMDCP_f04
+  CASE(14):
+  ALMDCP_f04 = &#x27;Short-circuit weld&#x27;
+  -- stmt68 stray ALMDCP_f04
+  CASE(15):
+  ALMDCP_f04 = &#x27;Drop down timeout&#x27;
+  -- stmt69 stray ALMDCP_f04
+  CASE(16):
+  ALMDCP_f04 = &#x27;Open circuit, no arc&#x27;
+  -- stmt70 stray ALMDCP_f04
+  CASE(17):
+  ALMDCP_f04 = &#x27;Measurement line broken&#x27;
+  -- stmt71 stray ALMDCP_f04
+  CASE(18):
+  ALMDCP_f04 = &#x27;Maintenance user counter required&#x27;
+  -- stmt72 stray ALMDCP_f04
+  CASE(19):
+  ALMDCP_f04 = &#x27;Maintenance collet required&#x27;
+  -- stmt73 stray ALMDCP_f04
+  CASE(20):
+  ALMDCP_f04 = &#x27;Maintenance weld tool required&#x27;
+  -- stmt74 stray ALMDCP_f04
+  CASE(22):
+  ALMDCP_f04 = &#x27;Maintenance feeding tube required&#x27;
+  -- stmt75 stray ALMDCP_f04
+  CASE(23):
+  ALMDCP_f04 = &#x27;Welding gun sequence not followed&#x27;
+  -- stmt76 stray ALMDCP_f04
+  CASE(24):
+  ALMDCP_f04 = &#x27;Datum line not found&#x27;
+  -- stmt77 stray ALMDCP_f04
+  CASE(25):
+  ALMDCP_f04 = &#x27;Wrong fastener (stud) loader&#x27;
+  -- stmt78 stray ALMDCP_f04
+  CASE(26):
+  ALMDCP_f04 = &#x27;Stud divider: Fault on the slave feeder&#x27;
+  -- stmt79 stray ALMDCP_f04
+  CASE(30):
+  ALMDCP_f04 = &#x27;Weld out of tolerance&#x27;
+  -- stmt80 stray ALMDCP_f04
+  CASE(31):
+  ALMDCP_f04 = &#x27;Weld aborted due to pilot arc voltage&#x27;
+  -- stmt81 stray ALMDCP_f04
+  CASE(32):
+  ALMDCP_f04 = &#x27;SMPS: Regulation out of range&#x27;
+  -- stmt82 stray ALMDCP_f04
+  CASE(33):
+  ALMDCP_f04 = &#x27;Common measurement line broken&#x27;
+  -- stmt83 stray ALMDCP_f04
+  CASE(34):
+  ALMDCP_f04 = &#x27;Safety circuit fault&#x27;
+  -- stmt84 stray ALMDCP_f04
+  CASE(35):
+  ALMDCP_f04 = &#x27;System configuration fault&#x27;
+  CASE(38):
+  ALMDCP_f04 = &#x27;Fiber optic connection feeder&#x27;
+  CASE(39):
+  ALMDCP_f04 = &#x27;Fiber optic connection customer interface&#x27;
+  CASE(40):
+  ALMDCP_f04 = &#x27;Fiber optic connection SMPS&#x27;
+  CASE(41):
+  ALMDCP_f04 = &#x27;SMPS: Weld program parameters invalid&#x27;
+  CASE(42):
+  ALMDCP_f04 = &#x27; Feeder: Safety relays still under power&#x27;
+  CASE(44):
+  ALMDCP_f04 = &#x27;Conditions for partial operation stop are not met&#x27;
+  CASE(45):
+  ALMDCP_f04 = &#x27;Start weld cycle not reset&#x27;
+  CASE(46):
+  ALMDCP_f04 = &#x27;No stud loaded&#x27;
+  CASE(47):
+  ALMDCP_f04 = &#x27;Test mode conditions not met&#x27;
+  CASE(48):
+  ALMDCP_f04 = &#x27;LMR: No release of movement&#x27;
+  CASE(49):
+  ALMDCP_f04 = &#x27;Feeder: Not in automatic mode&#x27;
+  CASE(50):
+  ALMDCP_f04 = &#x27;System configuration fault&#x27;
+  CASE(51):
+  ALMDCP_f04 = &#x27;Weld start during test mode&#x27;
+  CASE(52):
+  ALMDCP_f04 = &#x27;Feeder: Unknown weld tool&#x27;
+  CASE(53):
+  ALMDCP_f04 = &#x27;Feeder: Initialization weld tool&#x27;
+  CASE(54):
+  ALMDCP_f04 = &#x27;Feeder: Configuration fault program select switch / stud arrival sensor&#x27;
+  CASE(55):
+  ALMDCP_f04 = &#x27;ZCPU: Gripper function and stud feeding activated&#x27;
+  CASE(56):
+  ALMDCP_f04 = &#x27;ZCPU: No value for lift height/penetration due to operator protection during welding&#x27;
+  CASE(57):
+  ALMDCP_f04 = &#x27;Feeder: Lift fault&#x27;
+  CASE(58):
+  ALMDCP_f04 = &#x27;ZCPU: Start signal invalid during current operation mode&#x27;
+  CASE(59):
+  ALMDCP_f04 = &#x27;Weld Tool: Stud stickout not sufficient&#x27;
+  CASE(60):
+  ALMDCP_f04 = &#x27;CCPU: Memory capacity RAM module not sufficient&#x27;
+  CASE(61):
+  ALMDCP_f04 = &#x27;CCPU: RAM module memory defective&#x27;
+  CASE(62):
+  ALMDCP_f04 = &#x27;CCPU: RAM module is missing or defective&#x27;
+  CASE(63):
+  ALMDCP_f04 = &#x27;SMPS: Fault during start-up of software &#x27;
+  CASE(64):
+  ALMDCP_f04 = &#x27;CCPU: RAM module is incorrect initialized&#x27;
+  CASE(68):
+  ALMDCP_f04 = &#x27;Maintenance counter feedings cleared&#x27;
+  CASE(69):
+  ALMDCP_f04 = &#x27;CCPU: RAM module cleared&#x27;
+  CASE(70):
+  ALMDCP_f04 = &#x27;Maintenance counter collet cleared&#x27;
+  CASE(71):
+  ALMDCP_f04 = &#x27;Statistics cleared&#x27;
+  CASE(72):
+  ALMDCP_f04 = &#x27;Fault memory cleared&#x27;
+  CASE(73):
+  ALMDCP_f04 = &#x27;WOP memory cleared&#x27;
+  CASE(74):
+  ALMDCP_f04 = &#x27;Maintenance counter feeding tube cleared&#x27;
+  CASE(75):
+  ALMDCP_f04 = &#x27;Maintenance counter weld tool cleared&#x27;
+  CASE(76):
+  ALMDCP_f04 = &#x27;Maintenance counter user cleared&#x27;
+  CASE(78):
+  ALMDCP_f04 = &#x27;Keyreader - User Data Deleted&#x27;
+  CASE(79):
+  ALMDCP_f04 = &#x27;Keyreader - Reasons for changing texts deleted&#x27;
+  CASE(100):
+  ALMDCP_f04 = &#x27;Feeder: Auxiliary supply without power&#x27;
+  CASE(102):
+  ALMDCP_f04 = &#x27;Feeder: Fault during stud separation&#x27;
+  CASE(103):
+  ALMDCP_f04 = &#x27;Feeder: Air pressure not sufficient&#x27;
+  CASE(106):
+  ALMDCP_f04 = &#x27;Feeder: Feeding tube locking&#x27;
+  CASE(109):
+  ALMDCP_f04 = &#x27;Feeder: Timeout feeding tube&#x27;
+  CASE(110):
+  ALMDCP_f04 = &#x27;Weld Tool: Gripper not closed&#x27;
+  CASE(111):
+  ALMDCP_f04 = &#x27;Weld Tool: Gripper will not open&#x27;
+  CASE(112):
+  ALMDCP_f04 = &#x27;Feeder: Pressure monitor protective gas&#x27;
+  CASE(117):
+  ALMDCP_f04 = &#x27;Feeder: Communication with LM controller disturbed&#x27;
+  CASE(118):
+  ALMDCP_f04 = &#x27;Feeder: +5V voltage control panel not available&#x27;
+  CASE(119):
+  ALMDCP_f04 = &#x27;Feeder: LM/Solenoid undervoltage&#x27;
+  CASE(120):
+  ALMDCP_f04 = &#x27;CCPU: Programmed stud assignment not correct&#x27;
+  CASE(121):
+  ALMDCP_f04 = &#x27;Feeder: LM/Solenoid overvoltage&#x27;
+  CASE(122):
+  ALMDCP_f04 = &#x27;Feeder: Weld tool has not been detected in a correct manner&#x27;
+  CASE(123):
+  ALMDCP_f04 = &#x27;Feeder: Overload LM/Solenoid controller&#x27;
+  CASE(124):
+  ALMDCP_f04 = &#x27;Feeder: Amplifier ground fault&#x27;
+  CASE(125):
+  ALMDCP_f04 = &#x27;Feeder: LM controller distance measurement not detected&#x27;
+  CASE(126):
+  ALMDCP_f04 = &#x27;Feeder: Insufficient room for lift&#x27;
+  CASE(127):
+  ALMDCP_f04 = &#x27;Feeder: Timeout lift movement&#x27;
+  CASE(128):
+  ALMDCP_f04 = &#x27;Feeder: LM controller over temperature&#x27;
+  CASE(129):
+  ALMDCP_f04 = &#x27;Weld Tool: LMR collective fault&#x27;
+  CASE(130):
+  ALMDCP_f04 = &#x27;Feeder: No valid software in LM controller&#x27;
+  CASE(131):
+  ALMDCP_f04 = &#x27;Feeder: No valid software in feeder control board&#x27;
+  CASE(142):
+  ALMDCP_f04 = &#x27;CCPU: Stud divider position not reached&#x27;
+  CASE(144):
+  ALMDCP_f04 = &#x27;Feeder: LM system fault&#x27;
+  CASE(145):
+  ALMDCP_f04 = &#x27;Feeder: LM not ready&#x27;
+  CASE(147):
+  ALMDCP_f04 = &#x27;Feeder: LM controller amplifier not detected&#x27;
+  CASE(150):
+  ALMDCP_f04 = &#x27;Feeder: 5V control voltage LM controller not available&#x27;
+  CASE(151):
+  ALMDCP_f04 = &#x27;Feeder: 24V internal control voltage not available&#x27;
+  CASE(152):
+  ALMDCP_f04 = &#x27;Feeder: 24V external control voltage not available&#x27;
+  CASE(153):
+  ALMDCP_f04 = &#x27;Feeder: 24V internal control voltage relay not available&#x27;
+  CASE(154):
+  ALMDCP_f04 = &#x27;Feeder: 24V external control voltage relay not available&#x27;
+  CASE(155):
+  ALMDCP_f04 = &#x27;Feeder: 15V control panel supply voltage not available&#x27;
+  CASE(156):
+  ALMDCP_f04 = &#x27;Feeder: +15V LM controller control voltage not available&#x27;
+  CASE(157):
+  ALMDCP_f04 = &#x27;Feeder: -15V LM controller control voltage not available&#x27;
+  CASE(159):
+  ALMDCP_f04 = &#x27;Feeder: Stud stickout not sufficient&#x27;
+  CASE(160):
+  ALMDCP_f04 = &#x27;Feeder: Color marking not possible&#x27;
+  CASE(161):
+  ALMDCP_f04 = &#x27;Feeder: Fastener not supplied&#x27;
+  CASE(162):
+  ALMDCP_f04 = &#x27;Feeder: Fastener not removed&#x27;
+  CASE(165):
+  ALMDCP_f04 = &#x27;Feeder: Invalid software&#x27;
+  CASE(167):
+  ALMDCP_f04 = &#x27;Feeder: 5V supply voltage distance measurement missing&#x27;
+  CASE(168):
+  ALMDCP_f04 = &#x27;LMR: Angle position not achieved&#x27;
+  CASE(169):
+  ALMDCP_f04 = &#x27;LMR: Not in pickup position&#x27;
+  CASE(170):
+  ALMDCP_f04 = &#x27;LMR: Not ready for rotation&#x27;
+  CASE(171):
+  ALMDCP_f04 = &#x27;Feeder: Invalid weld tool&#x27;
+  CASE(172):
+  ALMDCP_f04 = &#x27;Feeder: Unknown LMR type&#x27;
+  CASE(173):
+  ALMDCP_f04 = &#x27;LMR: Stud not fetched&#x27;
+  CASE(174):
+  ALMDCP_f04 = &#x27;LMR: No stud in pickup station &#x27;
+  CASE(175):
+  ALMDCP_f04 = &#x27;LMR: Initialization fault&#x27;
+  CASE(176):
+  ALMDCP_f04 = &#x27;LMR: Fault during rotation into welding position&#x27;
+  CASE(177):
+  ALMDCP_f04 = &#x27;LMR: Fault during rotation into pickup position&#x27;
+  CASE(178):
+  ALMDCP_f04 = &#x27;LMR: Referencing fault&#x27;
+  CASE(179):
+  ALMDCP_f04 = &#x27;LMR: Gripper teaching fault&#x27;
+  CASE(181):
+  ALMDCP_f04 = &#x27;LMR: Fault during rotation into angle position&#x27;
+  CASE(182):
+  ALMDCP_f04 = &#x27;LMR: Fault during saving of pickup position&#x27;
+  CASE(183):
+  ALMDCP_f04 = &#x27;LMR: Fault during saving of mechanical adjust position&#x27;
+  CASE(184):
+  ALMDCP_f04 = &#x27;Feeder: CAN bus initialization fault&#x27;
+  CASE(185):
+  ALMDCP_f04 = &#x27;LMR: LM rear position not reached&#x27;
+  CASE(187):
+  ALMDCP_f04 = &#x27;LMR: Faulty position stabilizer&#x27;
+  CASE(188):
+  ALMDCP_f04 = &#x27;LMR: Gripper not opened&#x27;
+  CASE(189):
+  ALMDCP_f04 = &#x27;LMR: Rotation without stud not allowed&#x27;
+  CASE(190):
+  ALMDCP_f04 = &#x27;Customer Interface: Start signal for dummy weld head&#x27;
+  CASE(191):
+  ALMDCP_f04 = &#x27;Customer Interface: Start feeding for inactive outlet 1&#x27;
+  CASE(192):
+  ALMDCP_f04 = &#x27;Customer Interface: Start feeding for inactive outlet 2&#x27;
+  CASE(193):
+  ALMDCP_f04 = &#x27;Customer Interface: Start feeding for inactive outlet 3&#x27;
+  CASE(194):
+  ALMDCP_f04 = &#x27;Customer Interface: Start feeding for inactive outlet 4&#x27;
+  CASE(195):
+  ALMDCP_f04 = &#x27;Customer Interface: Start feeding for inactive outlet 5&#x27;
+  CASE(196):
+  ALMDCP_f04 = &#x27;Customer Interface: Start weld cycle for inactive outlet 1&#x27;
+  CASE(197):
+  ALMDCP_f04 = &#x27;Customer Interface: Start weld cycle for inactive outlet 2&#x27;
+  CASE(198):
+  ALMDCP_f04 = &#x27;Customer Interface: Start weld cycle for inactive outlet 3&#x27;
+  CASE(199):
+  ALMDCP_f04 = &#x27;Customer Interface: Start weld cycle for inactive outlet 4&#x27;
+  CASE(200):
+  ALMDCP_f04 = &#x27;Customer Interface: Start weld cycle for inactive outlet 5&#x27;
+  CASE(202):
+  ALMDCP_f04 = &#x27;SMPS: Temperature too high&#x27;
+  CASE(204):
+  ALMDCP_f04 = &#x27;SMPS: Hardware fault&#x27;
+  CASE(208):
+  ALMDCP_f04 = &#x27;PKZ: Work piece missing&#x27;
+  CASE(209):
+  ALMDCP_f04 = &#x27;PKZ: Counter achieved&#x27;
+  CASE(210):
+  ALMDCP_f04 = &#x27;PKZ: Type selection work piece missing&#x27;
+  CASE(211):
+  ALMDCP_f04 = &#x27;Abort through &quot;force WC&quot; signal&#x27;
+  CASE(212):
+  ALMDCP_f04 = &#x27;MAC box: Current Controller Fault&#x27;
+  CASE(213):
+  ALMDCP_f04 = &#x27;MAC box: Maximum current reached&#x27;
+  CASE(214):
+  ALMDCP_f04 = &#x27;MAC-Box: fuse power section fault&#x27;
+  CASE(215):
+  ALMDCP_f04 = &#x27;MAC-Box: no connection to the coil&#x27;
+  CASE(300):
+  ALMDCP_f04 = &#x27;LMR: Overload rotation motor&#x27;
+  CASE(301):
+  ALMDCP_f04 = &#x27;LMR: Overvoltage rotation motor&#x27;
+  CASE(302):
+  ALMDCP_f04 = &#x27;LMR: Controller rotation motor over temperature&#x27;
+  CASE(303):
+  ALMDCP_f04 = &#x27;LMR: Maximum output power controller rotation motor achieved&#x27;
+  CASE(304):
+  ALMDCP_f04 = &#x27;LMR: Undervoltage rotation motor&#x27;
+  CASE(305):
+  ALMDCP_f04 = &#x27;LMR: Motor phases not or incorrect connected&#x27;
+  CASE(306):
+  ALMDCP_f04 = &#x27;LMR: Control board memory data invalid&#x27;
+  CASE(307):
+  ALMDCP_f04 = &#x27;LMR: Overload digital output&#x27;
+  CASE(308):
+  ALMDCP_f04 = &#x27;LMR: Processor of controller rotation motor overloaded&#x27;
+  CASE(309):
+  ALMDCP_f04 = &#x27;LMR: Maximum speed of rotation motor exceeded&#x27;
+  CASE(310):
+  ALMDCP_f04 = &#x27;LMR: Position registration of rotation disturbed&#x27;
+  CASE(311):
+  ALMDCP_f04 = &#x27;LMR: Position fault during rotation&#x27;
+  CASE(312):
+  ALMDCP_f04 = &#x27;Fiber optic connection between SD10 master and slave disturbed&#x27;
+  CASE(314):
+  ALMDCP_f04 = &#x27;LMR: 24V external control voltage relay not available&#x27;
+  CASE(315):
+  ALMDCP_f04 = &#x27;LMR: Reference position not found&#x27;
+  CASE(316):
+  ALMDCP_f04 = &#x27;LMR: Angle position not reached&#x27;
+  CASE(317):
+  ALMDCP_f04 = &#x27;LMR: Angle position not allowed&#x27;
+  CASE(318):
+  ALMDCP_f04 = &#x27;Timeout transfer LM program to feeder&#x27;
+  CASE(319):
+  ALMDCP_f04 = &#x27;Timeout transfer weld cycle to customer interface&#x27;
+  CASE(320):
+  ALMDCP_f04 = &#x27;Timeout transfer weld program to SMPS&#x27;
+  CASE(321):
+  ALMDCP_f04 = &#x27;Timeout transfer start weld cycle&#x27;
+  CASE(322):
+  ALMDCP_f04 = &#x27;Timeout stop feeder communication&#x27;
+  CASE(323):
+  ALMDCP_f04 = &#x27;Timeout transfer bus master to SMPS&#x27;
+  CASE(324):
+  ALMDCP_f04 = &#x27;Timeout takeover bus master from SMPS&#x27;
+  CASE(325):
+  ALMDCP_f04 = &#x27;Timeout robot retreating to weld position&#x27;
+  CASE(326):
+  ALMDCP_f04 = &#x27;Timeout transfer lift data from feeder&#x27;
+  CASE(327):
+  ALMDCP_f04 = &#x27;Timeout transfer weld measuring data from SMPS&#x27;
+  CASE(330):
+  ALMDCP_f04 = &#x27;Timeout LM of the LMR weldhead in rear postion&#x27;
+  CASE(331):
+  ALMDCP_f04 = &#x27;Timeout execution function &quot;auto teach&quot;&#x27;
+  CASE(332):
+  ALMDCP_f04 = &#x27;Timeout execution function &quot;auto teach LMR&quot;&#x27;
+  CASE(343):
+  ALMDCP_f04 = &#x27;LMR: Deviation from absolute position&#x27;
+  CASE(345):
+  ALMDCP_f04 = &#x27;Continuing weld cycle after operation stop/operator protection not possible&#x27;
+  CASE(346):
+  ALMDCP_f04 = &#x27;LMR: Wrong stud length&#x27;
+  CASE(347):
+  ALMDCP_f04 = &#x27;LMR: Wrong stud diameter&#x27;
+  CASE(348):
+  ALMDCP_f04 = &#x27;LMR: Fault weld post-processing&#x27;
+  CASE(349):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 1 loading pin not in rear position&#x27;
+  CASE(350):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 1 loading pin not in front position&#x27;
+  CASE(351):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 1 rotation segment not in feeding position&#x27;
+  CASE(352):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 1 rotation segment not in loading position&#x27;
+  CASE(353):
+  ALMDCP_f04 = &#x27;LMR: Angle position not allowed&#x27;
+  CASE(354):
+  ALMDCP_f04 = &#x27;LMR: Fault during start-up of software of LMR control board&#x27;
+  CASE(355):
+  ALMDCP_f04 = &#x27;LMR: Communication with LMR control board disturbed&#x27;
+  CASE(356):
+  ALMDCP_f04 = &#x27;LMR: Current coupling not open&#x27;
+  CASE(357):
+  ALMDCP_f04 = &#x27;LMR: Current coupling not closed&#x27;
+  CASE(358):
+  ALMDCP_f04 = &#x27;Feeder: Separation fault - stud has not left feeder&#x27;
+  CASE(359):
+  ALMDCP_f04 = &#x27;Feeder: Feeding fault - stud is still located in tube&#x27;
+  CASE(360):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 2 loading pin not in rear position&#x27;
+  CASE(361):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 2 loading pin not in front position&#x27;
+  CASE(362):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 2 rotation segment not in feeding position&#x27;
+  CASE(363):
+  ALMDCP_f04 = &#x27;LMR: Pickup station 2 rotation segment not in loading position&#x27;
+  CASE(364):
+  ALMDCP_f04 = &#x27;Weld tool: Maximum speed LM exceeded&#x27;
+  CASE(365):
+  ALMDCP_f04 = &#x27;Feeder: Processor of LM controller overloaded&#x27;
+  CASE(366):
+  ALMDCP_f04 = &#x27;Fault distance measurement cable package&#x27;
+  CASE(367):
+  ALMDCP_f04 = &#x27;LMR: Rotation release withdrawn during movement&#x27;
+  CASE(368):
+  ALMDCP_f04 = &#x27;Feeder: Filling flap not locked&#x27;
+  CASE(369):
+  ALMDCP_f04 = &#x27;Feeder: Rail not filled, stud filling level too low&#x27;
+  CASE(386):
+  ALMDCP_f04 = &#x27;Feeder: Observance active loading pin - air pressure out of range&#x27;
+  CASE(387):
+  ALMDCP_f04 = &#x27;Feeder: Observance protective gas - out of range&#x27;
+  CASE(388):
+  ALMDCP_f04 = &#x27;LMR: Magazine block cylinder does not reach home position&#x27;
+  CASE(389):
+  ALMDCP_f04 = &#x27;LMR: Magazine block cylinder does not reach operating position&#x27;
+  CASE(390):
+  ALMDCP_f04 = &#x27;LMR: Rotation magazine does not move&#x27;
+  CASE(391):
+  ALMDCP_f04 = &#x27;LMR: Rotation magazine position not found&#x27;
+  CASE(392):
+  ALMDCP_f04 = &#x27;LMR: Standard stud not recognized&#x27;
+  CASE(393):
+  ALMDCP_f04 = &#x27;Feeder: Horizontal cylinder does not reach home position&#x27;
+  CASE(394):
+  ALMDCP_f04 = &#x27;Feeder: Horizontal cylinder does not reach operating position&#x27;
+  CASE(395):
+  ALMDCP_f04 = &#x27;LMR: Rotation magazine empty&#x27;
+  CASE(396):
+  ALMDCP_f04 = &#x27;LMR: No fastener in loading position of the rotation magazine&#x27;
+  CASE(397):
+  ALMDCP_f04 = &#x27;Feeder: Vertical cylinder does not reach home position&#x27;
+  CASE(398):
+  ALMDCP_f04 = &#x27;Feeder: Vertical cylinder does not reach the operating position&#x27;
+  CASE(399):
+  ALMDCP_f04 = &#x27;Feeder: Setting piston does not reach front position&#x27;
+  CASE(400):
+  ALMDCP_f04 = &#x27;Feeder: Setting piston does not reach rear position&#x27;
+  CASE(401):
+  ALMDCP_f04 = &#x27;Feeder: Fault separation motor setting piston&#x27;
+  CASE(404):
+  ALMDCP_f04 = &#x27;Weld tool: Fastener could not be deposited in rotation magazine&#x27;
+  CASE(413):
+  ALMDCP_f04 = &#x27;Feeder: No fastener in fetch position feeding rail&#x27;
+  CASE(420):
+  ALMDCP_f04 = &#x27;Ouput signals of customer interface changed via control panel&#x27;
+  CASE(500):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Air pressure too low&#x27;
+  CASE(501):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Air pressure too low&#x27;
+  CASE(502):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Air pressure too low&#x27;
+  CASE(503):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Air pressure too low&#x27;
+  CASE(504):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Air pressure too low&#x27;
+  CASE(505):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Air pressure too low&#x27;
+  CASE(506):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Air pressure too low&#x27;
+  CASE(507):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Air pressure too low&#x27;
+  CASE(508):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Air pressure too low&#x27;
+  CASE(509):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Feeding tube locking pickup station&#x27;
+  CASE(510):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Feeding tube locking pickup station&#x27;
+  CASE(511):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Feeding tube locking pickup station&#x27;
+  CASE(512):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Feeding tube locking pickup station&#x27;
+  CASE(513):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Feeding tube locking pickup station&#x27;
+  CASE(514):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Feeding tube locking pickup station&#x27;
+  CASE(515):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Feeding tube locking pickup station&#x27;
+  CASE(516):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Feeding tube locking pickup station&#x27;
+  CASE(517):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Feeding tube locking pickup station&#x27;
+  CASE(518):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Fault during stud separation&#x27;
+  CASE(519):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Fault during stud separation&#x27;
+  CASE(520):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Fault during stud separation&#x27;
+  CASE(521):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Fault during stud separation&#x27;
+  CASE(522):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Fault during stud separation&#x27;
+  CASE(523):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Fault during stud separation&#x27;
+  CASE(524):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Fault during stud separation&#x27;
+  CASE(525):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Fault during stud separation&#x27;
+  CASE(526):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Fault during stud separation&#x27;
+  CASE(527):
+  ALMDCP_f04 = &#x27;Feeder slave 1: 24V internal control voltage not available&#x27;
+  CASE(528):
+  ALMDCP_f04 = &#x27;Feeder slave 2: 24V internal control voltage not available&#x27;
+  CASE(529):
+  ALMDCP_f04 = &#x27;Feeder slave 3: 24V internal control voltage not available&#x27;
+  CASE(530):
+  ALMDCP_f04 = &#x27;Feeder slave 4: 24V internal control voltage not available&#x27;
+  CASE(531):
+  ALMDCP_f04 = &#x27;Feeder slave 5: 24V internal control voltage not available&#x27;
+  CASE(532):
+  ALMDCP_f04 = &#x27;Feeder slave 6: 24V internal control voltage not available&#x27;
+  CASE(533):
+  ALMDCP_f04 = &#x27;Feeder slave 7: 24V internal control voltage not available&#x27;
+  CASE(534):
+  ALMDCP_f04 = &#x27;Feeder slave 8: 24V internal control voltage not available&#x27;
+  CASE(535):
+  ALMDCP_f04 = &#x27;Feeder slave 9: 24V internal control voltage not available&#x27;
+  CASE(536):
+  ALMDCP_f04 = &#x27;Feeder slave 1: 24V external control voltage not available&#x27;
+  CASE(537):
+  ALMDCP_f04 = &#x27;Feeder slave 2: 24V external control voltage not available&#x27;
+  CASE(538):
+  ALMDCP_f04 = &#x27;Feeder slave 3: 24V external control voltage not available&#x27;
+  CASE(539):
+  ALMDCP_f04 = &#x27;Feeder slave 4: 24V external control voltage not available&#x27;
+  CASE(540):
+  ALMDCP_f04 = &#x27;Feeder slave 5: 24V external control voltage not available&#x27;
+  CASE(541):
+  ALMDCP_f04 = &#x27;Feeder slave 6: 24V external control voltage not available&#x27;
+  CASE(542):
+  ALMDCP_f04 = &#x27;Feeder slave 7: 24V external control voltage not available&#x27;
+  CASE(543):
+  ALMDCP_f04 = &#x27;Feeder slave 8: 24V external control voltage not available&#x27;
+  CASE(544):
+  ALMDCP_f04 = &#x27;Feeder slave 9: 24V external control voltage not available&#x27;
+  CASE(545):
+  ALMDCP_f04 = &#x27;Feeder slave 1: 24V internal control voltage relay not available&#x27;
+  CASE(546):
+  ALMDCP_f04 = &#x27;Feeder slave 2: 24V internal control voltage relay not available&#x27;
+  CASE(547):
+  ALMDCP_f04 = &#x27;Feeder slave 3: 24V internal control voltage relay not available&#x27;
+  CASE(548):
+  ALMDCP_f04 = &#x27;Feeder slave 4: 24V internal control voltage relay not available&#x27;
+  CASE(549):
+  ALMDCP_f04 = &#x27;Feeder slave 5: 24V internal control voltage relay not available&#x27;
+  CASE(550):
+  ALMDCP_f04 = &#x27;Feeder slave 6: 24V internal control voltage relay not available&#x27;
+  CASE(551):
+  ALMDCP_f04 = &#x27;Feeder slave 7: 24V internal control voltage relay not available&#x27;
+  CASE(552):
+  ALMDCP_f04 = &#x27;Feeder slave 8: 24V internal control voltage relay not available&#x27;
+  CASE(553):
+  ALMDCP_f04 = &#x27;Feeder slave 9: 24V internal control voltage relay not available&#x27;
+  CASE(554):
+  ALMDCP_f04 = &#x27;Feeder slave 1: 24V external control voltage relay not available&#x27;
+  CASE(555):
+  ALMDCP_f04 = &#x27;Feeder slave 2: 24V external control voltage relay not available&#x27;
+  CASE(556):
+  ALMDCP_f04 = &#x27;Feeder slave 3: 24V external control voltage relay not available&#x27;
+  CASE(557):
+  ALMDCP_f04 = &#x27;Feeder slave 4: 24V external control voltage relay not available&#x27;
+  CASE(558):
+  ALMDCP_f04 = &#x27;Feeder slave 5: 24V external control voltage relay not available&#x27;
+  CASE(559):
+  ALMDCP_f04 = &#x27;Feeder slave 6: 24V external control voltage relay not available&#x27;
+  CASE(560):
+  ALMDCP_f04 = &#x27;Feeder slave 7: 24V external control voltage relay not available&#x27;
+  CASE(561):
+  ALMDCP_f04 = &#x27;Feeder slave 8: 24V external control voltage relay not available&#x27;
+  CASE(562):
+  ALMDCP_f04 = &#x27;Feeder slave 9: 24V external control voltage relay not available&#x27;
+  CASE(563):
+  ALMDCP_f04 = &#x27;Feeder slave 1: 15V control panel supply voltage not available&quot;Air&quot;&#x27;
+  CASE(564):
+  ALMDCP_f04 = &#x27;Feeder slave 2: 15V control panel supply voltage not available&#x27;
+  CASE(565):
+  ALMDCP_f04 = &#x27;Feeder slave 3: 15V control panel supply voltage not available&#x27;
+  CASE(566):
+  ALMDCP_f04 = &#x27;Feeder slave 4: 15V control panel supply voltage not available&#x27;
+  CASE(567):
+  ALMDCP_f04 = &#x27;Feeder slave 5: 15V control panel supply voltage not available&#x27;
+  CASE(568):
+  ALMDCP_f04 = &#x27;Feeder slave 6: 15V control panel supply voltage not available&#x27;
+  CASE(569):
+  ALMDCP_f04 = &#x27;Feeder slave 7: 15V control panel supply voltage not available&#x27;
+  CASE(570):
+  ALMDCP_f04 = &#x27;Feeder slave 8: 15V control panel supply voltage not available&#x27;
+  CASE(571):
+  ALMDCP_f04 = &#x27;Feeder slave 9: 15V control panel supply voltage not available&#x27;
+  CASE(572):
+  ALMDCP_f04 = &#x27;Feeder slave 1: +5V voltage control panel not available&#x27;
+  CASE(573):
+  ALMDCP_f04 = &#x27;Feeder slave 2: +5V voltage control panel not available&#x27;
+  CASE(574):
+  ALMDCP_f04 = &#x27;Feeder slave 3: +5V voltage control panel not available&#x27;
+  CASE(575):
+  ALMDCP_f04 = &#x27;Feeder slave 4: +5V voltage control panel not available&#x27;
+  CASE(576):
+  ALMDCP_f04 = &#x27;Feeder slave 5: +5V voltage control panel not available&#x27;
+  CASE(577):
+  ALMDCP_f04 = &#x27;Feeder slave 6: +5V voltage control panel not available&#x27;
+  CASE(578):
+  ALMDCP_f04 = &#x27;Feeder slave 7: +5V voltage control panel not available&#x27;
+  CASE(579):
+  ALMDCP_f04 = &#x27;Feeder slave 8: +5V voltage control panel not available&#x27;
+  CASE(580):
+  ALMDCP_f04 = &#x27;Feeder slave 9: +5V voltage control panel not availablet&#x27;
+  CASE(581):
+  ALMDCP_f04 = &#x27;Feeder slave 1: No valid software in feeder control board&#x27;
+  CASE(582):
+  ALMDCP_f04 = &#x27;Feeder slave 2: No valid software in feeder control board&#x27;
+  CASE(583):
+  ALMDCP_f04 = &#x27;Feeder slave 3: No valid software in feeder control board&#x27;
+  CASE(584):
+  ALMDCP_f04 = &#x27;Feeder slave 4: No valid software in feeder control board&#x27;
+  CASE(585):
+  ALMDCP_f04 = &#x27;Feeder slave 5: No valid software in feeder control board&#x27;
+  CASE(586):
+  ALMDCP_f04 = &#x27;Feeder slave 6: No valid software in feeder control board&#x27;
+  CASE(587):
+  ALMDCP_f04 = &#x27;Feeder slave 7: No valid software in feeder control board&#x27;
+  CASE(588):
+  ALMDCP_f04 = &#x27;Feeder slave 8: No valid software in feeder control board&#x27;
+  CASE(589):
+  ALMDCP_f04 = &#x27;Feeder slave 9: No valid software in feeder control board&#x27;
+  CASE(590):
+  ALMDCP_f04 = &#x27;Feeder slave 1: No stud in pickup station&#x27;
+  CASE(591):
+  ALMDCP_f04 = &#x27;Feeder slave 2: No stud in pickup station&#x27;
+  CASE(592):
+  ALMDCP_f04 = &#x27;Feeder slave 3: No stud in pickup station&#x27;
+  CASE(593):
+  ALMDCP_f04 = &#x27;Feeder slave 4: No stud in pickup station&#x27;
+  CASE(594):
+  ALMDCP_f04 = &#x27;Feeder slave 5: No stud in pickup station&#x27;
+  CASE(595):
+  ALMDCP_f04 = &#x27;Feeder slave 6: No stud in pickup station&#x27;
+  CASE(596):
+  ALMDCP_f04 = &#x27;Feeder slave 7: No stud in pickup station&#x27;
+  CASE(597):
+  ALMDCP_f04 = &#x27;Feeder slave 8: No stud in pickup station&#x27;
+  CASE(598):
+  ALMDCP_f04 = &#x27;Feeder slave 9: No stud in pickup station&#x27;
+  CASE(599):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Pickup station loading pin not in rear position&#x27;
+  CASE(600):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Pickup station loading pin not in rear position&#x27;
+  CASE(601):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Pickup station loading pin not in rear position&#x27;
+  CASE(602):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Pickup station loading pin not in rear position&#x27;
+  CASE(603):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Pickup station loading pin not in rear position&#x27;
+  CASE(604):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Pickup station loading pin not in rear position&#x27;
+  CASE(605):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Pickup station loading pin not in rear position&#x27;
+  CASE(606):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Pickup station loading pin not in rear position&#x27;
+  CASE(607):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Pickup station loading pin not in rear position&#x27;
+  CASE(608):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Pickup station loading pin not in front position&#x27;
+  CASE(609):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Pickup station loading pin not in front position&#x27;
+  CASE(610):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Pickup station loading pin not in front position&#x27;
+  CASE(611):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Pickup station loading pin not in front position&#x27;
+  CASE(612):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Pickup station loading pin not in front position&#x27;
+  CASE(613):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Pickup station loading pin not in front position&#x27;
+  CASE(614):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Pickup station loading pin not in front position&#x27;
+  CASE(615):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Pickup station loading pin not in front position&#x27;
+  CASE(616):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Pickup station loading pin not in front position&#x27;
+  CASE(617):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Pickup station rotation segment not in feeding position&#x27;
+  CASE(618):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Pickup station rotation segment not in feeding position&#x27;
+  CASE(619):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Pickup station rotation segment not in feeding position&#x27;
+  CASE(620):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Pickup station rotation segment not in feeding position&#x27;
+  CASE(621):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Pickup station rotation segment not in feeding position&#x27;
+  CASE(622):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Pickup station rotation segment not in feeding position&#x27;
+  CASE(623):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Pickup station rotation segment not in feeding position&#x27;
+  CASE(624):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Pickup station rotation segment not in feeding position&#x27;
+  CASE(625):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Pickup station rotation segment not in feeding position&#x27;
+  CASE(626):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Pickup station rotation segment not in loading position&#x27;
+  CASE(627):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Pickup station rotation segment not in loading position&#x27;
+  CASE(628):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Pickup station rotation segment not in loading position&#x27;
+  CASE(629):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Pickup station rotation segment not in loading position&#x27;
+  CASE(630):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Pickup station rotation segment not in loading position&#x27;
+  CASE(631):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Pickup station rotation segment not in loading position&#x27;
+  CASE(632):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Pickup station rotation segment not in loading position&#x27;
+  CASE(633):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Pickup station rotation segment not in loading position&#x27;
+  CASE(634):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Pickup station rotation segment not in loading position&#x27;
+  CASE(635):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Fiber optic connection to next slave feeder&#x27;
+  CASE(636):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Fiber optic connection to next slave feeder&#x27;
+  CASE(637):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Fiber optic connection to next slave feeder&#x27;
+  CASE(638):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Fiber optic connection to next slave feeder&#x27;
+  CASE(639):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Fiber optic connection to next slave feeder&#x27;
+  CASE(640):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Fiber optic connection to next slave feeder&#x27;
+  CASE(641):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Fiber optic connection to next slave feeder&#x27;
+  CASE(642):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Fiber optic connection to next slave feeder&#x27;
+  CASE(643):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Fiber optic connection to next slave feeder&#x27;
+  CASE(644):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Multiple use slave address&#x27;
+  CASE(645):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Multiple use slave address&#x27;
+  CASE(646):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Multiple use slave address&#x27;
+  CASE(647):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Multiple use slave address&#x27;
+  CASE(648):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Multiple use slave address&#x27;
+  CASE(649):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Multiple use slave address&#x27;
+  CASE(650):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Multiple use slave address&#x27;
+  CASE(651):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Multiple use slave address&#x27;
+  CASE(652):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Multiple use slave address&#x27;
+  CASE(653):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Separation fault - stud has not left feeder&#x27;
+  CASE(654):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Separation fault - stud has not left feeder&#x27;
+  CASE(655):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Separation fault - stud has not left feeder&#x27;
+  CASE(656):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Separation fault - stud has not left feeder&#x27;
+  CASE(657):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Separation fault - stud has not left feeder&#x27;
+  CASE(658):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Separation fault - stud has not left feeder&#x27;
+  CASE(659):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Separation fault - stud has not left feeder&#x27;
+  CASE(660):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Separation fault - stud has not left feeder&#x27;
+  CASE(661):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Separation fault - stud has not left feeder&#x27;
+  CASE(662):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Feeding fault - stud is still located in tube&#x27;
+  CASE(663):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Feeding fault - stud is still located in tube&#x27;
+  CASE(664):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Feeding fault - stud is still located in tube&#x27;
+  CASE(665):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Feeding fault - stud is still located in tube&#x27;
+  CASE(666):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Feeding fault - stud is still located in tube&#x27;
+  CASE(667):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Feeding fault - stud is still located in tube&#x27;
+  CASE(668):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Feeding fault - stud is still located in tube&#x27;
+  CASE(669):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Feeding fault - stud is still located in tube&#x27;
+  CASE(670):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Feeding fault - stud is still located in tube&#x27;
+  CASE(716):
+  ALMDCP_f04 = &#x27;Weld tool 1: Maintenance weld tool required&#x27;
+  CASE(717):
+  ALMDCP_f04 = &#x27;Weld tool 2: Maintenance weld tool required&#x27;
+  CASE(718):
+  ALMDCP_f04 = &#x27;Weld tool 3: Maintenance weld tool required&#x27;
+  CASE(719):
+  ALMDCP_f04 = &#x27;Weld tool 4: Maintenance weld tool required&#x27;
+  CASE(720):
+  ALMDCP_f04 = &#x27;Weld tool 5: Maintenance weld tool required&#x27;
+  CASE(721):
+  ALMDCP_f04 = &#x27;Weld tool 6: Maintenance weld tool required&#x27;
+  CASE(722):
+  ALMDCP_f04 = &#x27;Weld tool 7: Maintenance weld tool required&#x27;
+  CASE(723):
+  ALMDCP_f04 = &#x27;Weld tool 8: Maintenance weld tool required&#x27;
+  CASE(724):
+  ALMDCP_f04 = &#x27;Weld tool 9: Maintenance weld tool required&#x27;
+  CASE(725):
+  ALMDCP_f04 = &#x27;Weld tool 10: Maintenance weld tool required&#x27;
+  CASE(726):
+  ALMDCP_f04 = &#x27;Weld tool 1: Maintenance collet required&#x27;
+  CASE(727):
+  ALMDCP_f04 = &#x27;Weld tool 2: Maintenance collet required&#x27;
+  CASE(728):
+  ALMDCP_f04 = &#x27;Weld tool 3: Maintenance collet required&#x27;
+  CASE(729):
+  ALMDCP_f04 = &#x27;Weld tool 4: Maintenance collet required&#x27;
+  CASE(730):
+  ALMDCP_f04 = &#x27;Weld tool 5: Maintenance collet required&#x27;
+  CASE(731):
+  ALMDCP_f04 = &#x27;Weld tool 6: Maintenance collet required&#x27;
+  CASE(732):
+  ALMDCP_f04 = &#x27;Weld tool 7: Maintenance collet required&#x27;
+  CASE(733):
+  ALMDCP_f04 = &#x27;Weld tool 8: Maintenance collet required&#x27;
+  CASE(734):
+  ALMDCP_f04 = &#x27;Weld tool 9: Maintenance collet required&#x27;
+  CASE(735):
+  ALMDCP_f04 = &#x27;Weld tool 10: Maintenance collet required&#x27;
+  CASE(736):
+  ALMDCP_f04 = &#x27;Weld tool 1: Maintenance user counter required&#x27;
+  CASE(737):
+  ALMDCP_f04 = &#x27;Weld tool 2: Maintenance user counter required&#x27;
+  CASE(738):
+  ALMDCP_f04 = &#x27;Weld tool 3: Maintenance user counter required&#x27;
+  CASE(739):
+  ALMDCP_f04 = &#x27;Weld tool 4: Maintenance user counter required&#x27;
+  CASE(740):
+  ALMDCP_f04 = &#x27;Weld tool 5: Maintenance user counter required&#x27;
+  CASE(741):
+  ALMDCP_f04 = &#x27;Weld tool 6: Maintenance user counter required&#x27;
+  CASE(742):
+  ALMDCP_f04 = &#x27;Weld tool 7: Maintenance user counter required&#x27;
+  CASE(743):
+  ALMDCP_f04 = &#x27;Weld tool 8: Maintenance user counter required&#x27;
+  CASE(744):
+  ALMDCP_f04 = &#x27;Weld tool 9: Maintenance user counter required&#x27;
+  CASE(745):
+  ALMDCP_f04 = &#x27;Weld tool 10: Maintenance user counter required&#x27;
+  CASE(746):
+  ALMDCP_f04 = &#x27;Feeder master: Maintenance feeder required&#x27;
+  CASE(747):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Maintenance feeder required&#x27;
+  CASE(748):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Maintenance feeder required&#x27;
+  CASE(749):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Maintenance feeder required&#x27;
+  CASE(750):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Maintenance feeder required&#x27;
+  CASE(751):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Maintenance feeder required&#x27;
+  CASE(752):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Maintenance feeder required&#x27;
+  CASE(753):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Maintenance feeder required&#x27;
+  CASE(754):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Maintenance feeder required&#x27;
+  CASE(755):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Maintenance feeder required&#x27;
+  CASE(756):
+  ALMDCP_f04 = &#x27;Feeder master: Maintenance feeding tube required&#x27;
+  CASE(757):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Maintenance feeding tube required&#x27;
+  CASE(758):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Maintenance feeding tube required&#x27;
+  CASE(759):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Maintenance feeding tube required&#x27;
+  CASE(760):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Maintenance feeding tube required&#x27;
+  CASE(761):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Maintenance feeding tube required&#x27;
+  CASE(762):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Maintenance feeding tube required&#x27;
+  CASE(763):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Maintenance feeding tube required&#x27;
+  CASE(764):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Maintenance feeding tube required&#x27;
+  CASE(765):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Maintenance feeding tube required&#x27;
+  CASE(766):
+  ALMDCP_f04 = &#x27;Divider 1: Maintenance feeding tube after divider required&#x27;
+  CASE(767):
+  ALMDCP_f04 = &#x27;Divider 2: Maintenance feeding tube after divider required&#x27;
+  CASE(768):
+  ALMDCP_f04 = &#x27;Divider 3: Maintenance feeding tube after divider required&#x27;
+  CASE(769):
+  ALMDCP_f04 = &#x27;Divider 4: Maintenance feeding tube after divider required&#x27;
+  CASE(770):
+  ALMDCP_f04 = &#x27;Divider 5: Maintenance feeding tube after divider required&#x27;
+  CASE(771):
+  ALMDCP_f04 = &#x27;Feeder slave 1: Feeder not connected&#x27;
+  CASE(772):
+  ALMDCP_f04 = &#x27;Feeder slave 2: Feeder not connected&#x27;
+  CASE(773):
+  ALMDCP_f04 = &#x27;Feeder slave 3: Feeder not connected&#x27;
+  CASE(774):
+  ALMDCP_f04 = &#x27;Feeder slave 4: Feeder not connected&#x27;
+  CASE(775):
+  ALMDCP_f04 = &#x27;Feeder slave 5: Feeder not connected&#x27;
+  CASE(776):
+  ALMDCP_f04 = &#x27;Feeder slave 6: Feeder not connected&#x27;
+  CASE(777):
+  ALMDCP_f04 = &#x27;Feeder slave 7: Feeder not connected&#x27;
+  CASE(778):
+  ALMDCP_f04 = &#x27;Feeder slave 8: Feeder not connected&#x27;
+  CASE(779):
+  ALMDCP_f04 = &#x27;Feeder slave 9: Feeder not connected&#x27;
+  CASE(780):
+  ALMDCP_f04 = &#x27;Wrong weld head docked&#x27;
+  CASE(2000):
+  ALMDCP_f04 = &#x27;DCE: The battery of the storage module (RAM module) is low&#x27;
+  CASE(2001):
+  ALMDCP_f04 = &#x27;DCE: The battery of the clock on central control board (ZCPU) is low&#x27;
+  CASE(2002):
+  ALMDCP_f04 = &#x27;DCE: DIP switch S2 is set on central control board (ZCPU)&#x27;
+  CASE(2003):
+  ALMDCP_f04 = &#x27;DCE: IP addresses in storage module (RAM module) and Ethernet card are not identical&#x27;
+  CASE(2004):
+  ALMDCP_f04 = &#x27;DCE: No physical network connection available (uplink)&#x27;
+  CASE(2005):
+  ALMDCP_f04 = &#x27;DCE: Time synchronization via network has been disrupted - Connection to time server could not be established&#x27;
+  CASE(2016):
+  ALMDCP_f04 = &#x27;Weld Tool: Pre-maintenance warning - Maintenance of collet required&#x27;
+  CASE(2020):
+  ALMDCP_f04 = &#x27;Feeder: Stud fill level is low&#x27;
+  CASE(2024):
+  ALMDCP_f04 = &#x27;Feeder: Drum door not locked&#x27;
+  CASE(2025):
+  ALMDCP_f04 = &#x27;Feeder: Control board for drum motor is missing or defective&#x27;
+  CASE(2026):
+  ALMDCP_f04 = &#x27;Feeder: Voltage supply for drum motor is missing&#x27;
+  CASE(2027):
+  ALMDCP_f04 = &#x27;Feeder: Voltage supply for LM/Solenoid too low&#x27;
+  CASE(2028):
+  ALMDCP_f04 = &#x27;Feeder: Temperature of the LM amplifier too high&#x27;
+  CASE(2029):
+  ALMDCP_f04 = &#x27;Weld Tool: LM temperature too high&#x27;
+  CASE(2030):
+  ALMDCP_f04 = &#x27;LMR: Unknown warning weld head&#x27;
+  CASE(2031):
+  ALMDCP_f04 = &#x27;Feeder: Filling of feeding rail has been disrupted&#x27;
+  CASE(2032):
+  ALMDCP_f04 = &#x27;Weld Tool: Maintenance of collet required&#x27;
+  CASE(2034):
+  ALMDCP_f04 = &#x27;Weld Tool: Maintenance required&#x27;
+  CASE(2035):
+  ALMDCP_f04 = &#x27;Feeding tube: Maintenance required&#x27;
+  CASE(2036):
+  ALMDCP_f04 = &#x27;User counter: Maintenance required&#x27;
+  CASE(2037):
+  ALMDCP_f04 = &#x27;Robot / PLC: Release of movement for LMR is missing&#x27;
+  CASE(2038):
+  ALMDCP_f04 = &#x27;Feeder: Timeout during feeding cycle&#x27;
+  CASE(2039):
+  ALMDCP_f04 = &#x27;Robot / PLC: Weld start is not effected after operation stop or operator protection&#x27;
+  CASE(2040):
+  ALMDCP_f04 = &#x27;LMR: Voltage supply for the rotation motor is near the lower limit value&#x27;
+  CASE(2041):
+  ALMDCP_f04 = &#x27;LMR: Current limitation in controller rotation motor active&#x27;
+  CASE(2042):
+  ALMDCP_f04 = &#x27;LMR: Voltage limitation in controller rotation motor active&#x27;
+  CASE(2043):
+  ALMDCP_f04 = &#x27;Feeder: Malfunction stud arrival sensor&#x27;
+  CASE(2044):
+  ALMDCP_f04 = &#x27;LMR: LM start or LMR angle position lost&#x27;
+  CASE(2045):
+  ALMDCP_f04 = &#x27;LMR: No stud fed into pickup station&#x27;
+  CASE(2046):
+  ALMDCP_f04 = &#x27;LMR: Maintenance warning wear gripper&#x27;
+  CASE(2048):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Stud fill level is low&#x27;
+  CASE(2049):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Drum door not locked&#x27;
+  CASE(2050):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Control board for drum motor is missing or defective&#x27;
+  CASE(2051):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Voltage supply for drum motor is missing&#x27;
+  CASE(2052):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Stud separation is disrupted&#x27;
+  CASE(2053):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Malfunction stud arrival sensor &#x27;
+  CASE(2054):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: No stud fed into pickup station&#x27;
+  CASE(2056):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Stud fill level is low&#x27;
+  CASE(2057):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Drum door not locked&#x27;
+  CASE(2058):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Control board for drum motor is missing or defective&#x27;
+  CASE(2059):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Voltage supply for drum motor is missing&#x27;
+  CASE(2060):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Stud separation is disrupted&#x27;
+  CASE(2061):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Malfunction stud arrival sensor &#x27;
+  CASE(2062):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: No stud fed into pickup station&#x27;
+  CASE(2064):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Stud fill level is low&#x27;
+  CASE(2065):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Drum door not locked&#x27;
+  CASE(2066):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Control board for drum motor is missing or defective&#x27;
+  CASE(2067):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Voltage supply for drum motor is missing&#x27;
+  CASE(2068):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Stud separation is disrupted&#x27;
+  CASE(2069):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Malfunction stud arrival sensor &#x27;
+  CASE(2070):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: No stud fed into pickup station&#x27;
+  CASE(2072):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Stud fill level is low&#x27;
+  CASE(2073):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Drum door not locked&#x27;
+  CASE(2074):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Control board for drum motor is missing or defective&#x27;
+  CASE(2075):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Voltage supply for drum motor is missing&#x27;
+  CASE(2076):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Stud separation is disrupted&#x27;
+  CASE(2077):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Malfunction stud arrival sensor &#x27;
+  CASE(2078):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: No stud fed into pickup station&#x27;
+  CASE(2080):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Stud fill level is low&#x27;
+  CASE(2081):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Drum door not locked&#x27;
+  CASE(2082):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Control board for drum motor is missing or defective&#x27;
+  CASE(2083):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Voltage supply for drum motor is missing&#x27;
+  CASE(2084):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Stud separation is disrupted&#x27;
+  CASE(2085):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Malfunction stud arrival sensor &#x27;
+  CASE(2086):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: No stud fed into pickup station&#x27;
+  CASE(2088):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Stud fill level is low&#x27;
+  CASE(2089):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Drum door not locked&#x27;
+  CASE(2090):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Control board for drum motor is missing or defective&#x27;
+  CASE(2091):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Voltage supply for drum motor is missing&#x27;
+  CASE(2092):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Stud separation is disrupted&#x27;
+  CASE(2093):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Malfunction stud arrival sensor &#x27;
+  CASE(2094):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: No stud fed into pickup station&#x27;
+  CASE(2096):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Stud fill level is low&#x27;
+  CASE(2097):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Drum door not locked&#x27;
+  CASE(2098):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Control board for drum motor is missing or defective&#x27;
+  CASE(2099):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Voltage supply for drum motor is missing&#x27;
+  CASE(2100):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Stud separation is disrupted&#x27;
+  CASE(2101):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Malfunction stud arrival sensor &#x27;
+  CASE(2102):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: No stud fed into pickup station&#x27;
+  CASE(2104):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Stud fill level is low&#x27;
+  CASE(2105):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Drum door not locked&#x27;
+  CASE(2106):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Control board for drum motor is missing or defective&#x27;
+  CASE(2107):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Voltage supply for drum motor is missing&#x27;
+  CASE(2108):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Stud separation is disrupted&#x27;
+  CASE(2109):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Malfunction stud arrival sensor &#x27;
+  CASE(2110):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: No stud fed into pickup station&#x27;
+  CASE(2112):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Stud fill level is low&#x27;
+  CASE(2113):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Drum door not locked&#x27;
+  CASE(2114):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Control board for drum motor is missing or defective&#x27;
+  CASE(2115):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Voltage supply for drum motor is missing&#x27;
+  CASE(2116):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Stud separation is disrupted&#x27;
+  CASE(2117):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Malfunction stud arrival sensor &#x27;
+  CASE(2118):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: No stud fed into pickup station&#x27;
+  CASE(2128):
+  ALMDCP_f04 = &#x27;Weld Tool 1: Maintenance of weld tool required&#x27;
+  CASE(2129):
+  ALMDCP_f04 = &#x27;Weld Tool 1: Maintenance of collet required&#x27;
+  CASE(2130):
+  ALMDCP_f04 = &#x27;Weld Tool 1: Maintenance of user counter required&#x27;
+  CASE(2131):
+  ALMDCP_f04 = &#x27;Feeder master: Maintenance of feeder required&#x27;
+  CASE(2132):
+  ALMDCP_f04 = &#x27;Feeder master: Maintenance of feeding tube required&#x27;
+  CASE(2133):
+  ALMDCP_f04 = &#x27;Divider 1: Maintenance of feeding tube after divider required&#x27;
+  CASE(2136):
+  ALMDCP_f04 = &#x27;Weld Tool 2: Maintenance of weld tool required&#x27;
+  CASE(2137):
+  ALMDCP_f04 = &#x27;Weld Tool 2: Maintenance of collet required&#x27;
+  CASE(2138):
+  ALMDCP_f04 = &#x27;Weld Tool 2: Maintenance of user counter required&#x27;
+  CASE(2139):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Maintenance of feeder required&#x27;
+  CASE(2140):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Maintenance of feeding tube required&#x27;
+  CASE(2141):
+  ALMDCP_f04 = &#x27;Divider 2: Maintenance of feeding tube after divider required&#x27;
+  CASE(2144):
+  ALMDCP_f04 = &#x27;Weld Tool 3: Maintenance of weld tool required&#x27;
+  CASE(2145):
+  ALMDCP_f04 = &#x27;Weld Tool 3: Maintenance of collet required&#x27;
+  CASE(2146):
+  ALMDCP_f04 = &#x27;Weld Tool 3: Maintenance of user counter required&#x27;
+  CASE(2147):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Maintenance of feeder required&#x27;
+  CASE(2148):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Maintenance of feeding tube required&#x27;
+  CASE(2149):
+  ALMDCP_f04 = &#x27;Divider 3: Maintenance of feeding tube after divider required&#x27;
+  CASE(2152):
+  ALMDCP_f04 = &#x27;Weld Tool 4: Maintenance of weld tool required&#x27;
+  CASE(2153):
+  ALMDCP_f04 = &#x27;Weld Tool 4: Maintenance of collet required&#x27;
+  CASE(2154):
+  ALMDCP_f04 = &#x27;Weld Tool 4: Maintenance of user counter required&#x27;
+  CASE(2155):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Maintenance of feeder required&#x27;
+  CASE(2156):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Maintenance of feeding tube required&#x27;
+  CASE(2157):
+  ALMDCP_f04 = &#x27;Divider 4: Maintenance of feeding tube after divider required&#x27;
+  CASE(2160):
+  ALMDCP_f04 = &#x27;Weld Tool 5: Maintenance of weld tool required&#x27;
+  CASE(2161):
+  ALMDCP_f04 = &#x27;Weld Tool 5: Maintenance of collet required&#x27;
+  CASE(2162):
+  ALMDCP_f04 = &#x27;Weld Tool 5: Maintenance of user counter required&#x27;
+  CASE(2163):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Maintenance of feeder required&#x27;
+  CASE(2164):
+  ALMDCP_f04 = &#x27;Feeder Slave 4: Maintenance of feeding tube required&#x27;
+  CASE(2165):
+  ALMDCP_f04 = &#x27;Divider 5: Maintenance of feeding tube after divider required&#x27;
+  CASE(2168):
+  ALMDCP_f04 = &#x27;Weld Tool 6: Maintenance of weld tool required&#x27;
+  CASE(2169):
+  ALMDCP_f04 = &#x27;Weld Tool 6: Maintenance of collet required&#x27;
+  CASE(2170):
+  ALMDCP_f04 = &#x27;Weld Tool 6: Maintenance of user counter required&#x27;
+  CASE(2171):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Maintenance of feeder required&#x27;
+  CASE(2172):
+  ALMDCP_f04 = &#x27;Feeder Slave 5: Maintenance of feeding tube required&#x27;
+  CASE(2173):
+  ALMDCP_f04 = &#x27;Divider 6: Maintenance of feeding tube after divider required&#x27;
+  CASE(2176):
+  ALMDCP_f04 = &#x27;Weld Tool 7: Maintenance of weld tool required&#x27;
+  CASE(2177):
+  ALMDCP_f04 = &#x27;Weld Tool 7: Maintenance of collet required&#x27;
+  CASE(2178):
+  ALMDCP_f04 = &#x27;Weld Tool 7: Maintenance of user counter required&#x27;
+  CASE(2179):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Maintenance of feeder required&#x27;
+  CASE(2180):
+  ALMDCP_f04 = &#x27;Feeder Slave 6: Maintenance of feeding tube required&#x27;
+  CASE(2181):
+  ALMDCP_f04 = &#x27;Divider 7: Maintenance of feeding tube after divider required&#x27;
+  CASE(2184):
+  ALMDCP_f04 = &#x27;Weld Tool 8: Maintenance of weld tool required&#x27;
+  CASE(2185):
+  ALMDCP_f04 = &#x27;Weld Tool 8: Maintenance of collet required&#x27;
+  CASE(2186):
+  ALMDCP_f04 = &#x27;Weld Tool 8: Maintenance of user counter required&#x27;
+  CASE(2187):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Maintenance of feeder required&#x27;
+  CASE(2188):
+  ALMDCP_f04 = &#x27;Feeder Slave 7: Maintenance of feeding tube required&#x27;
+  CASE(2189):
+  ALMDCP_f04 = &#x27;Divider 8: Maintenance of feeding tube after divider required&#x27;
+  CASE(2192):
+  ALMDCP_f04 = &#x27;Weld Tool 9: Maintenance of weld tool required&#x27;
+  CASE(2193):
+  ALMDCP_f04 = &#x27;Weld Tool 9: Maintenance of collet required&#x27;
+  CASE(2194):
+  ALMDCP_f04 = &#x27;Weld Tool 9: Maintenance of user counter required&#x27;
+  CASE(2195):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Maintenance of feeder required&#x27;
+  CASE(2196):
+  ALMDCP_f04 = &#x27;Feeder Slave 8: Maintenance of feeding tube required&#x27;
+  CASE(2197):
+  ALMDCP_f04 = &#x27;Divider 9: Maintenance of feeding tube after divider required&#x27;
+  CASE(2200):
+  ALMDCP_f04 = &#x27;Weld Tool 10: Maintenance of weld tool required&#x27;
+  CASE(2201):
+  ALMDCP_f04 = &#x27;Weld Tool 10: Maintenance of collet required&#x27;
+  CASE(2202):
+  ALMDCP_f04 = &#x27;Weld Tool 10: Maintenance of user counter required&#x27;
+  CASE(2203):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Maintenance of feeder required&#x27;
+  CASE(2204):
+  ALMDCP_f04 = &#x27;Feeder Slave 9: Maintenance of feeding tube required&#x27;
+  CASE(2205):
+  ALMDCP_f04 = &#x27;Divider 10: Maintenance of feeding tube after divider required&#x27;
+  ELSE:
+  ALMDCP_f04 = &#x27;Undefined TUCKER DCP Fault Message&#x27;
+  -- stmt158 stray ALMDCP_f04
+  ENDSELECT
+  RETURN(sv_s)
+END ERROR_MSG
+
+BEGIN
+  SELECT pp00 OF
+  CASE(1):
+  ALMDCP_f04 = &#x27;Weld tool remains in R position&#x27;
+  -- stmt60 stray ALMDCP_f04
+  ENDSELECT
+END MI20_SWH_DCP
+
+</span></pre></details><details><summary>MI20_SWH_GUI.KL（67 例程）</summary><pre><span class=c>-- MI20_SWH_GUI.KL (decompiled v3)
+PROGRAM MI20_SWH_GUI
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF STRING[64]
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : ARRAY[64] OF BOOLEAN
+  v17 : ARRAY[64] OF BOOLEAN
+  v18 : INTEGER
+  v19 : FILE
+  v20 : INTEGER
+  v3_f04 : ARRAY[64] OF INTEGER
+  v3_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE REALROBOT : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$VIRTUALEDIT&#x27;, r0_lc1, v1)
+  IF ((v1 &lt;&gt; 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END REALROBOT
+
+ROUTINE CURRLANGUAGE : STRING
+VAR
+  r1_lc10 : INTEGER
+  r1_lc4 : STRING[64]
+  r1_lc8 : STRING[64]
+  r1_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$LANGUAGE&#x27;, r1_lc8, r1_lc10)
+  sv_i = index(r1_lc8, &#x27; &#x27;)
+  r1_lc9 = sv_i
+  sv_s = sub_str(r1_lc8, 1, r1_lc9 - 1)
+  r1_lc4 = sv_s
+  IF ((r1_lc4 &lt;&gt; &#x27;DEFAULT&#x27;)) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG(&#x27;ENGLISH     &#x27;, r1_lc10)
+  -- stmt116 stray &#x27;ENGLISH     &#x27;
+  ELSE
+  -- stmt118 stray &#x27;DEFAULT     &#x27;
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURRLANGUAGE
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r2_lc9 : STRING[64]
+BEGIN
+  r2_lc9 = &#x27;FR:\&#x27; + p1
+  -- stmt135 residue &#x27;FR:\\&#x27;
+  IF ((sv_s = &#x27;ENGLISH     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;ENGLISH     &#x27;, 4, v1)
+  ELSE
+  IF ((sv_s = &#x27;CHINESE     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;CHINESE     &#x27;, 4, v1)
+  ELSE
+  ADD_DICT(r2_lc9, p0, &#x27;DEFAULT     &#x27;, 4, v1)
+  ENDIF
+  ENDIF
+  IF ((v1 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Failed to load dict &#x27; + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE RESET_VALARRAY : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v2[r3_lc1] = &#x27;&#x27;
+  ENDFOR
+  RETURN(0)
+END RESET_VALARRAY
+
+ROUTINE USERSCREEN : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+  r4_lc4 : INTEGER
+  r4_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r4_lc1, r4_lc2, r4_lc3, r4_lc4, r4_lc5, v1)
+  v4 = v3_f04[r4_lc2]
+  v5 = v3_f08[r4_lc2]
+  SELECT r4_lc2 OF
+  CASE(1):
+  v6 = 1
+  CASE(2):
+  v6 = 2
+  CASE(3):
+  v6 = 3
+  ELSE:
+  v6 = 1
+  ENDSELECT
+  FORCE_SPMENU(v6, 190, 1)
+  RETURN(0)
+END USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = 0
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt217 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r5_lc3 = r5_lc3 + r5_lc2
+  ENDFOR
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, v7, v1)
+  RETURN(r5_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  DELAY 100
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt241 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  IF ((r6_lc3 &lt;&gt; v8)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, r6_lc4, v1)
+  IF ((r6_lc4 &lt;&gt; v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE INITLOALVARS : INTEGER
+BEGIN
+  IF (UNINIT(v9)) THEN
+  v9 = 5
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  v10 = 1
+  ENDIF
+  IF (UNINIT(v11)) THEN
+  v11 = 32
+  ENDIF
+  IF (UNINIT(v12)) THEN
+  v12 = 1
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE SHOW_MI20STP : INTEGER
+BEGIN
+  v13 = 1
+  v14 = 1
+  v2[v14] = &#x27;[MI20_SWH_VAR]r_WC_timeout&#x27;
+  v14 = v14 + 1
+  v2[v14] = &#x27;[MI20_SWH_VAR]i_BNSType&#x27;
+  v14 = v14 + 1
+  v2[v14] = &#x27;[MI20_SWH_VAR]i_mon&#x27;
+  v14 = v14 + 1
+  v2[v14] = &#x27;[MI20_SWH_VAR]i_gunnum&#x27;
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v15 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt40 stray sv_i
+  DISCTRL_FORM(&#x27;ASWH&#x27;, 0, v2, v16, v17, 2 + 2048, v18, v15, v1)
+  SELECT v15 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  CASE(131):
+  CASE(138):
+  CASE(132):
+  CASE(139):
+  CASE(133):
+  CASE(134):
+  IF ((v12 = 1)) THEN
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTEQSETUP[1].$NUM_GUNS&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_START2_I&#x27;, 0, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WCFLT2_I&#x27;, 0, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_COMP2_I&#x27;, 0, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTNUMEQ&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$NUM_WD_CTLS&#x27;, 1, v1)
+  ELSE
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTEQSETUP[1].$NUM_GUNS&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_START2_I&#x27;, 658, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WCFLT2_I&#x27;, 650, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_COMP2_I&#x27;, 658, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTNUMEQ&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$NUM_WD_CTLS&#x27;, 2, v1)
+  ENDIF
+  OPEN FILE v19(&#x27;RW&#x27;, &#x27;WD:prmp/tpkb&#x27;)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt86 stray v19
+  WRITE_DICT(v19, &#x27;ASWH&#x27;, 7, v1)
+  DELAY 2000
+  CASE(232):
+  CASE(13):
+  RETURN(v13)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v13)
+  RETURN(0)
+END SHOW_MI20STP
+
+ROUTINE ST_MACHINE(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  sv_i = SHOW_MI20STP
+  RETURN(sv_i)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  sv_i = INITLOALVARS
+  -- stmt125 stray sv_i
+  sv_i = RESET_VALARRAY
+  -- stmt127 stray sv_i
+  sv_i = LOAD_TX(&#x27;ASWH&#x27;, &#x27;20aswheg&#x27;)
+  -- stmt131 stray sv_i
+  sv_i = USERSCREEN
+  -- stmt134 stray sv_i
+  v15 = 0
+  v18 = 1
+  v20 = 1
+  REPEAT
+  sv_i = ST_MACHINE(v20)
+  v20 = sv_i
+  DELAY 64
+  UNTIL((v20 = 0))
+  RETURN(0)
+END ST_MACHINE
+
+BEGIN
+END MI20_SWH_GUI
+-- module-residue &#x27;H521&#x27;, &#x27;H538&#x27;
+</span></pre></details><details><summary>MI20_SWH_MON.KL（6 例程）</summary><pre><span class=c>-- MI20_SWH_MON.KL (decompiled v3)
+PROGRAM MI20_SWH_MON
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_12 : ARRAY[512] OF INTEGER
+  I_LASTFAULTNO : INTEGER
+  I_MI20_GI : INTEGER
+  B_MON_20 : INTEGER
+  I_MON : INTEGER
+  I_MI20_DI : INTEGER
+  I_MI20_DO : INTEGER
+  I_MI20_GO : INTEGER
+  R_WC_TIMEOUT : REAL
+  I_BNSTYPE : INTEGER
+  I_GUNNUM : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE MI20_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI20_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI20_START(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DCPFAULTREFRESH(p0 : INTEGER; p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING FROM MI_LIB
+
+ROUTINE MI20_FAULTDISP : INTEGER
+BEGIN
+  IF ((B_MON_20 &lt;&gt; 0)) THEN
+  sv_i = MI20_SENDBSNUM(0)
+  -- stmt56 stray sv_i
+  sv_i = MI20_FAULTDISP
+  -- stmt57 stray sv_i
+  IF (UNINIT(I_MON)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &lt; 32)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &gt; 1024)) THEN
+  I_MON = 1024
+  ENDIF
+  DELAY I_MON
+  ELSE
+  ENDIF
+  RETURN(0)
+END MI20_FAULTDISP
+
+BEGIN
+  IF (UNINIT(I_LASTFAULTNO)) THEN
+  I_LASTFAULTNO = 0
+  ENDIF
+  IF ((io_12[I_MI20_GI + 1] &lt;&gt; 0)) THEN
+  IF ((I_LASTFAULTNO &lt;&gt; io_12[I_MI20_GI + 1])) THEN
+  r1_lc35 = io_12[I_MI20_GI + 1]
+  sv_s = ERROR_MSG(r1_lc35)
+  r1_lc33 = sv_s
+  sv_i = DCPFAULTREFRESH(r1_lc35, r1_lc33)
+  -- stmt40 stray sv_i
+  I_LASTFAULTNO = io_12[I_MI20_GI + 1]
+  ENDIF
+  ELSE
+  I_LASTFAULTNO = 0
+  ENDIF
+END MI20_SWH_MON
+
+</span></pre></details><details><summary>MI20_SWH_ROUT.KL（60 例程）</summary><pre><span class=c>-- MI20_SWH_ROUT.KL (decompiled v3)
+PROGRAM MI20_SWH_ROUT
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  I_BNSTYPE : INTEGER
+  I_MI01_DI : INTEGER
+  I_MI20_DO : INTEGER
+  R_WC_TIMEOUT : INTEGER
+  I_MI20_GO : INTEGER
+  I_MI20_DI : INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  I_MI20_GI : INTEGER
+  I_PROCESSTIM : INTEGER
+  I_MI01_DO : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  B_MON_20 : BOOLEAN
+  I_MON : INTEGER
+  I_GUNNUM : INTEGER
+  I_STATUS : INTEGER
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE MI20_SENDBSNUM : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+BEGIN
+  IF (UNINIT(I_BNSTYPE)) THEN
+  I_BNSTYPE = 1
+  ENDIF
+  IF ((I_BNSTYPE = 1)) THEN
+  r0_lc2 = 80
+  ELSE
+  r0_lc2 = 64
+  ENDIF
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI01_DI + 129 + r0_lc1 - 1] &lt;&gt; 0)) THEN
+  io_02[I_MI20_DO + 161 + r0_lc1 - 1] = 1
+  ELSE
+  io_02[I_MI20_DO + 161 + r0_lc1 - 1] = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI20_SENDBSNUM
+
+ROUTINE INITLOALVARS : INTEGER
+BEGIN
+  IF (UNINIT(R_WC_TIMEOUT)) THEN
+  R_WC_TIMEOUT = 5
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE MI20_INIT : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+  r2_lc3 : INTEGER
+BEGIN
+  sv_i = INITLOALVARS
+  -- stmt86 stray sv_i
+  io_02[I_MI20_DO + 4] = 0
+  io_02[I_MI20_DO + 5] = 0
+  io_02[I_MI20_DO + 6] = 0
+  io_02[I_MI20_DO + 7] = 0
+  FOR r2_lc1 = 1 TO 3 DO
+  io_02[I_MI20_DO + 9 + r2_lc1 - 1] = 0
+  ENDFOR
+  FOR r2_lc1 = 1 TO 3 DO
+  io_02[I_MI20_DO + 17 + r2_lc1 - 1] = 0
+  ENDFOR
+  FOR r2_lc1 = 1 TO 3 DO
+  io_02[I_MI20_DO + 22 + r2_lc1 - 1] = 0
+  ENDFOR
+  io_13[I_MI20_GO + 1] = 0
+  io_13[I_MI20_GO + 2] = 0
+  IF ((io_01[I_MI20_DI + 1] = 0)) THEN
+  r2_lc3 = 1
+  LST_ERROR_f00[r2_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] = &#x27;Stud SYS not Ready&#x27;
+  LST_ERROR_f38[r2_lc3] = &#x27;Stud System is in Fault&#x27;
+  sv_i = WAIT_SIGNAL(r2_lc3, 1, I_MI20_DI + 1, 1, 3000, 2)
+  r2_lc2 = sv_i
+  ENDIF
+  IF ((io_01[I_MI20_DI + 3] = 0)) THEN
+  r2_lc3 = 2
+  LST_ERROR_f00[r2_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] = &#x27;Stud SYS in Fault&#x27;
+  LST_ERROR_f38[r2_lc3] = &#x27;Stud System is in Fault&#x27;
+  sv_i = WAIT_SIGNAL(r2_lc3, 1, I_MI20_DI + 3, 1, 3000, 2)
+  r2_lc2 = sv_i
+  ENDIF
+  IF ((io_12[I_MI20_GI + 1] &lt;&gt; 0)) THEN
+  r2_lc3 = 3
+  LST_ERROR_f00[r2_lc3] = &#x27;APL&#x27;
+  LST_ERROR_f10[r2_lc3] = 0
+  LST_ERROR_f14[r2_lc3] = &#x27;Stud SYS Fault Code&#x27;
+  LST_ERROR_f38[r2_lc3] = &#x27;Stud SYS Fault Code not Clear&#x27;
+  sv_i = WAIT_SIGNAL(r2_lc3, 3, I_MI20_GI + 1, 0, 3000, 2)
+  r2_lc2 = sv_i
+  ENDIF
+  RETURN(0)
+END MI20_INIT
+
+ROUTINE MI20_START(p0, p1 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+  r3_lc2 : INTEGER
+  r3_lc3 : INTEGER
+  r3_lc4 : INTEGER
+  r3_lc5 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  io_02[I_MI20_DO + 17 + r3_lc1 - 1] = 0
+  ENDFOR
+  sv_i = ROBOTINPROC(1)
+  -- stmt165 stray sv_i
+  r3_lc4 = p1
+  IF ((io_01[I_MI20_DI + 1] = 0)) THEN
+  r3_lc3 = 1
+  LST_ERROR_f00[r3_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r3_lc3] = 0
+  LST_ERROR_f14[r3_lc3] = &#x27;Stud SYS not Ready&#x27;
+  LST_ERROR_f38[r3_lc3] = &#x27;Stud System is in Fault&#x27;
+  sv_i = WAIT_SIGNAL(r3_lc3, 1, I_MI20_DI + 1, 1, 500, 2)
+  r3_lc2 = sv_i
+  ENDIF
+  IF ((io_01[I_MI20_DI + 3] = 0)) THEN
+  r3_lc3 = 2
+  LST_ERROR_f00[r3_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r3_lc3] = 0
+  LST_ERROR_f14[r3_lc3] = &#x27;Stud SYS in Fault&#x27;
+  LST_ERROR_f38[r3_lc3] = &#x27;Stud System is in Fault&#x27;
+  sv_i = WAIT_SIGNAL(r3_lc3, 1, I_MI20_DI + 3, 1, 500, 2)
+  r3_lc2 = sv_i
+  ENDIF
+  io_02[I_MI20_DO + 2] = 1
+  IF ((io_01[I_MI20_DI + 2] = 0)) THEN
+  r3_lc3 = 4
+  LST_ERROR_f00[r3_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r3_lc3] = 0
+  LST_ERROR_f14[r3_lc3] = &#x27;Stud Weld Mode not ON&#x27;
+  LST_ERROR_f38[r3_lc3] = &#x27;Stud Weld Mode not ON&#x27;
+  sv_i = WAIT_SIGNAL(r3_lc3, 1, I_MI20_DI + 2, 1, 500, 2)
+  r3_lc2 = sv_i
+  ENDIF
+  io_13[I_MI20_GO + 1] = r3_lc4 MOD 65536
+  io_13[I_MI20_GO + 2] = r3_lc4 DIV 65536
+  FOR r3_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI20_DI + 17 + r3_lc1 - 1] &lt;&gt; 0)) THEN
+  r3_lc3 = 5
+  LST_ERROR_f00[r3_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r3_lc3] = 0
+  sv_s = INTTOSTR(r3_lc1)
+  LST_ERROR_f14[r3_lc3] = &#x27;Head&#x27; + sv_s + &#x27; WC not Off&#x27;
+  sv_s = INTTOSTR(r3_lc1)
+  LST_ERROR_f38[r3_lc3] = &#x27;Head&#x27; + sv_s + &#x27; Weld Complete not Clear&#x27;
+  sv_i = WAIT_SIGNAL(r3_lc3, 1, I_MI20_DI + 17 + r3_lc1 - 1, 0, 500, 2)
+  r3_lc2 = sv_i
+  ENDIF
+  ENDFOR
+  r3_lc5 = 0
+  REPEAT
+  io_02[I_MI20_DO + 17 + p0 - 1] = 1
+  IF ((io_01[I_MI20_DI + 17 + p0 - 1] = 0)) THEN
+  I_PROCESSTIM = 0
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((I_PROCESSTIM &gt; R_WC_TIMEOUT * 1000) OR (io_01[I_MI20_DI + 17 + p0 - 1] &lt;&gt; 0))
+  -- stmt230 residue 1000
+  IF ((I_PROCESSTIM &gt; R_WC_TIMEOUT * 1000)) THEN
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt233 stray &#x27;&#x27; + sv_s + &#x27;: &#x27; + &#x27;Weld Timeout&#x27;
+  -- stmt233 residue &#x27;Head&#x27;
+  io_02[I_MI01_DO + 436 + p0 - 1] = 1
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[I_MI01_DI + 433 + p0 - 1] &lt;&gt; 0) OR (io_01[I_MI01_DI + 435 + p0 - 1] &lt;&gt; 0))
+  IF ((io_01[I_MI01_DI + 433 + p0 - 1] &lt;&gt; 0) AND (io_01[I_MI01_DI + 435 + p0 - 1] = 0)) THEN
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt239 stray &#x27;&#x27; + sv_s + &#x27;: &#x27; + &#x27;Weld Retry Requested&#x27;
+  -- stmt239 residue &#x27;Head&#x27;
+  ENDIF
+  IF ((io_01[I_MI01_DI + 435 + p0 - 1] &lt;&gt; 0) AND (io_01[I_MI01_DI + 433 + p0 - 1] = 0)) THEN
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt243 stray &#x27;&#x27; + sv_s + &#x27;: &#x27; + &#x27;Weld Skip Requested&#x27;
+  -- stmt243 residue &#x27;Head&#x27;
+  r3_lc5 = 1
+  ENDIF
+  IF ((io_01[I_MI01_DI + 433 + p0 - 1] &lt;&gt; 0) AND (io_01[I_MI01_DI + 435 + p0 - 1] &lt;&gt; 0)) THEN
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: 0
+  -- stmt247 stray &#x27;&#x27; + sv_s + &#x27;: &#x27; + &#x27;Received both Retry and Skip DI&#x27;
+  -- stmt247 residue &#x27;Head&#x27;
+  ENDIF
+  io_02[I_MI01_DO + 436 + p0 - 1] = 0
+  UNTIL((io_01[I_MI20_DI + 17 + p0 - 1] &lt;&gt; 0) OR (r3_lc5 &lt;&gt; 0))
+  io_02[I_MI20_DO + 17 + p0 - 1] = 0
+  io_13[I_MI20_GO + 1] = 0
+  io_13[I_MI20_GO + 2] = 0
+  io_02[I_MI20_DO + 2] = 0
+  IF ((io_01[I_MI20_DI + 2] &lt;&gt; 0)) THEN
+  r3_lc3 = 7
+  LST_ERROR_f00[r3_lc3] = &#x27;SWH&#x27;
+  LST_ERROR_f10[r3_lc3] = 0
+  LST_ERROR_f14[r3_lc3] = &#x27;Stud Weld Mode not OFF&#x27;
+  LST_ERROR_f38[r3_lc3] = &#x27;Stud Weld Mode not OFF&#x27;
+  sv_i = WAIT_SIGNAL(r3_lc3, 1, I_MI20_DI + 2, 0, 500, 2)
+  r3_lc2 = sv_i
+  ENDIF
+  sv_i = ROBOTINPROC(2)
+  -- stmt19 stray sv_i
+  RETURN(0)
+END MI20_START
+
+BEGIN
+END MI20_SWH_ROUT
+</span></pre></details><details><summary>MI20_SWH_VAR.KL（0 例程）</summary><pre><span class=c>-- MI20_SWH_VAR.KL (decompiled v3)
+PROGRAM MI20_SWH_VAR
+%COMMENT = &#x27;MI20 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+END MI20_SWH_VAR
+
+</span></pre></details>

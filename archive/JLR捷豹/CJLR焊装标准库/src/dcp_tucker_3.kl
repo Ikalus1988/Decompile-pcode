@@ -1,0 +1,437 @@
+PROGRAM DCP_TUCKER_3
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+--Version 1.2 Added in Die Check Retry
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, intRivID :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+strDCPNum : STRING[4]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL, strRivID:STRING[3]
+strHis1, strHis2,strHis3: STRING[82]
+strAddDCPTxt:STRING[20]
+
+--Delcare Internal Routines
+ROUTINE G_DCP_SPR1_3
+BEGIN 
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+--Get Rivet ID From R[86]
+GET_REG(86,FALSE,intRivID, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intRivID,3,0,strRivID)
+
+
+SELECT DCPText.DCPFaultNum OF
+	
+CASE(701):
+DCPText.DCPLine1 = 'Feeder slave 1: Filling station does not reach basic position'
+DCPText.DCPFaultNum = 00701
+
+CASE(702):
+DCPText.DCPLine1 = 'Feeder slave 2: Filling station does not reach basic position'
+DCPText.DCPFaultNum = 00702
+
+CASE(703):
+DCPText.DCPLine1 = 'Feeder slave 3: Filling station does not reach basic position'
+DCPText.DCPFaultNum = 00703
+
+CASE(704):
+DCPText.DCPLine1 = 'Feeder master: Timeout slave feeder'
+DCPText.DCPFaultNum = 00704
+
+CASE(705):
+DCPText.DCPLine1 = 'Feeder slave 1: Timeout slave feeder'
+DCPText.DCPFaultNum = 00705
+
+CASE(706):
+DCPText.DCPLine1 = 'Feeder slave 2: Timeout slave feeder'
+DCPText.DCPFaultNum = 00706
+
+CASE(707):
+DCPText.DCPLine1 = 'Feeder slave 3: Timeout slave feeder'
+DCPText.DCPFaultNum = 00707
+
+CASE(708):
+DCPText.DCPLine1 = 'Feeder master: Invalid configuration'
+DCPText.DCPFaultNum = 00708
+
+CASE(709):
+DCPText.DCPLine1 = 'Feeder slave1: Invalid configuration'
+DCPText.DCPFaultNum = 00709
+
+CASE(710):
+DCPText.DCPLine1 = 'Feeder slave2: Invalid configuration'
+DCPText.DCPFaultNum = 00710
+
+CASE(711):
+DCPText.DCPLine1 = 'Feeder slave3: Invalid configuration'
+DCPText.DCPFaultNum = 00711
+
+CASE(712):
+DCPText.DCPLine1 = 'Process: Timeout feeder not ready for process'
+DCPText.DCPFaultNum = 00712
+
+CASE(713):
+DCPText.DCPLine1 = 'Process: Timeout SIC (controller) not ready for process'
+DCPText.DCPFaultNum = 00713
+
+CASE(714):
+DCPText.DCPLine1 = 'Process: SIC (controller) process not finished yet'
+DCPText.DCPFaultNum = 00714
+
+CASE(715):
+DCPText.DCPLine1 = 'Process: Adjustment drive necessary'
+DCPText.DCPFaultNum = 00715
+
+CASE(716):
+DCPText.DCPLine1 = 'Start riveting during protective circuit or emergency stop'
+DCPText.DCPFaultNum = 00716
+
+CASE(717):
+DCPText.DCPLine1 = 'SIC: Programmed value Speed riveting too small'
+DCPText.DCPFaultNum = 00717
+
+CASE(718):
+DCPText.DCPLine1 = 'SIC: Programmed value Speed driving too small'
+DCPText.DCPFaultNum = 00718
+
+CASE(719):
+DCPText.DCPLine1 = 'Timeout overhead floating linear slide'
+DCPText.DCPFaultNum = 00719
+
+CASE(720):
+DCPText.DCPLine1 = 'Hardware configuration of the controller has changed'
+DCPText.DCPFaultNum = 00720
+
+CASE(721):
+DCPText.DCPLine1 = 'Hardware configuration of the spindle has changed'
+DCPText.DCPFaultNum = 00721
+
+CASE(722):
+DCPText.DCPLine1 = 'Hardware configuration of the feeders have changed'
+DCPText.DCPFaultNum = 00722
+
+CASE(723):
+DCPText.DCPLine1 = 'SIC: Programmed value Spindle home POSITION too big'
+DCPText.DCPFaultNum = 00723
+
+CASE(724):
+DCPText.DCPLine1 = 'SIC: Reference curve has invalid values'
+DCPText.DCPFaultNum = 00724
+
+CASE(725):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode activated for spindel 1'
+DCPText.DCPFaultNum = 00725
+
+CASE(726):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode activated for spindel 2'
+DCPText.DCPFaultNum = 00726
+
+CASE(727):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode activated for spindel 3'
+DCPText.DCPFaultNum = 00727
+
+CASE(728):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode activated for spindel 4'
+DCPText.DCPFaultNum = 00728
+
+CASE(729):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode deactivated for spindel 1'
+DCPText.DCPFaultNum = 00729
+
+CASE(730):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode deactivated for spindel 2'
+DCPText.DCPFaultNum = 00730
+
+CASE(731):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode deactivated for spindel 3'
+DCPText.DCPFaultNum = 00731
+
+CASE(732):
+DCPText.DCPLine1 = 'ZCPU: Stealth-Mode deactivated for spindel 4'
+DCPText.DCPFaultNum = 00732
+
+CASE(733):
+DCPText.DCPLine1 = 'Spindle 1: Maintenance magazine-tube 1 is necessary'
+DCPText.DCPFaultNum = 00733
+
+CASE(734):
+DCPText.DCPLine1 = 'Spindle 2: Maintenance magazine-tube 1 is necessary'
+DCPText.DCPFaultNum = 00734
+
+CASE(735):
+DCPText.DCPLine1 = 'Spindle 3: Maintenance magazine-tube 1 is necessary'
+DCPText.DCPFaultNum = 00735
+
+CASE(736):
+DCPText.DCPLine1 = 'Spindle 4: Maintenance magazine-tube 1 is necessary'
+DCPText.DCPFaultNum = 00736
+
+CASE(737):
+DCPText.DCPLine1 = 'Spindle 1: Maintenance magazine-tube 2 is necessary'
+DCPText.DCPFaultNum = 00737
+
+CASE(738):
+DCPText.DCPLine1 = 'Spindle 2: Maintenance magazine-tube 2 is necessary'
+DCPText.DCPFaultNum = 00738
+
+CASE(739):
+DCPText.DCPLine1 = 'Spindle 3: Maintenance magazine-tube 2 is necessary'
+DCPText.DCPFaultNum = 00739
+
+CASE(740):
+DCPText.DCPLine1 = 'Spindle 4: Maintenance magazine-tube 2 is necessary'
+DCPText.DCPFaultNum = 00740
+
+CASE(741):
+DCPText.DCPLine1 = 'Spindle 1: Maintenance magazine-tube behind separation is necessary'
+DCPText.DCPFaultNum = 00741
+
+CASE(742):
+DCPText.DCPLine1 = 'Spindle 2: Maintenance magazine-tube behind separation is necessary'
+DCPText.DCPFaultNum = 00742
+
+CASE(743):
+DCPText.DCPLine1 = 'Spindle 3: Maintenance magazine-tube behind separation is necessary'
+DCPText.DCPFaultNum = 00743
+
+CASE(744):
+DCPText.DCPLine1 = 'Spindle 4: Maintenance magazine-tube behind separation is necessary'
+DCPText.DCPFaultNum = 00744
+
+CASE(745):
+DCPText.DCPLine1 = 'Prozess: JIC Criteria 1 is out of tolerance threshold'
+DCPText.DCPFaultNum = 00745
+
+CASE(746):
+DCPText.DCPLine1 = 'DDC: magazine lock not opened'
+DCPText.DCPFaultNum = 00746
+
+CASE(747):
+DCPText.DCPLine1 = 'DDC: magazine lock not sealed'
+DCPText.DCPFaultNum = 00747
+
+CASE(748):
+DCPText.DCPLine1 = 'DDC: Magazine slide 1 has not reached magazine position'
+DCPText.DCPFaultNum = 00748
+
+CASE(749):
+DCPText.DCPLine1 = 'DDC: Magazine slide 1 has not reached receiver position'
+DCPText.DCPFaultNum = 00749
+
+CASE(750):
+DCPText.DCPLine1 = 'DDC: Magazine slide 2 has not reached magazine position'
+DCPText.DCPFaultNum = 00750
+
+CASE(751):
+DCPText.DCPLine1 = 'DDC: Magazine slide 2 has not reached receiver position'
+DCPText.DCPFaultNum = 00751
+
+CASE(752):
+DCPText.DCPLine1 = 'DDC: Rivet in receiver not recognized'
+DCPText.DCPFaultNum = 00752
+
+CASE(753):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00753
+
+CASE(754):
+DCPText.DCPLine1 = 'Force Correction: Communication to DF30CAN is faulty'
+DCPText.DCPFaultNum = 00754
+
+CASE(755):
+DCPText.DCPLine1 = 'DDC: Corrected max. force exceeded (FC)'
+DCPText.DCPFaultNum = 00755
+
+CASE(756):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00756
+
+CASE(757):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00757
+
+CASE(758):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00758
+
+CASE(759):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00759
+
+CASE(760):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00760
+
+CASE(761):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00761
+
+CASE(762):
+DCPText.DCPLine1 = 'Prozess: JIC Criteria 2 is out of tolerance threshold'
+DCPText.DCPFaultNum = 00762
+
+CASE(763):
+DCPText.DCPLine1 = 'Feeder: Die changer not connected anymore'
+DCPText.DCPFaultNum = 00763
+
+CASE(764):
+DCPText.DCPLine1 = 'Feeder: Communication fault with die changer'
+DCPText.DCPFaultNum = 00764
+
+CASE(765):
+DCPText.DCPLine1 = 'Die changer: Station not closed'
+DCPText.DCPFaultNum = 00765
+
+CASE(766):
+DCPText.DCPLine1 = 'Die changer: Station not opened'
+DCPText.DCPFaultNum = 00766
+
+CASE(767):
+DCPText.DCPLine1 = 'Die changer: selected die position is occupied'
+DCPText.DCPFaultNum = 00767
+
+CASE(768):
+DCPText.DCPLine1 = 'Die changer: selected die position is vacant'
+DCPText.DCPFaultNum = 00768
+
+CASE(769):
+DCPText.DCPLine1 = 'Die changer: selected die position is out of range'
+DCPText.DCPFaultNum = 00769
+
+CASE(770):
+DCPText.DCPLine1 = 'Die changer: deposited die not in position'
+DCPText.DCPFaultNum = 00770
+
+CASE(771):
+DCPText.DCPLine1 = 'Die changer: die not picked up'
+DCPText.DCPFaultNum = 00771
+
+CASE(772):
+DCPText.DCPLine1 = 'Die changer: coded plug is missing'
+DCPText.DCPFaultNum = 00772
+
+CASE(773):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00773
+
+CASE(774):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00774
+
+CASE(775):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00775
+
+CASE(776):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00776
+
+CASE(777):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00777
+
+CASE(778):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00778
+
+CASE(779):
+DCPText.DCPLine1 = 'Die changer process: Cycle Timeout'
+DCPText.DCPFaultNum = 00779
+
+CASE(780):
+DCPText.DCPLine1 = 'Die changer process: No valid die-number detected'
+DCPText.DCPFaultNum = 00780
+
+CASE(781):
+DCPText.DCPLine1 = 'Process: Incorrect die-assignment'
+DCPText.DCPFaultNum = 00781
+
+CASE(782):
+DCPText.DCPLine1 = 'Force correction: data do not match'
+DCPText.DCPFaultNum = 00782
+
+CASE(783):
+DCPText.DCPLine1 = 'Force Correction: SIC command not supported by the DDC'
+DCPText.DCPFaultNum = 00783
+
+CASE(784):
+DCPText.DCPLine1 = 'Force Correction: Time out DDC'
+DCPText.DCPFaultNum = 00784
+
+CASE(785):
+DCPText.DCPLine1 = 'Force Correction: Runtime error SIC'
+DCPText.DCPFaultNum = 00785
+
+
+	else:
+	DCPText.DCPLine1 = 'Undefined SPR DCP Fault Message'
+	
+ENDSELECT
+
+CNV_INT_STR(DCPText.DCPFaultNum,4,10,strDCPNum)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,strDCPNum,STATUS)
+	
+END G_DCP_SPR1_3
+
+--Begin Prog
+BEGIN
+
+ 
+ 
+END DCP_TUCKER_3

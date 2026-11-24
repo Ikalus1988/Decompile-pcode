@@ -1,8 +1,10 @@
-# pc2kl_gate.py — 反编译重建质量门（四道门）
+# pc2kl_gate.py — 反编译重建质量门（六道门）
 #   G1 编译门:   KTRANS 0 error
 #   G2 语义指纹门: 消息串/常量在 原始.dec ↔ 重建.pc 间一致
 #   G3 结构门:   块配平/ROUTINE 块完整/无非法左值/无 ? 残留
 #   G4 渲染门:   未渲染语句(注释降级)占比 ≤ 15%
+#   G5 流拓扑门: REPEAT/UNTIL 配平 + 跨界嵌套签名（loop↔branch 降级专检，T_UNTIL 探针）
+#   G6 名字绑定: 真名声明未引用（声明/使用断裂 lint）
 # Usage: python -I pc2kl_gate.py <原始.dec> <重建.KL> <重建.pc> [report.txt]
 import os, re, subprocess, sys, tempfile
 
@@ -93,9 +95,17 @@ except Exception as e:
 gate('G2 语义指纹', g2_ok, g2_detail)
 
 # G3 结构门
+# 先拼接续行：长条件按顶层运算符断行（KTRANS 256 上限，probe_linelen 实测），
+# 逐行匹配会把 IF 计漏（ISV_VG 实证：IF/ENDIF 文件级 114/114 配平，G3 却报 -1）
+_g3_lines = []
+for _l in kl_lines:
+    if _g3_lines and re.search(r'( AND | OR |, | \+ )\s*$', _g3_lines[-1]):
+        _g3_lines[-1] = _g3_lines[-1].rstrip() + ' ' + _l.strip()
+    else:
+        _g3_lines.append(_l)
 g3_problems = []
 opens = {'IF': 0, 'WHILE': 0, 'FOR': 0}
-for l in kl_lines:
+for l in _g3_lines:
     t = l.strip()
     if re.match(r'^IF .* THEN$', t):
         opens['IF'] += 1
@@ -117,7 +127,7 @@ for l in kl_lines:
 for k, v in opens.items():
     if v != 0:
         g3_problems.append(f'{k} 块不配平: {v}')
-routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: INTEGER)?$', kl, re.M) if 'FROM' not in m.group(0)]
+routines = [m.group(1) for m in re.finditer(r'^ROUTINE (\w+)(\(.*\))? ?(: [A-Z]+(\[\d+\])?)?$', kl, re.M) if 'FROM' not in m.group(0)]
 ends = re.findall(r'^END (\w+)', kl, re.M)
 if sorted(routines + [re.search(r'PROGRAM (\w+)', kl).group(1)]) != sorted(ends):
     g3_problems.append('ROUTINE/END 名称不匹配')
@@ -131,6 +141,48 @@ total_stmt = len(body_lines) + len(fallback)
 ratio = len(fallback) / max(total_stmt, 1)
 g4_ok = ratio <= 0.15
 gate('G4 渲染覆盖', g4_ok, f'未渲染 {len(fallback)}/{total_stmt} = {ratio:.1%} (阈值15%)')
+
+# G5 控制流拓扑门（T_UNTIL 探针落锤：loop↔branch 降级四门全盲区，须专检）
+# ① REPEAT/UNTIL 配平；② 跨界嵌套签名「CASE/ELSE: 标签行紧跟 UNTIL(」= 循环跨子句
+#    （MI04_SSW_ROUT CHECKCAPVAL 实证，KTRANS 拒编）——正确形态是 UNTIL 先于下个标签。
+_code_lines = [re.sub(r'--.*$', '', l) for l in _g3_lines]
+g5_problems = []
+_n_repeat = sum(1 for l in _code_lines if re.match(r'^\s*REPEAT\s*$', l))
+_n_until = sum(1 for l in _code_lines if re.match(r'^\s*UNTIL\(', l))
+if _n_repeat != _n_until:
+    g5_problems.append(f'REPEAT/UNTIL 不配平: {_n_repeat}/{_n_until}')
+for _i5, _l5 in enumerate(_code_lines):
+    if re.match(r'^\s*(CASE\([^)]*\):|ELSE:)\s*$', _l5):
+        for _l6 in _code_lines[_i5 + 1:_i5 + 2]:
+            if re.match(r'^\s*UNTIL\(', _l6):
+                g5_problems.append(f'跨界嵌套: 行{_i5+1} 标签后紧跟 UNTIL')
+g5_ok = not g5_problems
+gate('G5 流拓扑', g5_ok, '通过' if g5_ok else '; '.join(g5_problems[:5]))
+
+# G6 名字绑定 lint（declared-but-unused 真名=声明与使用断裂，T_UNTIL B_1OOPOUT 实证）
+# 仅扫 VAR 块声明（TYPE 结构体字段不计——X/Y/Z/W/P/R 族实证误报 69 处）；
+# 语义为 lint：有命中记警告，不阻断（真名经字符串形参引用等合法形态存在），
+# 严格清点走 tests/loop_census.py 的 lint 通道。
+_g6_warn = []
+_decl_re = re.compile(r'^\s*([A-Za-z_]\w*)\s*:\s*(?:ARRAY|BOOLEAN|INTEGER|REAL|STRING|POSITION|JOINTPOS|FILE)')
+_synth_re = re.compile(r'^(?:v\d+|r\d+_lc\d+|sv_[a-z]|p\d+_f[0-9a-f]+|p\d+$|pp[0-9a-f]{2}|fn\d+x?|rtn\d+x?|imp\d+x?|l\d+_\w+)')
+_body_txt = '\n'.join(_code_lines)
+_in_type = False
+for _l5 in kl_lines:
+    _t5 = _l5.strip()
+    if _t5.startswith('TYPE'):
+        _in_type = True
+    if _t5.startswith('VAR') or _t5.startswith('ROUTINE') or _t5 == 'BEGIN':
+        _in_type = False
+    if _in_type:
+        continue
+    _m5 = re.match(r'^\s*([A-Za-z_]\w*)\s*:\s*BOOLEAN', _l5)   # 口径=BOOLEAN 真名（共享 VAR 膨胀实证淹没泛口径）
+    if _m5 and not _synth_re.match(_m5.group(1)):
+        _nm5 = _m5.group(1)
+        _uses = len(re.findall(r'\b' + re.escape(_nm5) + r'\b', _body_txt))
+        if _uses <= 1:
+            _g6_warn.append(_nm5)
+gate('G6 名字绑定', True, '通过' if not _g6_warn else f'警告 {len(_g6_warn)} 处真名声明未用: {", ".join(_g6_warn[:5])}')
 
 # 报告
 with open(report_path, 'w', encoding='utf-8') as f:

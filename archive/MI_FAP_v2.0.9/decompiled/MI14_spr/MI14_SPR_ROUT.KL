@@ -1,0 +1,820 @@
+-- MI14_SPR_ROUT.KL (decompiled v3)
+PROGRAM MI14_SPR_ROUT
+%COMMENT = 'MI14 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0b : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  AR_I_MI14_GO : ARRAY[64] OF INTEGER
+  I_TIMER : INTEGER
+  AR_I_MI14_GI : ARRAY[64] OF INTEGER
+  TIMEOUT_RIVET : INTEGER
+  AR_I_MI14_DI : ARRAY[64] OF INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  TIMEOUT_PROCESS : INTEGER
+  L_STATE : INTEGER
+  I_TOLERANCEPOS : INTEGER
+  I_MI01_DI : INTEGER
+  MI14_APPLMODE : INTEGER
+  AR_I_MI14_DO : ARRAY[64] OF INTEGER
+  B_SKIP_ROCESS : INTEGER
+  B_NOPROCESS : INTEGER
+  TIMEOUT_RELOAD : INTEGER
+  TIMEOUT_DOCK : INTEGER
+  TIMEOUT_MAGAZINE : INTEGER
+  GUN_COUNT : INTEGER
+  I_ACT_GUN : INTEGER
+  I_MAX_OPEN_POS : ARRAY[3] OF INTEGER
+  TIMEOUT_LIFEBIT : INTEGER
+  I_DRYRUNTIME : INTEGER
+  I_MON : INTEGER
+  B_MON_14 : BOOLEAN
+  B_SENDBNNUM : BOOLEAN
+  B_LIFEBIT : BOOLEAN
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  ENTRY : INTEGER
+  L_REPEATCOUNTER : INTEGER
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE MI14_SET_RIVETID(p0, p1 : INTEGER) : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+BEGIN
+  r0_lc1 = p1 MOD 65536
+  r0_lc2 = p1 DIV 65536
+  io_13[AR_I_MI14_GO[p0] + 3] = r0_lc1
+  io_13[AR_I_MI14_GO[p0] + 3 + 1] = r0_lc2
+  RETURN(0)
+END MI14_SET_RIVETID
+
+ROUTINE MI14_SET_NEXTRIVETID(p0, p1 : INTEGER) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  r1_lc1 = p1 MOD 65536
+  r1_lc2 = p1 DIV 65536
+  io_13[AR_I_MI14_GO[p0] + 5] = r1_lc1
+  io_13[AR_I_MI14_GO[p0] + 5 + 1] = r1_lc2
+  RETURN(0)
+END MI14_SET_NEXTRIVETID
+
+ROUTINE MI14_SETTIMER(p0 : INTEGER) : INTEGER
+BEGIN
+  I_TIMER = p0 * (0 - 1)
+  RETURN(0)
+END MI14_SETTIMER
+
+ROUTINE MI14_GET_FAULTCODE(p0 : INTEGER) : INTEGER
+BEGIN
+  RETURN(io_12[AR_I_MI14_GI[p0] + 3])
+  RETURN(0)
+END MI14_GET_FAULTCODE
+
+ROUTINE MI14_CHECKFORERROR(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_SETTIMER(TIMEOUT_RIVET)
+  -- stmt144 stray sv_i
+  -- stmt146 stray AR_I_MI14_DI[p0] + 6
+  IF ((I_TIMER > 0)) THEN
+  IF ((io_01[AR_I_MI14_DI[p0] + 6] <> 0)) THEN
+  IF ((sv_i <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet Controller error'
+  LST_ERROR_f38[256] = 'An error is occured at rivet gun'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 6, 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ELSE
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Riveting system error'
+  LST_ERROR_f38[256] = 'Error on the riveting system'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 6, 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet Controller error'
+  LST_ERROR_f38[256] = 'An error is occured at rivet gun'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 6, 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI14_CHECKFORERROR
+
+ROUTINE MI14_SET_GUN_CODE(p0 : INTEGER) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  IF ((p0 <> 0)) THEN
+  io_13[AR_I_MI14_GO[p0] + 1] = p0
+  ELSE
+  FOR r5_lc1 = 1 TO 3 DO
+  IF (NOT (UNINIT(AR_I_MI14_GO[r5_lc1]))) THEN
+  IF (sv_b) THEN
+  io_13[AR_I_MI14_GO[p0] + 1] = 0
+  ENDIF
+  ENDIF
+  ENDFOR
+  ENDIF
+  RETURN(0)
+END MI14_SET_GUN_CODE
+
+ROUTINE MI14_SET_TARGET_POS(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  io_13[AR_I_MI14_GO[p0] + 2] = p1
+  RETURN(0)
+END MI14_SET_TARGET_POS
+
+ROUTINE MI14_GET_CUR_POS(p0 : INTEGER) : INTEGER
+BEGIN
+  RETURN(io_12[AR_I_MI14_GI[p0] + 1])
+  RETURN(0)
+END MI14_GET_CUR_POS
+
+ROUTINE MI14_SETPOS(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_SET_GUN_CODE(p0)
+  -- stmt238 stray sv_i
+  sv_i = MI14_SET_TARGET_POS(p0, p1)
+  -- stmt241 stray sv_i
+  RETURN(0)
+END MI14_SETPOS
+
+ROUTINE MI14_CHECKPOS(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt0 stray sv_i
+  REPEAT
+  DELAY 20
+  UNTIL((0 < I_TOLERANCEPOS) OR (I_TIMER > 0))
+  IF ((I_TIMER > 0)) THEN
+  IF ((io_01[AR_I_MI14_DI[p0] + 6] <> 0)) THEN
+  IF ((sv_i <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet Controller error'
+  LST_ERROR_f38[256] = 'An error is occured at rivet gun'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 6, 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ELSE
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet gun not in Pos'
+  LST_ERROR_f38[256] = 'Waiting until gun in target position'
+  sv_i = WAIT_SIGNAL(256, 3, AR_I_MI14_GI[p0] + 1, p1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  ENDIF
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet gun not in Pos'
+  LST_ERROR_f38[256] = 'Waiting until gun in target position'
+  sv_i = WAIT_SIGNAL(256, 3, AR_I_MI14_GI[p0] + 1, p1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  RETURN(0)
+END MI14_CHECKPOS
+
+ROUTINE MI14_CHECKRIVETREADY(p0 : INTEGER) : INTEGER
+BEGIN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Rivet finish active'
+  LST_ERROR_f38[256] = 'Syetem: (riveting ended) still present'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 10, 0, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Controller not ready'
+  LST_ERROR_f38[256] = 'Wait for rivet controller is ready'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 1, 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Ready to start error'
+  LST_ERROR_f38[256] = 'Wait for ready to start from controller'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 2, 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  RETURN(0)
+END MI14_CHECKRIVETREADY
+
+ROUTINE MI14_CHECKGUNHOME(p0 : INTEGER) : INTEGER
+BEGIN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait gun home'
+  LST_ERROR_f38[256] = 'Wait for spindle home'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 13, 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  RETURN(0)
+END MI14_CHECKGUNHOME
+
+ROUTINE MI14_SPINDLEHOME(p0 : INTEGER) : INTEGER
+VAR
+  r12_lc14 : STRING[64]
+  r12_lc15 : INTEGER
+BEGIN
+  r12_lc15 = 0
+  sv_i = MI14_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt92 stray sv_i
+  REPEAT
+  DELAY 32
+  IF ((I_TIMER > 0) AND (r12_lc15 = 0)) THEN
+  sv_s = INTTOSTR(AR_I_MI14_DI[p0] + 13)
+  sv_s = INTTOSTR(AR_I_MI14_DI[p0] + 20)
+  r12_lc14 = 'Wait DI[' + sv_s + ']Or DI[' + sv_s + ']=ON'
+  POST_ERR(38100, 'Wait gun home', 0, 0)
+  POST_ERR(38100, r12_lc14, 0, 1)
+  r12_lc15 = 1
+  ENDIF
+  IF ((io_0e[153] <> 0) OR (io_01[I_MI01_DI + 5] <> 0) OR (io_0b[1] <> 0)) THEN
+  sv_i = MI14_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt104 stray sv_i
+  r12_lc15 = 0
+  ENDIF
+  UNTIL((io_01[AR_I_MI14_DI[p0] + 13] <> 0) OR (io_01[AR_I_MI14_DI[p0] + 20] <> 0))
+  RETURN(0)
+END MI14_SPINDLEHOME
+
+ROUTINE MI14_SPINDLETARGET(p0 : INTEGER) : INTEGER
+VAR
+  r13_lc14 : STRING[64]
+  r13_lc15 : INTEGER
+BEGIN
+  r13_lc15 = 0
+  sv_i = MI14_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt123 stray sv_i
+  REPEAT
+  DELAY 32
+  IF ((I_TIMER > 0) AND (r13_lc15 = 0)) THEN
+  sv_s = INTTOSTR(AR_I_MI14_DI[p0] + 21)
+  sv_s = INTTOSTR(AR_I_MI14_DI[p0] + 20)
+  r13_lc14 = 'Wait DI[' + sv_s + ']Or DI[' + sv_s + ']=ON'
+  POST_ERR(38100, 'Wait gun home', 0, 0)
+  POST_ERR(38100, r13_lc14, 0, 1)
+  r13_lc15 = 1
+  ENDIF
+  IF ((io_0e[153] <> 0) OR (io_01[I_MI01_DI + 5] <> 0) OR (io_0b[1] <> 0)) THEN
+  sv_i = MI14_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt135 stray sv_i
+  r13_lc15 = 0
+  ENDIF
+  UNTIL((io_01[AR_I_MI14_DI[p0] + 21] <> 0) OR (io_01[AR_I_MI14_DI[p0] + 20] <> 0))
+  RETURN(0)
+END MI14_SPINDLETARGET
+
+ROUTINE MI14_CHECK_APP_MODE(p0 : INTEGER) : INTEGER
+VAR
+  r14_lc1 : INTEGER
+BEGIN
+  IF ((sv_i = 3)) THEN
+  IF ((io_01[I_MI01_DI + 35] <> 0)) THEN
+  MI14_APPLMODE = 2
+  ELSE
+  MI14_APPLMODE = 1
+  ENDIF
+  IF ((io_01[I_MI01_DI + 35] <> 0)) THEN
+  ENDIF
+  REPEAT
+  DELAY 32
+  sv_i = DB_PROMPT(2, 'Application Mode acknowledge', 'YES -> Acknowledge Tryout Mode.\nNO  -> Ignore Tryout Mode.     ', 4)
+  r14_lc1 = sv_i
+  -- stmt165 residue 'YES -> Acknowledge Tryout Mode.\\nNO  -> Ignore Tryout Mode.     '
+  UNTIL((r14_lc1 = 3) OR (r14_lc1 = 4))
+  SELECT r14_lc1 OF
+  CASE(3):
+  MI14_APPLMODE = 2
+  CASE(4):
+  MI14_APPLMODE = 1
+  ELSE:
+  ENDSELECT
+  ENDIF
+  MI14_APPLMODE = 1
+  RETURN(MI14_APPLMODE)
+  RETURN(0)
+END MI14_CHECK_APP_MODE
+
+ROUTINE MI14_INIT(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_CHECKFORERROR(p0)
+  -- stmt196 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 10] = 0
+  io_02[AR_I_MI14_DO[p0] + 11] = 0
+  io_02[AR_I_MI14_DO[p0] + 17] = 0
+  io_02[AR_I_MI14_DO[p0] + 18] = 0
+  io_02[AR_I_MI14_DO[p0] + 33] = 0
+  io_02[AR_I_MI14_DO[p0] + 41] = 0
+  io_02[AR_I_MI14_DO[p0] + 42] = 0
+  io_02[AR_I_MI14_DO[p0] + 9] = 0
+  sv_i = MI14_SET_RIVETID(p0, 0)
+  -- stmt208 stray sv_i
+  sv_i = MI14_SET_GUN_CODE(p0)
+  -- stmt210 stray sv_i
+  sv_i = MI14_CHECKRIVETREADY(p0)
+  -- stmt212 stray sv_i
+  sv_i = MI14_SETPOS(p0, p1)
+  -- stmt215 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 21] = 1
+  IF ((io_01[AR_I_MI14_DI[p0] + 21] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait gun home'
+  LST_ERROR_f38[256] = 'Wait for spindle home'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 21, 1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  sv_i = MI14_CHECKPOS(p0, p1)
+  -- stmt227 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 21] = 0
+  RETURN(0)
+END MI14_INIT
+
+ROUTINE MI14_RIVETERRORHANDLING(p0, p1, p2, p3 : INTEGER) : INTEGER
+BEGIN
+  L_STATE = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, 'Last process NOK', 'YES: Acknowledge and Restart.\nNO: Forced Complete.', 3)
+  L_STATE = sv_i
+  -- stmt244 residue 'YES: Acknowledge and Restart.\\nNO: Forced Complete.'
+  DELAY 64
+  UNTIL((L_STATE <> 0))
+  SELECT L_STATE OF
+  CASE(3):
+  CASE(4):
+  -- stmt255 residue 1000
+  -- stmt5 residue 1000
+  B_SKIP_ROCESS = 1
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI14_RIVETERRORHANDLING
+
+ROUTINE MI14_RIVET(p0, p1, p2, p3 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_CHECKFORERROR(p0)
+  -- stmt21 stray sv_i
+  sv_i = MI14_CHECKRIVETREADY(p0)
+  -- stmt24 stray sv_i
+  sv_i = MI14_SETPOS(p0, p3)
+  -- stmt30 stray sv_i
+  sv_i = MI14_SET_RIVETID(p0, p1)
+  -- stmt32 stray sv_i
+  sv_i = MI14_SET_NEXTRIVETID(p0, p2)
+  -- stmt33 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 10] = 0
+  io_02[AR_I_MI14_DO[p0] + 21] = 0
+  sv_i = MI14_CHECK_APP_MODE(p0)
+  SELECT sv_i OF
+  CASE(1):
+  B_NOPROCESS = 0
+  CASE(2):
+  B_NOPROCESS = 1
+  CASE(3):
+  ABORT
+  ELSE:
+  ENDSELECT
+  IF ((B_NOPROCESS <> 0)) THEN
+  -- stmt55 residue 5000
+  sv_i = MI14_SET_RIVETID(p0, 0)
+  -- stmt57 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 34] = 0)) THEN
+  io_02[AR_I_MI14_DO[p0] + 33] = 1
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait reload'
+  LST_ERROR_f38[256] = 'Wait for reload request feedback'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 33, 1, TIMEOUT_RELOAD, 2)
+  L_STATE = sv_i
+  io_02[AR_I_MI14_DO[p0] + 33] = 0
+  ENDIF
+  DELAY 100
+  B_SKIP_ROCESS = 0
+  REPEAT
+  io_02[AR_I_MI14_DO[p0] + 10] = 1
+  sv_i = MI14_SETTIMER(TIMEOUT_RIVET)
+  -- stmt79 stray sv_i
+  -- stmt80 stray AR_I_MI14_DI[p0] + 10
+  IF ((I_TIMER > 0)) THEN
+  sv_i = MI14_RIVETERRORHANDLING(p0, p1, p2, p3)
+  -- stmt84 stray sv_i
+  ENDIF
+  DELAY 16
+  UNTIL((io_01[AR_I_MI14_DI[p0] + 10] <> 0) OR (B_SKIP_ROCESS <> 0))
+  io_02[AR_I_MI14_DO[p0] + 10] = 0
+  sv_i = MI14_CHECKPOS(p0, p3)
+  -- stmt93 stray sv_i
+  sv_i = MI14_CHECKGUNHOME(p0)
+  -- stmt96 stray sv_i
+  sv_i = MI14_SET_RIVETID(p0, 0)
+  -- stmt98 stray sv_i
+  RETURN(0)
+END MI14_RIVET
+
+ROUTINE MI14_RELOAD(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_CHECKFORERROR(p0)
+  -- stmt111 stray sv_i
+  sv_i = MI14_CHECKRIVETREADY(p0)
+  -- stmt114 stray sv_i
+  sv_i = MI14_CHECKGUNHOME(p0)
+  -- stmt117 stray sv_i
+  sv_i = MI14_SET_RIVETID(p0, p1)
+  -- stmt119 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 33] = 1
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait reload'
+  LST_ERROR_f38[256] = 'Wait for reload request feedback'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 33, 1, TIMEOUT_RELOAD, 2)
+  L_STATE = sv_i
+  sv_i = MI14_SET_RIVETID(p0, 0)
+  -- stmt128 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 33] = 0
+  RETURN(0)
+END MI14_RELOAD
+
+ROUTINE MI14_CHECK_DISCONNECT(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI14_DI[p0] + 29] <> 0) AND (io_01[AR_I_MI14_DI[p0] + 30] = 0)) THEN
+  ELSE
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait Disconnected'
+  LST_ERROR_f38[256] = 'Wait for spindle Disconnected'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 29, 1, TIMEOUT_DOCK, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait Disconnected'
+  LST_ERROR_f38[256] = 'Wait for spindle Disconnected'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 30, 0, TIMEOUT_DOCK, 2)
+  L_STATE = sv_i
+  ENDIF
+  RETURN(0)
+END MI14_CHECK_DISCONNECT
+
+ROUTINE MI14_CHECK_CONNECT(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI14_DI[p0] + 29] = 0) AND (io_01[AR_I_MI14_DI[p0] + 30] <> 0)) THEN
+  ELSE
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait Disconnected'
+  LST_ERROR_f38[256] = 'Wait for spindle Disconnected'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 29, 0, TIMEOUT_DOCK, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait Disconnected'
+  LST_ERROR_f38[256] = 'Wait for spindle Disconnected'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 30, 1, TIMEOUT_DOCK, 2)
+  L_STATE = sv_i
+  ENDIF
+  RETURN(0)
+END MI14_CHECK_CONNECT
+
+ROUTINE MI14_DOCK(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_CHECKRIVETREADY(p0)
+  -- stmt192 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 3] = 1
+  IF ((io_01[AR_I_MI14_DI[p0] + 3] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Life Bit Error'
+  LST_ERROR_f38[256] = 'Wait for Life Bit Active'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 3, 1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  io_02[AR_I_MI14_DO[p0] + 3] = 0
+  SELECT p1 OF
+  CASE(1):
+  sv_i = MI14_CHECK_DISCONNECT(p0)
+  -- stmt207 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 29] = 0
+  io_02[AR_I_MI14_DO[p0] + 30] = 1
+  sv_i = MI14_CHECK_CONNECT(p0)
+  -- stmt212 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 30] = 0
+  CASE(2):
+  sv_i = MI14_CHECK_CONNECT(p0)
+  -- stmt217 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 30] = 0
+  io_02[AR_I_MI14_DO[p0] + 29] = 1
+  sv_i = MI14_CHECK_DISCONNECT(p0)
+  -- stmt222 stray sv_i
+  io_02[AR_I_MI14_DO[p0] + 29] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI14_DOCK
+
+ROUTINE MI14_MAGAZINE(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI14_CHECKFORERROR(p0)
+  -- stmt241 stray sv_i
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI14_DO[p0] + 41] = 0
+  io_02[AR_I_MI14_DO[p0] + 42] = 0
+  io_02[AR_I_MI14_DO[p0] + 12] = 0
+  IF ((io_01[AR_I_MI14_DI[p0] + 42] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait station ready OFF'
+  LST_ERROR_f38[256] = 'Wait filling station ready OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 42, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 43] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine docked OFF'
+  LST_ERROR_f38[256] = 'Wait magazine docked OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 43, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 41] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine complete OFF'
+  LST_ERROR_f38[256] = 'Wait magazine fill cycle complete OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 41, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 45] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine full level OFF'
+  LST_ERROR_f38[256] = 'Wait magazine full level OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 45, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 44] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine empty'
+  LST_ERROR_f38[256] = 'Wait magazine fill level empty'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 44, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  io_02[AR_I_MI14_DO[p0] + 42] = 1
+  IF ((io_01[AR_I_MI14_DI[p0] + 42] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait station ready'
+  LST_ERROR_f38[256] = 'Wait filling station ready for docking'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 42, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  CASE(2):
+  IF ((io_01[AR_I_MI14_DI[p0] + 42] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait station ready'
+  LST_ERROR_f38[256] = 'Wait filling station ready for docking'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 42, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 43] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine docked'
+  LST_ERROR_f38[256] = 'Wait magazine docked'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 43, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 41] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine complete OFF'
+  LST_ERROR_f38[256] = 'Wait magazine fill cycle complete OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 41, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 45] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine full level OFF'
+  LST_ERROR_f38[256] = 'Wait magazine full level OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 45, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 44] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine empty'
+  LST_ERROR_f38[256] = 'Wait magazine fill level empty'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 44, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  io_02[AR_I_MI14_DO[p0] + 41] = 1
+  IF ((io_01[AR_I_MI14_DI[p0] + 41] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine complete'
+  LST_ERROR_f38[256] = 'Wait magazine fill cycle complete'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 41, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 6] <> 0)) THEN
+  L_STATE = 0
+  DELAY 64
+  ENDIF
+  REPEAT
+  sv_i = DB_PROMPT(0, 'Request for worker confirmation', 'Press \"OK\" to force complete', 7)
+  L_STATE = sv_i
+  -- stmt99 residue 'Press \\"OK\\" to force complete'
+  DELAY 64
+  UNTIL((L_STATE = 1))
+  io_02[AR_I_MI14_DO[p0] + 41] = 0
+  CASE(3):
+  IF ((io_01[AR_I_MI14_DI[p0] + 42] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait station ready'
+  LST_ERROR_f38[256] = 'Wait filling station ready for docking'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 42, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 43] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine docked OFF'
+  LST_ERROR_f38[256] = 'Wait magazine docked OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 43, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 41] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine complete OFF'
+  LST_ERROR_f38[256] = 'Wait magazine fill cycle complete OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 41, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 45] = 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine full level'
+  LST_ERROR_f38[256] = 'Wait magazine full level'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 45, 1, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI14_DI[p0] + 44] <> 0)) THEN
+  LST_ERROR_f00[256] = 'SPR'
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = 'Wait magazine empty OFF'
+  LST_ERROR_f38[256] = 'Wait magazine fill level empty OFF'
+  sv_i = WAIT_SIGNAL(256, 1, AR_I_MI14_DI[p0] + 44, 0, TIMEOUT_MAGAZINE, 2)
+  L_STATE = sv_i
+  ENDIF
+  io_02[AR_I_MI14_DO[p0] + 42] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI14_MAGAZINE
+
+ROUTINE MI14_SENDBSNUM(p0 : INTEGER) : INTEGER
+VAR
+  r23_lc1 : INTEGER
+BEGIN
+  FOR r23_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI01_DI + 129 + r23_lc1 - 1] <> 0)) THEN
+  io_02[AR_I_MI14_DO[p0] + 161 + r23_lc1 - 1] = 1
+  ELSE
+  io_02[AR_I_MI14_DO[p0] + 161 + r23_lc1 - 1] = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI14_SENDBSNUM
+
+BEGIN
+END MI14_SPR_ROUT

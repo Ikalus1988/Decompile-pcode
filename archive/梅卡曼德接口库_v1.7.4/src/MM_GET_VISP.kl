@@ -1,0 +1,74 @@
+PROGRAM  MM_GET_VISP
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_VisPath'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+%INCLUDE mm_module_h
+
+--------------------------------------------------------------------------------
+-- Get_VisPath
+--------------------------------------------------------------------------------
+ROUTINE Get_VisPath
+
+BEGIN
+-- Init
+    FOR i=1 TO 9 DO
+        Rel_Jps[i]=0
+    ENDFOR    
+-- Get  Tp  Parameter
+	Get_Arg(1, 1, Job, Real_Value, Str_Value)
+    Get_Arg(2, 1, Jps_Pos, Real_Value, Str_Value)
+    Get_Arg(3, 1, Reg_Lst_Data, Real_Value, Str_Value)
+    Get_Arg(4, 1, Reg_Pos_Num, Real_Value, Str_Value)
+    Get_Arg(5, 1, Reg_VPos_Num, Real_Value, Str_Value)
+    Get_Arg(6, 1, Reg_Status, Real_Value, Str_Value) 
+--Send
+    Open_Socket
+    OPEN FILE Sock_Send('RW',C_Tag_S)
+    WRITE Sock_Send(CMD_GET_VISP, Job, Jps_Pos)
+    WRITE Sock_Send(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,CR)
+    CLOSE FILE Sock_Send
+--Receive
+    OPEN FILE Sock_Rcv('RW',C_Tag_S)
+    READ Sock_Rcv(MM_CMD, MM_Status, Last_Data, Pos_Num, VPos_Num)
+    IF Jps_Pos = Send_Pos THEN
+        FOR i=1 TO 20 DO
+            READ Sock_Rcv(MM_Pose[i].Pose.X, MM_Pose[i].Pose.Y, MM_Pose[i].Pose.Z)
+            READ Sock_Rcv(MM_Pose[i].Pose.W, MM_Pose[i].Pose.P, MM_Pose[i].Pose.R)
+            READ Sock_Rcv(MM_Pose[i].Label, MM_Pose[i].Speed)
+        ENDFOR
+    ELSE
+    IF Jps_Pos = Send_Jps THEN
+        FOR i=1 TO 20 DO
+            READ Sock_Rcv(Rel_Jps[1], Rel_Jps[2], Rel_Jps[3], Rel_Jps[4], Rel_Jps[5], Rel_Jps[6])
+            READ Sock_Rcv(MM_Jps[i].Label, MM_Jps[i].Speed)
+            CNV_REL_JPOS(Rel_Jps,MM_Jps[i].Jps,Status)
+            IF Status <> 0 THEN 
+                POST_ERR(ErrCode, 'MM:Robot_Internal_Error', 0, ERR_ABORT)
+            ENDIF
+        ENDFOR    
+    ELSE
+        POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)	
+    ENDIF
+    ENDIF
+    CLOSE FILE Sock_Rcv
+    IF UNINIT(MM_CMD) OR (MM_CMD <> CMD_GET_VISP) THEN
+        POST_ERR(ErrCode,'MM:Robot_CMD_Error', 0, ERR_ABORT)
+    ENDIF
+--Check return status
+    Check_Status(MM_Status)
+    Set_IntReg(Reg_Lst_Data, Last_Data)
+    Set_IntReg(Reg_Pos_Num, Pos_Num)
+    Set_IntReg(Reg_VPos_Num, VPos_Num)
+    Set_IntReg(Reg_Status, MM_Status) 
+    MSG_DISCO(C_Tag_S,Status)
+END Get_VisPath
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_VisPath
+END MM_GET_VISP

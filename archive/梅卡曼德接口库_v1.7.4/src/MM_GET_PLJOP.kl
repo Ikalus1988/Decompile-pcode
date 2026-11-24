@@ -1,0 +1,174 @@
+PROGRAM  MM_GET_PLJOP
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_PlanJPS_POS'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+%INCLUDE mm_module_h
+
+--------------------------------------------------------------------------------
+-- Trans UserData and PlanResults Then Clear them 
+--------------------------------------------------------------------------------
+ROUTINE UsrDt_PlRes
+BEGIN
+	--UserData
+	FOR i=1 TO Viz_UserData[Serial].UserDataNum DO
+		Set_RealReg((Reg_UserData+i-1), Viz_UserData[Serial].UsrData[i])
+		Viz_UserData[Serial].UsrData[i] = 0	
+	ENDFOR
+	--PlanResults
+	IF (Jps_Pos = 3) OR (Jps_Pos = 4) THEN
+		FOR i=1 TO 10 DO
+			Set_RealReg((Reg_PlanRes+i-1), (Viz_PlanRes[Serial].Label[i]))
+			Viz_PlanRes[Serial].Label[i] = 0
+		ENDFOR
+		Set_RealReg((Reg_PlanRes+10), (Viz_PlanRes[Serial].TotalGrabNum))
+		Set_RealReg((Reg_PlanRes+11), (Viz_PlanRes[Serial].CurGrabNum))
+		Set_RealReg((Reg_PlanRes+12), (Viz_PlanRes[Serial].EdgeNum))
+		Set_RealReg((Reg_PlanRes+16), (Viz_PlanRes[Serial].Direction))
+		Viz_PlanRes[Serial].TotalGrabNum=0
+		Viz_PlanRes[Serial].CurGrabNum=0
+		Viz_PlanRes[Serial].EdgeNum=0
+		Viz_PlanRes[Serial].Direction=0
+		FOR i=1 TO 3 DO
+			Set_RealReg((Reg_PlanRes+i+12), (Viz_PlanRes[Serial].TCPoffset[i]))
+			Set_RealReg((Reg_PlanRes+i+16), (Viz_PlanRes[Serial].BoxSize[i]))
+			Viz_PlanRes[Serial].TCPoffset[i] = 0
+			Viz_PlanRes[Serial].BoxSize[i] = 0
+		ENDFOR
+	ENDIF			
+END UsrDt_PlRes
+
+--------------------------------------------------------------------------------
+-- Get_PlanJps
+--------------------------------------------------------------------------------
+ROUTINE Get_PlanJPS
+BEGIN
+--Check If All Data 0
+    CNV_JPOS_REL(MMviz2_Jps[Serial].Jps,Rel_Jps,Status)
+    IF Status <> 0 THEN 
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error1', 0, ERR_ABORT)
+    ENDIF
+    IF ((Rel_Jps[1]=0)AND(Rel_Jps[2]=0)AND(Rel_Jps[3]=0)AND(Rel_Jps[4]=0)AND(Rel_Jps[5]=0)AND(Rel_Jps[6]=0)) THEN 
+    	POST_ERR(ErrCode, 'MM:Robot_Internal_Error2', 0, ERR_ABORT)
+    ENDIF    
+--Trans JPS
+    SET_JPOS_REG(Pr_Num, MMviz2_Jps[Serial].Jps, Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error3', 0, ERR_ABORT)
+    ENDIF    
+--Trans MoveType/ToolNum/Speed
+    Set_RealReg(Reg_MoveType, (MMviz2_Jps[Serial].MoveType))
+    Set_RealReg(Reg_ToolNum, (MMviz2_Jps[Serial].ToolNum))
+    Set_RealReg(Reg_Speed, (MMviz2_Jps[Serial].Speed))
+    
+--Trans UserData&PlanResults then clear them
+	IF MMviz2_Jps[Serial].IsVisPt THEN
+		UsrDt_PlRes
+	ENDIF
+--Clear Pose Data 
+    FOR i=1 TO 9 DO
+    	Rel_Jps[i]=0
+    ENDFOR
+    CNV_REL_JPOS(Rel_Jps,MMviz2_Jps[Serial].Jps,Status)
+    IF Status <> 0 THEN
+        POST_ERR(ErrCode, 'MM:Robot_Internal_Error4', 0, ERR_ABORT)
+    ENDIF
+    MMviz2_Jps[Serial].MoveType = 0
+    MMviz2_Jps[Serial].ToolNum = 0	
+	MMviz2_Jps[Serial].Speed = 0
+END Get_PlanJPS
+
+--------------------------------------------------------------------------------
+-- Get_PlanPose
+--------------------------------------------------------------------------------
+ROUTINE Get_PlanPose
+BEGIN
+--Check If All Data 0
+    MMviz2_Pose[Serial].Pose.Config_Data=$MOR_GRP[1].$NILPOS.Config_Data
+    IF (MMviz2_Pose[Serial].Pose >=< $MOR_GRP[1].$NILPOS)THEN
+    	POST_ERR(ErrCode, 'MM:Robot_Internal_Error5', 0, ERR_ABORT)
+    ENDIF 
+--Get PR TYPE    
+	Chk_Pr_Type(Pr_Num,1,pr_type,PR_XYZWPR,PR_XYZWPREXT)
+	IF pr_type=PR_XYZWPR THEN	--no 7th axis    
+	--Get PR Config
+	    Pr_Pos=GET_POS_REG(Pr_Num, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error6', 0, ERR_ABORT)
+	    ENDIF
+	--Trans Pose
+	    MMviz2_Pose[Serial].Pose.Config_Data=Pr_Pos.Config_Data
+	    SET_POS_REG(Pr_Num, MMviz2_Pose[Serial].Pose, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error7', 0, ERR_ABORT)
+	    ENDIF
+	ENDIF
+	IF pr_type=PR_XYZWPREXT THEN	--has 7th axis
+	--Get PR Config
+	    Pr_EPos=GET_POS_REG(Pr_Num, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error8', 0, ERR_ABORT)
+	    ENDIF
+	--Trans Pose
+	    Pr_EPos.x = MMviz2_Pose[Serial].Pose.x
+	    Pr_EPos.y = MMviz2_Pose[Serial].Pose.y
+	    Pr_EPos.z = MMviz2_Pose[Serial].Pose.z
+	    Pr_EPos.w = MMviz2_Pose[Serial].Pose.w
+	    Pr_EPos.p = MMviz2_Pose[Serial].Pose.p
+	    Pr_EPos.r = MMviz2_Pose[Serial].Pose.r	    
+	    SET_EPOS_REG(Pr_Num, Pr_EPos, Status)
+	    IF Status <> 0 THEN
+	        POST_ERR(ErrCode, 'MM:Robot_Internal_Error9', 0, ERR_ABORT)
+	    ENDIF		
+	ENDIF
+--Trans MoveType/ToolNum/Speed
+    Set_RealReg(Reg_MoveType, (MMviz2_Pose[Serial].MoveType))
+    Set_RealReg(Reg_ToolNum, (MMviz2_Pose[Serial].ToolNum))
+    Set_RealReg(Reg_Speed, (MMviz2_Pose[Serial].Speed))
+    
+--Trans UserData&PlanResults then clear them
+	IF MMviz2_Pose[Serial].IsVisPt THEN
+		UsrDt_PlRes
+	ENDIF
+--Clear Pose Data    
+    MMviz2_Pose[Serial].Pose = $MOR_GRP[1].$NILPOS
+    MMviz2_Pose[Serial].MoveType = 0
+    MMviz2_Pose[Serial].ToolNum = 0	
+	MMviz2_Pose[Serial].Speed = 0
+END Get_PlanPose
+
+--------------------------------------------------------------------------------
+-- Get_PLJOP
+--------------------------------------------------------------------------------
+ROUTINE Get_PLJOP
+BEGIN
+-- Get  TP  Parameter
+    Get_Arg(1, 1, Serial, Real_Value, Str_Value)
+    Get_Arg(2, 1, Jps_Pos, Real_Value, Str_Value)
+    Get_Arg(3, 1, Pr_Num, Real_Value, Str_Value)    
+    Get_Arg(4, 1, Reg_MoveType, Real_Value, Str_Value)
+    Get_Arg(5, 1, Reg_ToolNum, Real_Value, Str_Value)
+    Get_Arg(6, 1, Reg_Speed, Real_Value, Str_Value)
+    Get_Arg(7, 1, Reg_UserData, Real_Value, Str_Value)
+    Get_Arg(8, 1, Reg_PlanRes, Real_Value, Str_Value)  	
+	
+	IF (Jps_Pos = 1) OR (Jps_Pos = 3) THEN
+		Get_PlanJPS
+	else
+		IF (Jps_Pos = 2) OR (Jps_Pos = 4) THEN
+			Get_PlanPose
+		else
+			POST_ERR(ErrCode,'MM:Robot_Argument_Error', 0, ERR_ABORT)
+		ENDIF
+	ENDIF
+END Get_PLJOP
+
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_PLJOP
+END MM_GET_PLJOP

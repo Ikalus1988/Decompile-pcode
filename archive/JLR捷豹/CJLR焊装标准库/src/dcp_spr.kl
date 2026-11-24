@@ -1,0 +1,271 @@
+PROGRAM DCP_SPR
+
+--Sends DCP fault text to PLC using string registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+--Version 1.2 Changed F2 key text to RIVET instead of Retry
+--Version 1.3 Changed F5 key text to Retry
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+CONST
+HenC1ErrOff = 560
+HenC2ErrOff = 2210
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID, intContID, intHenError:INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+HenContID, HenToolID, DCPFaultNum, DCPFaultNum1 : STRING[5] 
+RobotName:STRING[6]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ContID, ToolID, strHenError: STRING[5]
+strDCPText,DCPPLCText, strHis1, strHis2,strHis3: STRING[82]
+strAddDCPTxt:STRING[20]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Delcare  External Routines
+ROUTINE G_DCP_SPR1_1 FROM DCP_SPR1_1
+ROUTINE G_DCP_SPR1_2 FROM DCP_SPR1_2
+ROUTINE G_DCP_SPR1_3 FROM DCP_SPR1_3
+
+ROUTINE G_DCP_SPR2_1 FROM DCP_SPR2_1
+ROUTINE G_DCP_SPR2_2 FROM DCP_SPR2_2
+ROUTINE G_DCP_SPR2_3 FROM DCP_SPR2_3
+
+BEGIN
+	
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault_SPR Program on Robot!',CR, 'Check argument 1 is an integer!')
+	strDCPText = 'Invalid Call to DCPFault_SCA Program on Robot'
+ ENDIF
+
+ DCPText.DCPFaultNum = intDCPFault
+ 
+ --Get Tool ID
+GET_REG(81,FALSE,intToolID, realDummy,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,HenToolID)
+--Get Controller ID
+GET_REG(80,FALSE,intContID, realDummy,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intContID,2,10,HenContID)
+--Get Tool ID
+--GET_PORT_VAL(io_gpout,3,intToolID,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+ 
+ --Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+ IF ( UNINIT(RobotName)) THEN
+	RobotName = 'NoName'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+ 
+  --Get tp paramater which contains additional DCP Fault Text
+ GET_TPE_PRM(2,paramTyp,paramInt,paramReal,strAddDCPTxt,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 3) OR (STATUS <> 0)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+
+ --check if strAddDCPTxt is initialised, if not set DCPFau to 0, if OK get DCP Fault number
+ IF ( UNINIT(strAddDCPTxt)) THEN
+	strAddDCPTxt = '_'
+ ENDIF
+ 
+--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+--Initialise DCP Text
+DCPText.DCPLine1 = ''
+DCPText.DCPLine2 = ''
+DCPText.DCPLine3 = ''
+DCPText.DCPLine4 = ''
+DCPText.DCPLine5 = ''
+IF (intDCPFault < 101) THEN
+	WRITE TPDISPLAY('INCORRECT ERROR CODE', CR)
+	FORCE_SPMENU(TP_PANEL,SPI_TPUSER, 1)
+	ABORT
+ENDIF
+
+--Before calling the correct DCP Rountine Check which Tool Number it should relate to.
+--As standard it will assume Tool 1
+--If Tool 2 add an Offset of 330 if Tool 3 add offset of 660
+IF(intToolID = 2)THEN
+	DCPText.DCPFaultNum = DCPText.DCPFaultNum + 330 
+	intDCPFault = intDCPFault + 330
+ENDIF 
+IF(intToolID = 3)THEN
+	DCPText.DCPFaultNum = DCPText.DCPFaultNum + 660 
+	intDCPFault = intDCPFault + 660
+ENDIF
+
+IF ((intDCPFault >=501) AND (intDCPFault <=890)) THEN
+	G_DCP_SPR1_1
+ENDIF
+
+IF(( intDCPFault >=891) AND (intDCPFault<=1220)) THEN
+	G_DCP_SPR1_2
+ENDIF
+
+IF ((intDCPFault >=1221) AND (intDCPFault <=1550)) THEN
+	G_DCP_SPR1_3
+ENDIF
+
+
+IF ((intDCPFault >=2211) AND (intDCPFault <=2540)) THEN
+	G_DCP_SPR2_1
+ENDIF
+
+IF(( intDCPFault >=2541) AND (intDCPFault<=2870)) THEN
+	G_DCP_SPR2_2
+ENDIF
+
+IF ((intDCPFault >=2871) AND (intDCPFault <=3200)) THEN
+	G_DCP_SPR2_3
+ENDIF
+
+IF (intDCPFault > 3200) THEN
+	WRITE TPDISPLAY('INCORRECT ERROR CODE', CR)
+	FORCE_SPMENU(TP_PANEL,SPI_TPUSER, 1)
+	ABORT
+ENDIF
+	
+	--Decide based on Integer Value in FKEY_SEL what text to display on the Alarm page	
+	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+	ENDIF
+	IF FKEY_SEL = 1 THEN
+		FKEYS[1] = 'ACK'
+		FKEYS[4] = 'FEED-NEW'
+	ENDIF
+	IF FKEY_SEL = 2 THEN
+		FKEYS[2] = 'RIVET'
+		FKEYS[3] = 'SKIP'
+	ENDIF
+	IF FKEY_SEL = 3 THEN
+		FKEYS[1] = 'ACK'
+		FKEYS[5] = 'RETRY'
+	ENDIF
+	IF FKEY_SEL = 4 THEN
+		FKEYS[5] = 'RETRY'
+	ENDIF
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= TRUE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = FALSE
+  blQuiss  =FALSE
+
+
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,DCPText.DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+IF (DCPText.DCPFaultNum > 0) AND (DCPText.DCPFaultNum < 10) THEN
+	CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+	DCPFaultNum1 = SUB_STR(DCPFaultNum1,5,1)
+	DCPFaultNum = '0000' + DCPFaultNum1
+ENDIF
+IF (DCPText.DCPFaultNum > 9) AND (DCPText.DCPFaultNum < 100) THEN
+	CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+	DCPFaultNum1 = SUB_STR(DCPFaultNum1,4,2)
+	DCPFaultNum = '000' + DCPFaultNum1
+ENDIF
+IF (DCPText.DCPFaultNum > 99) AND (DCPText.DCPFaultNum < 1000) THEN
+	CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+	DCPFaultNum1 = SUB_STR(DCPFaultNum1,3,3)
+	DCPFaultNum = '00' + DCPFaultNum1
+ENDIF
+IF (DCPText.DCPFaultNum > 999) AND (DCPText.DCPFaultNum < 10000) THEN
+	CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+	DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+	DCPFaultNum = '0' + DCPFaultNum1
+ENDIF
+
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+
+--Write Henrob Tool Number and Controller Number to the Alarm Form
+DCPText.DCPLine5 = 'Henrob Controller '+HenContID+ ', Tool Number ' +HenToolID 
+
+--Display Henrob Fault number if the Fault to be displayed is one of the 0-255 generated by Henrob
+IF (((intDCPFault >= 561) AND (intDCPFault <= 815)) OR ((intDCPFault >= 2211) AND (intDCPFault <= 2465))) THEN
+		--Get Henrob Fault Number
+		IF (intContID = 1) THEN
+			GET_REG(89,FALSE,intHenError, realDummy,STATUS)
+			intHenError = intHenError - HenC1ErrOff
+		ENDIF
+		IF (intContID = 2) THEN
+			GET_REG(89,FALSE,intHenError, realDummy,STATUS)
+			intHenError = intHenError - HenC2ErrOff
+		ENDIF
+ELSE
+	IF(intContID = 1)THEN
+		GET_PORT_VAL(io_gpin,90,intHenError,STATUS)
+	ENDIF
+	IF(intContID = 2)THEN
+		GET_PORT_VAL(io_gpin,91,intHenError,STATUS)
+	ENDIF	
+ENDIF
+
+--COnvert Integer Henrob Error Number to a String to Display on Screen
+CNV_INT_STR(intHenError,3,0,strHenError)
+
+IF intHenError > 0 THEN
+	DCPText.DCPLine4 = 'Henrob Error Code = ' +strHenError
+ELSE
+	DCPText.DCPLine4 = ''
+ENDIF
+--Turn On DCP Fault output 
+DOUT[5] = ON
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+
+SET_INT_REG(89,0,STATUS)
+
+END DCP_SPR

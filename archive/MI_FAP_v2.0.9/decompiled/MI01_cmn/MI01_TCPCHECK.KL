@@ -1,0 +1,328 @@
+-- MI01_TCPCHECK.KL (decompiled v3)
+PROGRAM MI01_TCPCHECK
+%COMMENT = 'MI01 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : ARRAY[64] OF INTEGER
+  v2 : ARRAY[64] OF INTEGER
+  v3 : ARRAY[64] OF INTEGER
+  v4 : POSITION
+  v5 : INTEGER
+  r4_lc100_f08 : INTEGER
+  r4_lc100_f0c : INTEGER
+  r4_lc100_f10 : INTEGER
+  r4_lc91_f08 : INTEGER
+  r4_lc91_f0c : INTEGER
+  r4_lc91_f10 : INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v3_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE CURRENTUT : INTEGER
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  r0_lc1 = 0
+  -- stmt63 stray v1[1]
+  RETURN(r0_lc1)
+  RETURN(0)
+END CURRENTUT
+
+ROUTINE CURRENTUF : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  r1_lc1 = 0
+  -- stmt78 stray v2[1]
+  RETURN(r1_lc1)
+  RETURN(0)
+END CURRENTUF
+
+ROUTINE GETCURRENTPOS : POSITION
+VAR
+  r2_lc15 : POSITION
+  r2_lc30 : POSITION
+  r2_lc45 : POSITION
+  r2_lc60 : POSITION
+  r2_lc69 : POSITION
+  r2_lc70 : INTEGER
+  r2_lc71 : INTEGER
+  r2_lc72 : INTEGER
+BEGIN
+  r2_lc70 = 0
+  -- stmt97 stray v2[1]
+  r2_lc71 = 0
+  -- stmt98 stray v1[1]
+  IF ((r2_lc70 <> 0)) THEN
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt101 residue '*SYSTEM*', '$MNUFRAME[1,', ']'
+  ELSE
+  PURGE CONDITION[1]
+  r2_lc15 = v3_f00[1]
+  ENDIF
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt105 residue '*SYSTEM*', '$MNUTOOL[1,', ']'
+  PURGE CONDITION[1]
+  r2_lc45 = v0_f1c[1]
+  PURGE CONDITION[1]
+  r2_lc60 = v0_f58[1]
+  PURGE CONDITION[1]
+  -- stmt108 stray r2_lc15 | v0_f1c[1]
+  PURGE CONDITION[1]
+  -- stmt109 stray r2_lc30 | v0_f58[1]
+  sv_p = curpos(0, 0)
+  r2_lc69 = sv_p
+  PURGE CONDITION[1]
+  -- stmt111 stray r2_lc45 | v0_f1c[1]
+  PURGE CONDITION[1]
+  -- stmt112 stray r2_lc60 | v0_f58[1]
+  -- stmt113 stray r2_lc69
+  RETURN(sv_p)
+END GETCURRENTPOS
+
+ROUTINE CHECKFRAMENO(p0, p1 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+  r3_lc2 : INTEGER
+  r3_lc3 : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  GET_VAR(1, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', r3_lc2, r3_lc3)
+  IF ((p1 > r3_lc2)) THEN
+  POST_ERR(38100, 'UTOOL Number exceed the max value', 0, 2)
+  ENDIF
+  CASE(2):
+  GET_VAR(1, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', r3_lc1, r3_lc3)
+  IF ((p1 > r3_lc1)) THEN
+  POST_ERR(38100, 'UFRAME Number exceed the max value', 0, 2)
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END CHECKFRAMENO
+
+ROUTINE ACTIONSELECT : INTEGER
+VAR
+  r4_lc100 : POSITION
+  r4_lc101 : INTEGER
+  r4_lc102 : INTEGER
+  r4_lc103 : INTEGER
+  r4_lc104 : INTEGER
+  r4_lc105 : INTEGER
+  r4_lc106 : INTEGER
+  r4_lc107 : INTEGER
+  r4_lc108 : INTEGER
+  r4_lc109 : INTEGER
+  r4_lc14 : STRING[64]
+  r4_lc28 : STRING[64]
+  r4_lc43 : POSITION
+  r4_lc58 : POSITION
+  r4_lc73 : POSITION
+  r4_lc82 : POSITION
+  r4_lc91 : POSITION
+BEGIN
+  sv_i = GETTPEPRMINT(1)
+  r4_lc101 = sv_i
+  sv_i = GETTPEPRMINT(2)
+  r4_lc102 = sv_i
+  sv_i = CHECKFRAMENO(2, r4_lc102)
+  -- stmt174 stray sv_i
+  IF ((r4_lc102 <> sv_i)) THEN
+  DELAY 8
+  r4_lc14 = 'UF Number not equal to active UF number'
+  sv_i = CURRENTUF
+  sv_s = INTTOSTR(sv_i)
+  r4_lc28 = 'Change UF to ' + sv_s + ' and record? '
+  sv_i = DB_PROMPT(1, r4_lc14, r4_lc28, 2)
+  r4_lc106 = sv_i
+  IF ((r4_lc106 = 1)) THEN
+  sv_i = CURRENTUF
+  r4_lc102 = sv_i
+  ELSE
+  ABORT
+  ENDIF
+  ENDIF
+  sv_i = GETTPEPRMINT(3)
+  r4_lc103 = sv_i
+  sv_i = CHECKFRAMENO(1, r4_lc103)
+  -- stmt187 stray sv_i
+  IF ((r4_lc103 <> sv_i)) THEN
+  DELAY 8
+  r4_lc14 = 'UT Number not equal to active UT number'
+  sv_i = CURRENTUT
+  sv_s = INTTOSTR(sv_i)
+  r4_lc28 = 'Change UT to ' + sv_s + ' and record?'
+  sv_i = DB_PROMPT(1, r4_lc14, r4_lc28, 2)
+  r4_lc106 = sv_i
+  IF ((r4_lc106 = 1)) THEN
+  sv_i = CURRENTUT
+  r4_lc103 = sv_i
+  ELSE
+  ABORT
+  ENDIF
+  ENDIF
+  SELECT r4_lc101 OF
+  CASE(1):
+  sv_i = GETTPEPRMINT(4)
+  r4_lc104 = sv_i
+  sv_p = GETCURRENTPOS
+  v4 = sv_p
+  SET_POS_REG(r4_lc104, v4, v5)
+  CASE(2):
+  sv_i = GETTPEPRMINT(4)
+  r4_lc107 = sv_i
+  sv_i = CHECKFRAMENO(1, r4_lc107)
+  -- stmt210 stray sv_i
+  IF ((r4_lc107 = r4_lc103)) THEN
+  POST_ERR(38100, 'Suggest to use another UTool as backup', 0, 2)
+  ENDIF
+  sv_i = GETTPEPRMINT(5)
+  r4_lc108 = sv_i
+  sv_i = CHECKFRAMENO(1, r4_lc108)
+  -- stmt217 stray sv_i
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt218 residue '*SYSTEM*', '$MNUTOOL[1,', ']'
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt219 residue '*SYSTEM*', '$MNUTOOL[1,', ']'
+  IF ((r4_lc102 <> 0)) THEN
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt223 residue '*SYSTEM*', '$MNUFRAME[1,', ']'
+  ELSE
+  PURGE CONDITION[1]
+  r4_lc58 = v3_f00[1]
+  ENDIF
+  sv_p = curpos(0, 0)
+  r4_lc82 = sv_p
+  sv_p = inv(r4_lc82)
+  r4_lc73 = v4
+  -- stmt229 stray sv_p | r4_lc58
+  r4_lc91 = r4_lc43
+  r4_lc100 = r4_lc73
+  r4_lc109 = 1
+  IF ((0 > 2)) THEN
+  DELAY 8
+  r4_lc14 = 'Force to update?'
+  sv_s = REALTOSTR(r4_lc100_f08 - r4_lc91_f08)
+  r4_lc28 = 'The diffence of X direction is about ' + sv_s + ' mm'
+  sv_i = DB_PROMPT(1, r4_lc14, r4_lc28, 2)
+  r4_lc106 = sv_i
+  IF ((r4_lc106 = 2)) THEN
+  r4_lc109 = 0
+  ENDIF
+  ENDIF
+  IF ((0 > 2)) THEN
+  DELAY 8
+  r4_lc14 = 'Force to update?'
+  sv_s = REALTOSTR(r4_lc100_f0c - r4_lc91_f0c)
+  r4_lc28 = 'The diffence of Y direction is about ' + sv_s + ' mm'
+  sv_i = DB_PROMPT(1, r4_lc14, r4_lc28, 2)
+  r4_lc106 = sv_i
+  IF ((r4_lc106 = 2)) THEN
+  r4_lc109 = 0
+  ENDIF
+  ENDIF
+  IF ((0 > 2)) THEN
+  DELAY 8
+  r4_lc14 = 'Force to update?'
+  sv_s = REALTOSTR(r4_lc100_f10 - r4_lc91_f10)
+  r4_lc28 = 'The diffence of Z direction is about ' + sv_s + ' mm'
+  sv_i = DB_PROMPT(1, r4_lc14, r4_lc28, 2)
+  r4_lc106 = sv_i
+  IF ((r4_lc106 = 2)) THEN
+  r4_lc109 = 0
+  ENDIF
+  ENDIF
+  IF ((r4_lc109 <> 0)) THEN
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt7 residue '*SYSTEM*', '$MNUTOOL[1,', ']'
+  sv_s = INTTOSTR(38100)
+  POST_ERR(0, '', 0, 0)
+  -- Æú²ÎÔ­Ê½: 0
+  -- stmt8 stray '' + sv_s + '] successfully'
+  -- stmt8 residue 'UTool update to ['
+  ELSE
+  POST_ERR(38100, 'Cancel to update UTool', 0, 0)
+  ENDIF
+  ELSE:
+  ENDSELECT
+  sv_i = ACTIONSELECT
+  -- stmt26 stray sv_i
+  RETURN(0)
+END ACTIONSELECT
+
+BEGIN
+END MI01_TCPCHECK

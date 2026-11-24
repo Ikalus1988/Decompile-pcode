@@ -1,0 +1,18 @@
+PROGRAM  MM_GET_FLT
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_Get_Float'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Get_Float FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Get_Float
+END MM_GET_FLT

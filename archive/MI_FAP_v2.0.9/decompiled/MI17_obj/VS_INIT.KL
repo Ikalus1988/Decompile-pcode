@@ -1,0 +1,209 @@
+-- VS_INIT.KL (decompiled v3)
+PROGRAM VS_INIT
+%COMMENT = 'Vs Init V1.6'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SIGNAL_DEF = STRUCTURE
+	SIG_START: INTEGER
+	SIG_LEN: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : STRING[64]
+  v7 : STRING[64]
+  v8 : STRING[64]
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : SIGNAL_DEF
+  v13 : SIGNAL_DEF
+  v14 : SIGNAL_DEF
+  v15 : SIGNAL_DEF
+  v16 : SIGNAL_DEF
+  v17 : SIGNAL_DEF
+  v18 : SIGNAL_DEF
+  v19 : SIGNAL_DEF
+  v20 : SIGNAL_DEF
+  v21 : SIGNAL_DEF
+  v22 : SIGNAL_DEF
+  v23 : SIGNAL_DEF
+  v24 : SIGNAL_DEF
+  v25 : SIGNAL_DEF
+  v26 : SIGNAL_DEF
+  v27 : SIGNAL_DEF
+  v28 : SIGNAL_DEF
+  v29 : SIGNAL_DEF
+  TELL_ID_O : REAL
+  MODE_ID_O : REAL
+  JOB_ID_O : REAL
+  POS_ID_O : REAL
+  SYSTEM_ID : REAL
+  GO_X_INT : REAL
+  GO_X_REAL : REAL
+  GO_Y_INT : REAL
+  GO_Y_REAL : REAL
+  GO_Z_INT : REAL
+  GO_Z_REAL : REAL
+  GO_W_INT : REAL
+  GO_W_REAL : REAL
+  GO_P_INT : REAL
+  GO_P_REAL : REAL
+  GO_R_INT : REAL
+  GO_R_REAL : REAL
+  TELL_ID_I : REAL
+  STATUS_ID : REAL
+  ERROR_ID : REAL
+  RESERVE_I : REAL
+  PC_STATUS : REAL
+  GI_X_INT : REAL
+  GI_X_REAL : REAL
+  GI_Y_INT : REAL
+  GI_Y_REAL : REAL
+  GI_Z_INT : REAL
+  GI_Z_REAL : REAL
+  GI_W_INT : REAL
+  GI_W_REAL : REAL
+  GI_P_INT : REAL
+  GI_P_REAL : REAL
+  GI_R_INT : REAL
+  GI_R_REAL : REAL
+  CAMERA_ID : REAL
+  CALIB_NO : REAL
+  TIME_COUNT : INTEGER
+  TIMEOUT : INTEGER
+  STATUS : INTEGER
+  TELL_NO : INTEGER
+  TIMEOUT_STAT : BOOLEAN
+  VS_STATUS : BOOLEAN
+  ERROR_VAL : INTEGER
+  CTL_VERSION : STRING[127]
+  PROG_DETAIL : STRING[127]
+  SYS_ID : INTEGER
+  PC_STAT : INTEGER
+  STAT_VAL : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE GET_PARM(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITE_DATA(p0 : INTEGER; p1 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+ROUTINE READ_DATA(p0 : SIGNAL_DEF) : INTEGER FROM MI_LIB
+
+ROUTINE TP_CLS : INTEGER
+BEGIN
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 37, 1)
+  RETURN(0)
+END TP_CLS
+
+ROUTINE TIMER_START : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END TIMER_START
+
+ROUTINE TIMER_STOP : INTEGER
+BEGIN
+  v1 = 0
+  RETURN(0)
+END TIMER_STOP
+
+ROUTINE WAITDATA(p0 : SIGNAL_DEF; p1 : INTEGER) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  DELAY 8
+  sv_i = READ_DATA(p0)
+  r3_lc1 = sv_i
+  IF ((r3_lc1 = p1) OR (v2 = 1)) THEN
+  PURGE CONDITION[1]
+  -- stmt73 stray 1 | v1 | v3 | 1 | 14
+  v4 = 0
+  v5 = 0
+  v7 = v6
+  v8 = 'Modification Data : 2020-01-17'
+  sv_s = chr(137)
+  sv_s = chr(128)
+  WRITE(sv_s, sv_s)
+  WRITE('Vision Initialization', CR)
+  sv_i = GET_PARM(1, v9, v10)
+  -- stmt91 stray sv_i
+  v3 = 8000
+  v11 = 1
+  v2 = 0
+  sv_i = WRITE_DATA(0, v12)
+  -- stmt98 stray sv_i
+  sv_i = WRITE_DATA(0, v13)
+  -- stmt99 stray sv_i
+  sv_i = WRITE_DATA(0, v14)
+  -- stmt100 stray sv_i
+  sv_i = WRITE_DATA(v9, v15)
+  -- stmt101 stray sv_i
+  sv_i = WRITE_DATA(0, v16)
+  -- stmt102 stray sv_i
+  sv_i = WRITE_DATA(0, v17)
+  -- stmt103 stray sv_i
+  sv_i = WRITE_DATA(0, v18)
+  -- stmt104 stray sv_i
+  sv_i = WRITE_DATA(0, v19)
+  -- stmt105 stray sv_i
+  sv_i = WRITE_DATA(0, v20)
+  -- stmt106 stray sv_i
+  sv_i = WRITE_DATA(0, v21)
+  -- stmt107 stray sv_i
+  sv_i = WRITE_DATA(0, v22)
+  -- stmt108 stray sv_i
+  sv_i = WRITE_DATA(0, v23)
+  -- stmt109 stray sv_i
+  sv_i = WRITE_DATA(0, v24)
+  -- stmt110 stray sv_i
+  sv_i = WRITE_DATA(0, v25)
+  -- stmt111 stray sv_i
+  sv_i = WRITE_DATA(0, v26)
+  -- stmt112 stray sv_i
+  sv_i = WRITE_DATA(0, v27)
+  -- stmt113 stray sv_i
+  sv_i = WRITE_DATA(v5, v28)
+  -- stmt114 stray sv_i
+  ENABLE CONDITION[1]
+  sv_i = TIMER_START
+  -- stmt117 stray sv_i
+  sv_i = WAITDATA(v29, v5)
+  -- stmt118 stray sv_i
+  sv_i = TIMER_STOP
+  -- stmt123 stray sv_i
+  -- stmt124 stray 1
+  WRITE('Initialization Complete', CR)
+  ENDIF
+  RETURN(0)
+END WAITDATA
+
+BEGIN
+END VS_INIT

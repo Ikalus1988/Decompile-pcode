@@ -1,0 +1,121 @@
+
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+
+CONST
+    -- xyz_pkt ref
+    DELIMITER    = ','   -- defination of protocol delimiter
+    TERMINATOR   = '#'   -- defination of protocol terminator
+    MAX_MGAY_LEN = 6     -- max msg array len
+    MAX_ECMG_LEN = 200   -- max each msg len
+    MAX_DTAY_LEN = 60    -- max data array len
+    MAX_ECDT_LEN = 20    -- max each data len
+
+    -- move type
+    MT_JNT_MOVJ  = 1     -- set joints movej
+    MT_JNT_MOVL  = 2     -- set joints movel
+    MT_MOVL_UTL  = 3     -- set joints movel-until
+
+    -- register
+        -- R[1~200], don't use R[1~100]
+            -- don't use R[15~18], as used in XYZ_EXECTRAJ.LS
+            -- don't use R[8],R[9],R[19],R[96], as used in XYZ_EXECTRAJ.LS
+            -- only R[97~100] is available 
+        -- PR[1~100], don't use PR[1~40]
+        -- SR[1~25], don't use SR[1~12]
+
+    REG_NO_JSPD  = 1     -- register number of back write movej speed, R[1]
+    REG_NO_LSPD  = 2     -- register number of back write movel speed, R[2]
+    REG_NO_ACC   = 3     -- register number of back write acceleration, R[3]
+    REG_NO_CNT   = 4     -- register number of back write cnt data, R[4]
+    REG_NO_POT   = 5     -- register number of back write digital input port for move-until, R[5]
+    REG_NO_MT    = 11    -- register number of back write move type, used in MOT, R[11]
+    REG_NO_CONN  = 5     -- register shows the master connection state, R[5]
+    REG_NO_COMM  = 6     -- register shows the communication state, only used in xyz_move.ls, R[6]
+    REG_NO_HB = 7        -- heart beat internal, R[7], unit seconds, default 600 seconds
+    REG_NO_ERR   = 10    -- register number of error code, R[10]
+    REG_NO_INT   = 11    -- master token, also used in xyz_move.ls, R[11]
+    REG_NO_POSE  = 12    -- master pose number, alse used in xyz_move.ls, R[12]
+    REG_NO_PPNM  = 13    -- pipeline num, R[13]
+    REG_NO_RGNM  = 14    -- register num, R[14]
+    REG_NO_INT1  = 90    -- register number of grasp_pose, object_pose integer valus, R[90-95](6 integer valus)
+    REG_NO_WP    = 20    -- master traj waypoint type, R[20~49], maxinum 30 points
+    REG_IN_INT   = 50    -- usr cmd in ints, R[50~59]
+    REG_IN_FLT   = 60    -- usr cmd in floats, R[60~69]
+    SREG_OBJ_NM  = 1     -- object name, SR[1]
+    SREG_IN_STR  = 2     -- usr cmd in strs, SR[2~6]
+    REG_OUT_INT  = 70    -- usr cmd out ints, R[70~79]
+    REG_OUT_FLT  = 80    -- usr cmd out floats, R[80~89]
+    SREG_OUT_STR = 7     -- usr cmd out strs, SR[7~11]
+    PREG_NO_MOV  = 1     -- used in MOT, PR[1]
+    PREG_OUT_JNT = 2     -- usr cmd out joints, PR[2]
+    PREG_IN_JNT = 3      -- usr cmd in joints, PR[3]
+    PREG_REF_CFG = 4    -- ref pose config for TrajMove and xyzUserCmd output pose, PR[4]
+    PREG_IN_CPOS = 5     -- grasp_pose/object_pose/place_pose, PR[5]
+    PREG_OUT_CRT = 6     -- usr cmd out cart, PR[6]
+    PREG_IN_CRT = 7      -- usr cmd in cart, PR[7]
+    PREG_IN_POS  = 10    -- way point index in master traj, PR[10~39] maximu 30 points, PR[10~39]
+
+    F_BACK_C_WRT = 1     -- flag back can write register
+    F_BACK_F_WRT = 2     -- flag back finish write
+    F_MOVE_TYPE  = 3     -- ON on Movej OFF on Movel
+    F_MOVE_END   = 4     -- front move finish flag
+    F_BKGD_COMM  = 5     -- bkgd is sending cmd to server
+    KAREL_VER = '1.1.10'  -- karel version id for IPC read and check
+
+
+    -- command ids
+    CMD_GETVER  = 100   -- get version
+    CMD_SETSPD  = 101   -- set speed
+    CMD_SETACC  = 102   -- set acceleration
+    CMD_SETZONE = 103   -- set zone
+    CMD_SETDOUT = 105   -- set digital output
+    CMD_JNTMOVJ = 106   -- set joint moveJ
+    CMD_JNTMOVL = 108   -- set joint moveL
+    CMD_MOVJSEQ = 110   -- movej sequence
+    CMD_MOVLUTL = 118   -- movel until
+    CMD_GETDIN  = 119   -- get digital input
+    CMD_GETDOUT = 120   -- get digital output
+    CMD_GETJNT  = 122   -- get current joints
+    CMD_GETCPOS = 123   -- get current cartesian pose
+    CMD_HB = 500        -- heartbeat signal
+    CMD_SW_APP = 501    -- switch app
+    CMD_SW_TA  = 502    -- switch vp flow
+    CMD_SW_TOOL = 503   -- switch tool
+    CMD_C_VISCMD = 504  -- call vision command
+    CMD_G_CAPIMG = 505  -- get capture image result
+    CMD_CAPIMG = 506    -- capture image
+    CMD_R_G_POSE = 507  -- request grasp pose
+    CMD_G_G_POSE = 508  -- get grasp pose result
+    CMD_R_O_POSE = 509  -- request object pose
+    CMD_G_O_POSE = 510  -- get object pose result
+    CMD_RESET_TA = 511  -- reset task
+    CMD_S_JOINTS = 512  -- send certain joints
+    CMD_S_C_POSE = 513  -- send certain cartesian pose
+    CMD_S_EXT_J = 514   -- send external joints
+    CMD_R_PICK = 515    -- request pick calculation
+    CMD_R_PLACE = 516   -- request place calculation
+    CMD_R_PICPLA = 517  -- request pick and place calculation
+    CMD_G_PICIN = 518   -- get pick in result
+    CMD_G_PICOUT = 519  -- get pick out result
+    CMD_G_PLAIN = 520   -- get place in result
+    CMD_G_PLAOUT = 521  -- get place out result
+    CMD_SW_STRAT = 522  -- switch strategy
+    CMD_U_T_POSE = 523  -- update tote pose
+    CMD_U_OBJ_IH = 524  -- update object pose in hand
+    CMD_U_OBJ_TH = 525  -- update object pose to hand
+    CMD_G_OBJ_PT = 526  -- get object pose type
+    CMD_RESET_PS = 527  -- reset pallet status
+    CMD_SW_ITEM = 528   -- switch item
+    CMD_C_G_POSE = 529  -- calculate grasp pose
+    CMD_C_O_POSE = 530  -- calculate object pose
+    CMD_CUS_REQ = 600   -- custom request
+
+    NO_ERR       = 0
+    ERR_PARSE    = 101
+    ERR_INVA_CMD = 200

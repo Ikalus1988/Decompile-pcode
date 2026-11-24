@@ -1,0 +1,736 @@
+PROGRAM DCP_Form
+%NOLOCKGROUP
+%NOPAUSE  = ERROR + TPENABLE +COMMAND
+%NOPAUSESHFT
+%NOBUSYLAMP
+%INCLUDE DCPS
+%INCLUDE klevkmsk
+%INCLUDE KLEVKEYS
+
+CONST
+	NUM_ELEM = 6
+	
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables
+
+VAR
+	value_array			: ARRAY[NUM_ELEM] OF STRING[40]
+	inact_array			: ARRAY[NUM_ELEM] OF BOOLEAN	
+	change_array		: ARRAY[NUM_ELEM] OF BOOLEAN
+	term_mask			: INTEGER
+	def_item				: INTEGER
+	term_char			: INTEGER
+	STATUS				: INTEGER
+	device_stat			: INTEGER
+	bldone					: BOOLEAN
+	intFaultNum			: INTEGER
+	prev_menu   		: INTEGER
+	prev_screen		: INTEGER
+	entry       				: INTEGER
+	dummyReal			: REAL
+	DCPReg				: INTEGER
+-------------------------------------------------------------------------------------------
+------------------------------Routines-------------------------------------------------
+-------------------------------------------------------------------------------------------
+--Reset Henrob Controllers
+ROUTINE SPRReset
+BEGIN
+	SET_PORT_VAL(2,3099,1,STATUS)
+	SET_PORT_VAL(2,3100,1,STATUS)
+	DELAY 500	
+	SET_PORT_VAL(2,3099,0,STATUS)
+	SET_PORT_VAL(2,3100,0,STATUS)
+END SPRReset
+
+ROUTINE exit_form
+BEGIN
+  FORCE_MENU(TP_PANEL, KY_CANCEL)
+END exit_form
+
+ROUTINE FORM_INIT
+BEGIN
+		IF UNINIT(DCPText.DCPFaultNum)THEN
+			DCPText.DCPFaultNum = 0
+		ENDIF
+		IF UNINIT(DCPText.DCPLine1)THEN
+			DCPText.DCPLine1 = 'No DCP Faults Active'
+		ENDIF
+		IF UNINIT(DCPText.DCPLine2)THEN
+			DCPText.DCPLine2 = ''
+		ENDIF
+		IF UNINIT(DCPText.DCPLine3)THEN
+			DCPText.DCPLine3 = ''
+		ENDIF
+		IF UNINIT(DCPText.DCPLine4)THEN
+			DCPText.DCPLine4 = ''
+		ENDIF
+		IF UNINIT(DCPText.DCPLine5)THEN
+			DCPText.DCPLine5 = ''
+		ENDIF
+		IF UNINIT(FKEY_SEL)THEN
+			FKEY_SEL = 0
+		ENDIF
+		IF UNINIT(blSPR) AND UNINIT(blPLC) AND UNINIT(blSpot) AND UNINIT(blDispense) AND UNINIT(blMH) AND UNINIT(blStud) AND UNINIT(blNut) AND UNINIT(blIsra) AND UNINIT(blQuiss) THEN
+			blPLC = TRUE
+  			blSPR	= FALSE
+  			blSpot  = FALSE
+			blDispense  = FALSE
+			blMH = FALSE
+			blStud = FALSE
+			blNut = FALSE
+			blIsra = FALSE
+			blQuiss = FALSE
+		ENDIF
+		--Purge Condition 1 to delete previous definition
+		PURGE CONDITION[1]
+		PURGE CONDITION[2]
+		PURGE CONDITION[3]
+		PURGE CONDITION[4]
+		PURGE CONDITION[5]
+		PURGE CONDITION[6]
+		PURGE CONDITION[7]
+		PURGE CONDITION[8]	
+	--Waiting on SCA Heating On					
+		CONDITION[1]:
+ 	 		WHEN DIN[732] = ON DO
+  		  	exit_form
+		ENDCONDITION
+	--Waiting on SCA Heating Ready
+		CONDITION[2]:
+ 		 	WHEN DIN[733] = ON DO
+   			 	exit_form
+		ENDCONDITION
+		--Waiting for Rivet Type A
+		CONDITION[3]:
+ 	 		WHEN DIN[516] = ON DO
+    			exit_form
+		ENDCONDITION
+		--Waiting for Rivet Type B
+		CONDITION[4]:
+ 	 		WHEN DIN[517] = ON DO
+    			exit_form
+		ENDCONDITION
+		CONDITION[5]:
+ 	 		WHEN DIN[548] = ON DO
+    			exit_form
+		ENDCONDITION
+		CONDITION[6]:
+ 	 		WHEN DIN[549] = ON DO
+    			exit_form
+		ENDCONDITION
+		CONDITION[7]:
+ 	 		WHEN DIN[2736] = ON DO
+    			exit_form
+		ENDCONDITION
+		CONDITION[8]:
+ 	 		WHEN DIN[2737] = ON DO
+    			exit_form
+		ENDCONDITION		
+		IF DCPText.DCPFaultNum = 6193 THEN
+			ENABLE CONDITION[1]
+		ENDIF
+		IF DCPText.DCPFaultNum = 6194 THEN
+			ENABLE CONDITION[2]
+		ENDIF
+		--Enable Condition Waiting on Rivet Type A
+		IF DCPText.DCPFaultNum = 851 THEN
+			ENABLE CONDITION[3]
+		ENDIF
+		--Enable Condition Waiting on Rivet Type B
+		IF DCPText.DCPFaultNum = 852 THEN
+			ENABLE CONDITION[4]
+		ENDIF
+		IF DCPText.DCPFaultNum = 866 THEN
+			ENABLE CONDITION[5]
+		ENDIF
+		IF DCPText.DCPFaultNum = 864 THEN
+			ENABLE CONDITION[6]
+		ENDIF	
+		IF DCPText.DCPFaultNum = 6293 THEN
+			ENABLE CONDITION[7]
+		ENDIF
+		IF DCPText.DCPFaultNum = 6294 THEN
+			ENABLE CONDITION[8]
+		ENDIF					
+END FORM_INIT
+-------------------------------------------------------------------------------------------------------------------
+----------------------------------------Display Alarm Screen------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------
+ROUTINE DCPDISPALM
+BEGIN
+	--Get the Previous Menu and Previous screen so you can return to it after the Form is Quit
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', prev_menu, STATUS)
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', prev_screen, STATUS)
+	--Check for Uninitised Data
+	FORM_INIT
+	--Populate the Value Array to be passed into the Form DCPFault
+	value_array[1] = 'DCPText.DCPFaultNum'
+	value_array[2] = 'DCPText.DCPLine1'
+	value_array[3] = 'DCPText.DCPLine2'
+	value_array[4] = 'DCPText.DCPLine3'
+	value_array[5] = 'DCPText.DCPLine4'
+	value_array[6] = 'DCPText.DCPLine5'
+	term_mask = kc_func_key
+	FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+	blDone = FALSE
+	
+---------------------------------------------
+-----------SPR DCP Fault---------------
+---------------------------------------------
+IF blSPR = TRUE THEN
+	REPEAT
+		DELAY 250
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', SPRFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 1) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+					SPRReset
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+	 		   	IF (FKEY_SEL = 3) OR (FKEY_SEL = 4) THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,5,STATUS)	
+					blDone = TRUE
+					SPRReset
+	 		   	ENDIF
+	 		   	  --Runs if the exit_form rountine has been activated
+	 		   CASE (KY_CANCEL): 
+	 		 	  	--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,6,STATUS)	
+					blDone = TRUE
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+
+------------------------------------------------------------
+-----------SPOT ----------------------------------------
+-----------------------------------------------------------
+IF blSpot = TRUE THEN
+	REPEAT
+		DELAY 250
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', SpotFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF (FKEY_SEL = 1) OR (FKEY_SEL = 2) THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF (FKEY_SEL = 1) OR (FKEY_SEL = 2) OR (FKEY_SEL = 3)THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+---------------------------------------------
+-----------STUD DCP Fault---------------
+---------------------------------------------
+IF blStud = TRUE THEN
+	REPEAT
+		DELAY 250
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', StudFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF FKEY_SEL = 0 THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 5 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+---------------------------------------------
+-----------NUT DCP Fault---------------
+---------------------------------------------
+IF blNut = TRUE THEN
+	REPEAT
+		DELAY 250
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', NutFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF (FKEY_SEL = 2) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF (FKEY_SEL = 2) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+--------------------------------------------
+-----------Other DCP Fault------------
+--------------------------------------------
+IF (blPLC = TRUE) OR (blDispense = TRUE) OR (blMH = TRUE) OR (blIsra = TRUE) OR (blQuiss = TRUE)THEN
+	REPEAT
+		DELAY 250
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', GenFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 5) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF (FKEY_SEL = 2) or (FKEY_SEL = 5)  THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+	 		   --Runs if the exit_form rountine has been activated
+	 		   CASE (KY_CANCEL): 
+	 		 	  	--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,5,STATUS)	
+					blDone = TRUE
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+END DCPDISPALM
+
+--This Routine is used when a 
+ROUTINE DCPDISP(ImportDCP:AlmDCP)
+BEGIN
+	--Get the Previous Menu and Previous screen so you can return to it after the Form is Quit
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SP_ID', prev_menu, STATUS)
+	GET_VAR(entry, '*SYSTEM*', '$TP_CURSCRN[1].$SCRN_ID', prev_screen, STATUS)
+	--Check for Uninitised Data
+	FORM_INIT
+	--Populate the Global DCP Variables with the required information
+	DCPText.DCPFaultNum = ImportDCP.DCPFaultNum
+	DCPText.DCPLine1 = ImportDCP.DCPLine1
+	DCPText.DCPLine2 = ImportDCP.DCPLine2
+	DCPText.DCPLine3 = ImportDCP.DCPLine3
+	DCPText.DCPLine4 = ImportDCP.DCPLine4
+	DCPText.DCPLine5 = ImportDCP.DCPLine5 
+	--Populate the Value Array to be passed into the Form DCPFault
+	value_array[1] = 'DCPText.DCPFaultNum'
+	value_array[2] = 'DCPText.DCPLine1'
+	value_array[3] = 'DCPText.DCPLine2'
+	value_array[4] = 'DCPText.DCPLine3'
+	value_array[5] = 'DCPText.DCPLine4'
+	value_array[6] = 'DCPText.DCPLine5'
+	term_mask = kc_func_key
+	blDone = FALSE
+
+---------------------------------------------
+-----------SPR DCP Fault---------------
+---------------------------------------------
+IF blSPR = TRUE THEN
+	--Repeat while waiting for a correct selection from the Alarm Form
+	REPEAT
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', SPRFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+		SELECT term_char OF
+	 	   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 1) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+					SPRReset
+				ENDIF
+	 	   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF   
+	 	   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF   
+	 	   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF
+	 	   CASE (KY_F5,KY_F5_S): 
+				IF (FKEY_SEL = 3) OR (FKEY_SEL = 4) THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,5,STATUS)	
+					blDone = TRUE
+					SPRReset
+				ENDIF
+				 --Runs if the exit_form rountine has been activated
+			CASE (KY_CANCEL): 
+				--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,6,STATUS)	
+					blDone = TRUE
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+		ENDSELECT
+	UNTIL(blDone)	
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+
+------------------------------------------------------
+-----------Spot DCP Fault---------------
+-----------------------------------------------------
+IF (blSpot = TRUE) THEN
+	--Repeat while waiting for a correct selection from the Alarm Form
+	REPEAT
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', SpotFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+		SELECT term_char OF
+	 	CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF (FKEY_SEL = 1) OR (FKEY_SEL = 2) THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF (FKEY_SEL = 1) OR (FKEY_SEL = 2) OR (FKEY_SEL = 3)THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)	
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+---------------------------------------------
+-----------STUD DCP Fault---------------
+---------------------------------------------
+IF blStud = TRUE THEN
+	REPEAT
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', StudFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF FKEY_SEL = 0 THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 5 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+
+---------------------------------------------
+-----------NUT DCP Fault---------------
+---------------------------------------------
+IF blNut = TRUE THEN
+	REPEAT
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', NutFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+			SELECT term_char OF
+	 		   CASE (KY_F1,KY_F1_S): 
+				IF FKEY_SEL = 0 THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F2,KY_F2_S):
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F3,KY_F3_S): 
+				IF (FKEY_SEL = 2) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 		   CASE (KY_F4,KY_F4_S): 
+				IF (FKEY_SEL = 2) OR (FKEY_SEL = 3) THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 		   CASE (KY_F5,KY_F5_S): 
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+			ENDSELECT
+	UNTIL(blDone)
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+---------------------------------------------
+-----------General DCP Fault----------
+---------------------------------------------
+IF (blPLC = TRUE) OR (blDispense = TRUE) OR (blMH = TRUE) OR (blIsra = TRUE) OR(blQuiss = TRUE)THEN
+	--Repeat while waiting for a correct selection from the Alarm Form
+	REPEAT
+		DELAY 250
+		FORCE_SPMENU(TP_PANEL, SPI_TPUSER2,1) -- Displays User Screen 2
+			--Display the DCP Fault Form	
+			DISCTRL_FORM('DCPs', GenFault, value_array, inact_array,change_array,term_mask,def_item,term_char,STATUS)
+			POST_ERR(STATUS,'',0,0)
+		SELECT term_char OF
+	 	   CASE (KY_F1,KY_F1_S): 
+				IF (FKEY_SEL = 0) OR (FKEY_SEL = 5)  THEN
+					--Set Register 50 (DCPFault Ret Val = 1
+					SET_INT_REG(56,1,STATUS)
+					blDone = TRUE
+				ENDIF
+	 	   CASE (KY_F2,KY_F2_S):
+				IF (FKEY_SEL = 2) OR (FKEY_SEL = 5)  THEN
+					--Set Register 50 (DCPFault Ret Val = 2
+					SET_INT_REG(56,2,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 	   CASE (KY_F3,KY_F3_S): 
+				IF FKEY_SEL = 2 THEN
+					--Set Register 50 (DCPFault Ret Val = 3
+					SET_INT_REG(56,3,STATUS)	
+					blDone = TRUE
+				ENDIF   
+	 	   CASE (KY_F4,KY_F4_S): 
+				IF FKEY_SEL = 1 THEN
+					--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,4,STATUS)	
+					blDone = TRUE
+				ENDIF
+	 	   CASE (KY_F5,KY_F5_S): 
+	 	   --Runs if the exit_form rountine has been activated
+	 	   CASE (KY_CANCEL): 
+	 		 	  	--Set Register 50 (DCPFault Ret Val = 4
+					SET_INT_REG(56,5,STATUS)	
+					blDone = TRUE
+			ELSE:
+				SET_INT_REG(56,0,STATUS)
+				blDone = TRUE
+		ENDSELECT
+	UNTIL(blDone)	
+	
+	--Read Register 56 into Vars
+	GET_REG(56,FALSE,DCPReg,dummyReal,STATUS)
+	IF DCPReg > 0 THEN
+		FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+	ENDIF
+ENDIF
+	FORCE_SPMENU(TP_PANEL, prev_menu,prev_screen)	
+END DCPDISP
+
+BEGIN
+
+END DCP_Form	

@@ -1,0 +1,4842 @@
+<!doctype html><meta charset=utf-8><title>SSW 点焊工位</title>
+<style>
+body{font:14px/1.55 ui-monospace,Consolas,monospace;margin:24px auto;max-width:1100px;
+ background:#fafafa;color:#222}
+h1{font-size:20px} h2{font-size:16px;border-bottom:1px solid #ccc;padding-bottom:4px}
+.note{background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;margin:8px 0} td,th{border:1px solid #ccc;padding:3px 10px;font-size:12px}
+pre{background:#fff;border:1px solid #ddd;padding:10px;overflow:auto;font-size:12px;line-height:1.45}
+.k{color:#7a3;font-weight:600}.s{color:#c39}.c{color:#888}.n{color:#36c}
+details{margin:10px 0} summary{cursor:pointer;font-weight:600}
+</style>
+<h1>MI_FAP v2.0.9 · SSW 点焊工位</h1>
+<div class=note><b>应用定位</b>：点焊工位主应用：焊枪与伺服控制、电极帽磨损/修磨（TC/TD WEAR）、压力曲线、TipChange 流程；内含 isv_vg 视觉引导模块与 TD 管理（td_pop）。</div>
+<p>TP 程序 42 个：CHECK_TC_WEAR.LS, CHECK_TC_WEAR.TP, CHECK_TD_WEAR.LS, CHECK_TD_WEAR.TP, FRES_DRESS_GUN_XX.LS, FRES_DRESS_GUN_XX.TP, FRES_PED_DRESS_GUN1.LS, FRES_PED_DRESS_GUN1.TP, FRES_PED_TIPCHANG_GUN1.LS, FRES_PED_TIPCHANG_GUN1.TP, FRES_TIPCHG_AUTO.LS, FRES_TIPCHG_AUTO.TP, OPEN_GUN.LS, OPEN_GUN.TP, R01_CAPCHANGE_XX.LS, R01_CAPCHANGE_XX.TP, R01_SWIM_TIPDRESS_XX.LS, R01_SWIM_TIPDRESS_XX.TP, R01_TIPDRESS_XX.LS, R01_TIPDRESS_XX.TP</p>
+<h2>模块与例程</h2>
+<table><tr><th>模块</th><th>例程</th><th>SELECT</th><th>例程名</th><th>IO</th></tr><tr><td>ISV_VG.KL</td><td>11</td><td>8</td><td>ISV2_GIN, VG_MSG, SOCKET_INIT, VG_SEND, VG_RECV, VG_CHKOFFSET, VG_X_CYCEND, VG_X_READY</td><td>io_01</td></tr><tr><td>MI04_SSW.KL</td><td>81</td><td>7</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td></td></tr><tr><td>MI04_SSW_CHK.KL</td><td>3</td><td>0</td><td>ACTION_ON, CHECK_BLINK, KEEP_ALARM</td><td>io_01, io_0e, io_13</td></tr><tr><td>MI04_SSW_CHK2.KL</td><td>32</td><td>0</td><td>MI04_SENDBSNUM, MI04_RESETTIME, MI04_DIMSGOUT, MI04_PRESSOK, MI04_FLOWOK, MI04_TIPDRES, CAPCHANGEPRE, CONTROLMOTOR</td><td>io_01, io_02, io_0e, io_13</td></tr><tr><td>MI04_SSW_GUI.KL</td><td>94</td><td>10</td><td>CLR_FSCR, KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE</td><td></td></tr><tr><td>MI04_SSW_MON.KL</td><td>92</td><td>2</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02, io_12, io_13, io_23</td></tr><tr><td>MI04_SSW_ROUT.KL</td><td>78</td><td>21</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02, io_0b, io_0e, io_13, io_23</td></tr><tr><td>MI04_SSW_VAR.KL</td><td>0</td><td>0</td><td></td><td></td></tr><tr><td>MI04_TD_POP.KL</td><td>0</td><td>1</td><td></td><td></td></tr></table>
+<h2>调用与消息</h2>
+<table><tr><th>模块</th><th>外部调用/消息</th></tr><tr><td>ISV_VG.KL</td><td>BYTES_AHEAD, CLR_IO_STAT, CNV_REAL_STR, CNV_STR_INT, FILEREC, FILEVG, FILEXML, FORCE_SPMENU, GET_PORT_VAL, GET_TPE_PRM, IO_STATUS, MSG_CONNECT, MSG_DISCO, PAR5, SET_FILE_ATR, SET_PORT_VAL, UNINIT, XML_ADDTAG</td></tr><tr><td>ISV_VG.KL 消息</td><td> + sv_s +  | ISV_VG: Socket connect failed | Check ethernet connection | ISV_VG: Socket connect success | , r2_lc4)
+  sv_i = IO_STATUS(FILEVG)
+  r2_lc7 = sv_i
+  IF ((r2_lc7 &lt;&gt; 0)) THEN
+  WRITE( | , r2_lc7, CR)
+  IF ((r2_lc5 &gt;= 3)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE( | , CR)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s,  | ISV_VG: Open channel success</td></tr><tr><td>MI04_SSW.KL</td><td>GET_TPE_PRM, UNINIT</td></tr><tr><td>MI04_SSW.KL 消息</td><td>MI04 2.0.9 | MI04_ssw_mon | MI04_ssw_mon | Wrong data type for PRM[ | Wrong data type for PRM[</td></tr><tr><td>MI04_SSW_CHK.KL</td><td>UNINIT</td></tr><tr><td>MI04_SSW_CHK.KL 消息</td><td>MI04 2.0.9 | RD rotatary detection failed | RD rotatary detection failed | Reset rotatary alarm</td></tr><tr><td>MI04_SSW_CHK2.KL</td><td>UNINIT</td></tr><tr><td>MI04_SSW_CHK2.KL 消息</td><td>MI04 2.0.9 | TD Overload | Servo Motor Alarm</td></tr><tr><td>MI04_SSW_GUI.KL</td><td>ADD_DICT, COPY_FILE, DB_PROMPT, DISCTRL_FORM, FORCE_SPMENU, GET_DEV_INFO, SET_LANG, UNINIT, WRITE_DICT</td></tr><tr><td>MI04_SSW_GUI.KL 消息</td><td>MI04 2.0.9 | *SYSTEM* | $VIRTUALEDIT | *SYSTEM* | $LANGUAGE | )) THEN
+  -- stmt136 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG( | , r1_lc10)
+  -- stmt142 stray  | 
+  ELSE
+  -- stmt144 stray </td></tr><tr><td>MI04_SSW_MON.KL</td><td>CLR_IO_STAT, CNV_TIME_STR, DELETE_FILE, F_FILELOG1, GET_TIME, SET_FILE_ATR, UNINIT</td></tr><tr><td>MI04_SSW_MON.KL 消息</td><td>MI04 2.0.9 | 
+  ENDIF
+  sv_s = INTTOSTR(r0_lc18)
+  r0_lc16 =  | FR:RecordLog | , (0 &lt;&gt; 0), I_STATUS)
+  -- ����ԭʽ: 0
+  ELSE
+  IF ((I_FILENUM = 9)) THEN
+  DELETE_FILE( | FR:\RecordLog | 
+  -- stmt82 residue  | 
+  CLR_IO_STAT(F_FILELOG1)
+  OPEN FILE F_FILELOG1( |  + sv_s + </td></tr><tr><td>MI04_SSW_ROUT.KL</td><td>CALL_PROG, DB_PROMPT, UNINIT</td></tr><tr><td>MI04_SSW_ROUT.KL 消息</td><td>MI04 2.0.9 | , 0, 0)
+  -- ����ԭʽ: p4
+  -- stmt118 stray  |  + sv_s +  |  + sv_s
+  -- stmt118 residue  | Water valve is closed | Flow Check NOK | : Wait DI[ | Water valve is opened</td></tr><tr><td>MI04_SSW_VAR.KL 消息</td><td>MI04 2.0.9</td></tr><tr><td>MI04_TD_POP.KL</td><td>DB_PROMPT, UNINIT</td></tr><tr><td>MI04_TD_POP.KL 消息</td><td>MI04 2.0.9 | Tipwear check NOK | Re-dress?</td></tr></table>
+<h2>源码（反编译 .KL）</h2>
+<details><summary>ISV_VG.KL（11 例程）</summary><pre><span class=c>-- ISV_VG.KL (decompiled v3)
+PROGRAM ISV_VG
+%COMMENT = &#x27;TCP 1.0&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	POSWPR = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	POSABC = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	A: INTEGER
+	B: INTEGER
+	C: INTEGER
+	ENDSTRUCTURE
+	VGTX = STRUCTURE
+	CTL: INTEGER
+	MOD1: INTEGER
+	JOB: INTEGER
+	SEQ: INTEGER
+	MOD2: INTEGER
+	FRAM: POSABC
+	VIN: STRING[20]
+	ENDSTRUCTURE
+	VGRX = STRUCTURE
+	CTL: INTEGER
+	STA1: INTEGER
+	ERR: INTEGER
+	SEQ: INTEGER
+	STA2: INTEGER
+	FRAM: POSABC
+	ENDSTRUCTURE
+	VGCFG = STRUCTURE
+	CLIENT: INTEGER
+	FLAG_VGERR: INTEGER
+	FLAG_IDERR: INTEGER
+	MAXOFFSET: POSWPR
+	MINOFFSET: POSWPR
+	VIN_MODE: INTEGER
+	VIN_INPUT: ARRAY[20] OF INTEGER
+	COMMTOUT: INTEGER
+	MEATOUT: INTEGER
+	RDY_CHK: INTEGER
+	ENDSTRUCTURE
+	VGSTA = STRUCTURE
+	FLAG_ACTIVE: INTEGER
+	FLAG_ABORT: INTEGER
+	FLAG_TX: INTEGER
+	FLAG_RX: INTEGER
+	SEND: VGTX
+	RECV: VGRX
+	VGRES: VGRX
+	PREOFFSET: POSWPR
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  VGCONFIG : VGCFG
+  FILEVG : FILE
+  VGSTATUS : VGSTA
+  STATUS : INTEGER
+  TIMER0 : INTEGER
+  FILEREC : FILE
+  TIMER1 : INTEGER
+  FILEXML : FILE
+  TMPFRAME : POSABC
+  INTVAL1 : INTEGER
+  REALVAL : REAL
+  STRVAL : STRING[64]
+  INTVAL2 : INTEGER
+  INTVAL3 : INTEGER
+  INTVAL4 : INTEGER
+  INTVAL5 : INTEGER
+  INTVAL6 : INTEGER
+  VGCONFIG_f00 : INTEGER
+  VGCONFIG_f04 : INTEGER
+  VGCONFIG_f08 : INTEGER
+  VGCONFIG_f0c : INTEGER
+  VGCONFIG_f0c_f00 : INTEGER
+  VGCONFIG_f0c_f04 : INTEGER
+  VGCONFIG_f0c_f08 : INTEGER
+  VGCONFIG_f0c_f0c : INTEGER
+  VGCONFIG_f0c_f10 : INTEGER
+  VGCONFIG_f0c_f14 : INTEGER
+  VGCONFIG_f24 : INTEGER
+  VGCONFIG_f24_f00 : INTEGER
+  VGCONFIG_f24_f04 : INTEGER
+  VGCONFIG_f24_f08 : INTEGER
+  VGCONFIG_f24_f0c : INTEGER
+  VGCONFIG_f24_f10 : INTEGER
+  VGCONFIG_f24_f14 : INTEGER
+  VGCONFIG_f3c : INTEGER
+  VGCONFIG_f40 : ARRAY[64] OF INTEGER
+  VGCONFIG_f94 : INTEGER
+  VGCONFIG_f98 : INTEGER
+  VGCONFIG_f9c : INTEGER
+  VGSTATUS_f00 : INTEGER
+  VGSTATUS_f10 : INTEGER
+  VGSTATUS_f10_f00 : INTEGER
+  VGSTATUS_f10_f04 : INTEGER
+  VGSTATUS_f10_f08 : INTEGER
+  VGSTATUS_f10_f0c : INTEGER
+  VGSTATUS_f10_f10 : INTEGER
+  VGSTATUS_f10_f14 : INTEGER
+  VGSTATUS_f10_f14_f00 : REAL
+  VGSTATUS_f10_f14_f04 : REAL
+  VGSTATUS_f10_f14_f08 : REAL
+  VGSTATUS_f10_f14_f0c : REAL
+  VGSTATUS_f10_f14_f10 : REAL
+  VGSTATUS_f10_f14_f14 : REAL
+  VGSTATUS_f10_f2c : STRING[64]
+  VGSTATUS_f54 : INTEGER
+  VGSTATUS_f54_f00 : INTEGER
+  VGSTATUS_f54_f04 : INTEGER
+  VGSTATUS_f54_f08 : INTEGER
+  VGSTATUS_f54_f0c : INTEGER
+  VGSTATUS_f54_f10 : INTEGER
+  VGSTATUS_f54_f14 : INTEGER
+  VGSTATUS_f54_f14_f00 : INTEGER
+  VGSTATUS_f54_f14_f04 : INTEGER
+  VGSTATUS_f54_f14_f08 : INTEGER
+  VGSTATUS_f54_f14_f0c : INTEGER
+  VGSTATUS_f54_f14_f10 : INTEGER
+  VGSTATUS_f54_f14_f14 : INTEGER
+  VGSTATUS_f80 : INTEGER
+  VGSTATUS_f80_f04 : INTEGER
+  VGSTATUS_f80_f08 : INTEGER
+  VGSTATUS_f80_f10 : INTEGER
+  VGSTATUS_f80_f14 : INTEGER
+  VGSTATUS_f80_f14_f00 : INTEGER
+  VGSTATUS_f80_f14_f04 : INTEGER
+  VGSTATUS_f80_f14_f08 : INTEGER
+  VGSTATUS_f80_f14_f0c : INTEGER
+  VGSTATUS_f80_f14_f10 : INTEGER
+  VGSTATUS_f80_f14_f14 : INTEGER
+  VGSTATUS_fac : INTEGER
+  VGSTATUS_fac_f00 : INTEGER
+  VGSTATUS_fac_f04 : INTEGER
+  VGSTATUS_fac_f08 : INTEGER
+  VGSTATUS_fac_f0c : INTEGER
+  VGSTATUS_fac_f10 : INTEGER
+  VGSTATUS_fac_f14 : INTEGER
+  r10_lc58_f08 : INTEGER
+  r10_lc58_f0c : INTEGER
+  r10_lc58_f10 : INTEGER
+  r10_lc58_f14 : INTEGER
+  r10_lc58_f18 : INTEGER
+  r10_lc58_f1c : INTEGER
+  r10_lc76_f08 : INTEGER
+  r10_lc76_f0c : INTEGER
+  r10_lc76_f10 : INTEGER
+  r10_lc76_f14 : INTEGER
+  r10_lc76_f18 : INTEGER
+  r10_lc76_f1c : INTEGER
+  r4_lc201_f00 : INTEGER
+  r4_lc201_f04 : INTEGER
+  r4_lc201_f08 : INTEGER
+  r4_lc201_f0c : INTEGER
+  r4_lc201_f10 : INTEGER
+  r4_lc201_f14 : INTEGER
+  r4_lc201_f14_f00 : INTEGER
+  r4_lc201_f14_f04 : INTEGER
+  r4_lc201_f14_f08 : INTEGER
+  r4_lc201_f14_f0c : INTEGER
+  r4_lc201_f14_f10 : INTEGER
+  r4_lc201_f14_f14 : INTEGER
+  r8_lc47_f08 : INTEGER
+  r8_lc47_f0c : INTEGER
+  r8_lc47_f10 : INTEGER
+  r8_lc47_f14 : INTEGER
+  r8_lc47_f18 : INTEGER
+  r8_lc47_f1c : INTEGER
+  r8_lc56_f08 : INTEGER
+  r8_lc56_f0c : INTEGER
+  r8_lc56_f10 : INTEGER
+  r8_lc56_f14 : INTEGER
+  r8_lc56_f18 : INTEGER
+  r8_lc56_f1c : INTEGER
+  r8_lc68_f08 : INTEGER
+  r8_lc68_f0c : INTEGER
+  r8_lc68_f10 : INTEGER
+  r8_lc68_f14 : INTEGER
+  r8_lc68_f18 : INTEGER
+  r8_lc68_f1c : INTEGER
+  r9_lc58_f08 : INTEGER
+  r9_lc58_f0c : INTEGER
+  r9_lc58_f10 : INTEGER
+  r9_lc58_f14 : INTEGER
+  r9_lc58_f18 : INTEGER
+  r9_lc58_f1c : INTEGER
+  r9_lc76_f08 : INTEGER
+  r9_lc76_f0c : INTEGER
+  r9_lc76_f10 : INTEGER
+  r9_lc76_f14 : INTEGER
+  r9_lc76_f18 : INTEGER
+  r9_lc76_f1c : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ISV2_GIN(p0, p1 : INTEGER) : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : INTEGER
+BEGIN
+  r0_lc1 = 0
+  IF ((p0 &gt; 0) AND (p1 &gt; 0)) THEN
+  r0_lc2 = 1
+  FOR r0_lc3 = 1 TO 3 DO
+  IF ((io_01[p0 + r0_lc3 - 1] &lt;&gt; 0)) THEN
+  r0_lc1 = r0_lc1 + r0_lc2
+  ENDIF
+  r0_lc2 = r0_lc2 * 2
+  ENDFOR
+  ENDIF
+  RETURN(r0_lc1)
+  RETURN(0)
+END ISV2_GIN
+
+ROUTINE VG_MSG(p0, p1, p2, p3 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 &gt; 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  ENDIF
+  SELECT p0 OF
+  CASE(1):
+  ELSE:
+  ENDSELECT
+  SELECT p1 OF
+  CASE(1):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END VG_MSG
+
+ROUTINE SOCKET_INIT : INTEGER
+VAR
+  r2_lc2 : STRING[64]
+  r2_lc4 : STRING[64]
+  r2_lc5 : INTEGER
+  r2_lc6 : INTEGER
+  r2_lc7 : INTEGER
+BEGIN
+  r2_lc5 = 0
+  r2_lc6 = 0
+  CNV_INT_STR(VGCONFIG_f00, 1, 0, r2_lc2)
+  sv_s = sub_str(r2_lc2, 2, 1)
+  r2_lc4 = &#x27;C&#x27; + sv_s + &#x27;:&#x27;
+  WRITE(CR)
+  -- stmt127 stray FILEVG
+  sv_i = IO_STATUS(FILEVG)
+  r2_lc7 = sv_i
+  IF ((r2_lc7 &lt;&gt; 0)) THEN
+  r2_lc5 = r2_lc5 + 1
+  -- stmt132 stray FILEVG
+  CLR_IO_STAT(FILEVG)
+  IF ((r2_lc7 &gt; 67000) AND (r2_lc7 &lt; 68000)) THEN
+  MSG_DISCO(r2_lc4, r2_lc6)
+  MSG_CONNECT(r2_lc4, r2_lc6)
+  IF ((r2_lc6 &lt;&gt; 0)) THEN
+  WRITE(&#x27;ISV_VG: Socket connect failed&#x27;, r2_lc6, CR)
+  IF ((r2_lc5 &gt;= 3)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE(&#x27;Check ethernet connection&#x27;, CR)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt144 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  ELSE
+  WRITE(&#x27;ISV_VG: Socket connect success&#x27;, CR)
+  ENDIF
+  ENDIF
+  ENDIF
+  IF ((r2_lc6 = 0)) THEN
+  OPEN FILE FILEVG(&#x27;RW&#x27;, r2_lc4)
+  sv_i = IO_STATUS(FILEVG)
+  r2_lc7 = sv_i
+  IF ((r2_lc7 &lt;&gt; 0)) THEN
+  WRITE(&#x27;ISV_VG: Open channel failed&#x27;, r2_lc7, CR)
+  IF ((r2_lc5 &gt;= 3)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE(&#x27;Check server status&#x27;, CR)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt163 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  ELSE
+  WRITE(&#x27;ISV_VG: Open channel success&#x27;, CR)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END SOCKET_INIT
+
+ROUTINE VG_SEND : INTEGER
+VAR
+  r3_lc103 : STRING[64]
+  r3_lc104 : INTEGER
+  r3_lc65 : STRING[64]
+  r3_lc67 : STRING[64]
+  r3_lc69 : STRING[64]
+  r3_lc71 : STRING[64]
+  r3_lc73 : STRING[64]
+  r3_lc78 : STRING[64]
+  r3_lc83 : STRING[64]
+  r3_lc88 : STRING[64]
+  r3_lc93 : STRING[64]
+  r3_lc98 : STRING[64]
+BEGIN
+  CNV_INT_STR(VGSTATUS_f10_f04, 1, 0, r3_lc67)
+  CNV_INT_STR(VGSTATUS_f10_f08, 1, 0, r3_lc69)
+  CNV_INT_STR(VGSTATUS_f10_f0c, 1, 0, r3_lc71)
+  CNV_INT_STR(VGSTATUS_f10_f10, 1, 0, r3_lc73)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f00, 1, 4, r3_lc78)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f04, 1, 4, r3_lc83)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f08, 1, 4, r3_lc88)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f0c, 1, 4, r3_lc93)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f10, 1, 4, r3_lc98)
+  CNV_REAL_STR(VGSTATUS_f10_f14_f14, 1, 4, r3_lc103)
+  r3_lc65 = &#x27;&lt;ROBOT&gt;&lt;CTL_ID&gt;1&lt;/CTL_ID&gt;&lt;MOD_ID&gt;&#x27; + r3_lc67 + &#x27;&lt;/MOD_ID&gt;&lt;JOB_ID&gt;&#x27; + r3_lc69 + &#x27;&lt;/JOB_ID&gt;&lt;POS_ID&gt;&#x27; + r3_lc71 + &#x27;&lt;/POS_ID&gt;&lt;CAM_CTL&gt;&#x27; + r3_lc73 + &#x27;&lt;/CAM_CTL&gt;&#x27;
+  r3_lc65 = r3_lc65 + &#x27;&lt;POS X=&quot;&#x27; + r3_lc78 + &#x27;&quot; Y=&quot;&#x27; + r3_lc83 + &#x27;&quot; Z=&quot;&#x27; + r3_lc88 + &#x27;&quot; A=&quot;&#x27; + r3_lc93 + &#x27;&quot; B=&quot;&#x27; + r3_lc98 + &#x27;&quot; C=&quot;&#x27; + r3_lc103 + &#x27;&quot; &gt;&lt;/POS&gt;&lt;VIN&gt;&#x27; + VGSTATUS_f10_f2c + &#x27;&lt;/VIN&gt;&lt;/ROBOT&gt;&#x27;
+  REPEAT
+  WRITE(r3_lc65, CR)
+  -- stmt196 stray FILEVG
+  sv_i = IO_STATUS(FILEVG)
+  r3_lc104 = sv_i
+  IF ((r3_lc104 &lt;&gt; 0)) THEN
+  sv_i = SOCKET_INIT
+  -- stmt199 stray sv_i
+  ENDIF
+  UNTIL((r3_lc104 = 0))
+  RETURN(0)
+END VG_SEND
+
+ROUTINE VG_RECV(p0 : INTEGER) : INTEGER
+VAR
+  r4_lc106 : ARRAY[64] OF STRING[64]
+  r4_lc157 : ARRAY[64] OF STRING[64]
+  r4_lc190 : INTEGER
+  r4_lc201 : INTEGER
+  r4_lc202 : INTEGER
+  r4_lc203 : INTEGER
+  r4_lc204 : INTEGER
+  r4_lc205 : INTEGER
+  r4_lc206 : INTEGER
+  r4_lc207 : INTEGER
+  r4_lc4 : STRING[64]
+  r4_lc55 : ARRAY[64] OF INTEGER
+BEGIN
+  STATUS = 0
+  r4_lc202 = 0
+  TIMER0 = 0 - p0 * 1000
+  IF ((p0 &gt; 0)) THEN
+  ENDIF
+  REPEAT
+  BYTES_AHEAD(FILEVG, r4_lc202, STATUS)
+  UNTIL((r4_lc202 &gt; 0) OR (TIMER0 &gt; 0))
+  REPEAT
+  BYTES_AHEAD(FILEVG, r4_lc202, STATUS)
+  UNTIL((r4_lc202 &gt; 0) OR (TIMER0 &gt; 0))
+  IF ((r4_lc202 &gt; 0)) THEN
+  TIMER0 = 0
+  OPEN FILE FILEREC(&#x27;RW&#x27;, &#x27;RD:VG_RECV.xml&#x27;)
+  IF ((r4_lc202 &gt; 0)) THEN
+  IF ((r4_lc202 &gt; 100)) THEN
+  -- stmt236 stray FILEVG | r4_lc190 | 100
+  WRITE(r4_lc190)
+  -- stmt237 stray FILEREC
+  ELSE
+  -- stmt239 stray FILEVG | r4_lc190 | r4_lc202
+  WRITE(r4_lc190)
+  -- stmt240 stray FILEREC
+  ENDIF
+  ENDIF
+  TIMER1 = 0 - 100
+  ENDIF
+  REPEAT
+  BYTES_AHEAD(FILEVG, r4_lc202, STATUS)
+  UNTIL((r4_lc202 &gt; 0) OR (TIMER1 &gt; 0))
+  -- stmt249 stray FILEREC
+  SET_FILE_ATR(FILEXML, 20, 1)
+  OPEN FILE FILEXML(&#x27;RO&#x27;, &#x27;RD:VG_RECV.xml&#x27;)
+  XML_ADDTAG(FILEXML, &#x27;VISION&#x27;, 8, (1 &lt;&gt; 0), 1, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;CTL_ID&#x27;, 8, (1 &lt;&gt; 0), 2, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;STA_ID&#x27;, 8, (1 &lt;&gt; 0), 3, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;ERR_ID&#x27;, 8, (1 &lt;&gt; 0), 4, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;POS_ID&#x27;, 8, (1 &lt;&gt; 0), 5, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;CAM_CTL&#x27;, 8, (1 &lt;&gt; 0), 6, STATUS)
+  -- ����ԭʽ: 1
+  XML_ADDTAG(FILEXML, &#x27;POS&#x27;, 5, (1 &lt;&gt; 0), 7, STATUS)
+  -- ����ԭʽ: 1
+  r4_lc206 = 0
+  r4_lc201_f00 = 1
+  r4_lc201_f04 = (0 - 1)
+  r4_lc201_f08 = (0 - 1)
+  r4_lc201_f0c = 0
+  r4_lc201_f10 = (0 - 1)
+  r4_lc201_f14_f00 = 0
+  r4_lc201_f14_f04 = 0
+  r4_lc201_f14_f08 = 0
+  r4_lc201_f14_f0c = 0
+  r4_lc201_f14_f10 = 0
+  r4_lc201_f14_f14 = 0
+  REPEAT
+  XML_SCAN(FILEXML, r4_lc4, r4_lc203, r4_lc204, STATUS)
+  IF ((STATUS = 129015)) THEN
+  SELECT r4_lc204 OF
+  CASE(100):
+  CASE(1):
+  r4_lc206 = 0
+  CASE(2):
+  XML_GETDATA(FILEXML, r4_lc205, r4_lc106, r4_lc157, &#x27;&#x27;, (r4_lc207 &lt;&gt; 0), STATUS)
+  -- ����ԭʽ: (r4_lc55[2]) | r4_lc207
+  CNV_STR_INT(&#x27;&#x27;, r4_lc201_f00)
+  -- ����ԭʽ: (r4_lc55[2])
+  CASE(3):
+  XML_GETDATA(FILEXML, r4_lc205, r4_lc106, r4_lc157, &#x27;&#x27;, (r4_lc207 &lt;&gt; 0), STATUS)
+  -- ����ԭʽ: (r4_lc55[3]) | r4_lc207
+  CNV_STR_INT(&#x27;&#x27;, r4_lc201_f04)
+  -- ����ԭʽ: (r4_lc55[3])
+  CASE(4):
+  XML_GETDATA(FILEXML, r4_lc205, r4_lc106, r4_lc157, &#x27;&#x27;, (r4_lc207 &lt;&gt; 0), STATUS)
+  -- ����ԭʽ: (r4_lc55[4]) | r4_lc207
+  CNV_STR_INT(&#x27;&#x27;, r4_lc201_f08)
+  -- ����ԭʽ: (r4_lc55[4])
+  CASE(5):
+  XML_GETDATA(FILEXML, r4_lc205, r4_lc106, r4_lc157, &#x27;&#x27;, (r4_lc207 &lt;&gt; 0), STATUS)
+  -- ����ԭʽ: (r4_lc55[5]) | r4_lc207
+  CNV_STR_INT(&#x27;&#x27;, r4_lc201_f0c)
+  -- ����ԭʽ: (r4_lc55[5])
+  CASE(6):
+  XML_GETDATA(FILEXML, r4_lc205, r4_lc106, r4_lc157, &#x27;&#x27;, (r4_lc207 &lt;&gt; 0), STATUS)
+  -- ����ԭʽ: (r4_lc55[6]) | r4_lc207
+  CNV_STR_INT(&#x27;&#x27;, r4_lc201_f10)
+  -- ����ԭʽ: (r4_lc55[6])
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(101):
+  CASE(1):
+  r4_lc206 = 1
+  IF ((r4_lc201_f04 &gt; 0)) THEN
+  -- stmt45 stray r4_lc201 | VGSTATUS_f54
+  ENDIF
+  CASE(7):
+  XML_SETVAR(FILEXML, &#x27;isv_vg&#x27;, &#x27;tmpframe&#x27;, STATUS)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  IF ((STATUS &lt;&gt; 0) AND (STATUS &lt;&gt; 129014)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE(&#x27;ISV_VG: Parse error, &#x27;, STATUS, CR)
+  ENDIF
+  UNTIL((STATUS = 0) AND (r4_lc206 = 1))
+  -- stmt63 stray FILEXML
+  RETURN(0)
+END VG_RECV
+
+ROUTINE VG_CHKOFFSET : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  r5_lc1 = 0
+  IF ((VGSTATUS_f80_f14_f00 = 0) AND (VGSTATUS_f80_f14_f04 = 0) AND (VGSTATUS_f80_f14_f08 = 0) AND (VGSTATUS_f80_f14_f0c = 0) AND (VGSTATUS_f80_f14_f10 = 0) AND (VGSTATUS_f80_f14_f14 = 0)) THEN
+  r5_lc1 = 2
+  RETURN(r5_lc1)
+  ENDIF
+  IF (UNINIT(VGSTATUS_fac_f00) OR UNINIT(VGSTATUS_fac_f04) OR UNINIT(VGSTATUS_fac_f08) OR UNINIT(VGSTATUS_fac_f0c) OR UNINIT(VGSTATUS_fac_f10) OR UNINIT(VGSTATUS_fac_f14)) THEN
+  VGSTATUS_fac_f00 = 0
+  VGSTATUS_fac_f04 = 0
+  VGSTATUS_fac_f08 = 0
+  VGSTATUS_fac_f0c = 0
+  VGSTATUS_fac_f10 = 0
+  VGSTATUS_fac_f14 = 0
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f00 = VGSTATUS_fac_f00) AND (VGSTATUS_f80_f14_f04 = VGSTATUS_fac_f04) AND (VGSTATUS_f80_f14_f08 = VGSTATUS_fac_f08) AND (VGSTATUS_f80_f14_f0c = VGSTATUS_fac_f0c) AND (VGSTATUS_f80_f14_f10 = VGSTATUS_fac_f10) AND 
+(VGSTATUS_f80_f14_f14 = VGSTATUS_fac_f14)) THEN
+  r5_lc1 = 3
+  RETURN(r5_lc1)
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f00 &gt; VGCONFIG_f0c_f00) OR (VGSTATUS_f80_f14_f00 &lt; VGCONFIG_f24_f00)) THEN
+  r5_lc1 = 1
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f04 &gt; VGCONFIG_f0c_f04) OR (VGSTATUS_f80_f14_f04 &lt; VGCONFIG_f24_f04)) THEN
+  r5_lc1 = 1
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f08 &gt; VGCONFIG_f0c_f08) OR (VGSTATUS_f80_f14_f08 &lt; VGCONFIG_f24_f08)) THEN
+  r5_lc1 = 1
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f0c &gt; VGCONFIG_f0c_f0c) OR (VGSTATUS_f80_f14_f0c &lt; VGCONFIG_f24_f0c)) THEN
+  r5_lc1 = 1
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f10 &gt; VGCONFIG_f0c_f10) OR (VGSTATUS_f80_f14_f10 &lt; VGCONFIG_f24_f10)) THEN
+  r5_lc1 = 1
+  ENDIF
+  IF ((VGSTATUS_f80_f14_f14 &gt; VGCONFIG_f0c_f14) OR (VGSTATUS_f80_f14_f14 &lt; VGCONFIG_f24_f14)) THEN
+  r5_lc1 = 1
+  ENDIF
+  VGSTATUS_fac_f00 = VGSTATUS_f80_f14_f00
+  VGSTATUS_fac_f04 = VGSTATUS_f80_f14_f04
+  VGSTATUS_fac_f08 = VGSTATUS_f80_f14_f08
+  VGSTATUS_fac_f0c = VGSTATUS_f80_f14_f0c
+  VGSTATUS_fac_f10 = VGSTATUS_f80_f14_f10
+  VGSTATUS_fac_f14 = VGSTATUS_f80_f14_f14
+  RETURN(r5_lc1)
+  RETURN(0)
+END VG_CHKOFFSET
+
+ROUTINE VG_X_CYCEND(p0 : INTEGER) : INTEGER
+BEGIN
+  VGSTATUS_f10_f04 = 1
+  VGSTATUS_f10_f08 = p0
+  sv_i = VG_SEND
+  -- stmt126 stray sv_i
+  sv_i = VG_RECV(VGCONFIG_f94)
+  -- stmt127 stray sv_i
+  IF ((TIMER0 &gt; 0)) THEN
+  ELSE
+  VGSTATUS_f00 = 0
+  ENDIF
+  RETURN(0)
+END VG_X_CYCEND
+
+ROUTINE VG_X_READY(p0, p1 : INTEGER) : INTEGER
+VAR
+  r7_lc10 : INTEGER
+  r7_lc11 : INTEGER
+  r7_lc12 : INTEGER
+  r7_lc13 : INTEGER
+  r7_lc2 : STRING[64]
+  r7_lc8 : STRING[64]
+  r7_lc9 : INTEGER
+BEGIN
+  WRITE(CR, &#x27;----------&#x27;, CR)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  IF ((VGCONFIG_f9c &lt;&gt; 0)) THEN
+  GET_PORT_VAL(35, VGCONFIG_f04, r7_lc11, STATUS)
+  IF ((r7_lc11 &lt;&gt; 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;Confirm all clear BEFORE press &quot;OK&quot;&#x27;)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt152 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  FORCE_SPMENU(1, 64, 1)
+  ENDIF
+  ENDIF
+  VGSTATUS_f10_f2c = &#x27;&#x27;
+  -- stmt160 stray VGSTATUS_f54 | VGSTATUS_f80
+  IF ((VGSTATUS_f00 &lt;&gt; 0)) THEN
+  VGSTATUS_f10_f04 = 0
+  VGSTATUS_f10_f10 = 4
+  sv_i = VG_SEND
+  -- stmt164 stray sv_i
+  VGSTATUS_f10_f10 = 0
+  ENDIF
+  r7_lc9 = 0
+  VGSTATUS_f00 = 1
+  VGSTATUS_f10_f04 = 2
+  VGSTATUS_f10_f08 = p0
+  VGSTATUS_f10_f0c = 1
+  r7_lc13 = 0
+  r7_lc8 = &#x27;&#x27;
+  SELECT VGCONFIG_f3c OF
+  CASE(1):
+  FOR r7_lc10 = 1 TO 3 DO
+  IF (NOT (UNINIT(VGCONFIG_f40[r7_lc10]))) THEN
+  IF ((VGCONFIG_f40[r7_lc10] &gt; 0)) THEN
+  sv_i = ISV2_GIN((VGCONFIG_f40[r7_lc10]), 8)
+  sv_s = chr(sv_i)
+  r7_lc8 = &#x27;&#x27;
+  ENDIF
+  ENDIF
+  r7_lc10 = 0
+  ENDFOR
+  CASE(2):
+  FOR r7_lc10 = 1 TO 3 DO
+  IF (NOT (UNINIT(VGCONFIG_f40[r7_lc10]))) THEN
+  IF ((VGCONFIG_f40[r7_lc10] &gt; 0)) THEN
+  sv_i = ISV2_GIN((VGCONFIG_f40[r7_lc10]), 8)
+  CNV_INT_STR(sv_i, 1, 0, r7_lc2)
+  sv_s = sub_str(r7_lc2, 2, 1)
+  r7_lc8 = &#x27;&#x27;
+  ENDIF
+  ENDIF
+  r7_lc10 = 0
+  ENDFOR
+  CASE(3):
+  r7_lc12 = 1
+  FOR r7_lc10 = 1 TO 3 DO
+  IF (NOT (UNINIT(VGCONFIG_f40[r7_lc10]))) THEN
+  IF ((VGCONFIG_f40[r7_lc10] &gt; 0)) THEN
+  sv_i = ISV2_GIN((VGCONFIG_f40[r7_lc10]), 8)
+  r7_lc13 = r7_lc13 + sv_i * r7_lc12
+  ENDIF
+  ENDIF
+  r7_lc12 = r7_lc12 * 256
+  ENDFOR
+  CNV_INT_STR(r7_lc13, 1, 0, r7_lc8)
+  ELSE:
+  ENDSELECT
+  VGSTATUS_f10_f2c = r7_lc8
+  IF ((p1 &lt;&gt; 0)) THEN
+  VGSTATUS_f10_f10 = 1
+  ENDIF
+  sv_i = VG_SEND
+  -- stmt213 stray sv_i
+  sv_i = VG_RECV(VGCONFIG_f94)
+  -- stmt214 stray sv_i
+  IF ((TIMER0 &gt; 0)) THEN
+  r7_lc9 = 0
+  WRITE(&#x27;ISV_VG: Wait vision ready TIMEOUT.&#x27;, CR)
+  ELSE
+  IF ((VGSTATUS_f54_f04 = 2) AND (VGSTATUS_f54_f08 = 0)) THEN
+  IF ((p1 &lt;&gt; 0) AND (VGSTATUS_f54_f10 &lt;&gt; 1)) THEN
+  r7_lc9 = 0
+  WRITE(&#x27;ISV_VG: Connect sensor FAILED.&#x27;, CR)
+  ELSE
+  r7_lc9 = 1
+  SET_PORT_VAL(35, VGCONFIG_f04, 0, STATUS)
+  WRITE(&#x27;ISV_VG: Vision ready.&#x27;, CR)
+  ENDIF
+  r7_lc9 = 0
+  WRITE(&#x27;ISV_VG: Vision NOT ready.&#x27;, CR)
+  ENDIF
+  ENDIF
+  IF ((r7_lc9 = 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;Acknowledge ready ERROR&#x27;)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt243 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ELSE
+  ENDIF
+  RETURN(0)
+END VG_X_READY
+
+ROUTINE VG_X_CAP(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r8_lc23 : POSITION
+  r8_lc38 : POSITION
+  r8_lc4 : ARRAY[64] OF INTEGER
+  r8_lc47 : INTEGER
+  r8_lc56 : INTEGER
+  r8_lc68 : POSITION
+  r8_lc69 : INTEGER
+  r8_lc70 : INTEGER
+  r8_lc71 : INTEGER
+  r8_lc72 : INTEGER
+  r8_lc73 : INTEGER
+  r8_lc74 : INTEGER
+  r8_lc75 : INTEGER
+  r8_lc76 : INTEGER
+  r8_lc8 : STRING[64]
+BEGIN
+  r8_lc69 = 0
+  VGSTATUS_f10_f04 = 2
+  VGSTATUS_f10_f08 = p0
+  VGSTATUS_f10_f0c = p1
+  GET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$MAXNUMUFRAM&#x27;, r8_lc71, STATUS)
+  r8_lc72 = p2
+  IF ((r8_lc72 &gt; 0) AND (r8_lc72 &lt;= r8_lc71)) THEN
+  CNV_INT_STR(r8_lc72, 1, 0, r8_lc8)
+  GET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$MNUFRAME[1,&#x27; + r8_lc8 + &#x27;]&#x27;, r8_lc23, STATUS)
+  ELSE
+  r8_lc47_f08 = 0
+  r8_lc47_f0c = 0
+  r8_lc47_f10 = 0
+  r8_lc47_f14 = 0
+  r8_lc47_f18 = 0
+  r8_lc47_f1c = 0
+  r8_lc23 = r8_lc47
+  ENDIF
+  SET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$GROUP[1].$UFRAME&#x27;, r8_lc23, STATUS)
+  GET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$MAXNUMUTOOL&#x27;, r8_lc73, STATUS)
+  GET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$MNUTOOLNUM&#x27;, r8_lc4, STATUS)
+  r8_lc74 = 0
+  -- stmt30 stray r8_lc4[1]
+  IF ((r8_lc74 &gt; 0) AND (r8_lc74 &lt;= r8_lc73)) THEN
+  CNV_INT_STR(r8_lc74, 1, 0, r8_lc8)
+  GET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$MNUTOOL[1,&#x27; + r8_lc8 + &#x27;]&#x27;, r8_lc38, STATUS)
+  ELSE
+  r8_lc56_f08 = 0
+  r8_lc56_f0c = 0
+  r8_lc56_f10 = 0
+  r8_lc56_f14 = 0
+  r8_lc56_f18 = 0
+  r8_lc56_f1c = 0
+  r8_lc38 = r8_lc56
+  ENDIF
+  SET_VAR(r8_lc70, &#x27;*SYSTEM*&#x27;, &#x27;$GROUP[1].$UTOOL&#x27;, r8_lc38, STATUS)
+  sv_p = curpos(r8_lc75, r8_lc76)
+  r8_lc68 = sv_p
+  VGSTATUS_f10_f14_f00 = r8_lc68_f08
+  VGSTATUS_f10_f14_f04 = r8_lc68_f0c
+  VGSTATUS_f10_f14_f08 = r8_lc68_f10
+  VGSTATUS_f10_f14_f0c = r8_lc68_f14
+  VGSTATUS_f10_f14_f10 = r8_lc68_f18
+  VGSTATUS_f10_f14_f14 = r8_lc68_f1c
+  sv_i = VG_SEND
+  -- stmt53 stray sv_i
+  sv_i = VG_RECV(VGCONFIG_f98)
+  -- stmt54 stray sv_i
+  IF ((TIMER0 &gt; 0)) THEN
+  r8_lc69 = 0
+  WRITE(&#x27;ISV_VG: Pos&#x27;, p1, &#x27; TIMEOUT.&#x27;, CR)
+  ELSE
+  IF ((VGSTATUS_f54_f04 = 3) AND (VGSTATUS_f54_f08 = 0)) THEN
+  IF ((VGSTATUS_f54_f0c = VGSTATUS_f10_f0c)) THEN
+  r8_lc69 = 1
+  SET_PORT_VAL(35, VGCONFIG_f04, 0, STATUS)
+  WRITE(&#x27;ISV_VG: Pos&#x27;, p1, &#x27; pic captured&#x27;, CR)
+  ELSE
+  r8_lc69 = 0
+  WRITE(&#x27;ISV_VG: Pos&#x27;, p1, &#x27; TIMEOUT.&#x27;, CR)
+  ENDIF
+  r8_lc69 = 0
+  WRITE(&#x27;ISV_VG: Pos&#x27;, p1, &#x27; FAILED.&#x27;, CR)
+  ENDIF
+  ENDIF
+  IF ((r8_lc69 = 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;Acknowledge capture ERROR&#x27;)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt82 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ENDIF
+  RETURN(0)
+END VG_X_CAP
+
+ROUTINE VG_X_MEAEND(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  r9_lc19 : POSITION
+  r9_lc34 : POSITION
+  r9_lc4 : STRING[64]
+  r9_lc49 : POSITION
+  r9_lc58 : POSITION
+  r9_lc76 : INTEGER
+  r9_lc77 : INTEGER
+  r9_lc78 : INTEGER
+  r9_lc79 : INTEGER
+  r9_lc80 : INTEGER
+BEGIN
+  -- stmt96 stray VGSTATUS_f54 | VGSTATUS_f80
+  VGSTATUS_f10_f04 = 2
+  VGSTATUS_f10_f08 = p0
+  VGSTATUS_f10_f0c = p1
+  IF ((p4 &lt;&gt; 0)) THEN
+  VGSTATUS_f10_f10 = 2
+  ENDIF
+  GET_VAR(r9_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$MAXNUMUFRAM&#x27;, r9_lc78, STATUS)
+  r9_lc79 = p2
+  IF ((r9_lc79 &gt; 0) AND (r9_lc79 &lt;= r9_lc78)) THEN
+  CNV_INT_STR(r9_lc79, 1, 0, r9_lc4)
+  GET_VAR(r9_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUFRAME[1,&#x27; + r9_lc4 + &#x27;]&#x27;, r9_lc19, STATUS)
+  r9_lc58 = r9_lc19
+  ELSE
+  r9_lc58_f08 = 0
+  r9_lc58_f0c = 0
+  r9_lc58_f10 = 0
+  r9_lc58_f14 = 0
+  r9_lc58_f18 = 0
+  r9_lc58_f1c = 0
+  r9_lc19 = r9_lc58
+  ENDIF
+  IF ((p3 &lt;= 0) OR (p3 &gt; r9_lc78)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE(&#x27;ISV_VG: Invalid PAR5(UF).&#x27;, CR)
+  PAUSE
+  ELSE
+  CNV_INT_STR(p3, 1, 0, r9_lc4)
+  SET_VAR(r9_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUFRAME[1,&#x27; + r9_lc4 + &#x27;]&#x27;, r9_lc19, STATUS)
+  ENDIF
+  VGSTATUS_f10_f14_f00 = r9_lc58_f08
+  VGSTATUS_f10_f14_f04 = r9_lc58_f0c
+  VGSTATUS_f10_f14_f08 = r9_lc58_f10
+  VGSTATUS_f10_f14_f0c = r9_lc58_f14
+  VGSTATUS_f10_f14_f10 = r9_lc58_f18
+  VGSTATUS_f10_f14_f14 = r9_lc58_f1c
+  sv_i = VG_SEND
+  -- stmt138 stray sv_i
+  sv_i = VG_RECV(VGCONFIG_f94)
+  -- stmt139 stray sv_i
+  IF ((TIMER0 &gt; 0)) THEN
+  r9_lc80 = 11
+  WRITE(&#x27;ISV_VG: Wait result TIMEOUT.&#x27;, CR)
+  ELSE
+  -- stmt145 stray VGSTATUS_f54 | VGSTATUS_f80
+  ENDIF
+  sv_i = VG_X_CYCEND(p0)
+  -- stmt147 stray sv_i
+  IF ((VGSTATUS_f80_f04 = 5) AND (VGSTATUS_f80_f08 = 0)) THEN
+  IF ((VGSTATUS_f80_f10 = 8)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f08, 0, STATUS)
+  WRITE(&#x27;ISV_VG: Verification PASS.&#x27;, CR)
+  ENDIF
+  IF ((VGSTATUS_f80_f10 = 16)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f08, 1, STATUS)
+  WRITE(&#x27;ISV_VG: Verification ERROR.&#x27;, CR)
+  ENDIF
+  sv_i = VG_CHKOFFSET
+  r9_lc80 = sv_i
+  SELECT r9_lc80 OF
+  CASE(0):
+  r9_lc76_f08 = VGSTATUS_f80_f14_f00
+  r9_lc76_f0c = VGSTATUS_f80_f14_f04
+  r9_lc76_f10 = VGSTATUS_f80_f14_f08
+  r9_lc76_f14 = VGSTATUS_f80_f14_f0c
+  r9_lc76_f18 = VGSTATUS_f80_f14_f10
+  r9_lc76_f1c = VGSTATUS_f80_f14_f14
+  r9_lc49 = r9_lc76
+  r9_lc34 = r9_lc49
+  -- stmt167 stray r9_lc19
+  CNV_INT_STR(p3, 1, 0, r9_lc4)
+  SET_VAR(r9_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUTOOL[1,&#x27; + r9_lc4 + &#x27;]&#x27;, r9_lc34, STATUS)
+  IF ((STATUS = 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 0, STATUS)
+  WRITE(&#x27;Set uframe&#x27;, p3, &#x27; success.&#x27;, CR)
+  ELSE
+  r9_lc80 = 10
+  WRITE(&#x27;Set uframe&#x27;, p3, &#x27; failed.&#x27;, STATUS, CR)
+  ENDIF
+  CASE(1):
+  WRITE(&#x27;ISV_VG: Offset exceeds limits.&#x27;, CR)
+  CASE(2):
+  WRITE(&#x27;ISV_VG: Null offset.&#x27;, CR)
+  CASE(3):
+  WRITE(&#x27;ISV_VG: Duplicate offset.&#x27;, CR)
+  ELSE:
+  r9_lc80 = 9
+  WRITE(&#x27;ISV_VG: Unknown offset error.&#x27;, CR)
+  ENDSELECT
+  ENDIF
+  r9_lc80 = 12
+  WRITE(&#x27;ISV_VG: Result error. STA&#x27;, VGSTATUS_f80_f04, &#x27; ERR&#x27;, VGSTATUS_f80_f08, CR)
+  IF ((r9_lc80 &lt;&gt; 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;Acknowledge result ERROR&#x27;)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt201 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ENDIF
+  RETURN(0)
+END VG_X_MEAEND
+
+ROUTINE VG_X_CPEND(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  r10_lc19 : POSITION
+  r10_lc34 : POSITION
+  r10_lc4 : STRING[64]
+  r10_lc49 : POSITION
+  r10_lc58 : POSITION
+  r10_lc76 : INTEGER
+  r10_lc77 : INTEGER
+  r10_lc78 : INTEGER
+  r10_lc79 : INTEGER
+  r10_lc80 : INTEGER
+BEGIN
+  -- stmt215 stray VGSTATUS_f54 | VGSTATUS_f80
+  GET_VAR(r10_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$SCR.$MAXNUMUFRAM&#x27;, r10_lc78, STATUS)
+  r10_lc79 = p2
+  IF ((r10_lc79 &gt; 0) AND (r10_lc79 &lt;= r10_lc78)) THEN
+  CNV_INT_STR(r10_lc79, 1, 0, r10_lc4)
+  GET_VAR(r10_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUFRAME[1,&#x27; + r10_lc4 + &#x27;]&#x27;, r10_lc19, STATUS)
+  r10_lc58 = r10_lc19
+  ELSE
+  r10_lc58_f08 = 0
+  r10_lc58_f0c = 0
+  r10_lc58_f10 = 0
+  r10_lc58_f14 = 0
+  r10_lc58_f18 = 0
+  r10_lc58_f1c = 0
+  r10_lc19 = r10_lc58
+  ENDIF
+  IF ((p3 &lt;= 0) OR (p3 &gt; r10_lc78)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  WRITE(&#x27;ISV_VG: Invalid PAR5(UF).&#x27;, CR)
+  PAUSE
+  ELSE
+  CNV_INT_STR(p3, 1, 0, r10_lc4)
+  SET_VAR(r10_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUFRAME[1,&#x27; + r10_lc4 + &#x27;]&#x27;, r10_lc19, STATUS)
+  ENDIF
+  REPEAT
+  sv_i = VG_RECV(0)
+  -- stmt3 stray sv_i
+  WRITE(&#x27;sta_id&#x27;, VGSTATUS_f54_f04, CR)
+  UNTIL((VGSTATUS_f54_f04 = 5))
+  IF ((TIMER0 &gt; 0)) THEN
+  r10_lc80 = 11
+  WRITE(&#x27;ISV_VG: Wait result TIMEOUT.&#x27;, CR)
+  ELSE
+  -- stmt13 stray VGSTATUS_f54 | VGSTATUS_f80
+  ENDIF
+  IF ((VGSTATUS_f80_f04 = 5) AND (VGSTATUS_f80_f08 = 0)) THEN
+  IF ((VGSTATUS_f80_f10 = 8)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f08, 0, STATUS)
+  WRITE(&#x27;ISV_VG: Verification PASS.&#x27;, CR)
+  ENDIF
+  IF ((VGSTATUS_f80_f10 = 16)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f08, 1, STATUS)
+  WRITE(&#x27;ISV_VG: Verification ERROR.&#x27;, CR)
+  ENDIF
+  sv_i = VG_CHKOFFSET
+  r10_lc80 = sv_i
+  SELECT r10_lc80 OF
+  CASE(0):
+  r10_lc76_f08 = VGSTATUS_f80_f14_f00
+  r10_lc76_f0c = VGSTATUS_f80_f14_f04
+  r10_lc76_f10 = VGSTATUS_f80_f14_f08
+  r10_lc76_f14 = VGSTATUS_f80_f14_f0c
+  r10_lc76_f18 = VGSTATUS_f80_f14_f10
+  r10_lc76_f1c = VGSTATUS_f80_f14_f14
+  r10_lc49 = r10_lc76
+  r10_lc34 = r10_lc49
+  -- stmt35 stray r10_lc19
+  CNV_INT_STR(p3, 1, 0, r10_lc4)
+  SET_VAR(r10_lc77, &#x27;*SYSTEM*&#x27;, &#x27;$MNUTOOL[1,&#x27; + r10_lc4 + &#x27;]&#x27;, r10_lc34, STATUS)
+  IF ((STATUS = 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 0, STATUS)
+  WRITE(&#x27;Set uframe&#x27;, p3, &#x27; success.&#x27;, CR)
+  ELSE
+  r10_lc80 = 10
+  WRITE(&#x27;Set uframe&#x27;, p3, &#x27; failed.&#x27;, STATUS, CR)
+  ENDIF
+  CASE(1):
+  WRITE(&#x27;ISV_VG: Offset exceeds limits.&#x27;, CR)
+  CASE(2):
+  WRITE(&#x27;ISV_VG: Null offset.&#x27;, CR)
+  CASE(3):
+  WRITE(&#x27;ISV_VG: Duplicate offset.&#x27;, CR)
+  ELSE:
+  r10_lc80 = 9
+  WRITE(&#x27;ISV_VG: Unknown offset error.&#x27;, CR)
+  ENDSELECT
+  ENDIF
+  r10_lc80 = 12
+  WRITE(&#x27;ISV_VG: Result error. STA&#x27;, VGSTATUS_f80_f04, &#x27; ERR&#x27;, VGSTATUS_f80_f08, CR)
+  IF ((r10_lc80 &lt;&gt; 0)) THEN
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  FORCE_SPMENU(1, 37, 1)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;Acknowledge result ERROR&#x27;)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s, &#x27;OK&#x27;)
+  -- stmt69 stray 129
+  DELAY 100
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  sv_s = chr(128)
+  sv_s = chr(137)
+  WRITE(sv_s, sv_s)
+  ENDIF
+  VGSTATUS_f10_f00 = 1
+  VGSTATUS_f10_f04 = 0
+  VGSTATUS_f10_f08 = 0
+  VGSTATUS_f10_f0c = 0
+  VGSTATUS_f10_f10 = 0
+  VGSTATUS_f10_f14_f00 = 0
+  VGSTATUS_f10_f14_f04 = 0
+  VGSTATUS_f10_f14_f08 = 0
+  VGSTATUS_f10_f14_f0c = 0
+  VGSTATUS_f10_f14_f10 = 0
+  VGSTATUS_f10_f14_f14 = 0
+  VGSTATUS_f54_f00 = 1
+  VGSTATUS_f54_f04 = (0 - 1)
+  VGSTATUS_f54_f08 = (0 - 1)
+  VGSTATUS_f54_f0c = 0
+  VGSTATUS_f54_f10 = (0 - 1)
+  VGSTATUS_f54_f14_f00 = 0
+  VGSTATUS_f54_f14_f04 = 0
+  VGSTATUS_f54_f14_f08 = 0
+  VGSTATUS_f54_f14_f0c = 0
+  VGSTATUS_f54_f14_f10 = 0
+  VGSTATUS_f54_f14_f14 = 0
+  IF (UNINIT(VGCONFIG_f3c)) THEN
+  VGCONFIG_f3c = 0
+  ENDIF
+  IF (UNINIT(VGCONFIG_f94)) THEN
+  VGCONFIG_f94 = 5
+  ENDIF
+  IF (UNINIT(VGCONFIG_f98)) THEN
+  VGCONFIG_f98 = 30
+  ENDIF
+  IF (UNINIT(VGCONFIG_f9c)) THEN
+  VGCONFIG_f9c = 1
+  ENDIF
+  IF (UNINIT(VGSTATUS_f00)) THEN
+  VGSTATUS_f00 = 0
+  ENDIF
+  GET_TPE_PRM(1, 1, INTVAL1, REALVAL, STRVAL, STATUS)
+  SELECT INTVAL1 OF
+  CASE(1):
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  CASE(2):
+  sv_i = SOCKET_INIT
+  CASE(20):
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  sv_i = VG_X_READY(INTVAL2, INTVAL3)
+  CASE(21):
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(4, 1, INTVAL4, REALVAL, STRVAL, STATUS)
+  sv_i = VG_X_CAP(INTVAL2, INTVAL3, INTVAL4)
+  CASE(22):
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  SET_PORT_VAL(35, VGCONFIG_f08, 1, STATUS)
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(4, 1, INTVAL4, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(5, 1, INTVAL5, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(6, 1, INTVAL6, REALVAL, STRVAL, STATUS)
+  sv_i = VG_X_MEAEND(INTVAL2, INTVAL3, INTVAL4, INTVAL5, INTVAL6)
+  CASE(23):
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  sv_i = VG_X_CYCEND(INTVAL2)
+  CASE(221):
+  SET_PORT_VAL(35, VGCONFIG_f04, 1, STATUS)
+  SET_PORT_VAL(35, VGCONFIG_f08, 1, STATUS)
+  GET_TPE_PRM(2, 1, INTVAL2, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(3, 1, INTVAL3, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(4, 1, INTVAL4, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(5, 1, INTVAL5, REALVAL, STRVAL, STATUS)
+  GET_TPE_PRM(6, 1, INTVAL6, REALVAL, STRVAL, STATUS)
+  sv_i = VG_X_CPEND(INTVAL2, INTVAL3, INTVAL4, INTVAL5, INTVAL6)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END VG_X_CPEND
+
+BEGIN
+END ISV_VG
+</span></pre></details><details><summary>MI04_SSW.KL（81 例程）</summary><pre><span class=c>-- MI04_SSW.KL (decompiled v3)
+PROGRAM MI04_SSW
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  I_MI04_DI : INTEGER
+  I_MI04_DO : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_TD_DO : ARRAY[64] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  I_MI04_GI : INTEGER
+  I_MI04_GO : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[64] OF INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[64] OF INTEGER
+  B_SENDBSNUM : INTEGER
+  B_FLOWCHK : INTEGER
+  I_ACK_TIME : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_WELDTIMER : INTEGER
+  I_GUNCOUNT : INTEGER
+  B_FRES_USED : INTEGER
+  I_FRES_INSTALL : INTEGER
+  B_FRES_SWING_COMPENSATOR : INTEGER
+  I_DT_TYPE : INTEGER
+  I_DI_WELD_END : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  I_DI_READY : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_DO_START : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  B_MON_04 : INTEGER
+  I_STATUS : INTEGER
+  I_TD_TYPE : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DI : INTEGER
+  I_MI01_DO : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_BLINK_DI : INTEGER
+  B_BLINK_CHK : BOOLEAN
+  B_VALVEOPENSTARTED : BOOLEAN
+  B_TD_CHK : BOOLEAN
+  B_FRES_SWING_OVLD : BOOLEAN
+  B_FRES_SRVO_ALARM : BOOLEAN
+  B_FRES_MOTOR_END : BOOLEAN
+  B_FRES_HSPD : BOOLEAN
+  B_FRES_SWING_MOTOR : BOOLEAN
+  I_FRES_SWING_AUTOEND : INTEGER
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_BNSTYPE : INTEGER
+  I_MON : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  I_GUANSWELDING : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_ACK_DELAY : INTEGER
+  I_F1_PULSE : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI04_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INIT : INTEGER
+BEGIN
+  IF (UNINIT(I_MI04_DI)) THEN
+  I_MI04_DI = 512
+  ENDIF
+  IF (UNINIT(I_MI04_DO)) THEN
+  I_MI04_DO = 512
+  ENDIF
+  IF (UNINIT(AR_I_MI04_TD_DI[1])) THEN
+  AR_I_MI04_TD_DI[1] = 2648
+  ENDIF
+  IF (UNINIT(AR_I_MI04_TD_DO[1])) THEN
+  AR_I_MI04_TD_DO[1] = 2648
+  ENDIF
+  IF (UNINIT(AR_I_MI04_TD_DI[2])) THEN
+  AR_I_MI04_TD_DI[2] = 2680
+  ENDIF
+  IF (UNINIT(AR_I_MI04_TD_DO[2])) THEN
+  AR_I_MI04_TD_DO[2] = 2680
+  ENDIF
+  IF (UNINIT(I_MI04_SW_DI)) THEN
+  I_MI04_SW_DI = 2664
+  ENDIF
+  IF (UNINIT(I_MI04_SW_DO)) THEN
+  I_MI04_SW_DO = 2664
+  ENDIF
+  IF (UNINIT(I_MI04_GI)) THEN
+  I_MI04_GI = 15
+  ENDIF
+  IF (UNINIT(I_MI04_GO)) THEN
+  I_MI04_GO = 15
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_RO_DI[1])) THEN
+  AR_I_MI04_FRES_RO_DI[1] = 3664
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_RO_DO[1])) THEN
+  AR_I_MI04_FRES_RO_DO[1] = 3664
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_RO_DI[2])) THEN
+  AR_I_MI04_FRES_RO_DI[2] = 3696
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_RO_DO[2])) THEN
+  AR_I_MI04_FRES_RO_DO[2] = 3696
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_PD_DI[1])) THEN
+  AR_I_MI04_FRES_PD_DI[1] = 3680
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_PD_DO[1])) THEN
+  AR_I_MI04_FRES_PD_DO[1] = 3680
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_PD_DI[2])) THEN
+  AR_I_MI04_FRES_PD_DI[2] = 3712
+  ENDIF
+  IF (UNINIT(AR_I_MI04_FRES_PD_DO[2])) THEN
+  AR_I_MI04_FRES_PD_DO[2] = 3712
+  ENDIF
+  IF (UNINIT(B_SENDBSNUM)) THEN
+  B_SENDBSNUM = 0
+  ENDIF
+  IF (UNINIT(B_FLOWCHK)) THEN
+  B_FLOWCHK = 0
+  ENDIF
+  IF (UNINIT(I_ACK_TIME)) THEN
+  I_ACK_TIME = 500
+  ENDIF
+  IF (UNINIT(I_VALVEDELAY)) THEN
+  I_VALVEDELAY = 2000
+  ENDIF
+  IF (UNINIT(I_WELDTIMER)) THEN
+  I_WELDTIMER = 1
+  ENDIF
+  IF (UNINIT(I_GUNCOUNT)) THEN
+  I_GUNCOUNT = 1
+  ENDIF
+  IF (UNINIT(B_FRES_USED)) THEN
+  B_FRES_USED = 0
+  ENDIF
+  IF (UNINIT(I_FRES_INSTALL)) THEN
+  I_FRES_INSTALL = 1
+  ENDIF
+  IF (UNINIT(B_FRES_SWING_COMPENSATOR)) THEN
+  B_FRES_SWING_COMPENSATOR = 1
+  ENDIF
+  IF (UNINIT(I_DT_TYPE)) THEN
+  I_DT_TYPE = 1
+  ENDIF
+  SELECT I_WELDTIMER OF
+  CASE(1):
+  CASE(2):
+  I_DI_WELD_END = 1
+  I_DI_MILLING_DEMAND = 2
+  I_DI_PREWARNING = 3
+  I_DI_REQELECCHG = 4
+  I_DI_READY = 5
+  I_DI_SPOT_SELECTION_OK = 20
+  I_DO_START = 1
+  I_DO_MILLING_COMPLETED = 2
+  I_DO_COUNTER_RESET = 4
+  I_DO_ACKNOWLEDGE = 5
+  I_DO_WITH_CURRENT = 8
+  I_DO_SPOT_NUM_BIT0 = 17
+  I_DO_ASCII_0_BIT0 = 49
+  CASE(3):
+  I_DI_WELD_END = 3
+  I_DI_READY = 4
+  I_DI_SPOT_SELECTION_OK = 1
+  I_DO_START = 3
+  I_DO_ACKNOWLEDGE = 5
+  I_DO_WITH_CURRENT = 9
+  I_DO_SPOT_NUM_BIT0 = 65
+  I_DO_ASCII_0_BIT0 = 113
+  ELSE:
+  ENDSELECT
+  B_MON_04 = 1
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_mon&#x27;)
+  -- stmt121 stray sv_i
+  RETURN(0)
+END INIT
+
+ROUTINE ACTIONSELECT : INTEGER
+VAR
+  r1_lc10 : INTEGER
+  r1_lc11 : INTEGER
+  r1_lc12 : INTEGER
+  r1_lc13 : INTEGER
+  r1_lc14 : INTEGER
+  r1_lc15 : INTEGER
+  r1_lc16 : REAL
+  r1_lc17 : INTEGER
+  r1_lc18 : INTEGER
+  r1_lc19 : INTEGER
+  r1_lc20 : INTEGER
+  r1_lc21 : INTEGER
+  r1_lc22 : INTEGER
+  r1_lc23 : INTEGER
+  r1_lc24 : INTEGER
+  r1_lc25 : REAL
+  r1_lc26 : INTEGER
+  r1_lc27 : INTEGER
+  r1_lc29 : INTEGER
+  r1_lc30 : INTEGER
+  r1_lc31 : INTEGER
+  r1_lc32 : INTEGER
+  r1_lc33 : INTEGER
+  r1_lc34 : INTEGER
+  r1_lc36 : INTEGER
+  r1_lc9 : STRING[64]
+BEGIN
+  sv_i = GETTPEPRMINT(1)
+  r1_lc10 = sv_i
+  SELECT r1_lc10 OF
+  CASE(1):
+  sv_i = BSN_ENABLE(0)
+  -- stmt169 stray sv_i
+  B_SENDBSNUM = 1
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_mon&#x27;)
+  CASE(2):
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(2)
+  r1_lc29 = sv_i
+  sv_i = GETTPEPRMINT(3)
+  r1_lc11 = sv_i
+  ELSE
+  r1_lc29 = 1
+  sv_i = GETTPEPRMINT(2)
+  r1_lc11 = sv_i
+  ENDIF
+  CASE(1):
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(4)
+  r1_lc14 = sv_i
+  ELSE
+  sv_i = GETTPEPRMINT(3)
+  r1_lc14 = sv_i
+  ENDIF
+  sv_i = MI04_TIPDRES(r1_lc29, r1_lc14)
+  CASE(2):
+  IF ((I_DT_TYPE = 1)) THEN
+  GET_TPE_PRM(4, r1_lc24, r1_lc23, r1_lc25, r1_lc9, I_STATUS)
+  ELSE
+  GET_TPE_PRM(3, r1_lc24, r1_lc23, r1_lc25, r1_lc9, I_STATUS)
+  ENDIF
+  IF ((r1_lc24 = 2)) THEN
+  r1_lc16 = r1_lc25
+  ELSE
+  IF ((r1_lc24 = 1)) THEN
+  r1_lc16 = r1_lc23 * 1
+  ELSE
+  sv_s = INTTOSTR(3)
+  sv_s = KILLBLANKS(sv_s)
+  POST_ERR(38100, &#x27;Wrong data type for PRM[&#x27; + sv_s + &#x27;]&#x27;, 38099, 2)
+  ENDIF
+  ENDIF
+  sv_i = CAPCHANGEPRE(r1_lc29, r1_lc16)
+  CASE(3):
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(4)
+  r1_lc15 = sv_i
+  GET_TPE_PRM(5, r1_lc24, r1_lc23, r1_lc25, r1_lc9, I_STATUS)
+  ELSE
+  sv_i = GETTPEPRMINT(3)
+  r1_lc15 = sv_i
+  GET_TPE_PRM(4, r1_lc24, r1_lc23, r1_lc25, r1_lc9, I_STATUS)
+  ENDIF
+  IF ((r1_lc24 = 2)) THEN
+  sv_i = round(r1_lc25 * 1000)
+  r1_lc26 = sv_i
+  ELSE
+  IF ((r1_lc24 = 1)) THEN
+  r1_lc26 = r1_lc23 * 1000
+  ELSE
+  sv_s = INTTOSTR(3)
+  sv_s = KILLBLANKS(sv_s)
+  POST_ERR(38100, &#x27;Wrong data type for PRM[&#x27; + sv_s + &#x27;]&#x27;, 38099, 2)
+  ENDIF
+  ENDIF
+  sv_i = CONTROLMOTOR(r1_lc29, r1_lc15, r1_lc26)
+  CASE(4):
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(4)
+  r1_lc27 = sv_i
+  sv_i = GETTPEPRMINT(5)
+  r1_lc17 = sv_i
+  ELSE
+  sv_i = GETTPEPRMINT(3)
+  r1_lc27 = sv_i
+  sv_i = GETTPEPRMINT(4)
+  r1_lc17 = sv_i
+  ENDIF
+  sv_i = CHECKCAPUNIT(r1_lc29, r1_lc27, r1_lc17)
+  CASE(5):
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(4)
+  r1_lc18 = sv_i
+  ELSE
+  sv_i = GETTPEPRMINT(3)
+  r1_lc18 = sv_i
+  ENDIF
+  I_TD_TYPE = 2
+  sv_i = VALVECONTROL(r1_lc29, r1_lc18)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(3):
+  sv_i = GETTPEPRMINT(2)
+  r1_lc12 = sv_i
+  CASE(1):
+  sv_i = GETTPEPRMINT(3)
+  r1_lc15 = sv_i
+  sv_i = SWIMMOTION(r1_lc15)
+  CASE(2):
+  sv_i = GETTPEPRMINT(3)
+  r1_lc18 = sv_i
+  I_TD_TYPE = 3
+  sv_i = VALVECONTROL(0, r1_lc18)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(4):
+  sv_i = GETTPEPRMINT(2)
+  r1_lc13 = sv_i
+  CASE(1):
+  sv_i = GETTPEPRMINT(3)
+  r1_lc19 = sv_i
+  sv_i = GETTPEPRMINT(4)
+  r1_lc22 = sv_i
+  sv_i = TS_CHECKWEAR(r1_lc19, r1_lc22)
+  CASE(2):
+  sv_i = GETTPEPRMINT(3)
+  r1_lc20 = sv_i
+  IF ((I_DT_TYPE = 1)) THEN
+  sv_i = GETTPEPRMINT(4)
+  r1_lc22 = sv_i
+  ELSE
+  r1_lc22 = 0
+  ENDIF
+  CASE(1):
+  r1_lc22 = 0
+  sv_i = TS_RESET_TD(r1_lc20, r1_lc22)
+  CASE(2):
+  sv_i = TS_RESET_TD(r1_lc20, r1_lc22)
+  CASE(3):
+  sv_i = TS_RESET_TD_BOSCH(r1_lc20, r1_lc22)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(3):
+  sv_i = GETTPEPRMINT(3)
+  r1_lc21 = sv_i
+  sv_i = GETTPEPRMINT(4)
+  r1_lc22 = sv_i
+  sv_i = TS_TWD_RET(r1_lc21, r1_lc22)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(5):
+  sv_i = GETTPEPRMINT(2)
+  r1_lc32 = sv_i
+  sv_i = GETTPEPRMINT(3)
+  r1_lc31 = sv_i
+  CASE(1):
+  sv_i = GETTPEPRMINT(4)
+  r1_lc33 = sv_i
+  CASE(1):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc34 = sv_i
+  sv_i = FRES_CHECK_BOX(r1_lc32, r1_lc34)
+  CASE(2):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc34 = sv_i
+  sv_i = GETTPEPRMINT(6)
+  r1_lc36 = sv_i
+  sv_i = FRES_REMOVE_CAP(r1_lc32, r1_lc34, r1_lc36 * 1000)
+  CASE(3):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc34 = sv_i
+  sv_i = FRES_MOTOR_HIGHSPEED(r1_lc32, r1_lc34)
+  CASE(4):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc27 = sv_i
+  sv_i = GETTPEPRMINT(6)
+  r1_lc30 = sv_i
+  sv_i = GETTPEPRMINT(7)
+  r1_lc17 = sv_i
+  sv_i = FRES_CHECK_CAP(r1_lc32, r1_lc27, r1_lc30, r1_lc17)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(2):
+  sv_i = GETTPEPRMINT(4)
+  r1_lc33 = sv_i
+  CASE(1):
+  sv_i = FRES_SWING_MOTOLCTRL(r1_lc32, 1)
+  CASE(2):
+  sv_i = FRES_SWING_MOTOLCTRL(r1_lc32, 2)
+  CASE(3):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc36 = sv_i
+  sv_i = FRES_SWING_CONTROL(r1_lc32, 3, r1_lc36 * 1000)
+  CASE(4):
+  sv_i = GETTPEPRMINT(5)
+  r1_lc36 = sv_i
+  sv_i = FRES_SWING_CONTROL(r1_lc32, 4, r1_lc36 * 1000)
+  ELSE:
+  ENDSELECT
+  sv_i = INIT
+  -- stmt126 stray sv_i
+  sv_i = ACTIONSELECT
+  -- stmt128 stray sv_i
+  RETURN(0)
+END ACTIONSELECT
+
+BEGIN
+END MI04_SSW
+</span></pre></details><details><summary>MI04_SSW_CHK.KL（3 例程）</summary><pre><span class=c>-- MI04_SSW_CHK.KL (decompiled v3)
+PROGRAM MI04_SSW_CHK
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  I_PROCESSTIM : INTEGER
+  I_TIMEOUT : INTEGER
+  B_BLINK_CHK : INTEGER
+  B_ERRORONE : INTEGER
+  I_MI01_GO : INTEGER
+  B_ROTATE_FAILED : INTEGER
+  I_MI01_DI : INTEGER
+  I_BLINK_DI : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MI04_DI : INTEGER
+  I_MI04_DO : INTEGER
+  I_MI04_GI : INTEGER
+  I_MI04_GO : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_TD_DO : ARRAY[2] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[2] OF INTEGER
+  B_MON_04 : BOOLEAN
+  B_SENDBSNUM : BOOLEAN
+  B_FLOWCHK : BOOLEAN
+  B_VALVEOPENSTARTED : BOOLEAN
+  B_TD_CHK : BOOLEAN
+  I_ACK_TIME : INTEGER
+  I_TD_TYPE : INTEGER
+  B_FRES_SWING_OVLD : BOOLEAN
+  B_FRES_SRVO_ALARM : BOOLEAN
+  B_FRES_SWING_COMPENSATOR : BOOLEAN
+  B_FRES_MOTOR_END : BOOLEAN
+  B_FRES_HSPD : BOOLEAN
+  B_FRES_SWING_MOTOR : BOOLEAN
+  I_FRES_SWING_AUTOEND : INTEGER
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_WELDTIMER : INTEGER
+  I_GUNCOUNT : INTEGER
+  I_BNSTYPE : INTEGER
+  I_MON : INTEGER
+  B_FRES_USED : BOOLEAN
+  I_FRES_INSTALL : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_GUANSWELDING : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_ACK_DELAY : INTEGER
+  I_F1_PULSE : INTEGER
+  I_DI_WELD_END : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  I_DI_READY : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_DO_START : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ACTION_ON : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  RETURN(0)
+END ACTION_ON
+
+ROUTINE CHECK_BLINK : INTEGER
+BEGIN
+  REPEAT
+  DELAY 8
+  UNTIL((I_PROCESSTIM &gt; I_TIMEOUT) OR (B_BLINK_CHK = 0))
+  IF ((I_PROCESSTIM &gt; I_TIMEOUT)) THEN
+  IF ((B_BLINK_CHK &lt;&gt; 0)) THEN
+  IF ((B_ERRORONE &lt;&gt; 0)) THEN
+  B_ERRORONE = 0
+  io_13[I_MI01_GO + 6] = 150
+  B_ROTATE_FAILED = 1
+  POST_ERR(38100, &#x27;RD rotatary detection failed&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0)) THEN
+  B_ERRORONE = 1
+  sv_i = ACTION_ON
+  -- stmt85 stray sv_i
+  ENDIF
+  ENDIF
+  ELSE
+  IF ((io_13[I_MI01_GO + 6] = 150)) THEN
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  ENDIF
+  RETURN(0)
+END CHECK_BLINK
+
+ROUTINE KEEP_ALARM : INTEGER
+BEGIN
+  IF ((B_ERRORONE &lt;&gt; 0)) THEN
+  B_ERRORONE = 0
+  POST_ERR(38100, &#x27;RD rotatary detection failed&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0)) THEN
+  B_ERRORONE = 1
+  ENDIF
+  IF ((io_0e[153] &lt;&gt; 0)) THEN
+  B_ROTATE_FAILED = 0
+  POST_ERR(38100, &#x27;Reset rotatary alarm&#x27;, 0, 0)
+  ENDIF
+  B_ERRORONE = 1
+  B_ROTATE_FAILED = 0
+  I_PROCESSTIM = 0
+  IF (UNINIT(I_TIMEOUT)) THEN
+  I_TIMEOUT = 1000
+  ENDIF
+  -- stmt131 stray 1 | I_BLINK_DI
+  ENABLE CONDITION[1]
+  IF ((B_BLINK_CHK &lt;&gt; 0)) THEN
+  sv_i = CHECK_BLINK
+  -- stmt140 stray sv_i
+  DELAY 8
+  ELSE
+  B_ERRORONE = 1
+  IF ((B_ROTATE_FAILED &lt;&gt; 0)) THEN
+  sv_i = KEEP_ALARM
+  -- stmt151 stray sv_i
+  DELAY 256
+  ELSE
+  ENDIF
+  ENDIF
+  RETURN(0)
+END KEEP_ALARM
+
+BEGIN
+END MI04_SSW_CHK
+</span></pre></details><details><summary>MI04_SSW_CHK2.KL（32 例程）</summary><pre><span class=c>-- MI04_SSW_CHK2.KL (decompiled v3)
+PROGRAM MI04_SSW_CHK2
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  I_PROCESST : INTEGER
+  I_ROTATETIME : INTEGER
+  B_BLINK_CHK : INTEGER
+  AR_I_MI04_TD_DO : ARRAY[64] OF INTEGER
+  I_TIPDRESSNO : INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[64] OF INTEGER
+  B_ERRORONE : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_DI : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[64] OF INTEGER
+  B_ERRORONE2 : INTEGER
+  I_FRES_AUTOEND : INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[64] OF INTEGER
+  B_FRES_MOTOR_END : INTEGER
+  I_FRES_SWING_AUTOEND : INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[64] OF INTEGER
+  B_FRES_SWING_MOTOR : INTEGER
+  B_TD_CHK : INTEGER
+  B_FRES_SWING_OVLD : INTEGER
+  B_FRES_SRVO_ALARM : INTEGER
+  B_FRES_HSPD : INTEGER
+  B_CONDITION_ON : INTEGER
+  B_CONDITION_ON_SWING : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MI04_DI : INTEGER
+  I_MI04_DO : INTEGER
+  I_MI04_GI : INTEGER
+  I_MI04_GO : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[2] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  I_BLINK_DI : INTEGER
+  B_MON_04 : BOOLEAN
+  B_SENDBSNUM : BOOLEAN
+  B_FLOWCHK : BOOLEAN
+  B_VALVEOPENSTARTED : BOOLEAN
+  I_ACK_TIME : INTEGER
+  I_TD_TYPE : INTEGER
+  B_FRES_SWING_COMPENSATOR : BOOLEAN
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_WELDTIMER : INTEGER
+  I_GUNCOUNT : INTEGER
+  I_BNSTYPE : INTEGER
+  I_MON : INTEGER
+  B_FRES_USED : BOOLEAN
+  I_FRES_INSTALL : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_GUANSWELDING : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_ACK_DELAY : INTEGER
+  I_F1_PULSE : INTEGER
+  I_DI_WELD_END : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  I_DI_READY : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_DO_START : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  I_STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE MI04_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI04_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE AUTOTDEND : INTEGER
+BEGIN
+  I_PROCESST = 0
+  IF (UNINIT(I_ROTATETIME)) THEN
+  I_ROTATETIME = 5000
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((I_PROCESST &gt;= I_ROTATETIME) OR (B_BLINK_CHK = 0))
+  IF ((io_02[AR_I_MI04_TD_DO[I_TIPDRESSNO] + 6] &lt;&gt; 0)) THEN
+  io_02[AR_I_MI04_TD_DO[I_TIPDRESSNO] + 6] = 0
+  ENDIF
+  B_BLINK_CHK = 0
+  RETURN(0)
+END AUTOTDEND
+
+ROUTINE CHECK_MOTOR_OVERLOAD : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[I_TIPDRESSNO] + 2] = 0)) THEN
+  IF ((B_ERRORONE &lt;&gt; 0)) THEN
+  B_ERRORONE = 0
+  io_13[I_MI01_GO + 6] = 152
+  POST_ERR(38100, &#x27;TD Overload&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0)) THEN
+  B_ERRORONE = 1
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  ELSE
+  B_ERRORONE = 1
+  ENDIF
+  RETURN(0)
+END CHECK_MOTOR_OVERLOAD
+
+ROUTINE CHECK_SERVO_ALARM : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[I_TIPDRESSNO] + 8] = 0)) THEN
+  IF ((B_ERRORONE2 &lt;&gt; 0)) THEN
+  B_ERRORONE2 = 0
+  io_13[I_MI01_GO + 6] = 163
+  POST_ERR(38100, &#x27;Servo Motor Alarm&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0)) THEN
+  B_ERRORONE2 = 1
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  ELSE
+  B_ERRORONE2 = 1
+  ENDIF
+  RETURN(0)
+END CHECK_SERVO_ALARM
+
+ROUTINE FRES_AUTOEND : INTEGER
+BEGIN
+  I_PROCESST = 0
+  IF (UNINIT(I_FRES_AUTOEND)) THEN
+  I_FRES_AUTOEND = 3000
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((I_PROCESST &gt;= I_FRES_AUTOEND))
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 9] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 11] = 0
+  B_FRES_MOTOR_END = 0
+  RETURN(0)
+END FRES_AUTOEND
+
+ROUTINE FRES_SWING_AUTOEND : INTEGER
+BEGIN
+  I_PROCESST = 0
+  IF (UNINIT(I_FRES_SWING_AUTOEND)) THEN
+  I_FRES_SWING_AUTOEND = 5000
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((I_PROCESST &gt;= I_FRES_SWING_AUTOEND))
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 13] = 0
+  B_FRES_SWING_MOTOR = 0
+  RETURN(0)
+END FRES_SWING_AUTOEND
+
+ROUTINE FRES_STOP_HSPD : INTEGER
+BEGIN
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 9] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 11] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 13] = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END FRES_STOP_HSPD
+
+ROUTINE FRES_RESET_HSPD : INTEGER
+BEGIN
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 10] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 11] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[I_TIPDRESSNO] + 13] = 1
+  ENABLE CONDITION[1]
+  RETURN(0)
+END FRES_RESET_HSPD
+
+ROUTINE FRES_STOP_SWING_MOTOR : INTEGER
+BEGIN
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 13] = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END FRES_STOP_SWING_MOTOR
+
+ROUTINE FRES_RESET_SWING_MOTOR : INTEGER
+BEGIN
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 9] = 1
+  io_02[AR_I_MI04_FRES_PD_DO[I_TIPDRESSNO] + 13] = 1
+  ENABLE CONDITION[1]
+  IF (UNINIT(B_TD_CHK)) THEN
+  B_TD_CHK = 0
+  ENDIF
+  IF (UNINIT(B_FRES_SWING_OVLD)) THEN
+  B_FRES_SWING_OVLD = 0
+  ENDIF
+  IF (UNINIT(B_FRES_SRVO_ALARM)) THEN
+  B_FRES_SRVO_ALARM = 0
+  ENDIF
+  IF (UNINIT(B_FRES_MOTOR_END)) THEN
+  B_FRES_MOTOR_END = 0
+  ENDIF
+  IF (UNINIT(B_FRES_HSPD)) THEN
+  B_FRES_HSPD = 0
+  ENDIF
+  IF (UNINIT(B_CONDITION_ON)) THEN
+  B_CONDITION_ON = 0
+  ENDIF
+  IF (UNINIT(B_CONDITION_ON_SWING)) THEN
+  B_CONDITION_ON_SWING = 0
+  ENDIF
+  IF (UNINIT(B_FRES_SWING_MOTOR)) THEN
+  B_FRES_SWING_MOTOR = 0
+  ENDIF
+  IF (UNINIT(B_ERRORONE)) THEN
+  B_ERRORONE = 1
+  ENDIF
+  IF (UNINIT(B_ERRORONE2)) THEN
+  B_ERRORONE2 = 1
+  ENDIF
+  IF ((B_TD_CHK = 1)) THEN
+  B_TD_CHK = 0
+  sv_i = AUTOTDEND
+  -- stmt229 stray sv_i
+  ENDIF
+  IF ((B_FRES_SWING_OVLD = 1) OR (B_FRES_SWING_MOTOR = 1)) THEN
+  IF ((B_FRES_SWING_OVLD &lt;&gt; 0)) THEN
+  sv_i = CHECK_MOTOR_OVERLOAD
+  -- stmt234 stray sv_i
+  ENDIF
+  IF ((B_FRES_SWING_MOTOR &lt;&gt; 0)) THEN
+  IF ((B_CONDITION_ON_SWING = 0)) THEN
+  PURGE CONDITION[1]
+  -- stmt241 stray 5 | 3 + 15 | 5 + 15
+  ENABLE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt248 stray 6 | 3 + 15
+  ENABLE CONDITION[1]
+  B_CONDITION_ON_SWING = 1
+  ENDIF
+  ELSE
+  IF ((B_CONDITION_ON_SWING &lt;&gt; 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  B_CONDITION_ON_SWING = 0
+  ENDIF
+  ENDIF
+  ENDIF
+  DELAY 32
+  IF ((B_FRES_SRVO_ALARM = 1) OR (B_FRES_MOTOR_END = 1) OR (B_FRES_HSPD = 1)) THEN
+  IF ((B_FRES_SRVO_ALARM &lt;&gt; 0)) THEN
+  sv_i = CHECK_SERVO_ALARM
+  -- stmt13 stray sv_i
+  ENDIF
+  IF ((B_FRES_MOTOR_END &lt;&gt; 0)) THEN
+  sv_i = FRES_AUTOEND
+  -- stmt16 stray sv_i
+  ENDIF
+  IF ((B_FRES_HSPD &lt;&gt; 0)) THEN
+  IF ((B_CONDITION_ON = 0)) THEN
+  PURGE CONDITION[1]
+  -- stmt21 stray 2 | 3 + 15
+  ENABLE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt29 stray 3 | 3 + 15
+  ENABLE CONDITION[1]
+  B_CONDITION_ON = 1
+  ENDIF
+  ELSE
+  IF ((B_CONDITION_ON &lt;&gt; 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  B_CONDITION_ON = 0
+  ENDIF
+  ENDIF
+  DELAY 32
+  ENDIF
+  RETURN(0)
+END FRES_RESET_SWING_MOTOR
+
+BEGIN
+END MI04_SSW_CHK2
+</span></pre></details><details><summary>MI04_SSW_GUI.KL（94 例程）</summary><pre><span class=c>-- MI04_SSW_GUI.KL (decompiled v3)
+PROGRAM MI04_SSW_GUI
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF STRING[64]
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : INTEGER
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : INTEGER
+  v21 : INTEGER
+  v22 : INTEGER
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : ARRAY[64] OF BOOLEAN
+  v27 : ARRAY[64] OF BOOLEAN
+  v28 : INTEGER
+  v29 : INTEGER
+  v30 : INTEGER
+  v31 : ARRAY[64] OF INTEGER
+  v32 : ARRAY[64] OF INTEGER
+  v33 : FILE
+  v34 : INTEGER
+  v3_f04 : ARRAY[64] OF INTEGER
+  v3_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI04_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE REALROBOT : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$VIRTUALEDIT&#x27;, r0_lc1, v1)
+  IF ((v1 &lt;&gt; 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END REALROBOT
+
+ROUTINE CURRLANGUAGE : STRING
+VAR
+  r1_lc10 : INTEGER
+  r1_lc4 : STRING[64]
+  r1_lc8 : STRING[64]
+  r1_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$LANGUAGE&#x27;, r1_lc8, r1_lc10)
+  sv_i = index(r1_lc8, &#x27; &#x27;)
+  r1_lc9 = sv_i
+  sv_s = sub_str(r1_lc8, 1, r1_lc9 - 1)
+  r1_lc4 = sv_s
+  IF ((r1_lc4 &lt;&gt; &#x27;DEFAULT&#x27;)) THEN
+  -- stmt136 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG(&#x27;ENGLISH     &#x27;, r1_lc10)
+  -- stmt142 stray &#x27;ENGLISH     &#x27;
+  ELSE
+  -- stmt144 stray &#x27;DEFAULT     &#x27;
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURRLANGUAGE
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r2_lc9 : STRING[64]
+BEGIN
+  r2_lc9 = &#x27;FR:\&#x27; + p1
+  -- stmt161 residue &#x27;FR:\\&#x27;
+  IF ((sv_s = &#x27;ENGLISH     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;ENGLISH     &#x27;, 4, v1)
+  ELSE
+  IF ((sv_s = &#x27;CHINESE     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;CHINESE     &#x27;, 4, v1)
+  ELSE
+  ADD_DICT(r2_lc9, p0, &#x27;DEFAULT     &#x27;, 4, v1)
+  ENDIF
+  ENDIF
+  IF ((v1 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Failed to load dict &#x27; + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE RESET_VALARRAY : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v2[r3_lc1] = &#x27;&#x27;
+  ENDFOR
+  RETURN(0)
+END RESET_VALARRAY
+
+ROUTINE USERSCREEN : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+  r4_lc4 : INTEGER
+  r4_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r4_lc1, r4_lc2, r4_lc3, r4_lc4, r4_lc5, v1)
+  v4 = v3_f04[r4_lc2]
+  v5 = v3_f08[r4_lc2]
+  SELECT r4_lc2 OF
+  CASE(1):
+  v6 = 1
+  CASE(2):
+  v6 = 2
+  CASE(3):
+  v6 = 3
+  ELSE:
+  v6 = 1
+  ENDSELECT
+  FORCE_SPMENU(v6, 190, 1)
+  RETURN(0)
+END USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = 0
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt243 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r5_lc3 = r5_lc3 + r5_lc2
+  ENDFOR
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, v7, v1)
+  RETURN(r5_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  DELAY 100
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt11 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  IF ((r6_lc3 &lt;&gt; v8)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, r6_lc4, v1)
+  IF ((r6_lc4 &lt;&gt; v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE INITLOALVARS : INTEGER
+BEGIN
+  IF (UNINIT(v9)) THEN
+  v9 = 1
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  v10 = 1
+  ENDIF
+  IF (UNINIT(v11)) THEN
+  v11 = 1
+  ENDIF
+  IF (UNINIT(v12)) THEN
+  v12 = 1
+  ENDIF
+  IF (UNINIT(v13)) THEN
+  v13 = 1
+  ENDIF
+  IF (UNINIT(v14)) THEN
+  v14 = 0
+  ENDIF
+  IF (UNINIT(v15)) THEN
+  v15 = 1
+  ENDIF
+  IF (UNINIT(v16)) THEN
+  v16 = 1
+  ENDIF
+  IF (UNINIT(v17)) THEN
+  v17 = 1
+  ENDIF
+  IF (UNINIT(v18)) THEN
+  v18 = 1
+  ENDIF
+  IF (UNINIT(v19)) THEN
+  v19 = 32
+  ENDIF
+  IF (UNINIT(v20)) THEN
+  v20 = 1
+  ENDIF
+  IF (UNINIT(v21)) THEN
+  v21 = 1
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE SET_WELD_OUT(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GO_SCHED_T&#x27;, 19, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GO_SCHED_I&#x27;, p1, v1)
+  CASE(2):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GO_WELDID_T&#x27;, 19, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GO_WELDID_I&#x27;, p1, v1)
+  CASE(4):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_RDSCHD_T&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_RDSCHD_I&#x27;, p1, v1)
+  CASE(5):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_WDINIT_T&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_WDINIT_I&#x27;, p1, v1)
+  CASE(6):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_WDENBL_T&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_WDENBL_I&#x27;, p1, v1)
+  CASE(7):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_STPRST_T&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_STPRST_I&#x27;, p1, v1)
+  CASE(8):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_RSTWC_T&#x27;, 2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DO_RSTWC_I&#x27;, p1, v1)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END SET_WELD_OUT
+
+ROUTINE SET_WELD_IN(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDINPR_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDINPR_I&#x27;, p1, v1)
+  CASE(2):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDCOMP_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDCOMP_I&#x27;, p1, v1)
+  CASE(3):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDENBL_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_WDENBL_I&#x27;, p1, v1)
+  CASE(4):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_MAJALM_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_MAJALM_I&#x27;, p1, v1)
+  CASE(7):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_CAPREQ_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_CAPREQ_I&#x27;, p1, v1)
+  CASE(8):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_CAPCHG_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_CAPCHG_I&#x27;, p1, v1)
+  CASE(9):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_TIPREQ_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_TIPREQ_I&#x27;, p1, v1)
+  CASE(11):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_SCHACK_T&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_SCHACK_I&#x27;, p1, v1)
+  CASE(12):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GI_FORCE_T&#x27;, 18, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$GI_FORCE_I&#x27;, p1, v1)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END SET_WELD_IN
+
+ROUTINE SHOW_MI04STP : INTEGER
+VAR
+  r10_lc102 : STRING[64]
+  r10_lc51 : STRING[64]
+BEGIN
+  v22 = 1
+  v23 = 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_gunchange&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_RobotHold&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_WeldTimer&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_GunCount&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_BNSType&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_mon&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_guanswelding&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_DT_type&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]b_OLD_DT&#x27;
+  v23 = v23 + 1
+  IF ((v21 = 2)) THEN
+  v24 = 1
+  ELSE
+  v24 = 0
+  ENDIF
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v25 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt185 stray sv_i
+  DISCTRL_FORM(&#x27;ASSW&#x27;, 0, v2, v26, v27, 2 + 2048, v28, v25, v1)
+  SELECT v25 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  RETURN(3)
+  CASE(134):
+  CASE(141):
+  CASE(1):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_MAJALM_I&#x27;, 517, v1)
+  CASE(2):
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$DI_MAJALM_I&#x27;, 0, v1)
+  ELSE:
+  ENDSELECT
+  SELECT v10 OF
+  CASE(1):
+  v29 = 2649
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTEQIO[1].$DI_WFOK_I[1]&#x27;, 2650, v1)
+  CASE(2):
+  v29 = 2665
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTEQIO[1].$DI_WFOK_I[1]&#x27;, 2666, v1)
+  ELSE:
+  ENDSELECT
+  SELECT v11 OF
+  CASE(1):
+  sv_i = SET_WELD_OUT(1, 16)
+  -- stmt231 stray sv_i
+  sv_i = SET_WELD_OUT(2, 18)
+  -- stmt232 stray sv_i
+  sv_i = SET_WELD_OUT(4, 2648)
+  -- stmt233 stray sv_i
+  sv_i = SET_WELD_OUT(513, 0)
+  -- stmt39 stray sv_i
+  sv_i = SET_WELD_OUT(6, 520)
+  -- stmt235 stray sv_i
+  sv_i = SET_WELD_OUT(7, 516)
+  -- stmt236 stray sv_i
+  sv_i = SET_WELD_OUT(8, 517)
+  -- stmt237 stray sv_i
+  sv_i = SET_WELD_IN(1, 0)
+  -- stmt239 stray sv_i
+  sv_i = SET_WELD_IN(2, 513)
+  -- stmt240 stray sv_i
+  sv_i = SET_WELD_IN(3, 520)
+  -- stmt241 stray sv_i
+  sv_i = SET_WELD_IN(4, 517)
+  -- stmt242 stray sv_i
+  sv_i = SET_WELD_IN(7, 516)
+  -- stmt243 stray sv_i
+  sv_i = SET_WELD_IN(8, 515)
+  -- stmt244 stray sv_i
+  sv_i = SET_WELD_IN(9, 514)
+  -- stmt245 stray sv_i
+  sv_i = SET_WELD_IN(11, 2648)
+  -- stmt246 stray sv_i
+  sv_i = SET_WELD_IN(12, 16)
+  -- stmt247 stray sv_i
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$FRC_SCALE&#x27;, 10.2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$WID_DSP_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DO_NO&#x27;, 393, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DI_NO&#x27;, v30 + 5, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DO_NO&#x27;, 396, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DI_NO&#x27;, v30 + 7, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DO_NO&#x27;, 398, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DI_NO&#x27;, v30 + 3, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DO_NO&#x27;, 401, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DI_NO&#x27;, v30 + 4, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DO_NO&#x27;, 404, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DI_NO&#x27;, v31[1] + 7, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DO_NO&#x27;, 405, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DI_NO&#x27;, v31[1] + 8, v1)
+  CASE(2):
+  sv_i = SET_WELD_OUT(1, 16)
+  -- stmt21 stray sv_i
+  sv_i = SET_WELD_OUT(2, 18)
+  -- stmt22 stray sv_i
+  sv_i = SET_WELD_OUT(4, 515)
+  -- stmt23 stray sv_i
+  sv_i = SET_WELD_OUT(5, 513)
+  -- stmt24 stray sv_i
+  sv_i = SET_WELD_OUT(6, 520)
+  -- stmt25 stray sv_i
+  sv_i = SET_WELD_OUT(7, 516)
+  -- stmt26 stray sv_i
+  sv_i = SET_WELD_OUT(8, 517)
+  -- stmt27 stray sv_i
+  sv_i = SET_WELD_IN(1, 0)
+  -- stmt29 stray sv_i
+  sv_i = SET_WELD_IN(2, 513)
+  -- stmt30 stray sv_i
+  sv_i = SET_WELD_IN(3, 520)
+  -- stmt31 stray sv_i
+  sv_i = SET_WELD_IN(4, 517)
+  -- stmt32 stray sv_i
+  sv_i = SET_WELD_IN(7, 516)
+  -- stmt33 stray sv_i
+  sv_i = SET_WELD_IN(8, 515)
+  -- stmt34 stray sv_i
+  sv_i = SET_WELD_IN(9, 514)
+  -- stmt35 stray sv_i
+  sv_i = SET_WELD_IN(11, 532)
+  -- stmt36 stray sv_i
+  sv_i = SET_WELD_IN(12, 16)
+  -- stmt37 stray sv_i
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$FRC_SCALE&#x27;, 10.2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$WID_DSP_ENB&#x27;, 1, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$FRC_SCALE&#x27;, 10.2, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$WID_DSP_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DO_NO&#x27;, 393, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DI_NO&#x27;, v30 + 5, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DO_NO&#x27;, 396, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DI_NO&#x27;, v30 + 7, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DO_NO&#x27;, 398, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DI_NO&#x27;, v30 + 3, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DO_NO&#x27;, 401, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DI_NO&#x27;, v30 + 4, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DO_NO&#x27;, 404, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DI_NO&#x27;, v31[1] + 7, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DO_NO&#x27;, 405, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DI_NO&#x27;, v31[1] + 8, v1)
+  CASE(3):
+  sv_i = SET_WELD_OUT(1, 16)
+  -- stmt70 stray sv_i
+  sv_i = SET_WELD_OUT(2, 7)
+  -- stmt71 stray sv_i
+  sv_i = SET_WELD_OUT(4, 513)
+  -- stmt72 stray sv_i
+  sv_i = SET_WELD_OUT(5, 515)
+  -- stmt73 stray sv_i
+  sv_i = SET_WELD_OUT(6, 521)
+  -- stmt74 stray sv_i
+  sv_i = SET_WELD_OUT(7, 0)
+  -- stmt75 stray sv_i
+  sv_i = SET_WELD_OUT(8, 516)
+  -- stmt76 stray sv_i
+  sv_i = SET_WELD_IN(1, 0)
+  -- stmt78 stray sv_i
+  sv_i = SET_WELD_IN(2, 515)
+  -- stmt79 stray sv_i
+  sv_i = SET_WELD_IN(3, 516)
+  -- stmt80 stray sv_i
+  sv_i = SET_WELD_IN(4, 517)
+  -- stmt81 stray sv_i
+  sv_i = SET_WELD_IN(7, 529)
+  -- stmt82 stray sv_i
+  sv_i = SET_WELD_IN(8, 530)
+  -- stmt83 stray sv_i
+  sv_i = SET_WELD_IN(9, 535)
+  -- stmt84 stray sv_i
+  sv_i = SET_WELD_IN(11, 2648)
+  -- stmt85 stray sv_i
+  sv_i = SET_WELD_IN(12, 16)
+  -- stmt86 stray sv_i
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTWELDIO[1].$FRC_SCALE&#x27;, 0.102, v1)
+  SET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$SPOTCONFIG.$WID_DSP_ENB&#x27;, 0, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DO_NO&#x27;, 393, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[41].$DI_NO&#x27;, 516, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$THR_ENB&#x27;, 0, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DO_NO&#x27;, 396, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[42].$DI_NO&#x27;, 0, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DO_NO&#x27;, 398, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[44].$DI_NO&#x27;, 529, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DO_NO&#x27;, 401, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[45].$DI_NO&#x27;, 530, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DO_NO&#x27;, 404, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[46].$DI_NO&#x27;, v32[1] + 3, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$THR_ENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DO_NO&#x27;, 405, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$THRSDITABLE[47].$DI_NO&#x27;, v32[1] + 4, v1)
+  ELSE:
+  ENDSELECT
+  IF ((v20 = 2)) THEN
+  IF (sv_b) THEN
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGCFG[1].$NOMOTN_FCSW&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPD1[1].$PPDENB&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPD1[1].$F_PRESS&#x27;, 100, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGSCH1[1].$WELD_PRESS&#x27;, 204.004, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPD1[1].$BF_TIME[1]&#x27;, 500, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPD1[1].$W_TIME[1]&#x27;, 50, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPD1[1].$AF_TIME[1]&#x27;, 0, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPDIO1[1].$BF_PVAL[1]&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPDIO1[1].$W_PVAL[1]&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGPPDIO1[1].$AF_PVAL[1]&#x27;, 1, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGSCH1[98].$COMMENT&#x27;, &#x27;Auto 0Calb&#x27;, v1)
+  SET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGSCH1[98].$WELD_PRESS&#x27;, 61.18, v1)
+  ELSE
+  v1 = 0
+  DELAY 64
+  ENDIF
+  REPEAT
+  sv_i = DB_PROMPT(0, &#x27;Option Needed&#x27;, &#x27;Press \&quot;OK\&quot; to check if Pressure Profile Control Function is installed&#x27;, 7)
+  v1 = sv_i
+  -- stmt142 residue &#x27;Press \\&quot;OK\\&quot; to check if Pressure Profile Control Function is installed&#x27;
+  DELAY 64
+  UNTIL((v1 = 1))
+  ENDIF
+  OPEN FILE v33(&#x27;RW&#x27;, &#x27;WD:prmp/tpkb&#x27;)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt152 stray v33
+  WRITE_DICT(v33, &#x27;ASSW&#x27;, 3, v1)
+  DELAY 2000
+  SELECT sv_i OF
+  CASE(194):
+  IF ((v24 &lt;&gt; 0)) THEN
+  r10_lc51 = &#x27;FR:\custom\MI04_SSW\old_file\ARGDISPEG04.DT&#x27;
+  -- stmt159 residue &#x27;FR:\\custom\\MI04_SSW\\old_file\\ARGDISPEG04.DT&#x27;
+  r10_lc102 = &#x27;FR:\custom\MI04_SSW\old_file\ARGDISPCH04.DT&#x27;
+  -- stmt160 residue &#x27;FR:\\custom\\MI04_SSW\\old_file\\ARGDISPCH04.DT&#x27;
+  ELSE
+  r10_lc51 = &#x27;FR:\custom\MI04_SSW\ARGDISPEG04.DT&#x27;
+  -- stmt163 residue &#x27;FR:\\custom\\MI04_SSW\\ARGDISPEG04.DT&#x27;
+  r10_lc102 = &#x27;FR:\custom\MI04_SSW\ARGDISPCH04.DT&#x27;
+  -- stmt164 residue &#x27;FR:\\custom\\MI04_SSW\\ARGDISPCH04.DT&#x27;
+  ENDIF
+  COPY_FILE(r10_lc51, &#x27;FR:ARGDISPEG04.DT&#x27;, (1 &lt;&gt; 0), (0 &lt;&gt; 0), v1)
+  -- ����ԭʽ: 1 | 0
+  COPY_FILE(r10_lc102, &#x27;FR:ARGDISPCH04.DT&#x27;, (1 &lt;&gt; 0), (0 &lt;&gt; 0), v1)
+  -- ����ԭʽ: 1 | 0
+  DELAY 1000
+  OPEN FILE v33(&#x27;RW&#x27;, &#x27;WD:prmp/tpkb&#x27;)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt174 stray v33
+  WRITE_DICT(v33, &#x27;ASSW&#x27;, 4, v1)
+  DELAY 2000
+  ELSE:
+  ENDSELECT
+  RETURN(v22)
+  RETURN(0)
+END SHOW_MI04STP
+
+ROUTINE SHOW_MI04TDSTP : INTEGER
+VAR
+  r11_lc26 : STRING[64]
+BEGIN
+  v22 = 2
+  v23 = 1
+  v2[v23] = &#x27;[MI04_SSW_CHK]i_timeout&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_CHK2]i_rotatetime&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]b_fres_used&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]b_fres_used&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_fres_install&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_fres_number&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]b_fres_swing_compensator&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_td_step&#x27;
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v25 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt222 stray sv_i
+  DISCTRL_FORM(&#x27;ASSW&#x27;, 1, v2, v26, v27, 2 + 2048, v28, v25, v1)
+  SELECT v25 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  RETURN(3)
+  CASE(133):
+  CASE(134):
+  CASE(1):
+  r11_lc26 = &#x27;FR:\custom\MI04_ssw\WR_UPDAT\CAP_PRESSURE.TP&#x27;
+  CASE(2):
+  -- stmt248 residue &#x27;FR:\\custom\\MI04_ssw\\WR_UPDAT\\CAP_PRESSURE.TP&#x27;
+  r11_lc26 = &#x27;FR:\custom\MI04_ssw\TW_UPDAT\CAP_PRESSURE.TP&#x27;
+  ELSE:
+  -- stmt251 residue &#x27;FR:\\custom\\MI04_ssw\\TW_UPDAT\\CAP_PRESSURE.TP&#x27;
+  ENDSELECT
+  sv_i = DB_PROMPT(2, &#x27;Need Confirmation&#x27;, &#x27;CAP_PRESSURE.tp will overwrite, OK?&#x27;, 3)
+  v1 = sv_i
+  IF ((v1 = 3)) THEN
+  COPY_FILE(r11_lc26, &#x27;MD:CAP_PRESSURE.TP&#x27;, (1 &lt;&gt; 0), (0 &lt;&gt; 0), v1)
+  -- ����ԭʽ: 1 | 0
+  POST_ERR(38100, &#x27;CAP_PRESSURE.TP is updated&#x27;, 0, 0)
+  ENDIF
+  RETURN(v22)
+  RETURN(0)
+END SHOW_MI04TDSTP
+
+ROUTINE SHOW_MI04RIPSTP : INTEGER
+BEGIN
+  v22 = 3
+  v23 = 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_reset_flow_delay&#x27;
+  v23 = v23 + 1
+  v2[v23] = &#x27;[MI04_SSW_VAR]i_valvedelay&#x27;
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v25 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt34 stray sv_i
+  DISCTRL_FORM(&#x27;ASSW&#x27;, 2, v2, v26, v27, 2 + 2048, v28, v25, v1)
+  SELECT v25 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  RETURN(3)
+  CASE(133):
+  ELSE:
+  ENDSELECT
+  RETURN(v22)
+  RETURN(0)
+END SHOW_MI04RIPSTP
+
+ROUTINE ST_MACHINE(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  sv_i = SHOW_MI04STP
+  RETURN(sv_i)
+  CASE(2):
+  sv_i = SHOW_MI04TDSTP
+  RETURN(sv_i)
+  CASE(3):
+  sv_i = SHOW_MI04RIPSTP
+  RETURN(sv_i)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  sv_i = INITLOALVARS
+  -- stmt91 stray sv_i
+  sv_i = RESET_VALARRAY
+  -- stmt93 stray sv_i
+  sv_i = LOAD_TX(&#x27;ASSW&#x27;, &#x27;04assweg&#x27;)
+  -- stmt97 stray sv_i
+  sv_i = USERSCREEN
+  -- stmt100 stray sv_i
+  v25 = 0
+  v28 = 1
+  v34 = 1
+  REPEAT
+  sv_i = ST_MACHINE(v34)
+  v34 = sv_i
+  DELAY 64
+  UNTIL((v34 = 0))
+  RETURN(0)
+END ST_MACHINE
+
+BEGIN
+END MI04_SSW_GUI
+-- module-residue &#x27;H521&#x27;, &#x27;H538&#x27;, &#x27;J672&#x27;
+</span></pre></details><details><summary>MI04_SSW_MON.KL（92 例程）</summary><pre><span class=c>-- MI04_SSW_MON.KL (decompiled v3)
+PROGRAM MI04_SSW_MON
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  io_23 : ARRAY[512] OF INTEGER
+  I_LINENUM : INTEGER
+  I_FILENUM : INTEGER
+  I_STATUS : INTEGER
+  FILE_NAME : STRING[64]
+  F_FILELOG1 : FILE
+  I_MI04_GI : INTEGER
+  I_LASTGIN : INTEGER
+  I_MI01_DI : INTEGER
+  I_MI01_DO : INTEGER
+  I_MI04_DO : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_GUNCOUNT : INTEGER
+  I_WELDTIMER : INTEGER
+  I_MI04_GO : INTEGER
+  I_MI04_DI : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_F1_PULSE : INTEGER
+  I_ACK_DELAY : INTEGER
+  I_TD_TYPE : INTEGER
+  I_MI01_GO : INTEGER
+  B_MON_04 : INTEGER
+  B_SENDBSNUM : INTEGER
+  B_PRESSCHK : INTEGER
+  B_FLOWCHK : INTEGER
+  I_GUANSWELDING : INTEGER
+  I_TIPDRESSNO : INTEGER
+  I_MON : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_TD_DO : ARRAY[2] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[2] OF INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[2] OF INTEGER
+  I_BLINK_DI : INTEGER
+  B_BLINK_CHK : BOOLEAN
+  B_VALVEOPENSTARTED : BOOLEAN
+  B_TD_CHK : BOOLEAN
+  I_ACK_TIME : INTEGER
+  B_FRES_SWING_OVLD : BOOLEAN
+  B_FRES_SRVO_ALARM : BOOLEAN
+  B_FRES_SWING_COMPENSATOR : BOOLEAN
+  B_FRES_MOTOR_END : BOOLEAN
+  B_FRES_HSPD : BOOLEAN
+  B_FRES_SWING_MOTOR : BOOLEAN
+  I_FRES_SWING_AUTOEND : INTEGER
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_BNSTYPE : INTEGER
+  B_FRES_USED : BOOLEAN
+  I_FRES_INSTALL : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_DI_WELD_END : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  I_DI_READY : INTEGER
+  I_DO_START : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI04_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER FROM MI_LIB
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE GETCURTIME : STRING
+VAR
+  r0_lc16 : STRING[64]
+  r0_lc17 : INTEGER
+  r0_lc18 : INTEGER
+BEGIN
+  GET_TIME(r0_lc17)
+  CNV_TIME_STR(r0_lc17, r0_lc16)
+  sv_i = str_len(r0_lc16)
+  sv_i = str_len(r0_lc16)
+  sv_s = sub_str(r0_lc16, sv_i - 6, sv_i)
+  r0_lc16 = sv_s
+  sv_s = KILLBLANKS(r0_lc16)
+  r0_lc16 = sv_s + &#x27;:&#x27;
+  IF (r0_lc17 &lt;&gt; 0) AND (31 &lt;&gt; 0) THEN
+    r0_lc18 = 1
+  ELSE
+    r0_lc18 = 0
+  ENDIF
+  r0_lc18 = r0_lc18 * 2
+  IF ((r0_lc18 &lt; 10)) THEN
+  r0_lc16 = r0_lc16 + &#x27;0&#x27;
+  ENDIF
+  sv_s = INTTOSTR(r0_lc18)
+  r0_lc16 = &#x27;&#x27;
+  -- stmt54 stray r0_lc16
+  RETURN(sv_s)
+END GETCURTIME
+
+ROUTINE OPENFILEAP : INTEGER
+BEGIN
+  IF ((I_LINENUM &gt; 200)) THEN
+  I_FILENUM = I_FILENUM + 1
+  I_LINENUM = 1
+  ENDIF
+  IF ((I_FILENUM &lt; 9)) THEN
+  sv_s = INTTOSTR(I_FILENUM + 1)
+  DELETE_FILE(&#x27;FR:RecordLog&#x27; + sv_s + &#x27;.DT&#x27;, (0 &lt;&gt; 0), I_STATUS)
+  -- ����ԭʽ: 0
+  ELSE
+  IF ((I_FILENUM = 9)) THEN
+  DELETE_FILE(&#x27;FR:RecordLog1.DT&#x27;, (0 &lt;&gt; 0), I_STATUS)
+  -- ����ԭʽ: 0
+  ELSE
+  I_FILENUM = 1
+  ENDIF
+  ENDIF
+  sv_s = INTTOSTR(I_FILENUM)
+  FILE_NAME = &#x27;FR:\RecordLog&#x27; + sv_s + &#x27;.DT&#x27;
+  -- stmt82 residue &#x27;FR:\\RecordLog&#x27;
+  CLR_IO_STAT(F_FILELOG1)
+  OPEN FILE F_FILELOG1(&#x27;AP&#x27;, FILE_NAME)
+  SET_FILE_ATR(F_FILELOG1, 1, 1)
+  RETURN(0)
+END OPENFILEAP
+
+ROUTINE WRITEDATA : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  r2_lc1 = io_12[I_MI04_GI + 2]
+  sv_s = GETCURTIME
+  WRITE(sv_s + &#x27;  &#x27;)
+  -- stmt102 stray F_FILELOG1
+  sv_s = INTTOSTR(I_MI04_GI + 2)
+  sv_s = INTTOSTR(r2_lc1)
+  WRITE(&#x27;GI[&#x27; + sv_s + &#x27;] = &#x27;, sv_s)
+  -- stmt103 stray F_FILELOG1
+  sv_s = chr(13)
+  sv_s = chr(10)
+  WRITE(sv_s, sv_s)
+  -- stmt104 stray F_FILELOG1
+  I_LINENUM = I_LINENUM + 1
+  RETURN(0)
+END WRITEDATA
+
+ROUTINE RECORD : INTEGER
+BEGIN
+  IF ((io_12[I_MI04_GI + 2] &lt;&gt; 0) AND (io_12[I_MI04_GI + 2] &lt;&gt; I_LASTGIN)) THEN
+  sv_i = OPENFILEAP
+  -- stmt118 stray sv_i
+  sv_i = WRITEDATA
+  -- stmt119 stray sv_i
+  -- stmt120 stray F_FILELOG1
+  I_LASTGIN = io_12[I_MI04_GI + 2]
+  ENDIF
+  RETURN(0)
+END RECORD
+
+ROUTINE DRYORWETMODE : INTEGER
+BEGIN
+  IF ((io_02[I_MI01_DI + 8] = 0)) THEN
+  IF ((io_01[I_MI01_DO + 35] &lt;&gt; 0) AND (io_01[I_MI01_DO + 393] = 0)) THEN
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SPOTCONFIG.$SIM_ENBL&#x27;, 1, I_STATUS)
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SPOTCONFIG.$WELD_ENBL&#x27;, 0, I_STATUS)
+  io_02[I_MI04_DO + I_DO_WITH_CURRENT] = 0
+  IF ((I_GUNCOUNT &gt; 1) AND (I_WELDTIMER = 2)) THEN
+  IF (sv_b) THEN
+  io_02[670] = 0
+  ENDIF
+  ENDIF
+  ELSE
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SPOTCONFIG.$SIM_ENBL&#x27;, 0, I_STATUS)
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SPOTCONFIG.$WELD_ENBL&#x27;, 1, I_STATUS)
+  io_02[I_MI04_DO + I_DO_WITH_CURRENT] = 1
+  IF ((I_GUNCOUNT &gt; 1) AND (I_WELDTIMER = 2)) THEN
+  IF (sv_b) THEN
+  io_02[670] = 1
+  ENDIF
+  ENDIF
+  ENDIF
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SGSCH1[1].$USE_MANUAL&#x27;, 0, I_STATUS)
+  ENDIF
+  RETURN(0)
+END DRYORWETMODE
+
+ROUTINE SETGUNOPERAT : INTEGER
+BEGIN
+  IF ((sv_i = 3)) THEN
+  SET_VAR(1, &#x27;*system*&#x27;, &#x27;$SPOTCONFIG.$STROKE_ENBL&#x27;, 1, I_STATUS)
+  ENDIF
+  RETURN(0)
+END SETGUNOPERAT
+
+ROUTINE WELDASSIST : INTEGER
+BEGIN
+  SELECT I_WELDTIMER OF
+  CASE(1):
+  CASE(2):
+  IF ((io_02[2648] &lt;&gt; 0) AND (io_12[I_MI04_GI + 1] &gt; 0) AND (io_13[I_MI04_GO + 1] &lt;&gt; 0) OR (io_13[I_MI04_GO + 1 + 1] &lt;&gt; 0) AND (io_01[I_MI04_DI + I_DI_SPOT_SELECTION_OK] &lt;&gt; 0)) THEN
+  io_23[1] = 1
+  ELSE
+  io_23[1] = 0
+  ENDIF
+  CASE(3):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END WELDASSIST
+
+ROUTINE CLOSEFLG : INTEGER
+BEGIN
+  IF (UNINIT(I_F1_PULSE)) THEN
+  I_F1_PULSE = 1000
+  ENDIF
+  DELAY I_F1_PULSE
+  io_23[1] = 0
+  RETURN(0)
+END CLOSEFLG
+
+ROUTINE BOSCHWELDASSIST : INTEGER
+BEGIN
+  IF (UNINIT(I_ACK_DELAY)) THEN
+  I_ACK_DELAY = 100
+  ENDIF
+  DELAY I_ACK_DELAY
+  ENABLE CONDITION[1]
+  io_23[1] = 1
+  ENABLE CONDITION[1]
+  RETURN(0)
+END BOSCHWELDASSIST
+
+ROUTINE AUTODISABLEWATER : INTEGER
+BEGIN
+  I_TD_TYPE = 2
+  sv_i = VALVECONTROL(1, 2)
+  -- stmt237 stray sv_i
+  ENABLE CONDITION[1]
+  RETURN(0)
+END AUTODISABLEWATER
+
+ROUTINE WELDPROCCHK : INTEGER
+BEGIN
+  SELECT I_WELDTIMER OF
+  CASE(1):
+  CASE(2):
+  IF ((io_01[I_MI04_DI + 5] = 1) AND (io_02[I_MI04_DO + 1] = 1) AND (io_23[67] = 1)) THEN
+  io_23[61] = 1
+  io_23[67] = 0
+  ENDIF
+  IF ((io_01[I_MI04_DI + 20] &lt;&gt; 0)) THEN
+  io_23[67] = 1
+  ENDIF
+  IF ((io_01[I_MI04_DI + 1] = 1) OR (io_01[I_MI04_DI + 5] = 0) OR (io_23[66] = 1) OR (io_02[I_MI04_DO + 1] = 0)) THEN
+  io_23[61] = 0
+  ENDIF
+  io_23[66] = io_01[I_MI04_DI + 1]
+  CASE(3):
+  IF ((io_01[I_MI04_DI + 4] = 1) AND (io_01[I_MI04_DI + 5] = 1) AND (io_02[I_MI04_DO + 3] = 1) AND (io_23[67] = 1)) THEN
+  io_23[61] = 1
+  io_23[67] = 0
+  ENDIF
+  IF ((io_01[I_MI04_DI + 1] &lt;&gt; 0)) THEN
+  io_23[67] = 1
+  ENDIF
+  IF ((io_01[I_MI04_DI + 3] = 1) OR (io_01[I_MI04_DI + 4] = 0) OR (io_01[I_MI04_DI + 5] = 0) OR (io_23[66] = 1) OR (io_02[I_MI04_DO + 3] = 0)) THEN
+  io_23[61] = 0
+  ENDIF
+  io_23[66] = io_01[I_MI04_DI + 3]
+  ELSE:
+  ENDSELECT
+  IF ((io_23[61] &lt;&gt; 0)) THEN
+  io_02[I_MI01_DO + 42] = 1
+  ELSE
+  io_02[I_MI01_DO + 42] = 0
+  ENDIF
+  RETURN(0)
+END WELDPROCCHK
+
+ROUTINE INTER_DOTODO : INTEGER
+BEGIN
+  IF ((io_02[I_MI04_DO + I_DO_WITH_CURRENT] &lt;&gt; 0)) THEN
+  io_02[I_MI01_DO + 397] = 1
+  ELSE
+  io_02[I_MI01_DO + 397] = 0
+  ENDIF
+  RETURN(0)
+END INTER_DOTODO
+
+ROUTINE TD_DATE_DISPLAY : INTEGER
+VAR
+  r12_lc1 : INTEGER
+  r12_lc2 : INTEGER
+  r12_lc3 : REAL
+  r12_lc4 : REAL
+  r12_lc5 : INTEGER
+  r12_lc6 : INTEGER
+BEGIN
+  IF (NOT (sv_b)) THEN
+  ENDIF
+  IF (NOT (sv_b)) THEN
+  ENDIF
+  GET_REG(36, (r12_lc1 &lt;&gt; 0), r12_lc2, r12_lc3, I_STATUS)
+  -- ����ԭʽ: r12_lc1
+  IF ((r12_lc1 &lt;&gt; 0)) THEN
+  r12_lc4 = r12_lc3
+  ELSE
+  r12_lc4 = r12_lc2 * 1
+  ENDIF
+  IF ((r12_lc4 &gt; 0)) THEN
+  io_02[360] = 1
+  sv_i = round(r12_lc4 * 1000)
+  r12_lc5 = sv_i
+  ELSE
+  io_02[360] = 0
+  sv_i = round(r12_lc4 * (0 - 1000))
+  r12_lc5 = sv_i
+  ENDIF
+  SET_INT_REG(168, r12_lc5, I_STATUS)
+  IF ((r12_lc5 &lt;= 65535)) THEN
+  io_13[I_MI01_GO + 13] = r12_lc5
+  ENDIF
+  GET_REG(39, (r12_lc1 &lt;&gt; 0), r12_lc2, r12_lc3, I_STATUS)
+  -- ����ԭʽ: r12_lc1
+  IF ((r12_lc1 &lt;&gt; 0)) THEN
+  r12_lc4 = r12_lc3
+  ELSE
+  r12_lc4 = r12_lc2 * 1
+  ENDIF
+  sv_i = round(r12_lc4)
+  r12_lc6 = sv_i
+  IF ((r12_lc6 &gt;= 0) AND (r12_lc6 &lt;= 255)) THEN
+  io_13[I_MI01_GO + 14] = r12_lc6
+  ENDIF
+  IF (UNINIT(B_MON_04)) THEN
+  B_MON_04 = 1
+  ENDIF
+  IF (UNINIT(B_SENDBSNUM)) THEN
+  B_SENDBSNUM = 0
+  ENDIF
+  IF (UNINIT(B_PRESSCHK)) THEN
+  B_PRESSCHK = 0
+  ENDIF
+  IF (UNINIT(B_FLOWCHK)) THEN
+  B_FLOWCHK = 0
+  ENDIF
+  IF (UNINIT(I_GUNCOUNT)) THEN
+  I_GUNCOUNT = 1
+  ENDIF
+  IF (UNINIT(I_FILENUM)) THEN
+  I_FILENUM = 1
+  ENDIF
+  IF (UNINIT(I_LINENUM)) THEN
+  I_LINENUM = 1
+  ENDIF
+  IF (UNINIT(I_GUANSWELDING)) THEN
+  I_GUANSWELDING = 1
+  ENDIF
+  I_LASTGIN = 0
+  PURGE CONDITION[1]
+  -- stmt147 stray 104 | I_MI04_DI + 1
+  PURGE CONDITION[1]
+  -- stmt152 stray 105 | 1 | 1
+  PURGE CONDITION[1]
+  -- stmt157 stray 106 | I_MI01_DI + 48
+  IF ((I_WELDTIMER = 3)) THEN
+  ENABLE CONDITION[1]
+  ENABLE CONDITION[1]
+  ENDIF
+  IF ((B_MON_04 &lt;&gt; 0)) THEN
+  IF ((B_SENDBSNUM &lt;&gt; 0)) THEN
+  sv_i = MI04_SENDBSNUM(0)
+  -- stmt170 stray sv_i
+  ENDIF
+  IF ((B_FLOWCHK &lt;&gt; 0) AND (I_GUANSWELDING = 1) AND (io_01[I_MI01_DI + 35] = 0)) THEN
+  IF (NOT (UNINIT(I_TIPDRESSNO))) THEN
+  sv_i = MI04_FLOWOK(I_TIPDRESSNO)
+  -- stmt178 stray sv_i
+  ENDIF
+  ENDIF
+  sv_i = DRYORWETMODE
+  -- stmt183 stray sv_i
+  sv_i = SETGUNOPERAT
+  -- stmt185 stray sv_i
+  sv_i = RECORD
+  -- stmt187 stray sv_i
+  sv_i = WELDASSIST
+  -- stmt189 stray sv_i
+  IF ((io_23[11] = 1)) THEN
+  sv_i = WELDPROCCHK
+  -- stmt192 stray sv_i
+  ENDIF
+  sv_i = INTER_DOTODO
+  -- stmt195 stray sv_i
+  sv_i = TD_DATE_DISPLAY
+  -- stmt197 stray sv_i
+  IF (UNINIT(I_MON)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &lt; 32)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &gt; 1024)) THEN
+  I_MON = 1024
+  ENDIF
+  DELAY I_MON
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  ENDIF
+  RETURN(0)
+END TD_DATE_DISPLAY
+
+BEGIN
+END MI04_SSW_MON
+</span></pre></details><details><summary>MI04_SSW_ROUT.KL（78 例程）</summary><pre><span class=c>-- MI04_SSW_ROUT.KL (decompiled v3)
+PROGRAM MI04_SSW_ROUT
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0b : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  io_23 : ARRAY[512] OF INTEGER
+  I_BNSTYPE : INTEGER
+  I_MI01_DI : INTEGER
+  I_MI04_DO : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  I_PROCESSTIM : INTEGER
+  ERRORONESHOT : INTEGER
+  I_MI01_GO : INTEGER
+  I_TD_TYPE : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_TD_DO : ARRAY[64] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  ERRORONE : ARRAY[64] OF INTEGER
+  I_PRO_TIME : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  B_VALVEOPENSTARTED : INTEGER
+  I_MI01_DO : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_WATEROK : INTEGER
+  I_RESET_TIME : INTEGER
+  B_TD_CHK : INTEGER
+  B_BLINK_CHK : INTEGER
+  I_BLINK_DI : INTEGER
+  I_STATUS : INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  B_FLOWCHK : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_MI04_GO : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_MI04_DI : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  B_FRES_SRVO_ALARM : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[64] OF INTEGER
+  B_FRES_MOTOR_END : INTEGER
+  B_FRES_HSPD : INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[64] OF INTEGER
+  B_FRES_SWING_MOTOR : INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[64] OF INTEGER
+  B_FRES_SWING_OVLD : INTEGER
+  B_FRES_SWING_COMPENSATOR : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MI04_GI : INTEGER
+  B_MON_04 : BOOLEAN
+  B_SENDBSNUM : BOOLEAN
+  I_ACK_TIME : INTEGER
+  I_FRES_SWING_AUTOEND : INTEGER
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_WELDTIMER : INTEGER
+  I_GUNCOUNT : INTEGER
+  I_MON : INTEGER
+  B_FRES_USED : BOOLEAN
+  I_FRES_INSTALL : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_GUANSWELDING : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_ACK_DELAY : INTEGER
+  I_F1_PULSE : INTEGER
+  I_DI_WELD_END : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_READY : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_DO_START : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_MOTOR_TIME : INTEGER
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE MI04_SENDBSNUM : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+BEGIN
+  IF (UNINIT(I_BNSTYPE)) THEN
+  I_BNSTYPE = 1
+  ENDIF
+  IF ((I_BNSTYPE = 1)) THEN
+  r0_lc2 = 80
+  ELSE
+  r0_lc2 = 64
+  ENDIF
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI01_DI + 129 + r0_lc1 - 1] &lt;&gt; 0)) THEN
+  io_02[I_MI04_DO + I_DO_ASCII_0_BIT0 + r0_lc1 - 1] = 1
+  ELSE
+  io_02[I_MI04_DO + I_DO_ASCII_0_BIT0 + r0_lc1 - 1] = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI04_SENDBSNUM
+
+ROUTINE MI04_RESETTIME : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  ERRORONESHOT = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MI04_RESETTIME
+
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  PURGE CONDITION[1]
+  -- stmt98 stray 1 | I_MI01_DI + 5 | 153 | 1
+  ENABLE CONDITION[1]
+  ERRORONESHOT = 0
+  IF ((p1 = 1)) THEN
+  r2_lc1 = 1
+  ELSE
+  r2_lc1 = 0
+  ENDIF
+  I_PROCESSTIM = 0
+  REPEAT
+  DELAY 16
+  IF ((I_PROCESSTIM &gt; p2) AND (ERRORONESHOT = 0)) THEN
+  io_13[I_MI01_GO + 6] = p3
+  ERRORONESHOT = 1
+  sv_s = INTTOSTR(38100)
+  sv_s = INTTOSTR(p1)
+  POST_ERR(0, &#x27;&#x27;, 0, 0)
+  -- ����ԭʽ: p4
+  -- stmt118 stray &#x27;&#x27; + sv_s + &#x27;]=&#x27; + sv_s
+  -- stmt118 residue &#x27;: Wait DI[&#x27;
+  ENDIF
+  UNTIL((r2_lc1 = io_01[p0]))
+  io_13[I_MI01_GO + 6] = 0
+  PURGE CONDITION[1]
+  RETURN(0)
+END MI04_DIMSGOUT
+
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER
+VAR
+  r3_lc3 : INTEGER
+  r3_lc4 : INTEGER
+  r3_lc5 : INTEGER
+BEGIN
+  IF ((I_TD_TYPE = 2)) THEN
+  r3_lc3 = AR_I_MI04_TD_DI[p0]
+  r3_lc4 = AR_I_MI04_TD_DO[p0]
+  ELSE
+  r3_lc3 = I_MI04_SW_DI
+  r3_lc4 = I_MI04_SW_DO
+  ENDIF
+  IF (UNINIT(ERRORONE[1])) THEN
+  ERRORONE[1] = 1
+  ENDIF
+  IF (UNINIT(ERRORONE[2])) THEN
+  ERRORONE[2] = 1
+  ENDIF
+  IF (UNINIT(ERRORONE[3])) THEN
+  ERRORONE[3] = 1
+  ENDIF
+  IF (UNINIT(I_PRO_TIME)) THEN
+  I_PRO_TIME = 0
+  ENDIF
+  IF (UNINIT(I_RESET_FLOW_DELAY)) THEN
+  I_RESET_FLOW_DELAY = 3000
+  ENDIF
+  IF (UNINIT(B_VALVEOPENSTARTED)) THEN
+  B_VALVEOPENSTARTED = 0
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] = 0) AND (io_23[31] = 0) AND (io_23[32] = 0)) THEN
+  io_02[r3_lc4 + 1] = 0
+  io_02[r3_lc4 + 2] = 1
+  IF ((ERRORONE[1] = 1)) THEN
+  ERRORONE[1] = 0
+  POST_ERR(38100, &#x27;Water valve is closed&#x27;, 0, 0)
+  ENDIF
+  IF ((ERRORONE[3] = 1)) THEN
+  ERRORONE[3] = 0
+  sv_s = INTTOSTR(r3_lc3 + 2)
+  sv_s = INTTOSTR(1)
+  POST_ERR(38100, &#x27;Flow Check NOK&#x27; + &#x27;: Wait DI[&#x27; + sv_s + &#x27;]=&#x27; + sv_s, 0, 1)
+  ENDIF
+  io_13[I_MI01_GO + 6] = 10
+  io_02[I_MI01_DO + 44] = 0
+  ENDIF
+  r3_lc5 = 0
+  IF ((io_02[I_MI01_DO + 52] = 0)) THEN
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0b[1] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0) OR (io_02[I_MI04_DO + I_DO_ACKNOWLEDGE] &lt;&gt; 0) AND (io_23[31] = 0)) THEN
+  r3_lc5 = 1
+  ENDIF
+  ENDIF
+  IF ((B_VALVEOPENSTARTED &lt;&gt; 0)) THEN
+  IF ((io_01[I_MI01_DI + 5] = 1) AND (io_02[r3_lc4 + 1] = 0) AND (io_02[r3_lc4 + 2] = 1)) THEN
+  r3_lc5 = 1
+  ENDIF
+  ENDIF
+  IF ((r3_lc5 &lt;&gt; 0)) THEN
+  io_02[r3_lc4 + 1] = 1
+  io_02[r3_lc4 + 2] = 0
+  io_13[I_MI01_GO + 6] = 0
+  I_WATEROK = 0
+  I_PRO_TIME = 0
+  IF ((ERRORONE[2] = 1)) THEN
+  io_23[32] = 1
+  ERRORONE[2] = 0
+  POST_ERR(38100, &#x27;Water valve is opened&#x27;, 0, 0)
+  ENDIF
+  I_RESET_TIME = 0
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[r3_lc3 + 2] = 1) OR (I_RESET_TIME &gt; I_RESET_FLOW_DELAY))
+  IF ((I_RESET_TIME &gt; I_RESET_FLOW_DELAY)) THEN
+  POST_ERR(38100, &#x27;Cannot detect FLOW OK&#x27;, 0, 0)
+  io_02[r3_lc4 + 1] = 0
+  io_02[r3_lc4 + 2] = 1
+  io_13[I_MI01_GO + 6] = 10
+  io_02[I_MI01_DO + 44] = 0
+  ENDIF
+  ERRORONE[2] = 1
+  IF (UNINIT(I_WATEROK)) THEN
+  I_WATEROK = 0
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] &lt;&gt; 0)) THEN
+  IF ((I_WATEROK &lt;= I_RESET_FLOW_DELAY)) THEN
+  ELSE
+  I_WATEROK = 0
+  io_02[I_MI01_DO + 44] = 1
+  ENDIF
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] = 0) AND (io_23[32] &lt;&gt; 0) AND (I_PRO_TIME &lt;= I_RESET_FLOW_DELAY)) THEN
+  ENDIF
+  IF ((I_PRO_TIME &gt; I_RESET_FLOW_DELAY)) THEN
+  I_PRO_TIME = 0
+  io_23[32] = 0
+  ERRORONE[1] = 1
+  IF ((io_02[I_MI04_DO + I_DO_ACKNOWLEDGE] = 0)) THEN
+  ERRORONE[2] = 1
+  ENDIF
+  ERRORONE[3] = 1
+  ENDIF
+  RETURN(0)
+END MI04_FLOWOK
+
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_TD_DO[p0] + 6] = 1
+  B_TD_CHK = 1
+  B_BLINK_CHK = 1
+  I_BLINK_DI = AR_I_MI04_TD_DI[p0] + 4
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk&#x27;)
+  -- stmt11 stray sv_i
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  -- stmt12 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 1, 1000, 1, &#x27;Wait blink&#x27;)
+  -- stmt13 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 0, 1000, 1, &#x27;Wait blink&#x27;)
+  -- stmt14 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 1, 1000, 1, &#x27;Wait blink&#x27;)
+  CASE(2):
+  io_02[AR_I_MI04_TD_DO[p0] + 6] = 0
+  B_BLINK_CHK = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI04_TIPDRES
+
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 7] = 0)) THEN
+  r5_lc2 = 1
+  LST_ERROR_f00[r5_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = &#x27;NO CAP&#x27;
+  LST_ERROR_f38[r5_lc2] = &#x27;NO upper electrode cap of spring clip&#x27;
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, AR_I_MI04_TD_DI[p0] + 7, 1, 3000, 2)
+  r5_lc1 = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 8] = 0)) THEN
+  r5_lc2 = 2
+  LST_ERROR_f00[r5_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = &#x27;NO CAP&#x27;
+  LST_ERROR_f38[r5_lc2] = &#x27;NO lower electrode cap of spring clip&#x27;
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, AR_I_MI04_TD_DI[p0] + 8, 1, 3000, 2)
+  r5_lc1 = sv_i
+  ENDIF
+  io_02[AR_I_MI04_TD_DO[p0] + 4] = 1
+  sv_i = round(p1 * 1000)
+  DELAY sv_i
+  io_02[AR_I_MI04_TD_DO[p0] + 4] = 0
+  RETURN(0)
+END CAPCHANGEPRE
+
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  CASE(2):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END CONTROLMOTOR
+
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r7_lc1 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 5] &lt;&gt; 0)) THEN
+  r7_lc1 = 1
+  ELSE
+  r7_lc1 = 0
+  ENDIF
+  DELAY 8
+  CASE(2):
+  -- stmt111 residue 3000
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 5] = 0)) THEN
+  r7_lc1 = 0
+  ELSE
+  r7_lc1 = 1
+  ENDIF
+  DELAY 8
+  ELSE:
+  -- stmt122 residue 3000
+  ENDSELECT
+  SET_INT_REG(p2, r7_lc1, I_STATUS)
+  RETURN(0)
+END CHECKCAPVAL
+
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r8_lc2 : INTEGER
+  r8_lc3 : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  sv_i = CHECKCAPVAL(p0, p1, p2)
+  -- stmt146 stray sv_i
+  IF ((I_PROCESSTIM &gt; 3000)) THEN
+  ENDIF
+  io_13[I_MI01_GO + 6] = 157
+  r8_lc2 = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Last process NOK&#x27;, &#x27;YES: Re-teach position and continue.\nNO: Retry process.&#x27;, 3)
+  r8_lc2 = sv_i
+  -- stmt155 residue &#x27;YES: Re-teach position and continue.\\nNO: Retry process.&#x27;
+  DELAY 64
+  UNTIL((r8_lc2 &lt;&gt; 0))
+  SELECT r8_lc2 OF
+  CASE(3):
+  I_PROCESSTIM = 0
+  sv_i = CHECKCAPVAL(p0, p1, p2)
+  -- stmt166 stray sv_i
+  IF ((I_PROCESSTIM &gt; 3000)) THEN
+  r8_lc3 = 0
+  ELSE
+  r8_lc3 = 1
+  ENDIF
+  CASE(4):
+  SET_INT_REG(p2, (0 - 1), I_STATUS)
+  r8_lc3 = 1
+  ELSE:
+  ENDSELECT
+  IF ((r8_lc3 = 1)) THEN
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  RETURN(0)
+END CHECKCAPUNIT
+
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+  r9_lc3 : INTEGER
+  r9_lc4 : INTEGER
+BEGIN
+  IF ((I_TD_TYPE = 2)) THEN
+  r9_lc3 = AR_I_MI04_TD_DI[p0]
+  r9_lc4 = AR_I_MI04_TD_DO[p0]
+  ELSE
+  r9_lc3 = I_MI04_SW_DI
+  r9_lc4 = I_MI04_SW_DO
+  ENDIF
+  SELECT p1 OF
+  CASE(1):
+  SET_VAR(1, &#x27;MI04_SSW_MON&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  IF ((io_01[r9_lc3 + 2] &lt;&gt; 0)) THEN
+  io_02[r9_lc4 + 1] = 1
+  io_02[r9_lc4 + 2] = 0
+  io_23[31] = 0
+  B_FLOWCHK = 1
+  ELSE
+  io_02[r9_lc4 + 2] = 1
+  io_02[r9_lc4 + 1] = 0
+  DELAY 100
+  io_02[r9_lc4 + 1] = 1
+  io_02[r9_lc4 + 2] = 0
+  DELAY I_VALVEDELAY
+  io_23[31] = 0
+  B_FLOWCHK = 1
+  ENDIF
+  B_VALVEOPENSTARTED = 1
+  CASE(2):
+  io_02[r9_lc4 + 2] = 1
+  io_02[r9_lc4 + 1] = 0
+  B_FLOWCHK = 0
+  B_VALVEOPENSTARTED = 0
+  io_23[31] = 1
+  IF ((io_01[r9_lc3 + 2] &lt;&gt; 0)) THEN
+  r9_lc2 = 5
+  LST_ERROR_f00[r9_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r9_lc2] = 0
+  LST_ERROR_f14[r9_lc2] = &#x27;Discharge Error&#x27;
+  LST_ERROR_f38[r9_lc2] = &#x27;Discharge is NOT OFF&#x27;
+  sv_i = WAIT_SIGNAL(r9_lc2, 1, r9_lc3 + 2, 0, 5000, 2)
+  r9_lc1 = sv_i
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END VALVECONTROL
+
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  IF ((io_01[I_MI04_SW_DI + 3] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 3, 1, 3000, 1, &#x27;TD Breaker OFF&#x27;)
+  -- stmt6 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 4] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 4, 1, 3000, 1, &#x27;Swim Breaker OFF&#x27;)
+  -- stmt16 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 10] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 10, 1, 3000, 1, &#x27;SP21VR OFF&#x27;)
+  -- stmt26 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 8] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 8, 1, 3000, 1, &#x27;SE21R OFF&#x27;)
+  -- stmt36 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 1
+  IF ((io_01[I_MI04_SW_DI + 11] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 11, 1, 3000, 1, &#x27;Contactor OFF&#x27;)
+  -- stmt48 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 9] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 9, 1, 3000, 1, &#x27;SP21RV OFF&#x27;)
+  -- stmt59 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 7] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 7, 1, 3000, 1, &#x27;SE21V OFF&#x27;)
+  -- stmt69 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 0
+  IF ((io_01[I_MI04_SW_DI + 11] &lt;&gt; 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 11, 0, 3000, 1, &#x27;Contactor ON&#x27;)
+  -- stmt81 stray sv_i
+  ENDIF
+  DELAY 2000
+  io_02[I_MI04_SW_DO + 3] = 1
+  IF ((io_01[I_MI04_SW_DI + 12] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 12, 1, 3000, 1, &#x27;Contactor OFF&#x27;)
+  -- stmt95 stray sv_i
+  ENDIF
+  B_BLINK_CHK = 1
+  I_BLINK_DI = I_MI04_SW_DI + 5
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk&#x27;)
+  CASE(2):
+  io_02[I_MI04_SW_DO + 4] = 1
+  B_BLINK_CHK = 0
+  IF ((io_01[I_MI04_SW_DI + 10] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 10, 1, 3000, 1, &#x27;SP21VR OFF&#x27;)
+  -- stmt120 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 8] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 8, 1, 3000, 1, &#x27;SE21R OFF&#x27;)
+  -- stmt130 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 0
+  io_02[I_MI04_SW_DO + 3] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END SWIMMOTION
+
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER
+VAR
+  r11_lc1 : INTEGER
+  r11_lc10 : REAL
+  r11_lc11 : INTEGER
+  r11_lc12 : INTEGER
+  r11_lc13 : INTEGER
+  r11_lc14 : INTEGER
+  r11_lc15 : REAL
+  r11_lc16 : INTEGER
+  r11_lc17 : INTEGER
+  r11_lc2 : INTEGER
+  r11_lc3 : INTEGER
+  r11_lc4 : INTEGER
+  r11_lc5 : REAL
+  r11_lc6 : REAL
+  r11_lc7 : REAL
+  r11_lc8 : REAL
+  r11_lc9 : REAL
+BEGIN
+  IF ((p0 = 2)) THEN
+  SET_INT_REG(31, 0, I_STATUS)
+  ENDIF
+  SELECT p0 OF
+  CASE(1):
+  CASE(1):
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN1.$SETUP.$WRDWN_TIP&#x27;, r11_lc1, I_STATUS)
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN1.$SETUP.$WRDWN_RBT&#x27;, r11_lc2, I_STATUS)
+  r11_lc7 = r11_lc1 + r11_lc2
+  r11_lc5 = r11_lc7
+  SET_REAL_REG(33, r11_lc7, I_STATUS)
+  CASE(2):
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN2.$SETUP.$WRDWN_TIP&#x27;, r11_lc3, I_STATUS)
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN2.$SETUP.$WRDWN_RBT&#x27;, r11_lc4, I_STATUS)
+  r11_lc9 = r11_lc3 + r11_lc4
+  r11_lc5 = r11_lc9
+  SET_REAL_REG(35, r11_lc9, I_STATUS)
+  ELSE:
+  ENDSELECT
+  IF ((r11_lc5 &gt; 3)) THEN
+  r11_lc12 = 0
+  POST_ERR(38100, &#x27;Caps Not Changed&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0b[1] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0)) THEN
+  r11_lc12 = 1
+  ENDIF
+  DELAY 100
+  IF ((r11_lc12 &lt;&gt; 0)) THEN
+  io_23[11] = 1
+  SELECT sv_i OF
+  CASE(2):
+  GET_REG(37, (r11_lc13 &lt;&gt; 0), r11_lc14, r11_lc15, I_STATUS)
+  -- ����ԭʽ: r11_lc13
+  IF ((r11_lc13 &lt;&gt; 0)) THEN
+  sv_i = round(r11_lc15)
+  r11_lc11 = sv_i
+  ELSE
+  r11_lc11 = r11_lc14
+  ENDIF
+  CASE(1):
+  GET_REG(33, (r11_lc13 &lt;&gt; 0), r11_lc14, r11_lc15, I_STATUS)
+  -- ����ԭʽ: r11_lc13
+  IF ((r11_lc13 &lt;&gt; 0)) THEN
+  r11_lc6 = r11_lc15
+  ELSE
+  r11_lc6 = r11_lc14 * 1
+  ENDIF
+  IF ((r11_lc11 = 0)) THEN
+  SET_REAL_REG(32, r11_lc6, I_STATUS)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN1.$SETUP.$WRDWN_TIP&#x27;, r11_lc1, I_STATUS)
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN1.$SETUP.$WRDWN_RBT&#x27;, r11_lc2, I_STATUS)
+  r11_lc7 = r11_lc1 + r11_lc2
+  r11_lc5 = r11_lc7
+  r11_lc10 = r11_lc7 - r11_lc6
+  SET_REAL_REG(33, r11_lc7, I_STATUS)
+  SET_REAL_REG(36, r11_lc10, I_STATUS)
+  CASE(2):
+  GET_REG(35, (r11_lc13 &lt;&gt; 0), r11_lc14, r11_lc15, I_STATUS)
+  -- ����ԭʽ: r11_lc13
+  IF ((r11_lc13 &lt;&gt; 0)) THEN
+  r11_lc8 = r11_lc15
+  ELSE
+  r11_lc8 = r11_lc14 * 1
+  ENDIF
+  IF ((r11_lc11 = 0)) THEN
+  SET_REAL_REG(34, r11_lc8, I_STATUS)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN2.$SETUP.$WRDWN_TIP&#x27;, r11_lc3, I_STATUS)
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$SGGUN2.$SETUP.$WRDWN_RBT&#x27;, r11_lc4, I_STATUS)
+  r11_lc9 = r11_lc3 + r11_lc4
+  r11_lc5 = r11_lc9
+  r11_lc10 = r11_lc9 - r11_lc8
+  SET_REAL_REG(35, r11_lc9, I_STATUS)
+  SET_REAL_REG(36, r11_lc10, I_STATUS)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  IF ((io_23[33] = 0)) THEN
+  IF ((r11_lc10 &lt; 0.1)) THEN
+  IF ((r11_lc11 &gt;= 3) OR (r11_lc10 &gt; 1)) THEN
+  r11_lc12 = 0
+  io_13[I_MI01_GO + 6] = 14
+  POST_ERR(38100, &#x27;TipWear Out Of Range&#x27;, 0, 1)
+  ENDIF
+  IF ((io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0b[1] &lt;&gt; 0) OR (io_0e[153] &lt;&gt; 0)) THEN
+  r11_lc12 = 1
+  ENDIF
+  DELAY 100
+  IF ((r11_lc12 &lt;&gt; 0)) THEN
+  CALL_PROG(&#x27;MI04_TD_POP&#x27;, 1)
+  GET_VAR(1, &#x27;MI04_TD_POP&#x27;, &#x27;r_num&#x27;, r11_lc16, I_STATUS)
+  GET_REG(r11_lc16, (r11_lc13 &lt;&gt; 0), r11_lc14, r11_lc15, I_STATUS)
+  -- ����ԭʽ: r11_lc13
+  IF ((r11_lc13 &lt;&gt; 0)) THEN
+  sv_i = round(r11_lc15)
+  r11_lc17 = sv_i
+  ELSE
+  r11_lc17 = r11_lc14
+  ENDIF
+  IF ((r11_lc17 = 1)) THEN
+  SET_INT_REG(31, 1, I_STATUS)
+  ELSE
+  SET_INT_REG(31, 0, I_STATUS)
+  ENDIF
+  io_13[I_MI01_GO + 6] = 0
+  SET_INT_REG(31, 1, I_STATUS)
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END TS_CHECKWEAR
+
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER
+VAR
+  r12_lc1 : INTEGER
+  r12_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(0):
+  CASE(1):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0] = 1
+  CASE(2):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0 + 1] = 1
+  ELSE:
+  ENDSELECT
+  SELECT p0 OF
+  CASE(1):
+  -- stmt86 residue 1000
+  DELAY 200
+  IF ((io_01[I_MI04_DI + I_DI_MILLING_DEMAND] &lt;&gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 15
+  r12_lc2 = 17
+  LST_ERROR_f00[r12_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r12_lc2] = 0
+  LST_ERROR_f14[r12_lc2] = &#x27;TD Rsq Nof off&#x27;
+  LST_ERROR_f38[r12_lc2] = &#x27;TipDress Request Not Off&#x27;
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_MILLING_DEMAND, 0, 3000, 2)
+  r12_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI04_DO + I_DO_MILLING_COMPLETED] = 0
+  CASE(2):
+  -- stmt104 residue 1000
+  IF ((io_01[I_MI04_DI + I_DI_MILLING_DEMAND] = 0) OR (io_01[I_MI04_DI + I_DI_REQELECCHG] &lt;&gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 16
+  r12_lc2 = 18
+  LST_ERROR_f00[r12_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r12_lc2] = 0
+  LST_ERROR_f14[r12_lc2] = &#x27;TC REQ Not Off&#x27;
+  LST_ERROR_f38[r12_lc2] = &#x27;TipChg Request Not Off&#x27;
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_MILLING_DEMAND, 1, 3000, 2)
+  r12_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_REQELECCHG, 0, 3000, 2)
+  r12_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  DELAY 500
+  io_02[I_MI04_DO + I_DO_COUNTER_RESET] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_RESET_TD
+
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER
+VAR
+  r13_lc1 : INTEGER
+  r13_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(0):
+  CASE(1):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0] = 1
+  CASE(2):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0 + 1] = 1
+  ELSE:
+  ENDSELECT
+  SELECT p0 OF
+  CASE(1):
+  -- stmt159 residue 2000
+  DELAY 200
+  IF ((io_01[I_MI04_DI + 24] = 0) OR (io_01[I_MI04_DI + 23] &lt;&gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 15
+  r13_lc2 = 17
+  LST_ERROR_f00[r13_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r13_lc2] = 0
+  LST_ERROR_f14[r13_lc2] = &#x27;ACK Tip Dress&#x27;
+  LST_ERROR_f38[r13_lc2] = &#x27;Wait for ACK TD&#x27;
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 24, 1, 3000, 2)
+  r13_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 23, 0, 3000, 2)
+  r13_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI04_DO + 24] = 0
+  CASE(2):
+  -- stmt179 residue 2000
+  IF ((io_01[I_MI04_DI + 20] = 0) OR (io_01[I_MI04_DI + 18] &lt;&gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 16
+  r13_lc2 = 18
+  LST_ERROR_f00[r13_lc2] = &#x27;SSW&#x27;
+  LST_ERROR_f10[r13_lc2] = 0
+  LST_ERROR_f14[r13_lc2] = &#x27;ACK Tip Change&#x27;
+  LST_ERROR_f38[r13_lc2] = &#x27;Wait for ACK TipChg&#x27;
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 20, 1, 3000, 2)
+  r13_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 18, 0, 3000, 2)
+  r13_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  DELAY 500
+  io_02[I_MI04_DO + 20] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_RESET_TD_BOSCH
+
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SET_INT_REG(5, p1, I_STATUS)
+  SELECT p0 OF
+  CASE(1):
+  CALL_PROG(&#x27;TWRSFX&#x27;, 1)
+  CASE(2):
+  CALL_PROG(&#x27;TWRSMV&#x27;, 1)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_TWD_RET
+
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  B_FRES_SRVO_ALARM = 1
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  CASE(2):
+  B_FRES_SRVO_ALARM = 0
+  ELSE:
+  ENDSELECT
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 1] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 1, 1, 3000, 160, 1, &#x27;MagHighFault&#x27;)
+  -- stmt6 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 2] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 2, 1, 3000, 159, 1, &#x27;MagLowFault&#x27;)
+  -- stmt11 stray sv_i
+  ENDIF
+  RETURN(0)
+END FRES_CHECK_BOX
+
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 1
+  CASE(2):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 0
+  ELSE:
+  ENDSELECT
+  DELAY 2000
+  B_FRES_MOTOR_END = 1
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_fres_autoend&#x27;, p2, I_STATUS)
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_processt&#x27;, 0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  -- stmt50 stray sv_i
+  RETURN(0)
+END FRES_REMOVE_CAP
+
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 13] = 1
+  B_FRES_HSPD = 1
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  -- stmt76 stray sv_i
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 7] = 0)) THEN
+  I_PROCESSTIM = 0
+  ENDIF
+  REPEAT
+  DELAY 32
+  UNTIL((io_01[AR_I_MI04_FRES_RO_DI[p0] + 7] = 1) OR (I_PROCESSTIM &gt; 3000))
+  -- stmt83 residue 3000
+  IF ((I_PROCESSTIM &gt; 3000)) THEN
+  io_13[I_MI01_GO + 6] = 150
+  sv_s = INTTOSTR(AR_I_MI04_FRES_RO_DI[p0] + 7)
+  POST_ERR(38100, &#x27;TD Motor OFF&#x27; + &#x27;: Wait DI[&#x27; + sv_s + &#x27;]=1&#x27;, 0, 0)
+  -- stmt89 residue 1000
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 7, 1, 3000, 150, 1, &#x27;TD Motor OFF&#x27;)
+  -- stmt90 stray sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  CASE(2):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 13] = 0
+  B_FRES_HSPD = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END FRES_MOTOR_HIGHSPEED
+
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r18_lc1 : INTEGER
+  r18_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  r18_lc2 = AR_I_MI04_FRES_RO_DI[p0] + 5
+  CASE(2):
+  r18_lc2 = AR_I_MI04_FRES_RO_DI[p0] + 6
+  ELSE:
+  ENDSELECT
+  SELECT p2 OF
+  CASE(1):
+  IF ((io_01[r18_lc2] &lt;&gt; 0)) THEN
+  r18_lc1 = 1
+  ELSE
+  r18_lc1 = 0
+  ENDIF
+  DELAY 8
+  CASE(2):
+  -- stmt138 residue 3000
+  IF ((io_01[r18_lc2] = 0)) THEN
+  r18_lc1 = 0
+  ELSE
+  r18_lc1 = 1
+  ENDIF
+  DELAY 8
+  ELSE:
+  -- stmt148 residue 3000
+  ENDSELECT
+  SET_INT_REG(p3, r18_lc1, I_STATUS)
+  RETURN(0)
+END FRES_CHECKCAPVAL
+
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r19_lc1 : INTEGER
+  r19_lc2 : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  sv_i = FRES_CHECKCAPVAL(p0, p1, p2, p3)
+  -- stmt171 stray sv_i
+  IF ((I_PROCESSTIM &gt; 3000)) THEN
+  ENDIF
+  IF ((p2 = 1)) THEN
+  io_13[I_MI01_GO + 6] = 158
+  ELSE
+  io_13[I_MI01_GO + 6] = 157
+  ENDIF
+  r19_lc1 = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Last process NOK&#x27;, &#x27;YES: Re-teach position and continue.\nNO: Retry process.&#x27;, 3)
+  r19_lc1 = sv_i
+  -- stmt184 residue &#x27;YES: Re-teach position and continue.\\nNO: Retry process.&#x27;
+  DELAY 64
+  UNTIL((r19_lc1 &lt;&gt; 0))
+  SELECT r19_lc1 OF
+  CASE(3):
+  I_PROCESSTIM = 0
+  sv_i = FRES_CHECKCAPVAL(p0, p1, p2, p3)
+  -- stmt195 stray sv_i
+  IF ((I_PROCESSTIM &gt; 3000)) THEN
+  r19_lc2 = 0
+  ELSE
+  r19_lc2 = 1
+  ENDIF
+  CASE(4):
+  SET_INT_REG(p3, (0 - 1), I_STATUS)
+  r19_lc2 = 1
+  ELSE:
+  ENDSELECT
+  IF ((r19_lc2 = 1)) THEN
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  RETURN(0)
+END FRES_CHECK_CAP
+
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 1
+  B_FRES_SWING_MOTOR = 1
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_processt&#x27;, 0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  -- stmt229 stray sv_i
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 3] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 3, 1, 3000, 150, 1, &#x27;TD Motor OFF&#x27;)
+  -- stmt233 stray sv_i
+  ENDIF
+  CASE(2):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 0
+  B_FRES_SWING_MOTOR = 0
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 3] &lt;&gt; 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 3, 0, 3000, 151, 1, &#x27;TD Motor ON&#x27;)
+  -- stmt243 stray sv_i
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END FRES_SWING_MOTOLCTRL
+
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  IF ((p1 = 3)) THEN
+  B_FRES_SWING_OVLD = 1
+  SET_VAR(1, &#x27;MI04_ssw_chk2&#x27;, &#x27;i_tipdressno&#x27;, p0, I_STATUS)
+  sv_i = RUN_MONITOR(&#x27;MI04_ssw_chk2&#x27;)
+  -- stmt6 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 0
+  SELECT p1 OF
+  CASE(3):
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt19 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt20 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 1
+  DELAY p2
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 6] = 0) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 5] = 1)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 6, 0, 3000, 155, 1, &#x27;Dump Not Adv&#x27;)
+  -- stmt28 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 5, 1, 3000, 155, 1, &#x27;Dump Not Adv&#x27;)
+  -- stmt29 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 0
+  IF ((B_FRES_SWING_COMPENSATOR &lt;&gt; 0)) THEN
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 1
+  DELAY 3000
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 0) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 1)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 0, 3000, 153, 1, &#x27;CylinderNotFW&#x27;)
+  -- stmt38 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 1, 3000, 153, 1, &#x27;CylinderNotFW&#x27;)
+  -- stmt39 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt44 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt45 stray sv_i
+  ENDIF
+  ENDIF
+  CASE(4):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 0
+  DELAY p2
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt55 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt56 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 1
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt63 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, &#x27;CylinderNotBW&#x27;)
+  -- stmt64 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 6] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 5] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 6, 1, 3000, 156, 1, &#x27;Dump Not Ret&#x27;)
+  -- stmt69 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 5, 0, 3000, 156, 1, &#x27;Dump Not Ret&#x27;)
+  -- stmt70 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 0
+  ELSE:
+  ENDSELECT
+  IF ((p1 = 4)) THEN
+  B_FRES_SWING_OVLD = 0
+  ENDIF
+  RETURN(0)
+END FRES_SWING_CONTROL
+
+BEGIN
+  STOP
+  -- SIGEVENT[δ��] arg=0
+  -- stmt77 stray 0 * 0 DIV 0 + NOT (NOT (0 - 0 - (0 = 0))) | 808335616
+END MI04_SSW_ROUT
+
+</span></pre></details><details><summary>MI04_SSW_VAR.KL（0 例程）</summary><pre><span class=c>-- MI04_SSW_VAR.KL (decompiled v3)
+PROGRAM MI04_SSW_VAR
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+END MI04_SSW_VAR
+
+</span></pre></details><details><summary>MI04_TD_POP.KL（0 例程）</summary><pre><span class=c>-- MI04_TD_POP.KL (decompiled v3)
+PROGRAM MI04_TD_POP
+%COMMENT = &#x27;MI04 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  R_NUM : INTEGER
+  POP_INTERVAL : INTEGER
+  I_STATUS : INTEGER
+  STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+  IF (UNINIT(R_NUM)) THEN
+  R_NUM = 100
+  ENDIF
+  IF (UNINIT(POP_INTERVAL)) THEN
+  POP_INTERVAL = 1024
+  ENDIF
+  I_STATUS = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Tipwear check NOK&#x27;, &#x27;Re-dress?&#x27;, 3)
+  I_STATUS = sv_i
+  DELAY POP_INTERVAL
+  UNTIL((I_STATUS &lt;&gt; 0))
+  SELECT I_STATUS OF
+  CASE(3):
+  SET_INT_REG(R_NUM, 1, STATUS)
+  CASE(4):
+  SET_INT_REG(R_NUM, 0, STATUS)
+  ELSE:
+  ENDSELECT
+END MI04_TD_POP
+
+</span></pre></details>

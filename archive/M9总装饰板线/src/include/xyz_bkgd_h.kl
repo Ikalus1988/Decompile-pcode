@@ -1,0 +1,310 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz background
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzBkgd(sock_fd : FILE) FROM xyz_bkgd
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+--  Wait for communication
+-- [in    ]             hb_sec:  INTEGER, unit seconds
+-- [return]          : 0  sending normal cmd to server
+--                     1  sending empty cmd to server
+-- 
+--------------------------------------------------------------------------------
+ROUTINE WaitComm(hb_sec: INTEGER) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+--  Get CMD
+-- 
+-- [out]          : current command id
+-- 
+--------------------------------------------------------------------------------
+ROUTINE GetCMD : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+--  Reset Out Data Array
+-- 
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ResetOutData FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add integer to out data array
+-- [in    ]  out_num  : INTEGER
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddInttoArr(out_num : INTEGER) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add real number to out data array
+-- [in    ]  out_num  : REAL
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddRealtoArr(out_num : REAL) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add real array to out data array
+-- 
+-- [in    ]  out_array  : ARRAY[*] OF REAL[*]
+-- [return]             :    0 on no error
+--                        != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddArrtoArr(out_array : ARRAY[*] OF REAL) : INTEGER FROM xyz_bkgd
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add string to out data array
+-- 
+-- [in    ]  out_string  : STRING
+-- [return]              :    0 on no error
+--                         != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddStrtoArr(out_string : STRING) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add joint pose to out data array
+-- 
+-- [in    ]  joint_pose  : JOINTPOS
+-- [return]              :    0 on no error
+--                         != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddJPostoArr(joint_pose : JOINTPOS) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add cartesian pose to out data array
+-- 
+-- [in    ]    cart_pose : XYZWPR
+-- [return]              :    0 on no error
+--                         != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddCPostoArr(cart_pose : XYZWPR) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Add external joints to out data array
+-- 
+-- [in    ]  joint_pose  : JOINTPOS
+-- [return]              :    0 on no error
+--                         != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE AddExtJtoArr(joint_pose : JOINTPOS) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Receive message from socket and parse
+-- 
+-- [in    ]  xsock     : xyz_sock_t
+-- [out   ]  err_code  : INTEGER
+-- [return]            : 0 on no error
+--                       != 0 on any error
+--------------------------------------------------------------------------------
+ROUTINE RecvAndParse(xsock : xyz_sock_t; err_code : INTEGER) : INTEGER FROM xyz_bkgd
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Pack message and send
+-- 
+-- [return]            : 0 on no error
+--                       != 0 on any error
+--------------------------------------------------------------------------------
+ROUTINE PackAndSend : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Heartbeat signal
+-- 
+-- [in    ]  xsock   : xyz_sock_t
+-- [return]          :    0 on no error
+--                     != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE xyzHeartBeat(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code
+-- 
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParseErrCode(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code and an integer
+-- 
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParseInt(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code and pose
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParsePose(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code and pose with pipeline_num and register_num
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParsePipe(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code and pose for xyzUpdateObjPoseInHand
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParseIhPose(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse error code and trajectory
+-- 
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParseTraj(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Parse custom response
+-- 
+-- [in    ]  xsock    : xyz_sock_t
+-- [return]           :    0 on no error
+--                      != 0 on any error
+-- 
+--------------------------------------------------------------------------------
+ROUTINE ParseCustom(xsock : xyz_sock_t) : INTEGER FROM xyz_bkgd

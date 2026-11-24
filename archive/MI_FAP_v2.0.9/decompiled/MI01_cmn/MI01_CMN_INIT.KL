@@ -1,0 +1,35 @@
+-- MI01_CMN_INIT.KL (decompiled v3)
+PROGRAM MI01_CMN_INIT
+%COMMENT = 'MI01 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_0e : ARRAY[512] OF INTEGER
+  STATUS : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+  STATUS = 0
+  IF ((io_0e[128] = 0)) THEN
+  RUN_TASK('MI01_cmn_mon', 0, (0 <> 0), (0 <> 0), 1, STATUS)
+  -- 弃参原式: 0 | 0
+  IF ((STATUS <> 0)) THEN
+  POST_ERR(38000, 'BGTASK Run Failed', 0, 1)
+  ENDIF
+  RUN_TASK('MI01_error', 0, (0 <> 0), (0 <> 0), 1, STATUS)
+  -- 弃参原式: 0 | 0
+  IF ((STATUS <> 0)) THEN
+  POST_ERR(38000, 'BGTASK Run Failed', 0, 1)
+  ENDIF
+  ENDIF
+END MI01_CMN_INIT
+

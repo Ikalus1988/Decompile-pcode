@@ -1,0 +1,184 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+PROGRAM xyz_log
+--------------------------------------------------------------------------------
+-- 
+-- Simple logging routines
+-- 
+--------------------------------------------------------------------------------
+%COMMENT = 'xyz log'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- remote types & constants
+-- 
+--------------------------------------------------------------------------------
+%INCLUDE klevccdf
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- local types & constants
+-- 
+--------------------------------------------------------------------------------
+CONST
+    -- use klevccdf constants for colours from rosconsole.cpp
+    XYZ_WARN  = cc_yellow
+    XYZ_ERR   = cc_red
+    XYZ_DEBUG = cc_green
+
+    -- 
+    XYZ_ERR_T   = ' E '
+    XYZ_WARN_T  = ' W '
+    XYZ_INFO_T  = ' I '
+    XYZ_DEBUG_T = ' D '
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- local routine prototypes
+-- 
+--------------------------------------------------------------------------------
+%INCLUDE include\xyz_log_h
+%INCLUDE klrdutil
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Empty body
+-- 
+--------------------------------------------------------------------------------
+BEGIN
+END xyz_log
+
+
+
+
+--------------------------------------------------------------------------------
+-- 
+-- Print the current time on the current line (as prefix for log lines)
+-- 
+--------------------------------------------------------------------------------
+ROUTINE prnt_time_
+VAR
+    time_ : INTEGER
+    tmp_  : STRING[30]
+BEGIN
+    -- 
+    GET_TIME(time_)
+    -- keep only lower 16 bits: HH:MM:SS
+    time_ = time_ AND 65535
+    -- convert it to a string (raw, not using CNV_TIME_STR)
+    CNV_INT_STR(time_, 4, 10, tmp_)
+    -- write on current line
+    WRITE TPDISPLAY(tmp_)
+END prnt_time_
+
+
+
+
+ROUTINE log_clear
+VAR
+    stat__ : INTEGER
+BEGIN
+    -- from klrdutil
+    clear_win(TPDISPLAY, stat__)
+    log_force
+END log_clear
+
+
+
+
+ROUTINE log_force
+BEGIN
+    FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+END log_force
+
+
+
+
+ROUTINE log_info
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(XYZ_INFO_T, msg, CR)
+END log_info
+
+
+
+
+ROUTINE log_info_a
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(XYZ_INFO_T, msg, prm, CR)
+END log_info_a
+
+
+
+
+ROUTINE log_warn
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(
+        CHR(cc_bgcolor), CHR(cc_black),
+        CHR(cc_fgcolor), CHR(XYZ_WARN),
+        XYZ_WARN_T, msg,
+        CHR(cc_bgcolor), CHR(cc_dfcolor),
+        CHR(cc_fgcolor), CHR(cc_dfcolor),
+        CR)
+END log_warn
+
+
+
+
+ROUTINE log_warn_a
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(
+        CHR(cc_fgcolor), CHR(XYZ_WARN),
+        XYZ_WARN_T, msg, prm,
+        CHR(cc_fgcolor), CHR(cc_dfcolor),
+        CR)
+END log_warn_a
+
+
+
+
+ROUTINE log_error
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(
+        CHR(cc_fgcolor), CHR(XYZ_ERR),
+        XYZ_ERR_T, msg,
+        CHR(cc_fgcolor), CHR(cc_dfcolor),
+        CR)
+END log_error
+
+
+
+
+ROUTINE log_error_a
+BEGIN
+    prnt_time_
+    WRITE TPDISPLAY(
+        CHR(cc_fgcolor), CHR(XYZ_ERR),
+        XYZ_ERR_T, msg, prm,
+        CHR(cc_fgcolor), CHR(cc_dfcolor),
+        CR)
+END log_error_a

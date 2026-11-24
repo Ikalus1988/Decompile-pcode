@@ -1,0 +1,1294 @@
+PROGRAM DCP_TUCKER_2
+
+--Sends DCP Fault text to PLC using String Registers
+--Version 1.1 Corrected all the CNV_INT_STR to base 10 number system
+--Version 1.2 Added in Die Check Retry
+%COMMENT = 'Version 1.6'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, intRivID :INTEGER
+paramReal, realDummy:REAL
+paramString:STRING[10]
+strDCPNum : STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL, strRivID:STRING[3]
+strHis1, strHis2,strHis3: STRING[82]
+strAddDCPTxt:STRING[20]
+
+--Delcare Internal Routines
+ROUTINE G_DCP_SPR1_2 
+BEGIN 
+
+--Get Program Number form GI[1] and put into intProgNumber
+GET_PORT_VAL(io_gpin,1,intProgNum,STATUS)
+--convert prog number into a string and put into strProgNumber
+CNV_INT_STR(intProgNum,3,10,strProgNum)
+
+--Get Area in Request Number form R[151]
+GET_REG(151,FALSE,intAreaInREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaInREQ,3,10,strAreaInREQ)
+
+--Get Area Out Release Number form R[152]
+GET_REG(152,FALSE,intAreaOutRL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intAreaOutRL,3,10,strAreaOutRL)
+
+--Get Tool Request Number form R[153]
+GET_REG(153,FALSE,intToolREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intToolREQ,3,10,strToolREQ)
+
+--Get Job Done Number form R[154]
+GET_REG(154,FALSE,intJobDone, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intJobDone,3,10,strJobDone)
+
+--Get Collission Zone Req Number form R[156]
+GET_REG(156,FALSE,intColREQ, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREQ,3,10,strColREQ)
+
+--Get Collission Zone Release Number form R[157]
+GET_REG(157,FALSE,intColREL, realDummy,STATUS)
+--convert Number to string
+CNV_INT_STR(intColREL,3,10,strColREL)
+
+
+SELECT DCPText.DCPFaultNum OF
+	
+CASE(401):
+DCPText.DCPLine1 = 'Tucker is not at home'
+DCPText.DCPFaultNum = 00401
+
+CASE(402):
+DCPText.DCPLine1 = 'Spindle is disconnected'
+DCPText.DCPFaultNum = 00402
+
+CASE(403):
+DCPText.DCPLine1 = 'Spindle fault'
+DCPText.DCPFaultNum = 00403
+
+CASE(404):
+DCPText.DCPLine1 = 'Spindle is not ready'
+DCPText.DCPFaultNum = 00404
+
+CASE(405):
+DCPText.DCPLine1 = 'Reviting not complete'
+DCPText.DCPFaultNum = 00405
+  FKEY_SEL = 2
+
+CASE(406):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00406
+
+CASE(407):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00407
+
+CASE(408):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00408
+
+CASE(409):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00409
+
+CASE(410):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00410
+
+CASE(411):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00411
+
+CASE(412):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00412
+
+CASE(413):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00413
+
+CASE(414):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00414
+
+CASE(415):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00415
+
+CASE(416):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00416
+
+CASE(417):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00417
+
+CASE(418):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00418
+
+CASE(419):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00419
+
+CASE(420):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00420
+
+CASE(421):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00421
+
+CASE(422):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00422
+
+CASE(423):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00423
+
+CASE(424):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00424
+
+CASE(425):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00425
+
+CASE(426):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00426
+
+CASE(427):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00427
+
+CASE(428):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00428
+
+CASE(429):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00429
+
+CASE(430):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00430
+
+CASE(431):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00431
+
+CASE(432):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00432
+
+CASE(433):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00433
+
+CASE(434):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00434
+
+CASE(435):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00435
+
+CASE(436):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00436
+
+CASE(437):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00437
+
+CASE(438):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00438
+
+CASE(439):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00439
+
+CASE(440):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00440
+
+CASE(441):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00441
+
+CASE(442):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00442
+
+CASE(443):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00443
+
+CASE(444):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00444
+
+CASE(445):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00445
+
+CASE(446):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00446
+
+CASE(447):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00447
+
+CASE(448):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00448
+
+CASE(449):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00449
+
+CASE(450):
+DCPText.DCPLine1 = 'Process: Feeder master - start feeding for a non-existent feeder'
+DCPText.DCPFaultNum = 00450
+
+CASE(451):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 - start feeding for a non-existent feeder'
+DCPText.DCPFaultNum = 00451
+
+CASE(452):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 - start feeding for a non-existent feeder'
+DCPText.DCPFaultNum = 00452
+
+CASE(453):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 - start feeding for a non-existent feeder'
+DCPText.DCPFaultNum = 00453
+
+CASE(454):
+DCPText.DCPLine1 = 'Feeder master: Proximity switch "Rivet in tube" is constantly high'
+DCPText.DCPFaultNum = 00454
+
+CASE(455):
+DCPText.DCPLine1 = 'Feeder slave 1: Proximity switch "Rivet in tube" is constantly high'
+DCPText.DCPFaultNum = 00455
+
+CASE(456):
+DCPText.DCPLine1 = 'Feeder slave 2: Proximity switch "Rivet in tube" is constantly high'
+DCPText.DCPFaultNum = 00456
+
+CASE(457):
+DCPText.DCPLine1 = 'Feeder slave 3: Proximity switch "Rivet in tube" is constantly high'
+DCPText.DCPFaultNum = 00457
+
+CASE(458):
+DCPText.DCPLine1 = 'Feeder master: Proximity switch "Rivet after divider" is constantly high'
+DCPText.DCPFaultNum = 00458
+
+CASE(459):
+DCPText.DCPLine1 = 'Feeder slave 1: Proximity switch "Rivet after divider" is constantly high'
+DCPText.DCPFaultNum = 00459
+
+CASE(460):
+DCPText.DCPLine1 = 'Feeder slave 2: Proximity switch "Rivet after divider" is constantly high'
+DCPText.DCPFaultNum = 00460
+
+CASE(461):
+DCPText.DCPLine1 = 'Feeder slave 3: Proximity switch "Rivet after divider" is constantly high'
+DCPText.DCPFaultNum = 00461
+
+CASE(462):
+DCPText.DCPLine1 = 'Feeder master: Proximity switch "Rivet in pre-separation" is constantly high'
+DCPText.DCPFaultNum = 00462
+
+CASE(463):
+DCPText.DCPLine1 = 'Feeder slave 1: Proximity switch "Rivet in pre-separation" is constantly high'
+DCPText.DCPFaultNum = 00463
+
+CASE(464):
+DCPText.DCPLine1 = 'Feeder slave 2: Proximity switch "Rivet in pre-separation" is constantly high'
+DCPText.DCPFaultNum = 00464
+
+CASE(465):
+DCPText.DCPLine1 = 'Feeder slave 3: Proximity switch "Rivet in pre-separation" is constantly high'
+DCPText.DCPFaultNum = 00465
+
+CASE(466):
+DCPText.DCPLine1 = 'Feeder master: No oil in atomizing device'
+DCPText.DCPFaultNum = 00466
+
+CASE(467):
+DCPText.DCPLine1 = 'Feeder slave 1: No oil in atomizing device'
+DCPText.DCPFaultNum = 00467
+
+CASE(468):
+DCPText.DCPLine1 = 'Feeder slave 2: No oil in atomizing device'
+DCPText.DCPFaultNum = 00468
+
+CASE(469):
+DCPText.DCPLine1 = 'Feeder slave 3: No oil in atomizing device'
+DCPText.DCPFaultNum = 00469
+
+CASE(470):
+DCPText.DCPLine1 = 'Feeder master: Magazine slide 1 has not reached magazine position'
+DCPText.DCPFaultNum = 00470
+
+CASE(471):
+DCPText.DCPLine1 = 'Feeder slave 1: Magazine slide 1 has not reached magazine position'
+DCPText.DCPFaultNum = 00471
+
+CASE(472):
+DCPText.DCPLine1 = 'Feeder slave 2: Magazine slide 1 has not reached magazine position'
+DCPText.DCPFaultNum = 00472
+
+CASE(473):
+DCPText.DCPLine1 = 'Feeder slave 3: Magazine slide 1 has not reached magazine position'
+DCPText.DCPFaultNum = 00473
+
+CASE(474):
+DCPText.DCPLine1 = 'Feeder master: Magazine slide 1 has not reached receiver position'
+DCPText.DCPFaultNum = 00474
+
+CASE(475):
+DCPText.DCPLine1 = 'Feeder slave 1: Magazine slide 1 has not reached receiver position'
+DCPText.DCPFaultNum = 00475
+
+CASE(476):
+DCPText.DCPLine1 = 'Feeder slave 2: Magazine slide 1 has not reached receiver position'
+DCPText.DCPFaultNum = 00476
+
+CASE(477):
+DCPText.DCPLine1 = 'Feeder slave 3: Magazine slide 1 has not reached receiver position'
+DCPText.DCPFaultNum = 00477
+
+CASE(478):
+DCPText.DCPLine1 = 'Feeder master: Fault test unit'
+DCPText.DCPFaultNum = 00478
+
+CASE(479):
+DCPText.DCPLine1 = 'Feeder slave 1: Fault test unit'
+DCPText.DCPFaultNum = 00479
+
+CASE(480):
+DCPText.DCPLine1 = 'Feeder slave 2: Fault test unit'
+DCPText.DCPFaultNum = 00480
+
+CASE(481):
+DCPText.DCPLine1 = 'Feeder slave 3: Fault test unit'
+DCPText.DCPFaultNum = 00481
+
+CASE(482):
+DCPText.DCPLine1 = 'Feeder master: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00482
+
+CASE(483):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00483
+
+CASE(484):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00484
+
+CASE(485):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00485
+
+CASE(486):
+DCPText.DCPLine1 = 'Feeder master: Rivet package separation does not reach position "Rivet"'
+DCPText.DCPFaultNum = 00486
+
+CASE(487):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet package separation does not reach position "Rivet"'
+DCPText.DCPFaultNum = 00487
+
+CASE(488):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet package separation does not reach position "Rivet"'
+DCPText.DCPFaultNum = 00488
+
+CASE(489):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet package separation does not reach position "Rivet"'
+DCPText.DCPFaultNum = 00489
+
+CASE(490):
+DCPText.DCPLine1 = 'Feeder master: Rivet package separation does not reach position "Air"'
+DCPText.DCPFaultNum = 00490
+
+CASE(491):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet package separation does not reach position "Air"'
+DCPText.DCPFaultNum = 00491
+
+CASE(492):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet package separation does not reach position "Air"'
+DCPText.DCPFaultNum = 00492
+
+CASE(493):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet package separation does not reach position "Air"'
+DCPText.DCPFaultNum = 00493
+
+CASE(494):
+DCPText.DCPLine1 = 'Feeder master: Rivets do not fall through rivet package separation'
+DCPText.DCPFaultNum = 00494
+
+CASE(495):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivets do not fall through rivet package separation'
+DCPText.DCPFaultNum = 00495
+
+CASE(496):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivets do not fall through rivet package separation'
+DCPText.DCPFaultNum = 00496
+
+CASE(497):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivets do not fall through rivet package separation'
+DCPText.DCPFaultNum = 00497
+
+CASE(498):
+DCPText.DCPLine1 = 'Feeder master: Rivet package is not fed'
+DCPText.DCPFaultNum = 00498
+
+CASE(499):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet package is not fed'
+DCPText.DCPFaultNum = 00499
+
+CASE(500):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet package is not fed'
+DCPText.DCPFaultNum = 00500
+
+CASE(501):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet package is not fed'
+DCPText.DCPFaultNum = 00501
+
+CASE(502):
+DCPText.DCPLine1 = 'Process: Feeder master - incorrect feeder assignment'
+DCPText.DCPFaultNum = 00502
+
+CASE(503):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 - incorrect feeder assignment'
+DCPText.DCPFaultNum = 00503
+
+CASE(504):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 - incorrect feeder assignment'
+DCPText.DCPFaultNum = 00504
+
+CASE(505):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 - incorrect feeder assignment'
+DCPText.DCPFaultNum = 00505
+
+CASE(506):
+DCPText.DCPLine1 = 'Process: Incorrect spindle type assignment'
+DCPText.DCPFaultNum = 00506
+
+CASE(507):
+DCPText.DCPLine1 = 'Spindle parameter: Incorrect process type assignment'
+DCPText.DCPFaultNum = 00507
+
+CASE(508):
+DCPText.DCPLine1 = 'Process: Feeder master does not have spindle 1 assignment'
+DCPText.DCPFaultNum = 00508
+
+CASE(509):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 does not have spindle 1 assignment'
+DCPText.DCPFaultNum = 00509
+
+CASE(510):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 does not have spindle 1 assignment'
+DCPText.DCPFaultNum = 00510
+
+CASE(511):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 does not have spindle 1 assignment'
+DCPText.DCPFaultNum = 00511
+
+CASE(512):
+DCPText.DCPLine1 = 'Process: Feeder master does not have spindle 2 assignment'
+DCPText.DCPFaultNum = 00512
+
+CASE(513):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 does not have spindle 2 assignment'
+DCPText.DCPFaultNum = 00513
+
+CASE(514):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 does not have spindle 2 assignment'
+DCPText.DCPFaultNum = 00514
+
+CASE(515):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 does not have spindle 2 assignment'
+DCPText.DCPFaultNum = 00515
+
+CASE(516):
+DCPText.DCPLine1 = 'Process: Feeder master does not have spindle 3 assignment'
+DCPText.DCPFaultNum = 00516
+
+CASE(517):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 does not have spindle 3 assignment'
+DCPText.DCPFaultNum = 00517
+
+CASE(518):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 does not have spindle 3 assignment'
+DCPText.DCPFaultNum = 00518
+
+CASE(519):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 does not have spindle 3 assignment'
+DCPText.DCPFaultNum = 00519
+
+CASE(520):
+DCPText.DCPLine1 = 'Process: Feeder master does not have spindle 4 assignment'
+DCPText.DCPFaultNum = 00520
+
+CASE(521):
+DCPText.DCPLine1 = 'Process: Feeder slave 1 does not have spindle 4 assignment'
+DCPText.DCPFaultNum = 00521
+
+CASE(522):
+DCPText.DCPLine1 = 'Process: Feeder slave 2 does not have spindle 4 assignment'
+DCPText.DCPFaultNum = 00522
+
+CASE(523):
+DCPText.DCPLine1 = 'Process: Feeder slave 3 does not have spindle 4 assignment'
+DCPText.DCPFaultNum = 00523
+
+CASE(524):
+DCPText.DCPLine1 = 'Feeder master: Atomizing device not connected anymore'
+DCPText.DCPFaultNum = 00524
+
+CASE(525):
+DCPText.DCPLine1 = 'Feeder slave 1: Atomizing device not connected anymore'
+DCPText.DCPFaultNum = 00525
+
+CASE(526):
+DCPText.DCPLine1 = 'Feeder slave 2: Atomizing device not connected anymore'
+DCPText.DCPFaultNum = 00526
+
+CASE(527):
+DCPText.DCPLine1 = 'Feeder slave 3: Atomizing device not connected anymore'
+DCPText.DCPFaultNum = 00527
+
+CASE(528):
+DCPText.DCPLine1 = 'Feeder master: Magazine not connected anymore'
+DCPText.DCPFaultNum = 00528
+
+CASE(529):
+DCPText.DCPLine1 = 'Feeder slave 1: Magazine not connected anymore'
+DCPText.DCPFaultNum = 00529
+
+CASE(530):
+DCPText.DCPLine1 = 'Feeder slave 2: Magazine not connected anymore'
+DCPText.DCPFaultNum = 00530
+
+CASE(531):
+DCPText.DCPLine1 = 'Feeder slave 3: Magazine not connected anymore'
+DCPText.DCPFaultNum = 00531
+
+CASE(532):
+DCPText.DCPLine1 = 'Feeder master: Rivet in receiver not recognized'
+DCPText.DCPFaultNum = 00532
+
+CASE(533):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet in receiver not recognized'
+DCPText.DCPFaultNum = 00533
+
+CASE(534):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet in receiver not recognized'
+DCPText.DCPFaultNum = 00534
+
+CASE(535):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet in receiver not recognized'
+DCPText.DCPFaultNum = 00535
+
+CASE(536):
+DCPText.DCPLine1 = 'Feeder master: Filling station not connected anymore'
+DCPText.DCPFaultNum = 00536
+
+CASE(537):
+DCPText.DCPLine1 = 'Feeder slave 1: Filling station not connected anymore'
+DCPText.DCPFaultNum = 00537
+
+CASE(538):
+DCPText.DCPLine1 = 'Feeder slave 2: Filling station not connected anymore'
+DCPText.DCPFaultNum = 00538
+
+CASE(539):
+DCPText.DCPLine1 = 'Feeder slave 3: Filling station not connected anymore'
+DCPText.DCPFaultNum = 00539
+
+CASE(540):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00540
+
+CASE(541):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00541
+
+CASE(542):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00542
+
+CASE(543):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00543
+
+CASE(544):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00544
+
+CASE(545):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00545
+
+CASE(546):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00546
+
+CASE(547):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00547
+
+CASE(548):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00548
+
+CASE(549):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00549
+
+CASE(550):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00550
+
+CASE(551):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00551
+
+CASE(552):
+DCPText.DCPLine1 = 'Feeder master: Rivet not separated, Bunker not filled'
+DCPText.DCPFaultNum = 00552
+
+CASE(553):
+DCPText.DCPLine1 = 'Feeder slave1: cetering pins not in alignment position'
+DCPText.DCPFaultNum = 00553
+
+CASE(554):
+DCPText.DCPLine1 = 'Feeder slave2: cetering pins not in alignment position'
+DCPText.DCPFaultNum = 00554
+
+CASE(555):
+DCPText.DCPLine1 = 'Feeder slave3: cetering pins not in alignment position'
+DCPText.DCPFaultNum = 00555
+
+CASE(556):
+DCPText.DCPLine1 = 'Feeder master: cetering pins not in home position'
+DCPText.DCPFaultNum = 00556
+
+CASE(557):
+DCPText.DCPLine1 = 'Feeder slave1: cetering pins not in home position'
+DCPText.DCPFaultNum = 00557
+
+CASE(558):
+DCPText.DCPLine1 = 'Feeder slave2: cetering pins not in home position'
+DCPText.DCPFaultNum = 00558
+
+CASE(559):
+DCPText.DCPLine1 = 'Feeder slave3: cetering pins not in home position'
+DCPText.DCPFaultNum = 00559
+
+CASE(560):
+DCPText.DCPLine1 = 'Feeder master: magazine lock not sealed'
+DCPText.DCPFaultNum = 00560
+
+CASE(561):
+DCPText.DCPLine1 = 'Feeder slave1: magazine lock not sealed'
+DCPText.DCPFaultNum = 00561
+
+CASE(562):
+DCPText.DCPLine1 = 'Feeder slave2: magazine lock not sealed'
+DCPText.DCPFaultNum = 00562
+
+CASE(563):
+DCPText.DCPLine1 = 'Feeder slave3: magazine lock not sealed'
+DCPText.DCPFaultNum = 00563
+
+CASE(564):
+DCPText.DCPLine1 = 'Feeder master: magazine lock not opened'
+DCPText.DCPFaultNum = 00564
+
+CASE(565):
+DCPText.DCPLine1 = 'Feeder slave1: magazine lock not opened'
+DCPText.DCPFaultNum = 00565
+
+CASE(566):
+DCPText.DCPLine1 = 'Feeder slave2: magazine lock not opened'
+DCPText.DCPFaultNum = 00566
+
+CASE(567):
+DCPText.DCPLine1 = 'Feeder slave3: magazine lock not opened'
+DCPText.DCPFaultNum = 00567
+
+CASE(568):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00568
+
+CASE(569):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00569
+
+CASE(570):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00570
+
+CASE(571):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00571
+
+CASE(572):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00572
+
+CASE(573):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00573
+
+CASE(574):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00574
+
+CASE(575):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00575
+
+CASE(576):
+DCPText.DCPLine1 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00576
+
+CASE(577):
+DCPText.DCPLine1 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00577
+
+CASE(578):
+DCPText.DCPLine1 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00578
+
+CASE(579):
+DCPText.DCPLine1 = 'Magazine master: Proximity sensor "rivet in receiver" did not recognize a rivet'
+DCPText.DCPFaultNum = 00579
+
+CASE(580):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00580
+
+CASE(581):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00581
+
+CASE(582):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00582
+
+CASE(583):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00583
+
+CASE(584):
+DCPText.DCPLine1 = 'Feeder master: Magazine slide 2 has not reached position magazine'
+DCPText.DCPFaultNum = 00584
+
+CASE(585):
+DCPText.DCPLine1 = 'Feeder slave 1: Magazine slide 2 has not reached position magazine'
+DCPText.DCPFaultNum = 00585
+
+CASE(586):
+DCPText.DCPLine1 = 'Feeder slave 2: Magazine slide 2 has not reached position magazine'
+DCPText.DCPFaultNum = 00586
+
+CASE(587):
+DCPText.DCPLine1 = 'Feeder slave 3: Magazine slide 2 has not reached position magazine'
+DCPText.DCPFaultNum = 00587
+
+CASE(588):
+DCPText.DCPLine1 = 'Feeder master: Magazine slide 2 has not reached position receiver'
+DCPText.DCPFaultNum = 00588
+
+CASE(589):
+DCPText.DCPLine1 = 'Feeder slave 1: Magazine slide 2 has not reached position receiver'
+DCPText.DCPFaultNum = 00589
+
+CASE(590):
+DCPText.DCPLine1 = 'Feeder slave 2: Magazine slide 2 has not reached position receiver'
+DCPText.DCPFaultNum = 00590
+
+CASE(591):
+DCPText.DCPLine1 = 'Feeder slave 3: Magazine slide 2 has not reached position receiver'
+DCPText.DCPFaultNum = 00591
+
+CASE(592):
+DCPText.DCPLine1 = 'Feeder master: Filling station could not be connected'
+DCPText.DCPFaultNum = 00592
+
+CASE(593):
+DCPText.DCPLine1 = 'Feeder slave 1: Filling station could not be connected'
+DCPText.DCPFaultNum = 00593
+
+CASE(594):
+DCPText.DCPLine1 = 'Feeder slave 2: Filling station could not be connected'
+DCPText.DCPFaultNum = 00594
+
+CASE(595):
+DCPText.DCPLine1 = 'Feeder slave 3: Filling station could not be connected'
+DCPText.DCPFaultNum = 00595
+
+CASE(596):
+DCPText.DCPLine1 = 'Feeder master: Magazine did not reach transition position'
+DCPText.DCPFaultNum = 00596
+
+CASE(597):
+DCPText.DCPLine1 = 'Feeder slave1: Magazine did not reach transition position'
+DCPText.DCPFaultNum = 00597
+
+CASE(598):
+DCPText.DCPLine1 = 'Feeder slave2: Magazine did not reach transition position'
+DCPText.DCPFaultNum = 00598
+
+CASE(599):
+DCPText.DCPLine1 = 'Feeder slave3: Magazine did not reach transition position'
+DCPText.DCPFaultNum = 00599
+
+CASE(600):
+DCPText.DCPLine1 = 'ERC: The battery of the memory module is discharged'
+DCPText.DCPFaultNum = 00600
+
+CASE(601):
+DCPText.DCPLine1 = 'ERC: The battery of the clock on the central CCPU is discharged'
+DCPText.DCPFaultNum = 00601
+
+CASE(602):
+DCPText.DCPLine1 = 'ERC: DIP switch S2 on central CCPU is set'
+DCPText.DCPFaultNum = 00602
+
+CASE(603):
+DCPText.DCPLine1 = 'ERC: IP addresses in memory module (RAM module) and ethernet card not identical'
+DCPText.DCPFaultNum = 00603
+
+CASE(604):
+DCPText.DCPLine1 = 'Feeder master: Rivet filling level too low'
+DCPText.DCPFaultNum = 00604
+
+CASE(605):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet filling level too low'
+DCPText.DCPFaultNum = 00605
+
+CASE(606):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet filling level too low'
+DCPText.DCPFaultNum = 00606
+
+CASE(607):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet filling level too low'
+DCPText.DCPFaultNum = 00607
+
+CASE(608):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00608
+
+CASE(609):
+DCPText.DCPLine1 = 'Feeder master: Fault during rivet separation'
+DCPText.DCPFaultNum = 00609
+
+CASE(610):
+DCPText.DCPLine1 = 'Feeder slave 1: Fault during rivet separation'
+DCPText.DCPFaultNum = 00610
+
+CASE(611):
+DCPText.DCPLine1 = 'Feeder slave 2: Fault during rivet separation'
+DCPText.DCPFaultNum = 00611
+
+CASE(612):
+DCPText.DCPLine1 = 'Feeder slave 3: Fault during rivet separation'
+DCPText.DCPFaultNum = 00612
+
+CASE(613):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00613
+
+CASE(614):
+DCPText.DCPLine1 = 'Feeder master: Maintenance feed tube necessary'
+DCPText.DCPFaultNum = 00614
+
+CASE(615):
+DCPText.DCPLine1 = 'Spindle: Maintenance is necessary'
+DCPText.DCPFaultNum = 00615
+
+CASE(616):
+DCPText.DCPLine1 = 'Spindle: Maintenance die is necessary'
+DCPText.DCPFaultNum = 00616
+
+CASE(617):
+DCPText.DCPLine1 = 'Spindle: Maintenance punch is necessary'
+DCPText.DCPFaultNum = 00617
+
+CASE(618):
+DCPText.DCPLine1 = 'Spindle: Maintenance free counter 1 is necessary'
+DCPText.DCPFaultNum = 00618
+
+CASE(619):
+DCPText.DCPLine1 = 'Process: Tolerance exceeding tolerance curve'
+DCPText.DCPFaultNum = 00619
+
+CASE(620):
+DCPText.DCPLine1 = 'ERC: No physical network connection available (uplink)'
+DCPText.DCPFaultNum = 00620
+
+CASE(621):
+DCPText.DCPLine1 = 'ERC: Time synchronisation via network disturbed - Connection to time server could not be established'
+DCPText.DCPFaultNum = 00621
+
+CASE(622):
+DCPText.DCPLine1 = 'Feeder slave 1: Maintenance feed tube necessary'
+DCPText.DCPFaultNum = 00622
+
+CASE(623):
+DCPText.DCPLine1 = 'Feeder slave 2: Maintenance feed tube necessary'
+DCPText.DCPFaultNum = 00623
+
+CASE(624):
+DCPText.DCPLine1 = 'Feeder slave 3: Maintenance feed tube necessary'
+DCPText.DCPFaultNum = 00624
+
+CASE(625):
+DCPText.DCPLine1 = 'Spindle: Maintenance free counter 2 is necessary'
+DCPText.DCPFaultNum = 00625
+
+CASE(626):
+DCPText.DCPLine1 = 'Spindle: Maintenance free counter 3 is necessary'
+DCPText.DCPFaultNum = 00626
+
+CASE(627):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 spindle is necessary'
+DCPText.DCPFaultNum = 00627
+
+CASE(628):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 die is necessary'
+DCPText.DCPFaultNum = 00628
+
+CASE(629):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 punch is necessary'
+DCPText.DCPFaultNum = 00629
+
+CASE(630):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 free counter 1 is necessary'
+DCPText.DCPFaultNum = 00630
+
+CASE(631):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 free counter 2 is necessary'
+DCPText.DCPFaultNum = 00631
+
+CASE(632):
+DCPText.DCPLine1 = 'Spindle: Maintenance step 2 free counter 3 is necessary'
+DCPText.DCPFaultNum = 00632
+
+CASE(633):
+DCPText.DCPLine1 = 'Feeder master: Maintenance step 2 feed tube is necessary'
+DCPText.DCPFaultNum = 00633
+
+CASE(634):
+DCPText.DCPLine1 = 'Feeder slave 1: Maintenance step 2 feed tube is necessary'
+DCPText.DCPFaultNum = 00634
+
+CASE(635):
+DCPText.DCPLine1 = 'Feeder slave 2: Maintenance step 2 feed tube is necessary'
+DCPText.DCPFaultNum = 00635
+
+CASE(636):
+DCPText.DCPLine1 = 'Feeder slave 3: Maintenance step 2 feed tube is necessary'
+DCPText.DCPFaultNum = 00636
+
+CASE(637):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00637
+
+CASE(638):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00638
+
+CASE(639):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00639
+
+CASE(640):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00640
+
+CASE(641):
+DCPText.DCPLine1 = 'Feeder master: Rivet filling level in spindle magazine too low'
+DCPText.DCPFaultNum = 00641
+FKEY_SEL = 1
+
+CASE(642):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet filling level in spindle magazine too low'
+DCPText.DCPFaultNum = 00642
+
+CASE(643):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet filling level in spindle magazine too low'
+DCPText.DCPFaultNum = 00643
+
+CASE(644):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet filling level in spindle magazine too low'
+DCPText.DCPFaultNum = 00644
+
+CASE(645):
+DCPText.DCPLine1 = 'Feeder master: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00645
+
+CASE(646):
+DCPText.DCPLine1 = 'Feeder slave 1: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00646
+
+CASE(647):
+DCPText.DCPLine1 = 'Feeder slave 2: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00647
+
+CASE(648):
+DCPText.DCPLine1 = 'Feeder slave 3: Rivet jam in oscillating conveyor'
+DCPText.DCPFaultNum = 00648
+
+CASE(649):
+DCPText.DCPLine1 = 'Controller: l^2T notification threshold exceeded'
+DCPText.DCPFaultNum = 00649
+
+CASE(650):
+DCPText.DCPLine1 = 'Controller: Load notification threshold exceeded'
+DCPText.DCPFaultNum = 00650
+
+CASE(651):
+DCPText.DCPLine1 = 'Controller: Following error'
+DCPText.DCPFaultNum = 00651
+
+CASE(652):
+DCPText.DCPLine1 = 'Controller: Missing mains phases'
+DCPText.DCPFaultNum = 00652
+
+CASE(653):
+DCPText.DCPLine1 = 'Controller: Referencing point not set'
+DCPText.DCPFaultNum = 00653
+
+CASE(654):
+DCPText.DCPLine1 = 'Controller: N stop active'
+DCPText.DCPFaultNum = 00654
+
+CASE(655):
+DCPText.DCPLine1 = 'Controller: P stop active'
+DCPText.DCPFaultNum = 00655
+
+CASE(656):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00656
+
+CASE(657):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00657
+
+CASE(658):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00658
+
+CASE(659):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00659
+
+CASE(660):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00660
+
+CASE(661):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00661
+
+CASE(662):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00662
+
+CASE(663):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00663
+
+CASE(664):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00664
+
+CASE(665):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00665
+
+CASE(666):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00666
+
+CASE(667):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00667
+
+CASE(668):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00668
+
+CASE(669):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00669
+
+CASE(670):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00670
+
+CASE(671):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00671
+
+CASE(672):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00672
+
+CASE(673):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00673
+
+CASE(674):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00674
+
+CASE(675):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00675
+
+CASE(676):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00676
+
+CASE(677):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00677
+
+CASE(678):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00678
+
+CASE(679):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00679
+
+CASE(680):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00680
+
+CASE(681):
+DCPText.DCPLine1 = 'Feeder master: Filling station not ready for docking'
+DCPText.DCPFaultNum = 00681
+
+CASE(682):
+DCPText.DCPLine1 = 'Feeder slave 1: Filling station not ready for docking'
+DCPText.DCPFaultNum = 00682
+
+CASE(683):
+DCPText.DCPLine1 = 'Feeder slave 2: Filling station not ready for docking'
+DCPText.DCPFaultNum = 00683
+
+CASE(684):
+DCPText.DCPLine1 = 'Feeder slave 3: Filling station not ready for docking'
+DCPText.DCPFaultNum = 00684
+
+CASE(685):
+DCPText.DCPLine1 = 'Feeder master: Fault at feeder'
+DCPText.DCPFaultNum = 00685
+
+CASE(686):
+DCPText.DCPLine1 = 'Feeder slave 1: Fault at feeder'
+DCPText.DCPFaultNum = 00686
+
+CASE(687):
+DCPText.DCPLine1 = 'Feeder slave 2: Fault at feeder'
+DCPText.DCPFaultNum = 00687
+
+CASE(688):
+DCPText.DCPLine1 = 'Feeder slave 3: Fault at feeder'
+DCPText.DCPFaultNum = 00688
+
+CASE(689):
+DCPText.DCPLine1 = 'Feeder master: Fault at filling station'
+DCPText.DCPFaultNum = 00689
+
+CASE(690):
+DCPText.DCPLine1 = 'Feeder slave 1: Fault at filling station'
+DCPText.DCPFaultNum = 00690
+
+CASE(691):
+DCPText.DCPLine1 = 'Feeder slave 2: Fault at filling station'
+DCPText.DCPFaultNum = 00691
+
+CASE(692):
+DCPText.DCPLine1 = 'Feeder slave 3: Fault at filling station'
+DCPText.DCPFaultNum = 00692
+
+CASE(693):
+DCPText.DCPLine1 = 'Process: JIC-spidle assigned dVall-average-value out of tolerance threshold'
+DCPText.DCPFaultNum = 00693
+
+CASE(694):
+DCPText.DCPLine1 = 'Die changer: Station not closed'
+DCPText.DCPFaultNum = 00694
+
+CASE(695):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00695
+
+CASE(696):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00696
+
+CASE(697):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00697
+
+CASE(698):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00698
+
+CASE(699):
+DCPText.DCPLine1 = ''
+DCPText.DCPFaultNum = 00699
+
+CASE(700):
+DCPText.DCPLine1 = 'Feeder master: Filling station does not reach basic position'
+DCPText.DCPFaultNum = 00700
+	
+
+	else:
+	DCPText.DCPLine1 = 'Undefined SPR DCP Fault Message'
+	
+ENDSELECT
+
+CNV_INT_STR(DCPText.DCPFaultNum,4,10,strDCPNum)
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,strDCPNum,STATUS)
+
+END G_DCP_SPR1_2
+
+--Begin Prog
+BEGIN
+
+ 
+ 
+END DCP_TUCKER_2

@@ -1,0 +1,1165 @@
+-- MI04_SSW_ROUT_new.KL (decompiled v3)
+PROGRAM MI04_SSW_ROUT
+%COMMENT = 'MI04 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0b : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  io_23 : ARRAY[512] OF INTEGER
+  I_BNSTYPE : INTEGER
+  I_MI01_DI : INTEGER
+  I_MI04_DO : INTEGER
+  I_DO_ASCII_0_BIT0 : INTEGER
+  I_PROCESSTIM : INTEGER
+  ERRORONESHOT : INTEGER
+  I_MI01_GO : INTEGER
+  I_TD_TYPE : INTEGER
+  AR_I_MI04_TD_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_TD_DO : ARRAY[64] OF INTEGER
+  I_MI04_SW_DI : INTEGER
+  I_MI04_SW_DO : INTEGER
+  ERRORONE : ARRAY[64] OF INTEGER
+  I_PRO_TIME : INTEGER
+  I_RESET_FLOW_DELAY : INTEGER
+  B_VALVEOPENSTARTED : INTEGER
+  I_MI01_DO : INTEGER
+  I_DO_ACKNOWLEDGE : INTEGER
+  I_WATEROK : INTEGER
+  I_RESET_TIME : INTEGER
+  B_TD_CHK : INTEGER
+  B_BLINK_CHK : INTEGER
+  I_BLINK_DI : INTEGER
+  I_STATUS : INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  B_FLOWCHK : INTEGER
+  I_VALVEDELAY : INTEGER
+  I_MI04_GO : INTEGER
+  I_DO_SPOT_NUM_BIT0 : INTEGER
+  I_DO_MILLING_COMPLETED : INTEGER
+  I_MI04_DI : INTEGER
+  I_DI_MILLING_DEMAND : INTEGER
+  I_DO_COUNTER_RESET : INTEGER
+  I_DI_REQELECCHG : INTEGER
+  B_FRES_SRVO_ALARM : INTEGER
+  AR_I_MI04_FRES_RO_DI : ARRAY[64] OF INTEGER
+  AR_I_MI04_FRES_RO_DO : ARRAY[64] OF INTEGER
+  B_FRES_MOTOR_END : INTEGER
+  B_FRES_HSPD : INTEGER
+  AR_I_MI04_FRES_PD_DO : ARRAY[64] OF INTEGER
+  B_FRES_SWING_MOTOR : INTEGER
+  AR_I_MI04_FRES_PD_DI : ARRAY[64] OF INTEGER
+  B_FRES_SWING_OVLD : INTEGER
+  B_FRES_SWING_COMPENSATOR : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  I_MI04_GI : INTEGER
+  B_MON_04 : BOOLEAN
+  B_SENDBSNUM : BOOLEAN
+  I_ACK_TIME : INTEGER
+  I_FRES_SWING_AUTOEND : INTEGER
+  I_GUNCHANGE : INTEGER
+  I_ROBOTHOLD : INTEGER
+  I_WELDTIMER : INTEGER
+  I_GUNCOUNT : INTEGER
+  I_MON : INTEGER
+  B_FRES_USED : BOOLEAN
+  I_FRES_INSTALL : INTEGER
+  I_FRES_NUMBER : INTEGER
+  I_TD_STEP : INTEGER
+  I_GUANSWELDING : INTEGER
+  I_DT_TYPE : INTEGER
+  B_OLD_DT : BOOLEAN
+  I_ACK_DELAY : INTEGER
+  I_F1_PULSE : INTEGER
+  I_DI_WELD_END : INTEGER
+  I_DI_PREWARNING : INTEGER
+  I_DI_READY : INTEGER
+  I_DI_SPOT_SELECTION_OK : INTEGER
+  I_DO_START : INTEGER
+  I_DO_WITH_CURRENT : INTEGER
+  I_MOTOR_TIME : INTEGER
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE MI04_SENDBSNUM : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+BEGIN
+  IF (UNINIT(I_BNSTYPE)) THEN
+  I_BNSTYPE = 1
+  ENDIF
+  IF ((I_BNSTYPE = 1)) THEN
+  r0_lc2 = 80
+  ELSE
+  r0_lc2 = 64
+  ENDIF
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI01_DI + 129 + r0_lc1 - 1] <> 0)) THEN
+  io_02[I_MI04_DO + I_DO_ASCII_0_BIT0 + r0_lc1 - 1] = 1
+  ELSE
+  io_02[I_MI04_DO + I_DO_ASCII_0_BIT0 + r0_lc1 - 1] = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI04_SENDBSNUM
+
+ROUTINE MI04_RESETTIME : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  ERRORONESHOT = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MI04_RESETTIME
+
+ROUTINE MI04_DIMSGOUT(p0, p1, p2, p3, p4 : INTEGER; p5 : STRING) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+BEGIN
+  PURGE CONDITION[1]
+  -- stmt98 stray 1 | I_MI01_DI + 5 | 153 | 1
+  ENABLE CONDITION[1]
+  ERRORONESHOT = 0
+  IF ((p1 = 1)) THEN
+  r2_lc1 = 1
+  ELSE
+  r2_lc1 = 0
+  ENDIF
+  I_PROCESSTIM = 0
+  REPEAT
+  DELAY 16
+  IF ((I_PROCESSTIM > p2) AND (ERRORONESHOT = 0)) THEN
+  io_13[I_MI01_GO + 6] = p3
+  ERRORONESHOT = 1
+  sv_s = INTTOSTR(38100)
+  sv_s = INTTOSTR(p1)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: p4
+  -- stmt118 stray '' + sv_s + ']=' + sv_s
+  -- stmt118 residue ': Wait DI['
+  ENDIF
+  UNTIL((r2_lc1 = io_01[p0]))
+  io_13[I_MI01_GO + 6] = 0
+  PURGE CONDITION[1]
+  RETURN(0)
+END MI04_DIMSGOUT
+
+ROUTINE MI04_FLOWOK(p0 : INTEGER) : INTEGER
+VAR
+  r3_lc3 : INTEGER
+  r3_lc4 : INTEGER
+  r3_lc5 : INTEGER
+BEGIN
+  IF ((I_TD_TYPE = 2)) THEN
+  r3_lc3 = AR_I_MI04_TD_DI[p0]
+  r3_lc4 = AR_I_MI04_TD_DO[p0]
+  ELSE
+  r3_lc3 = I_MI04_SW_DI
+  r3_lc4 = I_MI04_SW_DO
+  ENDIF
+  IF (UNINIT(ERRORONE[1])) THEN
+  ERRORONE[1] = 1
+  ENDIF
+  IF (UNINIT(ERRORONE[2])) THEN
+  ERRORONE[2] = 1
+  ENDIF
+  IF (UNINIT(ERRORONE[3])) THEN
+  ERRORONE[3] = 1
+  ENDIF
+  IF (UNINIT(I_PRO_TIME)) THEN
+  I_PRO_TIME = 0
+  ENDIF
+  IF (UNINIT(I_RESET_FLOW_DELAY)) THEN
+  I_RESET_FLOW_DELAY = 3000
+  ENDIF
+  IF (UNINIT(B_VALVEOPENSTARTED)) THEN
+  B_VALVEOPENSTARTED = 0
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] = 0) AND (io_23[31] = 0) AND (io_23[32] = 0)) THEN
+  io_02[r3_lc4 + 1] = 0
+  io_02[r3_lc4 + 2] = 1
+  IF ((ERRORONE[1] = 1)) THEN
+  ERRORONE[1] = 0
+  POST_ERR(38100, 'Water valve is closed', 0, 0)
+  ENDIF
+  IF ((ERRORONE[3] = 1)) THEN
+  ERRORONE[3] = 0
+  sv_s = INTTOSTR(r3_lc3 + 2)
+  sv_s = INTTOSTR(1)
+  POST_ERR(38100, 'Flow Check NOK' + ': Wait DI[' + sv_s + ']=' + sv_s, 0, 1)
+  ENDIF
+  io_13[I_MI01_GO + 6] = 10
+  io_02[I_MI01_DO + 44] = 0
+  ENDIF
+  r3_lc5 = 0
+  IF ((io_02[I_MI01_DO + 52] = 0)) THEN
+  IF ((io_01[I_MI01_DI + 5] <> 0) OR (io_0b[1] <> 0) OR (io_0e[153] <> 0) OR (io_02[I_MI04_DO + I_DO_ACKNOWLEDGE] <> 0) AND (io_23[31] = 0)) THEN
+  r3_lc5 = 1
+  ENDIF
+  ENDIF
+  IF ((B_VALVEOPENSTARTED <> 0)) THEN
+  IF ((io_01[I_MI01_DI + 5] = 1) AND (io_02[r3_lc4 + 1] = 0) AND (io_02[r3_lc4 + 2] = 1)) THEN
+  r3_lc5 = 1
+  ENDIF
+  ENDIF
+  IF ((r3_lc5 <> 0)) THEN
+  io_02[r3_lc4 + 1] = 1
+  io_02[r3_lc4 + 2] = 0
+  io_13[I_MI01_GO + 6] = 0
+  I_WATEROK = 0
+  I_PRO_TIME = 0
+  IF ((ERRORONE[2] = 1)) THEN
+  io_23[32] = 1
+  ERRORONE[2] = 0
+  POST_ERR(38100, 'Water valve is opened', 0, 0)
+  ENDIF
+  I_RESET_TIME = 0
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[r3_lc3 + 2] = 1) OR (I_RESET_TIME > I_RESET_FLOW_DELAY))
+  IF ((I_RESET_TIME > I_RESET_FLOW_DELAY)) THEN
+  POST_ERR(38100, 'Cannot detect FLOW OK', 0, 0)
+  io_02[r3_lc4 + 1] = 0
+  io_02[r3_lc4 + 2] = 1
+  io_13[I_MI01_GO + 6] = 10
+  io_02[I_MI01_DO + 44] = 0
+  ENDIF
+  ERRORONE[2] = 1
+  IF (UNINIT(I_WATEROK)) THEN
+  I_WATEROK = 0
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] <> 0)) THEN
+  IF ((I_WATEROK <= I_RESET_FLOW_DELAY)) THEN
+  ELSE
+  I_WATEROK = 0
+  io_02[I_MI01_DO + 44] = 1
+  ENDIF
+  ENDIF
+  IF ((io_01[r3_lc3 + 2] = 0) AND (io_23[32] <> 0) AND (I_PRO_TIME <= I_RESET_FLOW_DELAY)) THEN
+  ENDIF
+  IF ((I_PRO_TIME > I_RESET_FLOW_DELAY)) THEN
+  I_PRO_TIME = 0
+  io_23[32] = 0
+  ERRORONE[1] = 1
+  IF ((io_02[I_MI04_DO + I_DO_ACKNOWLEDGE] = 0)) THEN
+  ERRORONE[2] = 1
+  ENDIF
+  ERRORONE[3] = 1
+  ENDIF
+  RETURN(0)
+END MI04_FLOWOK
+
+ROUTINE MI04_TIPDRES(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_TD_DO[p0] + 6] = 1
+  B_TD_CHK = 1
+  B_BLINK_CHK = 1
+  I_BLINK_DI = AR_I_MI04_TD_DI[p0] + 4
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk')
+  -- stmt11 stray sv_i
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  -- stmt12 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 1, 1000, 1, 'Wait blink')
+  -- stmt13 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 0, 1000, 1, 'Wait blink')
+  -- stmt14 stray sv_i
+  sv_i = DIMSGOUT(I_BLINK_DI, 1, 1000, 1, 'Wait blink')
+  CASE(2):
+  io_02[AR_I_MI04_TD_DO[p0] + 6] = 0
+  B_BLINK_CHK = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI04_TIPDRES
+
+ROUTINE CAPCHANGEPRE(p0 : INTEGER; p1 : REAL) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+BEGIN
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 7] = 0)) THEN
+  r5_lc2 = 1
+  LST_ERROR_f00[r5_lc2] = 'SSW'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'NO CAP'
+  LST_ERROR_f38[r5_lc2] = 'NO upper electrode cap of spring clip'
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, AR_I_MI04_TD_DI[p0] + 7, 1, 3000, 2)
+  r5_lc1 = sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 8] = 0)) THEN
+  r5_lc2 = 2
+  LST_ERROR_f00[r5_lc2] = 'SSW'
+  LST_ERROR_f10[r5_lc2] = 0
+  LST_ERROR_f14[r5_lc2] = 'NO CAP'
+  LST_ERROR_f38[r5_lc2] = 'NO lower electrode cap of spring clip'
+  sv_i = WAIT_SIGNAL(r5_lc2, 1, AR_I_MI04_TD_DI[p0] + 8, 1, 3000, 2)
+  r5_lc1 = sv_i
+  ENDIF
+  io_02[AR_I_MI04_TD_DO[p0] + 4] = 1
+  sv_i = round(p1 * 1000)
+  DELAY sv_i
+  io_02[AR_I_MI04_TD_DO[p0] + 4] = 0
+  RETURN(0)
+END CAPCHANGEPRE
+
+ROUTINE CONTROLMOTOR(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  CASE(2):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END CONTROLMOTOR
+
+ROUTINE CHECKCAPVAL(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r7_lc1 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  REPEAT
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 5] <> 0)) THEN
+  r7_lc1 = 1
+  ELSE
+  r7_lc1 = 0
+  ENDIF
+  DELAY 8
+  UNTIL((r7_lc1 = 1) OR (I_PROCESSTIM > 3000))
+  CASE(2):
+  -- stmt111 residue 3000
+  REPEAT
+  IF ((io_01[AR_I_MI04_TD_DI[p0] + 5] = 0)) THEN
+  r7_lc1 = 0
+  ELSE
+  r7_lc1 = 1
+  ENDIF
+  DELAY 8
+  UNTIL((r7_lc1 = 0) OR (I_PROCESSTIM > 3000))
+  ELSE:
+  -- stmt122 residue 3000
+  ENDSELECT
+  SET_INT_REG(p2, r7_lc1, I_STATUS)
+  RETURN(0)
+END CHECKCAPVAL
+
+ROUTINE CHECKCAPUNIT(p0, p1, p2 : INTEGER) : INTEGER
+VAR
+  r8_lc2 : INTEGER
+  r8_lc3 : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  sv_i = CHECKCAPVAL(p0, p1, p2)
+  -- stmt146 stray sv_i
+  IF ((I_PROCESSTIM > 3000)) THEN
+  ENDIF
+  REPEAT
+  io_13[I_MI01_GO + 6] = 157
+  r8_lc2 = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, 'Last process NOK', 'YES: Re-teach position and continue.\nNO: Retry process.', 3)
+  r8_lc2 = sv_i
+  -- stmt155 residue 'YES: Re-teach position and continue.\\nNO: Retry process.'
+  DELAY 64
+  UNTIL((r8_lc2 <> 0))
+  SELECT r8_lc2 OF
+  CASE(3):
+  I_PROCESSTIM = 0
+  sv_i = CHECKCAPVAL(p0, p1, p2)
+  -- stmt166 stray sv_i
+  IF ((I_PROCESSTIM > 3000)) THEN
+  r8_lc3 = 0
+  ELSE
+  r8_lc3 = 1
+  ENDIF
+  CASE(4):
+  SET_INT_REG(p2, (0 - 1), I_STATUS)
+  r8_lc3 = 1
+  ELSE:
+  ENDSELECT
+  UNTIL((r8_lc3 = 1))
+  io_13[I_MI01_GO + 6] = 0
+  RETURN(0)
+END CHECKCAPUNIT
+
+ROUTINE VALVECONTROL(p0, p1 : INTEGER) : INTEGER
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+  r9_lc3 : INTEGER
+  r9_lc4 : INTEGER
+BEGIN
+  IF ((I_TD_TYPE = 2)) THEN
+  r9_lc3 = AR_I_MI04_TD_DI[p0]
+  r9_lc4 = AR_I_MI04_TD_DO[p0]
+  ELSE
+  r9_lc3 = I_MI04_SW_DI
+  r9_lc4 = I_MI04_SW_DO
+  ENDIF
+  SELECT p1 OF
+  CASE(1):
+  SET_VAR(1, 'MI04_SSW_MON', 'i_tipdressno', p0, I_STATUS)
+  IF ((io_01[r9_lc3 + 2] <> 0)) THEN
+  io_02[r9_lc4 + 1] = 1
+  io_02[r9_lc4 + 2] = 0
+  io_23[31] = 0
+  B_FLOWCHK = 1
+  ELSE
+  io_02[r9_lc4 + 2] = 1
+  io_02[r9_lc4 + 1] = 0
+  DELAY 100
+  io_02[r9_lc4 + 1] = 1
+  io_02[r9_lc4 + 2] = 0
+  DELAY I_VALVEDELAY
+  io_23[31] = 0
+  B_FLOWCHK = 1
+  ENDIF
+  B_VALVEOPENSTARTED = 1
+  CASE(2):
+  io_02[r9_lc4 + 2] = 1
+  io_02[r9_lc4 + 1] = 0
+  B_FLOWCHK = 0
+  B_VALVEOPENSTARTED = 0
+  io_23[31] = 1
+  IF ((io_01[r9_lc3 + 2] <> 0)) THEN
+  r9_lc2 = 5
+  LST_ERROR_f00[r9_lc2] = 'SSW'
+  LST_ERROR_f10[r9_lc2] = 0
+  LST_ERROR_f14[r9_lc2] = 'Discharge Error'
+  LST_ERROR_f38[r9_lc2] = 'Discharge is NOT OFF'
+  sv_i = WAIT_SIGNAL(r9_lc2, 1, r9_lc3 + 2, 0, 5000, 2)
+  r9_lc1 = sv_i
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END VALVECONTROL
+
+ROUTINE SWIMMOTION(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  IF ((io_01[I_MI04_SW_DI + 3] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 3, 1, 3000, 1, 'TD Breaker OFF')
+  -- stmt6 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 4] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 4, 1, 3000, 1, 'Swim Breaker OFF')
+  -- stmt16 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 10] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 10, 1, 3000, 1, 'SP21VR OFF')
+  -- stmt26 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 8] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 8, 1, 3000, 1, 'SE21R OFF')
+  -- stmt36 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 1
+  IF ((io_01[I_MI04_SW_DI + 11] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 11, 1, 3000, 1, 'Contactor OFF')
+  -- stmt48 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 9] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 9, 1, 3000, 1, 'SP21RV OFF')
+  -- stmt59 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 7] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 7, 1, 3000, 1, 'SE21V OFF')
+  -- stmt69 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 0
+  IF ((io_01[I_MI04_SW_DI + 11] <> 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 11, 0, 3000, 1, 'Contactor ON')
+  -- stmt81 stray sv_i
+  ENDIF
+  DELAY 2000
+  io_02[I_MI04_SW_DO + 3] = 1
+  IF ((io_01[I_MI04_SW_DI + 12] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 12, 1, 3000, 1, 'Contactor OFF')
+  -- stmt95 stray sv_i
+  ENDIF
+  B_BLINK_CHK = 1
+  I_BLINK_DI = I_MI04_SW_DI + 5
+  sv_i = RUN_MONITOR('MI04_ssw_chk')
+  CASE(2):
+  io_02[I_MI04_SW_DO + 4] = 1
+  B_BLINK_CHK = 0
+  IF ((io_01[I_MI04_SW_DI + 10] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 10, 1, 3000, 1, 'SP21VR OFF')
+  -- stmt120 stray sv_i
+  ENDIF
+  IF ((io_01[I_MI04_SW_DI + 8] = 0)) THEN
+  sv_i = DIMSGOUT(I_MI04_SW_DI + 8, 1, 3000, 1, 'SE21R OFF')
+  -- stmt130 stray sv_i
+  ENDIF
+  io_02[I_MI04_SW_DO + 4] = 0
+  io_02[I_MI04_SW_DO + 3] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END SWIMMOTION
+
+ROUTINE TS_CHECKWEAR(p0, p1 : INTEGER) : INTEGER
+VAR
+  r11_lc1 : INTEGER
+  r11_lc10 : REAL
+  r11_lc11 : INTEGER
+  r11_lc12 : INTEGER
+  r11_lc13 : INTEGER
+  r11_lc14 : INTEGER
+  r11_lc15 : REAL
+  r11_lc16 : INTEGER
+  r11_lc17 : INTEGER
+  r11_lc2 : INTEGER
+  r11_lc3 : INTEGER
+  r11_lc4 : INTEGER
+  r11_lc5 : REAL
+  r11_lc6 : REAL
+  r11_lc7 : REAL
+  r11_lc8 : REAL
+  r11_lc9 : REAL
+BEGIN
+  IF ((p0 = 2)) THEN
+  SET_INT_REG(31, 0, I_STATUS)
+  ENDIF
+  SELECT p0 OF
+  CASE(1):
+  CASE(1):
+  GET_VAR(1, '*SYSTEM*', '$SGGUN1.$SETUP.$WRDWN_TIP', r11_lc1, I_STATUS)
+  GET_VAR(1, '*SYSTEM*', '$SGGUN1.$SETUP.$WRDWN_RBT', r11_lc2, I_STATUS)
+  r11_lc7 = r11_lc1 + r11_lc2
+  r11_lc5 = r11_lc7
+  SET_REAL_REG(33, r11_lc7, I_STATUS)
+  CASE(2):
+  GET_VAR(1, '*SYSTEM*', '$SGGUN2.$SETUP.$WRDWN_TIP', r11_lc3, I_STATUS)
+  GET_VAR(1, '*SYSTEM*', '$SGGUN2.$SETUP.$WRDWN_RBT', r11_lc4, I_STATUS)
+  r11_lc9 = r11_lc3 + r11_lc4
+  r11_lc5 = r11_lc9
+  SET_REAL_REG(35, r11_lc9, I_STATUS)
+  ELSE:
+  ENDSELECT
+  IF ((r11_lc5 > 3)) THEN
+  r11_lc12 = 0
+  POST_ERR(38100, 'Caps Not Changed', 0, 1)
+  ENDIF
+  REPEAT
+  IF ((io_01[I_MI01_DI + 5] <> 0) OR (io_0b[1] <> 0) OR (io_0e[153] <> 0)) THEN
+  r11_lc12 = 1
+  ENDIF
+  DELAY 100
+  UNTIL((r11_lc12 <> 0))
+  io_23[11] = 1
+  SELECT sv_i OF
+  CASE(2):
+  GET_REG(37, (r11_lc13 <> 0), r11_lc14, r11_lc15, I_STATUS)
+  -- 弃参原式: r11_lc13
+  IF ((r11_lc13 <> 0)) THEN
+  sv_i = round(r11_lc15)
+  r11_lc11 = sv_i
+  ELSE
+  r11_lc11 = r11_lc14
+  ENDIF
+  CASE(1):
+  GET_REG(33, (r11_lc13 <> 0), r11_lc14, r11_lc15, I_STATUS)
+  -- 弃参原式: r11_lc13
+  IF ((r11_lc13 <> 0)) THEN
+  r11_lc6 = r11_lc15
+  ELSE
+  r11_lc6 = r11_lc14 * 1
+  ENDIF
+  IF ((r11_lc11 = 0)) THEN
+  SET_REAL_REG(32, r11_lc6, I_STATUS)
+  ENDIF
+  GET_VAR(1, '*SYSTEM*', '$SGGUN1.$SETUP.$WRDWN_TIP', r11_lc1, I_STATUS)
+  GET_VAR(1, '*SYSTEM*', '$SGGUN1.$SETUP.$WRDWN_RBT', r11_lc2, I_STATUS)
+  r11_lc7 = r11_lc1 + r11_lc2
+  r11_lc5 = r11_lc7
+  r11_lc10 = r11_lc7 - r11_lc6
+  SET_REAL_REG(33, r11_lc7, I_STATUS)
+  SET_REAL_REG(36, r11_lc10, I_STATUS)
+  CASE(2):
+  GET_REG(35, (r11_lc13 <> 0), r11_lc14, r11_lc15, I_STATUS)
+  -- 弃参原式: r11_lc13
+  IF ((r11_lc13 <> 0)) THEN
+  r11_lc8 = r11_lc15
+  ELSE
+  r11_lc8 = r11_lc14 * 1
+  ENDIF
+  IF ((r11_lc11 = 0)) THEN
+  SET_REAL_REG(34, r11_lc8, I_STATUS)
+  ENDIF
+  GET_VAR(1, '*SYSTEM*', '$SGGUN2.$SETUP.$WRDWN_TIP', r11_lc3, I_STATUS)
+  GET_VAR(1, '*SYSTEM*', '$SGGUN2.$SETUP.$WRDWN_RBT', r11_lc4, I_STATUS)
+  r11_lc9 = r11_lc3 + r11_lc4
+  r11_lc5 = r11_lc9
+  r11_lc10 = r11_lc9 - r11_lc8
+  SET_REAL_REG(35, r11_lc9, I_STATUS)
+  SET_REAL_REG(36, r11_lc10, I_STATUS)
+  ELSE:
+  ENDSELECT
+  IF ((io_23[33] = 0)) THEN
+  IF ((r11_lc10 < 0.1)) THEN
+  IF ((r11_lc11 >= 3) OR (r11_lc10 > 1)) THEN
+  r11_lc12 = 0
+  io_13[I_MI01_GO + 6] = 14
+  POST_ERR(38100, 'TipWear Out Of Range', 0, 1)
+  ENDIF
+  REPEAT
+  IF ((io_01[I_MI01_DI + 5] <> 0) OR (io_0b[1] <> 0) OR (io_0e[153] <> 0)) THEN
+  r11_lc12 = 1
+  ENDIF
+  DELAY 100
+  UNTIL((r11_lc12 <> 0))
+  CALL_PROG('MI04_TD_POP', 1)
+  GET_VAR(1, 'MI04_TD_POP', 'r_num', r11_lc16, I_STATUS)
+  GET_REG(r11_lc16, (r11_lc13 <> 0), r11_lc14, r11_lc15, I_STATUS)
+  -- 弃参原式: r11_lc13
+  IF ((r11_lc13 <> 0)) THEN
+  sv_i = round(r11_lc15)
+  r11_lc17 = sv_i
+  ELSE
+  r11_lc17 = r11_lc14
+  ENDIF
+  IF ((r11_lc17 = 1)) THEN
+  SET_INT_REG(31, 1, I_STATUS)
+  ELSE
+  SET_INT_REG(31, 0, I_STATUS)
+  ENDIF
+  io_13[I_MI01_GO + 6] = 0
+  SET_INT_REG(31, 1, I_STATUS)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END TS_CHECKWEAR
+
+ROUTINE TS_RESET_TD(p0, p1 : INTEGER) : INTEGER
+VAR
+  r12_lc1 : INTEGER
+  r12_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(0):
+  CASE(1):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0] = 1
+  CASE(2):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0 + 1] = 1
+  ELSE:
+  ENDSELECT
+  SELECT p0 OF
+  CASE(1):
+  -- stmt86 residue 1000
+  DELAY 200
+  IF ((io_01[I_MI04_DI + I_DI_MILLING_DEMAND] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 15
+  r12_lc2 = 17
+  LST_ERROR_f00[r12_lc2] = 'SSW'
+  LST_ERROR_f10[r12_lc2] = 0
+  LST_ERROR_f14[r12_lc2] = 'TD Rsq Nof off'
+  LST_ERROR_f38[r12_lc2] = 'TipDress Request Not Off'
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_MILLING_DEMAND, 0, 3000, 2)
+  r12_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI04_DO + I_DO_MILLING_COMPLETED] = 0
+  CASE(2):
+  -- stmt104 residue 1000
+  IF ((io_01[I_MI04_DI + I_DI_MILLING_DEMAND] = 0) OR (io_01[I_MI04_DI + I_DI_REQELECCHG] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 16
+  r12_lc2 = 18
+  LST_ERROR_f00[r12_lc2] = 'SSW'
+  LST_ERROR_f10[r12_lc2] = 0
+  LST_ERROR_f14[r12_lc2] = 'TC REQ Not Off'
+  LST_ERROR_f38[r12_lc2] = 'TipChg Request Not Off'
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_MILLING_DEMAND, 1, 3000, 2)
+  r12_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r12_lc2, 1, I_MI04_DI + I_DI_REQELECCHG, 0, 3000, 2)
+  r12_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  DELAY 500
+  io_02[I_MI04_DO + I_DO_COUNTER_RESET] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_RESET_TD
+
+ROUTINE TS_RESET_TD_BOSCH(p0, p1 : INTEGER) : INTEGER
+VAR
+  r13_lc1 : INTEGER
+  r13_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(0):
+  CASE(1):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0] = 1
+  CASE(2):
+  io_13[I_MI04_GO + 1] = 0
+  io_13[I_MI04_GO + 1 + 1] = 0
+  io_02[I_MI04_DO + I_DO_SPOT_NUM_BIT0 + 1] = 1
+  ELSE:
+  ENDSELECT
+  SELECT p0 OF
+  CASE(1):
+  -- stmt159 residue 2000
+  DELAY 200
+  IF ((io_01[I_MI04_DI + 24] = 0) OR (io_01[I_MI04_DI + 23] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 15
+  r13_lc2 = 17
+  LST_ERROR_f00[r13_lc2] = 'SSW'
+  LST_ERROR_f10[r13_lc2] = 0
+  LST_ERROR_f14[r13_lc2] = 'ACK Tip Dress'
+  LST_ERROR_f38[r13_lc2] = 'Wait for ACK TD'
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 24, 1, 3000, 2)
+  r13_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 23, 0, 3000, 2)
+  r13_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[I_MI04_DO + 24] = 0
+  CASE(2):
+  -- stmt179 residue 2000
+  IF ((io_01[I_MI04_DI + 20] = 0) OR (io_01[I_MI04_DI + 18] <> 0)) THEN
+  io_13[I_MI01_GO + 6] = 16
+  r13_lc2 = 18
+  LST_ERROR_f00[r13_lc2] = 'SSW'
+  LST_ERROR_f10[r13_lc2] = 0
+  LST_ERROR_f14[r13_lc2] = 'ACK Tip Change'
+  LST_ERROR_f38[r13_lc2] = 'Wait for ACK TipChg'
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 20, 1, 3000, 2)
+  r13_lc1 = sv_i
+  sv_i = WAIT_SIGNAL(r13_lc2, 1, I_MI04_DI + 18, 0, 3000, 2)
+  r13_lc1 = sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  DELAY 500
+  io_02[I_MI04_DO + 20] = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_RESET_TD_BOSCH
+
+ROUTINE TS_TWD_RET(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SET_INT_REG(5, p1, I_STATUS)
+  SELECT p0 OF
+  CASE(1):
+  CALL_PROG('TWRSFX', 1)
+  CASE(2):
+  CALL_PROG('TWRSMV', 1)
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END TS_TWD_RET
+
+ROUTINE FRES_CHECK_BOX(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  B_FRES_SRVO_ALARM = 1
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  CASE(2):
+  B_FRES_SRVO_ALARM = 0
+  ELSE:
+  ENDSELECT
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 1] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 1, 1, 3000, 160, 1, 'MagHighFault')
+  -- stmt6 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 2] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 2, 1, 3000, 159, 1, 'MagLowFault')
+  -- stmt11 stray sv_i
+  ENDIF
+  RETURN(0)
+END FRES_CHECK_BOX
+
+ROUTINE FRES_REMOVE_CAP(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 1
+  CASE(2):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 0
+  ELSE:
+  ENDSELECT
+  DELAY 2000
+  B_FRES_MOTOR_END = 1
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_fres_autoend', p2, I_STATUS)
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_processt', 0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  -- stmt50 stray sv_i
+  RETURN(0)
+END FRES_REMOVE_CAP
+
+ROUTINE FRES_MOTOR_HIGHSPEED(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 1
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 13] = 1
+  B_FRES_HSPD = 1
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  -- stmt76 stray sv_i
+  IF ((io_01[AR_I_MI04_FRES_RO_DI[p0] + 7] = 0)) THEN
+  I_PROCESSTIM = 0
+  ENDIF
+  REPEAT
+  DELAY 32
+  UNTIL((io_01[AR_I_MI04_FRES_RO_DI[p0] + 7] = 1) OR (I_PROCESSTIM > 3000))
+  -- stmt83 residue 3000
+  IF ((I_PROCESSTIM > 3000)) THEN
+  io_13[I_MI01_GO + 6] = 150
+  sv_s = INTTOSTR(AR_I_MI04_FRES_RO_DI[p0] + 7)
+  POST_ERR(38100, 'TD Motor OFF' + ': Wait DI[' + sv_s + ']=1', 0, 0)
+  -- stmt89 residue 1000
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_RO_DI[p0] + 7, 1, 3000, 150, 1, 'TD Motor OFF')
+  -- stmt90 stray sv_i
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  CASE(2):
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 10] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 11] = 0
+  io_02[AR_I_MI04_FRES_RO_DO[p0] + 13] = 0
+  B_FRES_HSPD = 0
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END FRES_MOTOR_HIGHSPEED
+
+ROUTINE FRES_CHECKCAPVAL(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r18_lc1 : INTEGER
+  r18_lc2 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  r18_lc2 = AR_I_MI04_FRES_RO_DI[p0] + 5
+  CASE(2):
+  r18_lc2 = AR_I_MI04_FRES_RO_DI[p0] + 6
+  ELSE:
+  ENDSELECT
+  SELECT p2 OF
+  CASE(1):
+  REPEAT
+  IF ((io_01[r18_lc2] <> 0)) THEN
+  r18_lc1 = 1
+  ELSE
+  r18_lc1 = 0
+  ENDIF
+  DELAY 8
+  UNTIL((r18_lc1 = 1) OR (I_PROCESSTIM > 3000))
+  CASE(2):
+  -- stmt138 residue 3000
+  REPEAT
+  IF ((io_01[r18_lc2] = 0)) THEN
+  r18_lc1 = 0
+  ELSE
+  r18_lc1 = 1
+  ENDIF
+  DELAY 8
+  UNTIL((r18_lc1 = 0) OR (I_PROCESSTIM > 3000))
+  ELSE:
+  -- stmt148 residue 3000
+  ENDSELECT
+  SET_INT_REG(p3, r18_lc1, I_STATUS)
+  RETURN(0)
+END FRES_CHECKCAPVAL
+
+ROUTINE FRES_CHECK_CAP(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r19_lc1 : INTEGER
+  r19_lc2 : INTEGER
+BEGIN
+  I_PROCESSTIM = 0
+  sv_i = FRES_CHECKCAPVAL(p0, p1, p2, p3)
+  -- stmt171 stray sv_i
+  IF ((I_PROCESSTIM > 3000)) THEN
+  ENDIF
+  REPEAT
+  IF ((p2 = 1)) THEN
+  io_13[I_MI01_GO + 6] = 158
+  ELSE
+  io_13[I_MI01_GO + 6] = 157
+  ENDIF
+  r19_lc1 = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, 'Last process NOK', 'YES: Re-teach position and continue.\nNO: Retry process.', 3)
+  r19_lc1 = sv_i
+  -- stmt184 residue 'YES: Re-teach position and continue.\\nNO: Retry process.'
+  DELAY 64
+  UNTIL((r19_lc1 <> 0))
+  SELECT r19_lc1 OF
+  CASE(3):
+  I_PROCESSTIM = 0
+  sv_i = FRES_CHECKCAPVAL(p0, p1, p2, p3)
+  -- stmt195 stray sv_i
+  IF ((I_PROCESSTIM > 3000)) THEN
+  r19_lc2 = 0
+  ELSE
+  r19_lc2 = 1
+  ENDIF
+  CASE(4):
+  SET_INT_REG(p3, (0 - 1), I_STATUS)
+  r19_lc2 = 1
+  ELSE:
+  ENDSELECT
+  UNTIL((r19_lc2 = 1))
+  io_13[I_MI01_GO + 6] = 0
+  RETURN(0)
+END FRES_CHECK_CAP
+
+ROUTINE FRES_SWING_MOTOLCTRL(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(1):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 1
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 1
+  B_FRES_SWING_MOTOR = 1
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_processt', 0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  -- stmt229 stray sv_i
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 3] = 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 3, 1, 3000, 150, 1, 'TD Motor OFF')
+  -- stmt233 stray sv_i
+  ENDIF
+  CASE(2):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 0
+  B_FRES_SWING_MOTOR = 0
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 3] <> 0)) THEN
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 3, 0, 3000, 151, 1, 'TD Motor ON')
+  -- stmt243 stray sv_i
+  ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END FRES_SWING_MOTOLCTRL
+
+ROUTINE FRES_SWING_CONTROL(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  IF ((p1 = 3)) THEN
+  B_FRES_SWING_OVLD = 1
+  SET_VAR(1, 'MI04_ssw_chk2', 'i_tipdressno', p0, I_STATUS)
+  sv_i = RUN_MONITOR('MI04_ssw_chk2')
+  -- stmt6 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 9] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 13] = 0
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 0
+  SELECT p1 OF
+  CASE(3):
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt19 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt20 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 1
+  DELAY p2
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 6] = 0) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 5] = 1)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 6, 0, 3000, 155, 1, 'Dump Not Adv')
+  -- stmt28 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 5, 1, 3000, 155, 1, 'Dump Not Adv')
+  -- stmt29 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 11] = 0
+  IF ((B_FRES_SWING_COMPENSATOR <> 0)) THEN
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 1
+  DELAY 3000
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 0) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 1)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 0, 3000, 153, 1, 'CylinderNotFW')
+  -- stmt38 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 1, 3000, 153, 1, 'CylinderNotFW')
+  -- stmt39 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt44 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt45 stray sv_i
+  ENDIF
+  ENDIF
+  CASE(4):
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 14] = 0
+  DELAY p2
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt55 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt56 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 1
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 8] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 7] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 8, 1, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt63 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 7, 0, 3000, 154, 1, 'CylinderNotBW')
+  -- stmt64 stray sv_i
+  ENDIF
+  IF ((io_01[AR_I_MI04_FRES_PD_DI[p0] + 6] = 1) AND (io_01[AR_I_MI04_FRES_PD_DI[p0] + 5] = 0)) THEN
+  ELSE
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 6, 1, 3000, 156, 1, 'Dump Not Ret')
+  -- stmt69 stray sv_i
+  sv_i = MI04_DIMSGOUT(AR_I_MI04_FRES_PD_DI[p0] + 5, 0, 3000, 156, 1, 'Dump Not Ret')
+  -- stmt70 stray sv_i
+  ENDIF
+  io_02[AR_I_MI04_FRES_PD_DO[p0] + 12] = 0
+  ELSE:
+  ENDSELECT
+  IF ((p1 = 4)) THEN
+  B_FRES_SWING_OVLD = 0
+  ENDIF
+  RETURN(0)
+END FRES_SWING_CONTROL
+
+BEGIN
+  STOP
+  -- SIGEVENT[未解] arg=0
+  -- stmt77 stray 0 * 0 DIV 0 + NOT (NOT (0 - 0 - (0 = 0))) | 808335616
+END MI04_SSW_ROUT
+

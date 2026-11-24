@@ -1,0 +1,17 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+
+TYPE
+    xyz_sock_t FROM xyz_sock = STRUCTURE
+        type_        : STRING[1]        -- S on server, C on client
+        connected_   : BOOLEAN
+        status_      : INTEGER
+        tag_idx_     : INTEGER
+        tag_str_     : STRING[3]
+        port_        : INTEGER
+        host_        : STRING[30]
+    ENDSTRUCTURE

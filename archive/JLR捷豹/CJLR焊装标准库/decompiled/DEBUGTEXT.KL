@@ -1,0 +1,369 @@
+-- DEBUGTEXT.KL (decompiled v3)
+PROGRAM DEBUGTEXT
+%COMMENT = 'Version 1.3'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	REVISION = STRUCTURE
+	MAJOR: INTEGER
+	MINOR: INTEGER
+	ENDSTRUCTURE
+VAR
+  io_23 : ARRAY[512] OF INTEGER
+  DEBUGTXTVER : REVISION
+  ENTRY : INTEGER
+  CLOCKREAD : INTEGER
+  STATUS : INTEGER
+  LASTTIME : INTEGER
+  DIFFTIME : INTEGER
+  PARAMTYP : INTEGER
+  INTDEBUGTEXT : INTEGER
+  PARAMREAL : REAL
+  PARAMSTRING : STRING[64]
+  INTPROGNUM : INTEGER
+  INTCOLLNUM : INTEGER
+  INTTYPENUM : INTEGER
+  STRPROGNUM : STRING[64]
+  INTAREAINREQ : INTEGER
+  REALDUMMY : REAL
+  STRAREAINREQ : STRING[64]
+  INTAREAOUTRL : INTEGER
+  STRAREAOUTRL : STRING[64]
+  INTTOOLREQ : INTEGER
+  STRTOOLREQ : STRING[64]
+  INTJOBDONE : INTEGER
+  STRJOBDONE : STRING[64]
+  INTCOLREQ : INTEGER
+  STRCOLREQ : STRING[64]
+  INTCOLREL : INTEGER
+  STRCOLREL : STRING[64]
+  PARAMNO : INTEGER
+  PARAMINT : INTEGER
+  STRAREANUM : STRING[3]
+  STRDEBUGTEXT : STRING[82]
+  CURRENTTIME : INTEGER
+  DEBUGTXTVER_f00 : INTEGER
+  DEBUGTXTVER_f04 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE DEBUGTXT_VER : INTEGER
+BEGIN
+  GET_VAR(ENTRY, '*SYSTEM*', '$FAST_CLOCK', CLOCKREAD, STATUS)
+  IF ((io_23[10] = 0)) THEN
+  FORCE_SPMENU(1, 37, 1)
+  LASTTIME = CLOCKREAD
+  ELSE
+  IF (UNINIT(LASTTIME)) THEN
+  LASTTIME = CLOCKREAD
+  ENDIF
+  DIFFTIME = CLOCKREAD - LASTTIME
+  IF ((DIFFTIME > 600000)) THEN
+  io_23[10] = 0
+  ENDIF
+  ENDIF
+  GET_TPE_PRM(1, PARAMTYP, INTDEBUGTEXT, PARAMREAL, PARAMSTRING, STATUS)
+  IF ((PARAMTYP <> 1) OR (STATUS <> 0)) THEN
+  WRITE('Invalid Call to Debug Text Program on Robot!', CR, 'Check argument 1 is an integer!')
+  ENDIF
+  GET_PORT_VAL(18, 1, INTPROGNUM, STATUS)
+  GET_PORT_VAL(18, 1, INTCOLLNUM, STATUS)
+  GET_PORT_VAL(18, 1, INTTYPENUM, STATUS)
+  CNV_INT_STR(INTPROGNUM, 3, 3, STRPROGNUM)
+  GET_REG(151, (0 <> 0), INTAREAINREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAINREQ, 3, 3, STRAREAINREQ)
+  GET_REG(152, (0 <> 0), INTAREAOUTRL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTAREAOUTRL, 3, 3, STRAREAOUTRL)
+  GET_REG(153, (0 <> 0), INTTOOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTTOOLREQ, 3, 3, STRTOOLREQ)
+  GET_REG(154, (0 <> 0), INTJOBDONE, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTJOBDONE, 3, 3, STRJOBDONE)
+  GET_REG(156, (0 <> 0), INTCOLREQ, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREQ, 3, 3, STRCOLREQ)
+  GET_REG(157, (0 <> 0), INTCOLREL, REALDUMMY, STATUS)
+  -- 弃参原式: 0
+  CNV_INT_STR(INTCOLREL, 3, 3, STRCOLREL)
+  SELECT INTDEBUGTEXT OF
+  CASE(0):
+  CASE(1):
+  WRITE('System Initialised', CR, 'Waiting for Robot in Auto')
+  CASE(2):
+  WRITE('Waiting for DI[16]=OFF', CR, 'Prog Strobe Off')
+  CASE(3):
+  WRITE('Waiting for DI[16]=on', CR, 'Prog Strobe On')
+  CASE(4):
+  WRITE('Waiting GI[1:Prog No.] = 1-127', CR, 'Current Prog No. = ', INTPROGNUM)
+  CASE(5):
+  WRITE('Waiting GI[1:Prog No.] = 0', CR, 'Current Prog No. = ', INTPROGNUM)
+  CASE(6):
+  WRITE('Waiting GI[3:Type No.] = 1-255', CR, 'Curretn Type No. = ', INTTYPENUM)
+  CASE(7):
+  WRITE('Waiting PLC End Cycle', CR, 'In program INITRS')
+  CASE(8):
+  WRITE('')
+  CASE(9):
+  WRITE('Waiting Robot to Stop Moving', CR, 'DO[15;No Motion]=ON')
+  CASE(10):
+  WRITE('')
+  CASE(11):
+  WRITE('Waiting Entry Area 1, DI[17] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(12):
+  WRITE('Waiting Entry Area 2, DI[18] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(13):
+  WRITE('Waiting Entry Area 3, DI[19] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(14):
+  WRITE('Waiting Entry Area 4, DI[20] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(15):
+  WRITE('Waiting Entry Area 5, DI[21] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(16):
+  WRITE('Waiting Entry Area 6, DI[22] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(17):
+  WRITE('Waiting Entry Area 7, DI[23] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(18):
+  WRITE('Waiting Entry Area 8, DI[24] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(19):
+  WRITE('')
+  CASE(20):
+  WRITE('')
+  CASE(21):
+  WRITE('Waiting Entry into Area 1', CR, 'DI[17;Area Ready 1] = ON')
+  CASE(22):
+  WRITE('Waiting Entry into Area 2', CR, 'DI[18;Area Ready 2] = ON')
+  CASE(23):
+  WRITE('Waiting Entry into Area 3', CR, 'DI[19;Area Ready 3] = ON')
+  CASE(24):
+  WRITE('Waiting Entry into Area 4', CR, 'DI[20;Area Ready 4] = ON')
+  CASE(25):
+  WRITE('Waiting Entry into Area 5', CR, 'DI[21;Area Ready 5] = ON')
+  CASE(26):
+  WRITE('Waiting Entry into Area 6', CR, 'DI[22;Area Ready 6] = ON')
+  CASE(27):
+  WRITE('Waiting Entry into Area 7', CR, 'DI[23;Area Ready 7] = ON')
+  CASE(28):
+  WRITE('Waiting Entry into Area 8', CR, 'DI[24;Area Ready 8] = ON')
+  CASE(29):
+  WRITE('')
+  CASE(30):
+  WRITE('')
+  CASE(31):
+  WRITE('Waiting Tool Request 1', CR, 'DI[33:Tool 1 Ready]')
+  CASE(32):
+  WRITE('Waiting Tool Request 2', CR, 'DI[34:Tool 1 Ready]')
+  CASE(33):
+  WRITE('Waiting Tool Request 3', CR, 'DI[35:Tool 1 Ready]')
+  CASE(34):
+  WRITE('Waiting Tool Request 4', CR, 'DI[36:Tool 1 Ready]')
+  CASE(35):
+  WRITE('Waiting Tool Request 5', CR, 'DI[37:Tool 1 Ready]')
+  CASE(36):
+  WRITE('Waiting Tool Request 6', CR, 'DI[38:Tool 1 Ready]')
+  CASE(37):
+  WRITE('Waiting Tool Request 7', CR, 'DI[39:Tool 1 Ready]')
+  CASE(38):
+  WRITE('Waiting Tool Request 8', CR, 'DI[40:Tool 1 Ready]')
+  CASE(39):
+  WRITE('')
+  CASE(40):
+  WRITE('')
+  CASE(41):
+  WRITE('Collision Zone Release', CR, 'Wait GI[2:Coll No.] = ', INTCOLREQ, ' and', CR, 'DI[31:Col Zone Clr] = On')
+  CASE(42):
+  WRITE('Collision Zone Release', CR, 'Wait GI[2:Coll No.] = ', INTCOLREQ, ' and', CR, 'DI[32:Col Zone Set] = On')
+  CASE(43):
+  WRITE('Collision Zone Release', CR, 'Wait DI[32:Coll Zone Set.] = Off')
+  CASE(44):
+  WRITE('Collision Zone Release', CR, 'Wait DI[31:Coll Zone Clr.] = Off')
+  CASE(45):
+  WRITE('Collision Zone Request', CR, 'Wait GI[2:Coll No.] =', INTCOLREQ, ' and', CR, 'DI[31;Coll Zone Clr = On')
+  CASE(46):
+  WRITE('Collision Zone Request', CR, 'Waiting for Col Zone - ', INTCOLREQ)
+  CASE(47):
+  WRITE('Collision Zone Request', CR, 'Wait DI[31;Coll Zone Clr] = Off')
+  CASE(48):
+  WRITE('Collision Zone Request', CR, 'Wait DI[32;Coll Zone Set] = Off')
+  CASE(49):
+  WRITE('')
+  CASE(50):
+  WRITE('')
+  CASE(51):
+  WRITE('Collision Zone Home', CR, 'Waiting DO[8:At Home Pos] = On', CR, 'Robot Not At Home')
+  CASE(52):
+  WRITE('Collision Zone Home', CR, 'Waiting DI[31;Col Zone Clr] = Off')
+  CASE(53):
+  WRITE('Collision Zone Home', CR, 'Waiting DI[32:Col Zone Set] = Off')
+  CASE(54):
+  WRITE('Collision Zone Home', CR, 'Waiting GI[2:Coll Zone No.] = 63 and', CR, 'DI[31:Coll Zone Clear] = On')
+  CASE(55):
+  WRITE('Collision Zone Home', CR, 'Waiting GI[2:Coll Zone No.] = 0 and', CR, 'DI[31:Coll Zone Clear] = Off')
+  CASE(100):
+  WRITE('No Water Flow to Electrodes', CR, 'Robot waiting for DI[922] = ON', CR, 'When DI[922] = On Robot will Continue')
+  CASE(101):
+  WRITE('Waiting Entry Area 9, DI[161] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(102):
+  WRITE('Waiting Entry Area 10, DI[162] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(103):
+  WRITE('Waiting Entry Area 11, DI[163] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(104):
+  WRITE('Waiting Entry Area 12, DI[164] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(105):
+  WRITE('Waiting Entry Area 13, DI[165] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(106):
+  WRITE('Waiting Entry Area 14, DI[166] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(107):
+  WRITE('Waiting Entry Area 15, DI[167] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(108):
+  WRITE('Waiting Entry Area 16, DI[168] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(109):
+  WRITE('')
+  CASE(110):
+  WRITE('')
+  CASE(111):
+  WRITE('Waiting Entry into Area 9', CR, 'DI[161:Area Ready 9] = ON')
+  CASE(112):
+  WRITE('Waiting Entry into Area 10', CR, 'DI[162:Area Ready 10] = ON')
+  CASE(113):
+  WRITE('Waiting Entry into Area 11', CR, 'DI[163:Area Ready 11] = ON')
+  CASE(114):
+  WRITE('Waiting Entry into Area 12', CR, 'DI[164:Area Ready 12] = ON')
+  CASE(115):
+  WRITE('Waiting Entry into Area 13', CR, 'DI[165:Area Ready 13] = ON')
+  CASE(116):
+  WRITE('Waiting Entry into Area 14', CR, 'DI[166:Area Ready 14] = ON')
+  CASE(117):
+  WRITE('Waiting Entry into Area 15', CR, 'DI[167:Area Ready 15] = ON')
+  CASE(118):
+  WRITE('Waiting Entry into Area 16', CR, 'DI[168:Area Ready 16] = ON')
+  CASE(119):
+  WRITE('')
+  CASE(120):
+  WRITE('')
+  CASE(131):
+  WRITE('Waiting Entry Area 17, DI[193] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(132):
+  WRITE('Waiting Entry Area 18, DI[194] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(133):
+  WRITE('Waiting Entry Area 19, DI[195] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(134):
+  WRITE('Waiting Entry Area 20, DI[196] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(135):
+  WRITE('Waiting Entry Area 21, DI[197] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(136):
+  WRITE('Waiting Entry Area 22, DI[198] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(137):
+  WRITE('Waiting Entry Area 23, DI[199] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(138):
+  WRITE('Waiting Entry Area 24, DI[200] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(139):
+  WRITE('')
+  CASE(140):
+  WRITE('')
+  CASE(141):
+  WRITE('Waiting Entry into Area 17', CR, 'DI[193:Area Ready 17] = ON')
+  CASE(142):
+  WRITE('Waiting Entry into Area 18', CR, 'DI[194:Area Ready 18] = ON')
+  CASE(143):
+  WRITE('Waiting Entry into Area 19', CR, 'DI[195:Area Ready 19] = ON')
+  CASE(144):
+  WRITE('Waiting Entry into Area 20', CR, 'DI[196:Area Ready 20] = ON')
+  CASE(145):
+  WRITE('Waiting Entry into Area 21', CR, 'DI[197:Area Ready 21] = ON')
+  CASE(146):
+  WRITE('Waiting Entry into Area 22', CR, 'DI[198:Area Ready 22] = ON')
+  CASE(147):
+  WRITE('Waiting Entry into Area 23', CR, 'DI[199:Area Ready 23] = ON')
+  CASE(148):
+  WRITE('Waiting Entry into Area 24', CR, 'DI[200:Area Ready 24] = ON')
+  CASE(149):
+  WRITE('')
+  CASE(150):
+  WRITE('')
+  CASE(151):
+  WRITE('Waiting Entry Area 25, DI[225] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(152):
+  WRITE('Waiting Entry Area 26, DI[226] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(153):
+  WRITE('Waiting Entry Area 27, DI[227] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(154):
+  WRITE('Waiting Entry Area 28, DI[228] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(155):
+  WRITE('Waiting Entry Area 29, DI[229] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(156):
+  WRITE('Waiting Entry Area 30, DI[230] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(157):
+  WRITE('Waiting Entry Area 31, DI[231] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(158):
+  WRITE('Waiting Entry Area 32, DI[232] = On', CR, 'or Return to Home DI[13] = On')
+  CASE(159):
+  WRITE('')
+  CASE(160):
+  WRITE('')
+  CASE(161):
+  WRITE('Waiting Entry into Area 25', CR, 'DI[225:Area Ready 25] = ON')
+  CASE(162):
+  WRITE('Waiting Entry into Area 26', CR, 'DI[226:Area Ready 26] = ON')
+  CASE(163):
+  WRITE('Waiting Entry into Area 27', CR, 'DI[227:Area Ready 27] = ON')
+  CASE(164):
+  WRITE('Waiting Entry into Area 28', CR, 'DI[228:Area Ready 28] = ON')
+  CASE(165):
+  WRITE('Waiting Entry into Area 29', CR, 'DI[229:Area Ready 29] = ON')
+  CASE(166):
+  WRITE('Waiting Entry into Area 30', CR, 'DI[230:Area Ready 30] = ON')
+  CASE(167):
+  WRITE('Waiting Entry into Area 31', CR, 'DI[231:Area Ready 31] = ON')
+  CASE(168):
+  WRITE('Waiting Entry into Area 32', CR, 'DI[232:Area Ready 32] = ON')
+  CASE(169):
+  WRITE('')
+  CASE(160):
+  WRITE('')
+  CASE(121):
+  WRITE('Start Signal Response', CR, 'Process Active not ON')
+  CASE(122):
+  WRITE('Start Signal Response', CR, 'Process OK not OFF')
+  CASE(123):
+  WRITE('Waiting Start Toogle OFF', CR, 'DI[2319:TogStart] = OFF')
+  CASE(124):
+  WRITE('Waiting Start Toogle ON', CR, 'DI[2319:TogStart] = ON')
+  CASE(125):
+  WRITE('Waiting Stop Toogle OFF', CR, 'DI[2320:TogStop] = OFF')
+  CASE(126):
+  WRITE('Waiting Stop Toogle ON', CR, 'DI[2320:TogStop] =  ON')
+  CASE(127):
+  WRITE('Waiting Spray Finished ON', CR, 'DI[2329:SprayRdy] = ON')
+  ELSE:
+  ENDSELECT
+  sv_s = chr(128)
+  WRITE(sv_s)
+  sv_s = chr(128)
+  WRITE(sv_s)
+  RETURN(0)
+END DEBUGTXT_VER
+
+BEGIN
+  DEBUGTXTVER_f00 = 1
+  DEBUGTXTVER_f04 = 0
+  -- stmt37 stray DEBUGTXTVER
+END DEBUGTEXT
+

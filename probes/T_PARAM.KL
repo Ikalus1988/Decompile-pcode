@@ -1,0 +1,54 @@
+PROGRAM T_PARAM
+%COMMENT = 'param slot probe'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+  TREC_A FROM T_PARAM = STRUCTURE
+    fa : INTEGER
+    fb : INTEGER
+    fc : INTEGER
+    fs : STRING[16]
+  ENDSTRUCTURE
+  TREC_B FROM T_PARAM = STRUCTURE
+    ga : INTEGER
+    gb : INTEGER
+  ENDSTRUCTURE
+VAR
+  gv : INTEGER
+
+ROUTINE r_one(a : TREC_A)
+BEGIN
+  a.fa = 1
+  a.fb = 2
+  a.fc = 3
+  a.fs = 'one'
+END r_one
+
+ROUTINE r_two(a : TREC_A; s : STRING)
+BEGIN
+  a.fa = STR_LEN(s)
+  a.fb = 4
+  a.fc = 5
+END r_two
+
+ROUTINE r_three(a : TREC_A; b : TREC_B; s : STRING)
+BEGIN
+  a.fa = 7
+  b.ga = 8
+  b.gb = STR_LEN(s)
+END r_three
+
+ROUTINE r_mix(i : INTEGER; s : STRING; r : REAL) : INTEGER
+BEGIN
+  gv = i
+  IF (r > 1.0) THEN
+    RETURN(STR_LEN(s))
+  ENDIF
+  RETURN(0)
+END r_mix
+
+BEGIN
+  gv = 0
+END T_PARAM

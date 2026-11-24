@@ -1,0 +1,824 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: Shu Liang <shu.liang@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+--
+-- xyz_bkgd
+--
+-- brief: xyz_background,
+--
+--------------------------------------------------------------------------------
+PROGRAM xyz_bkgd
+
+%STACKSIZE = 5000
+%COMMENT = 'backgroud'
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+
+
+
+VAR
+    sock_fd      : FILE
+    gOutData     : xyz_data_t
+    gInData      : xyz_data_t
+    
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+%INCLUDE include\xyz_bkgd_h
+
+
+BEGIN
+    xyzBkgd(sock_fd)
+END xyz_bkgd
+
+
+ROUTINE xyzBkgd
+VAR
+    state_      : INTEGER
+    temp_str    : STRING[10]
+    xsock       : xyz_sock_t
+    comm_state  : INTEGER
+    comm_error  : INTEGER
+    CMD         : INTEGER
+    err_code    : INTEGER
+    real_NA     : REAL
+    hb_interval : INTEGER
+    last_t      : INTEGER
+    new_t       : INTEGER
+    delta_t   : INTEGER
+BEGIN
+    log_info('------')
+	log_info('[BKGD] Version is ' + KAREL_VER)
+    FLG[F_BKGD_COMM] = OFF
+    -- init socket
+    state_ = sock_ctor(xsock, 2, 'C')
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] init sock failed')
+        GOTO EXIT_ON_ERR
+    ENDIF
+    
+    -- set socket recv timeout is 10s
+    sock_set_rt(sock_fd, 10000)
+
+    -- socket connection
+    state_ = sock_conn(xsock, sock_fd)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] sock connect failed')
+    	SET_INT_REG(REG_NO_CONN, 0, state_)
+	    IF (state_ <> 0) THEN
+	        log_error('[BKGD] fail to set state code')
+	    ENDIF
+        GOTO EXIT_ON_ERR
+    ENDIF
+
+	log_info('[BKGD] connection success')
+    SET_INT_REG(REG_NO_CONN, 1, state_)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to set state code')
+        GOTO EXIT_ON_ERR
+    ENDIF
+
+    GET_REG(REG_NO_HB, FALSE, hb_interval, real_NA, state_)
+    IF (state_<>0) THEN
+        log_error('[BKGD] fail to get heart_beat interval')
+        GOTO EXIT_ON_ERR
+    ENDIF
+
+    GET_TIME(last_t)
+
+    WHILE TRUE DO
+        -- wait for tpe to trigger socket communication
+
+        GET_TIME(new_t)
+        delta_t = new_t - last_t
+        -- delta_t in second
+        delta_t = delta_t * 2
+        IF (delta_t > hb_interval) THEN
+            GET_TIME(last_t)
+            state_ = xyzHeartBeat(xsock)
+            IF (state_ <> 0) THEN
+                GOTO EXIT_ON_ERR
+            ENDIF
+        ENDIF
+
+        IF (FLG[F_BKGD_COMM] = ON) THEN
+
+            CMD = GetCMD
+
+            state_ = PackAndSend
+            IF (state_ <> 0) THEN
+        		GOTO EXIT_ON_ERR
+            ENDIF
+
+            SELECT CMD OF
+                CASE(CMD_SW_TA, CMD_SW_TOOL, CMD_C_VISCMD, CMD_SW_ITEM,
+                CMD_RESET_TA, CMD_S_JOINTS, CMD_S_EXT_J, CMD_S_C_POSE,
+                CMD_R_PICPLA, CMD_U_T_POSE):
+                    state_ = ParseErrCode(xsock)
+                CASE(CMD_R_G_POSE, CMD_R_O_POSE):
+                    state_ = ParseInt(xsock)
+                CASE(CMD_G_O_POSE, CMD_C_O_POSE):
+                    state_ = ParsePose(xsock)
+                CASE(CMD_G_G_POSE, CMD_C_G_POSE):
+                    state_ = ParsePipe(xsock)
+                CASE(CMD_U_OBJ_IH):
+                    state_ = ParseIhPose(xsock)
+                CASE(CMD_G_PICIN, CMD_G_PICOUT, CMD_G_PLAIN, CMD_G_PLAOUT):
+                    state_ = ParseTraj(xsock)
+                CASE(CMD_CUS_REQ):
+                    state_ = ParseCustom(xsock)
+                ELSE:
+                    CNV_INT_STR(CMD, 1, 10, temp_str)
+                    log_error('[BKGD] invalid command id: ' + temp_str)
+                    GOTO EXIT_ON_ERR
+            ENDSELECT
+            IF (state_ <> 0) THEN
+        		log_error('[BKGD] fail to recv and parse messages')
+        		GOTO EXIT_ON_ERR
+            ENDIF
+        ENDIF
+
+        DELAY 10
+
+    ENDWHILE
+
+EXIT_ON_ERR::
+    log_error('[BKGD] close connect')
+    sock_close(xsock, sock_fd)
+    DELAY 200
+
+END xyzBkgd
+
+
+ROUTINE WaitComm
+VAR
+    ctr  : INTEGER
+    hb_dur : INTEGER
+    max_ctr : INTEGER
+
+BEGIN
+    ctr = 0
+    hb_dur = hb_sec
+    IF hb_sec < 10 THEN
+        hb_dur = 600
+    ENDIF
+
+    --------------------------------
+    -- Deprecated
+    -- May have bug in Delay statement
+    --------------------------------
+
+    -- unit: 10 ms
+    max_ctr = hb_dur * 100
+
+    WHILE TRUE DO
+        IF (FLG[F_BKGD_COMM] = OFF) THEN
+            DELAY 10
+            ctr = ctr + 1
+            IF (ctr > max_ctr) THEN
+                log_info('[BKGD] sending heartbeat signal to server')
+                ctr = 0
+                RETURN(1)
+            ENDIF
+        ELSE
+            RETURN(0)
+        ENDIF
+    ENDWHILE
+END WaitComm
+
+
+ROUTINE GetCMD
+VAR
+	CMD : INTEGER
+BEGIN
+	CNV_STR_INT(gOutData.data_array_[1], CMD)
+	RETURN(CMD)
+END GetCMD
+
+
+ROUTINE ResetOutData
+BEGIN
+    pkt_ctor_dat(gOutData)
+END ResetOutData
+
+
+ROUTINE AddInttoArr
+VAR
+    temp_str  : STRING[10]
+BEGIN
+    IF (gOutData.data_num_ + 1 > MAX_DTAY_LEN) THEN
+        log_error('[BKGD] fail to add int, data array is full')
+        RETURN(1)
+    ENDIF
+    CNV_INT_STR(out_num, 1, 10, temp_str)
+    gOutData.data_array_[gOutData.data_num_ + 1] = temp_str
+    gOutData.data_num_ = gOutData.data_num_ + 1   
+    RETURN(0)
+END AddInttoArr
+
+
+ROUTINE AddRealtoArr
+VAR
+    temp_str  : STRING[10]
+BEGIN
+    IF (gOutData.data_num_ + 1 > MAX_DTAY_LEN) THEN
+        log_error('[BKGD] fail to add real, data array is full')
+        RETURN(1)
+    ENDIF
+    CNV_REAL_STR(out_num, 1, 4, temp_str)
+    gOutData.data_array_[gOutData.data_num_ + 1] = temp_str
+    gOutData.data_num_ = gOutData.data_num_ + 1   
+    RETURN(0)
+END AddRealtoArr
+
+
+ROUTINE AddArrtoArr
+VAR
+    i    : INTEGER
+    ret  : INTEGER
+BEGIN
+    FOR i = 1 TO ARRAY_LEN(out_array) DO
+        ret = AddRealtoArr(out_array[i])
+        IF ret <> 0 THEN
+            log_error_a('[BKGD] fail to add the ith real num to array', i)
+            RETURN(ret)
+        ENDIF
+    ENDFOR
+    RETURN(0)
+END AddArrtoArr
+
+
+ROUTINE AddStrtoArr
+BEGIN
+    IF (gOutData.data_num_ + 1 > MAX_DTAY_LEN) THEN
+        log_error('[BKGD] fail to add string, data array is full')
+        RETURN(1)
+    ENDIF
+    gOutData.data_array_[gOutData.data_num_ + 1] = out_string
+    gOutData.data_num_ = gOutData.data_num_ + 1
+    RETURN(0)
+END AddStrtoArr
+
+
+ROUTINE AddJPostoArr
+VAR
+	joints : ARRAY[6] OF REAL
+	state_ : INTEGER
+BEGIN
+    CNV_JPOS_REL(joint_pose, joints, state_)
+    -- convert Fanuc joints to real joints
+    joints[3] = joints[3] + joints[2]
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to convert jointpos')
+    ENDIF
+    state_ = AddArrtoArr(joints)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to add joint pose')
+    ENDIF
+    RETURN(0)
+END AddJPostoArr
+
+
+ROUTINE AddCPostoArr
+VAR
+	pose   : ARRAY[7] OF REAL
+	state_ : INTEGER
+BEGIN
+    pose[1] = cart_pose.x
+    pose[2] = cart_pose.y
+    pose[3] = cart_pose.z
+    pose[4] = cart_pose.w
+    pose[5] = cart_pose.p
+    pose[6] = cart_pose.r
+    pose[7] = 0
+    state_ = AddArrtoArr(pose)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to add cart pose')
+    ENDIF
+    RETURN(0)
+END AddCPostoArr
+
+
+ROUTINE AddExtJtoArr
+VAR
+	joints     : ARRAY[9] OF REAL
+	state_     : INTEGER
+	out_joints : ARRAY[6] OF REAL
+BEGIN
+    CNV_JPOS_REL(joint_pose, joints, state_)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to convert jointpos')
+    ENDIF
+    out_joints[1] = joints[7]
+    out_joints[2] = joints[8]
+    out_joints[3] = joints[9]
+    out_joints[4] = 0
+    out_joints[5] = 0
+    out_joints[6] = 0
+    state_ = AddArrtoArr(out_joints)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] fail to add external joints')
+    ENDIF
+    RETURN(0)
+END AddExtJtoArr
+
+
+ROUTINE RecvAndParse
+VAR 
+    state_     : INTEGER
+    s_state_   : INTEGER
+    temp_data  : xyz_msg_t
+BEGIN
+    state_ = 0
+    pkt_ctor_msg(temp_data)
+    pkt_ctor_dat(gInData)
+    s_state_ = pkt_recv_ut(temp_data, xsock, sock_fd)
+    IF (s_state_ <> 0) THEN
+        log_error('[BKGD] recv msg failed')
+        SET_INT_REG(REG_NO_CONN, 0, state_)
+        IF (state_ <> 0) THEN
+            log_error('[BKGD] failed to set state code')
+        ENDIF
+        RETURN(s_state_)
+    ENDIF
+    state_ = pkt_cnv_mtd(temp_data, gInData)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] cnv msg to data failed')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[1], err_code)
+    RETURN(0)
+END RecvAndParse
+
+
+ROUTINE PackAndSend
+VAR 
+    i            : INTEGER
+    state_       : INTEGER
+    s_state_     : INTEGER
+    packed_data  : STRING[254]
+    tem_len      : INTEGER
+BEGIN
+    packed_data = ''
+    tem_len = 0
+    state_ = 0
+    -- pack ret string
+    FOR i = 1 TO gOutData.data_num_ DO
+        packed_data = packed_data + gOutData.data_array_[i] + DELIMITER
+        tem_len = STR_LEN(packed_data)
+        IF tem_len >= 200 THEN
+           s_state_ = sock_send(sock_fd, packed_data) 
+           IF (s_state_ <> 0) THEN
+                log_error('[BKGD] send reply to ipc failed')
+                SET_INT_REG(REG_NO_CONN, 0, state_)
+                IF (state_ <> 0) THEN
+                    log_error('[BKGD] failed to set state code')
+                ENDIF
+                RETURN(s_state_)
+            ENDIF
+            packed_data = ''
+            tem_len = 0
+        ENDIF
+    ENDFOR
+    packed_data = packed_data + TERMINATOR
+    -- send reply to ipc
+    s_state_ = sock_send(sock_fd, packed_data)
+    IF (s_state_ <> 0) THEN
+        log_error('[BKGD] send reply to ipc failed')
+        SET_INT_REG(REG_NO_CONN, 0, state_)
+        IF (state_ <> 0) THEN
+            log_error('[BKGD] failed to set state code')
+        ENDIF
+        RETURN(s_state_)
+    ENDIF
+    RETURN(0)
+END PackAndSend
+
+
+ROUTINE xyzHeartBeat
+VAR
+	err_code : INTEGER
+	state_   : INTEGER
+    packed_data : STRING[20]
+BEGIN
+
+    packed_data = '500' + DELIMITER + TERMINATOR
+    state_ = sock_send(sock_fd, packed_data)
+    IF (state_ <> 0) THEN
+        log_error('[BKGD] send heartbeat failed')
+        SET_INT_REG(REG_NO_CONN, 0, state_)
+        IF (state_ <> 0) THEN
+            log_error('[BKGD] failed to set state code')
+        ENDIF
+        RETURN(state_)
+    ENDIF
+    
+    state_ = RecvAndParse(xsock, err_code)
+    RETURN(state_)
+END xyzHeartBeat
+
+
+ROUTINE ParseErrCode
+VAR 
+    err_code  :  INTEGER
+    state_    :  INTEGER
+BEGIN
+    err_code = NO_ERR
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+END ParseErrCode
+
+
+ROUTINE ParseInt
+VAR 
+    err_code  :  INTEGER
+    state_    :  INTEGER
+    int_      :  INTEGER
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[2], int_)
+    SET_INT_REG(REG_NO_INT, int_, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to parse token')
+        RETURN(state_)
+    ENDIF
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+END ParseInt
+
+
+ROUTINE ParsePose
+VAR 
+    err_code   :  INTEGER
+    state_     :  INTEGER
+    cart_pose  :  XYZWPR
+    tmp_pose   :  XYZWPREXT
+    pose_type  :  INTEGER
+    pose_num   :  INTEGER
+    idx        :  INTEGER
+    int_temp   :  INTEGER
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_REAL(gInData.data_array_[2], cart_pose.x)
+    CNV_STR_REAL(gInData.data_array_[3], cart_pose.y)
+    CNV_STR_REAL(gInData.data_array_[4], cart_pose.z)
+    CNV_STR_REAL(gInData.data_array_[5], cart_pose.w)
+    CNV_STR_REAL(gInData.data_array_[6], cart_pose.p)
+    CNV_STR_REAL(gInData.data_array_[7], cart_pose.r)
+    tmp_pose = GET_POS_REG(PREG_IN_CPOS, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get obj pose cfg')
+        RETURN(state_)
+    ENDIF
+    cart_pose.config_data = tmp_pose.config_data
+    SET_POS_REG(PREG_IN_CPOS, cart_pose, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get obj pose')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[9], pose_num)
+    SET_INT_REG(REG_NO_POSE, pose_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get obj pose num')
+        RETURN(state_)
+    ENDIF
+    -- object name
+    SET_STR_REG(SREG_OBJ_NM, gInData.data_array_[10], state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get obj name')
+        RETURN(state_)
+    ENDIF
+    -- integer values
+    FOR idx = 1 TO 6 DO
+        CNV_STR_INT(gInData.data_array_[10 + idx], int_temp)
+        SET_INT_REG(REG_NO_INT1 + idx - 1, int_temp, state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to get obj int vals')
+            RETURN(state_)
+        ENDIF
+    ENDFOR
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+END ParsePose
+
+ROUTINE ParsePipe
+VAR 
+    err_code   :  INTEGER
+    state_     :  INTEGER
+    cart_pose  :  XYZWPR
+    tmp_pose   :  XYZWPREXT
+    pipe_num   :  INTEGER
+    reg_num    :  INTEGER
+    pose_num   :  INTEGER
+    idx        :  INTEGER
+    int_temp   :  INTEGER
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_REAL(gInData.data_array_[2], cart_pose.x)
+    CNV_STR_REAL(gInData.data_array_[3], cart_pose.y)
+    CNV_STR_REAL(gInData.data_array_[4], cart_pose.z)
+    CNV_STR_REAL(gInData.data_array_[5], cart_pose.w)
+    CNV_STR_REAL(gInData.data_array_[6], cart_pose.p)
+    CNV_STR_REAL(gInData.data_array_[7], cart_pose.r)
+    tmp_pose = GET_POS_REG(PREG_IN_CPOS, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get grasp pose cfg')
+        RETURN(state_)
+    ENDIF
+    cart_pose.config_data = tmp_pose.config_data
+    SET_POS_REG(PREG_IN_CPOS, cart_pose, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get grasp pose')
+        RETURN(state_)
+    ENDIF
+    -- pose num
+    CNV_STR_INT(gInData.data_array_[9], pose_num)
+    SET_INT_REG(REG_NO_POSE, pose_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get grasp pose num')
+        RETURN(state_)
+    ENDIF
+    -- pipeline num
+    CNV_STR_INT(gInData.data_array_[10], pipe_num)
+    SET_INT_REG(REG_NO_PPNM, pipe_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get pipeline_num')
+        RETURN(state_)
+    ENDIF
+    -- register num
+    CNV_STR_INT(gInData.data_array_[11], reg_num)
+    SET_INT_REG(REG_NO_RGNM, reg_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get register_num')
+        RETURN(state_)
+    ENDIF
+    -- integer values
+    FOR idx = 1 TO 6 DO
+        CNV_STR_INT(gInData.data_array_[11 + idx], int_temp)
+        SET_INT_REG(REG_NO_INT1 + idx - 1, int_temp, state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to get grasp_pose int vals')
+            RETURN(state_)
+        ENDIF
+    ENDFOR
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+END ParsePipe
+
+ROUTINE ParseIhPose
+VAR 
+    err_code   :  INTEGER
+    state_     :  INTEGER
+    cart_pose  :  XYZWPR
+    tmp_pose   :  XYZWPREXT
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_REAL(gInData.data_array_[2], cart_pose.x)
+    CNV_STR_REAL(gInData.data_array_[3], cart_pose.y)
+    CNV_STR_REAL(gInData.data_array_[4], cart_pose.z)
+    CNV_STR_REAL(gInData.data_array_[5], cart_pose.w)
+    CNV_STR_REAL(gInData.data_array_[6], cart_pose.p)
+    CNV_STR_REAL(gInData.data_array_[7], cart_pose.r)
+    tmp_pose = GET_POS_REG(PREG_IN_CPOS, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get in-hand obj pose cfg')
+        RETURN(state_)
+    ENDIF
+    cart_pose.config_data = tmp_pose.config_data
+    SET_POS_REG(PREG_IN_CPOS, cart_pose, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get cart pose')
+        RETURN(state_)
+    ENDIF
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+
+END ParseIhPose
+
+ROUTINE ParseTraj
+VAR 
+    err_code    :  INTEGER
+    state_      :  INTEGER
+    pipe_num    :  INTEGER
+    reg_num     :  INTEGER
+    pose_num    :  INTEGER
+    i           :  INTEGER
+    j           :  INTEGER
+    wp_type     :  INTEGER
+    cart_pose   :  XYZWPR
+    joints      :  ARRAY[9] OF REAL
+    joint_pose  :  JOINTPOS
+    tmp_pose    :  XYZWPREXT
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[2], pipe_num)
+    SET_INT_REG(REG_NO_PPNM, pipe_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get pipeline_num')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[3], reg_num)
+    SET_INT_REG(REG_NO_RGNM, reg_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get register_num')
+        RETURN(state_)
+    ENDIF
+    CNV_STR_INT(gInData.data_array_[4], pose_num)
+    SET_INT_REG(REG_NO_POSE, pose_num, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get pose num')
+        RETURN(state_)
+    ENDIF
+    FOR i = 1 TO 9 DO
+    	joints[i] = 0
+    ENDFOR
+    FOR i = 1 TO pose_num DO
+        CNV_STR_INT(gInData.data_array_[7*i-2], wp_type)
+        SET_INT_REG((REG_NO_WP+i-1), wp_type, state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to get wp type')
+            RETURN(state_)
+        ENDIF
+        SELECT wp_type OF
+            CASE(11, 12):
+                FOR j = 1 TO 6 DO
+                    CNV_STR_REAL(gInData.data_array_[7*i-2+j], joints[j])
+                ENDFOR
+                -- convert real joints to fanuc joints
+                joints[3] = joints[3] - joints[2]
+                CNV_REL_JPOS(joints, joint_pose, state_)
+                IF (state_ <> 0) THEN 
+                    log_error('[BKGD] fail to get joint pose')
+                    RETURN(state_)
+                ENDIF
+                SET_JPOS_REG((PREG_IN_POS+i-1), joint_pose, state_)
+                IF (state_ <> 0) THEN 
+                    log_error('[BKGD] fail to get joint pose')
+                    RETURN(state_)
+                ENDIF
+            CASE(21, 22):
+                CNV_STR_REAL(gInData.data_array_[7*i-1], cart_pose.x)
+                CNV_STR_REAL(gInData.data_array_[7*i], cart_pose.y)
+                CNV_STR_REAL(gInData.data_array_[7*i+1], cart_pose.z)
+                CNV_STR_REAL(gInData.data_array_[7*i+2], cart_pose.w)
+                CNV_STR_REAL(gInData.data_array_[7*i+3], cart_pose.p)
+                CNV_STR_REAL(gInData.data_array_[7*i+4], cart_pose.r)
+                tmp_pose = GET_POS_REG(PREG_REF_CFG, state_)
+                IF (state_ <> 0) THEN
+                    log_error('[BKGD] failed to get ref config for PR[4]')
+                    RETURN(state_)
+                ENDIF
+                cart_pose.config_data = tmp_pose.config_data
+                -- cart_pose.config_data.cfg_turn_no1 = 0
+                -- cart_pose.config_data.cfg_turn_no2 = 0
+                -- cart_pose.config_data.cfg_turn_no3 = 0
+                SET_POS_REG((PREG_IN_POS+i-1), cart_pose, state_)    
+                IF (state_ <> 0) THEN 
+                    log_error('[BKGD] fail to get cart pose')
+                    RETURN(state_)
+                ENDIF
+            ELSE:
+                log_error('[BKGD] wrong waypoint type')
+                RETURN(-100)
+        ENDSELECT
+    ENDFOR
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(0)
+END ParseTraj
+
+ROUTINE ParseCustom
+VAR 
+    err_code  :  INTEGER
+    state_    :  INTEGER
+    i         :  INTEGER
+    ints      :  ARRAY[10] OF INTEGER
+    floats    :  ARRAY[10] OF REAL
+    joints    :  ARRAY[6] OF REAL
+    cart_pose :  XYZWPR
+    joint_pose:  JOINTPOS6
+    tmp_pose  :  XYZWPREXT
+BEGIN
+    state_ = RecvAndParse(xsock, err_code)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    SET_INT_REG(REG_NO_ERR, err_code, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get error code')
+        RETURN(state_)
+    ENDIF
+    FOR i = 1 TO 5 DO
+        SET_STR_REG((SREG_OUT_STR+i-1), gInData.data_array_[i+1], state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to parse string')
+            RETURN(state_)
+        ENDIF
+    ENDFOR
+    FOR i = 1 TO 10 DO
+        CNV_STR_INT(gInData.data_array_[i+6], ints[i])
+        SET_INT_REG((REG_OUT_INT+i-1), ints[i], state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to parse int')
+            RETURN(state_)
+        ENDIF
+    ENDFOR
+    FOR i = 1 TO 10 DO
+        CNV_STR_REAL(gInData.data_array_[i+16], floats[i])
+        SET_REAL_REG((REG_OUT_FLT+i-1), floats[i], state_)
+        IF (state_ <> 0) THEN 
+            log_error('[BKGD] fail to parse float')
+            RETURN(state_)
+        ENDIF
+    ENDFOR
+    CNV_STR_REAL(gInData.data_array_[27], cart_pose.x)
+    CNV_STR_REAL(gInData.data_array_[28], cart_pose.y)
+    CNV_STR_REAL(gInData.data_array_[29], cart_pose.z)
+    CNV_STR_REAL(gInData.data_array_[30], cart_pose.w)
+    CNV_STR_REAL(gInData.data_array_[31], cart_pose.p)
+    CNV_STR_REAL(gInData.data_array_[32], cart_pose.r)
+    tmp_pose = GET_POS_REG(PREG_OUT_CRT, state_)
+    cart_pose.config_data = tmp_pose.config_data
+    SET_POS_REG(PREG_OUT_CRT, cart_pose, state_)    
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get cart pose')
+        RETURN(state_)
+    ENDIF
+    FOR i = 1 TO 6 DO
+        CNV_STR_REAL(gInData.data_array_[i+33], joints[i])
+    ENDFOR
+    -- convert real joints to Fanuc joints
+    joints[3] = joints[3] - joints[2]
+    CNV_REL_JPOS(joints, joint_pose, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get joint pose')
+        RETURN(state_)
+    ENDIF
+    SET_JPOS_REG(PREG_OUT_JNT, joint_pose, state_)
+    IF (state_ <> 0) THEN 
+        log_error('[BKGD] fail to get joint pose')
+        RETURN(state_)
+    ENDIF
+    FLG[F_BKGD_COMM] = OFF
+    RETURN(state_)
+END ParseCustom

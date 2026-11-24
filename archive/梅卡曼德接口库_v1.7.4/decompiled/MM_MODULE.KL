@@ -1,0 +1,1971 @@
+-- MM_MODULE.KL (decompiled v3)
+PROGRAM MM_MODULE
+%COMMENT = 'MM_Module'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	RCV_POSE = STRUCTURE
+	POSE: T_POS
+	LABEL: INTEGER
+	SPEED: INTEGER
+	ENDSTRUCTURE
+	RCV_JPS = STRUCTURE
+	JPS: INTEGER
+	LABEL: INTEGER
+	SPEED: INTEGER
+	ENDSTRUCTURE
+	RCVVIS2_POSE = STRUCTURE
+	POSE: T_POS
+	LABEL: INTEGER
+	ENDSTRUCTURE
+	RCVVIZ2_POSE = STRUCTURE
+	POSE: T_POS
+	MOVETYPE: INTEGER
+	TOOLNUM: INTEGER
+	SPEED: INTEGER
+	ISVISPT: INTEGER
+	ENDSTRUCTURE
+	RCVVIZ2_JPS = STRUCTURE
+	JPS: INTEGER
+	MOVETYPE: INTEGER
+	TOOLNUM: INTEGER
+	SPEED: INTEGER
+	ISVISPT: INTEGER
+	ENDSTRUCTURE
+	VIZ_UDATA = STRUCTURE
+	USERDATANUM: INTEGER
+	USRDATA: ARRAY[50] OF REAL
+	ENDSTRUCTURE
+	PLAN_RESULTS = STRUCTURE
+	LABEL: ARRAY[10] OF INTEGER
+	TOTALGRABNUM: INTEGER
+	CURGRABNUM: INTEGER
+	EDGENUM: INTEGER
+	TCPOFFSET: ARRAY[3] OF REAL
+	DIRECTION: INTEGER
+	BOXSIZE: ARRAY[3] OF REAL
+	ENDSTRUCTURE
+VAR
+  v1 : STRING[64]
+  v2 : STRING[64]
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : REAL
+  v8 : STRING[64]
+  v9 : STRING[64]
+  v10 : INTEGER
+  v11 : STRING[64]
+  v12 : INTEGER
+  v13 : STRING[64]
+  v14 : STRING[64]
+  v15 : INTEGER
+  v16 : INTEGER
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : INTEGER
+  v21 : INTEGER
+  v22 : JOINTPOS
+  v23 : INTEGER
+  v24 : ARRAY[64] OF REAL
+  v25 : INTEGER
+  v26 : FILE
+  v27 : POSITION
+  v28 : FILE
+  v29 : INTEGER
+  v30 : INTEGER
+  v31 : INTEGER
+  v32 : INTEGER
+  v33 : INTEGER
+  v34 : INTEGER
+  v35 : INTEGER
+  v36 : INTEGER
+  v37 : INTEGER
+  v38 : ARRAY[64] OF INTEGER
+  v39 : INTEGER
+  v40 : ARRAY[64] OF INTEGER
+  v41 : INTEGER
+  v42 : ARRAY[64] OF INTEGER
+  v43 : INTEGER
+  v44 : ARRAY[64] OF REAL
+  v45 : INTEGER
+  v46 : INTEGER
+  v47 : INTEGER
+  v48 : ARRAY[64] OF INTEGER
+  v49 : INTEGER
+  v50 : ARRAY[64] OF INTEGER
+  v51 : ARRAY[64] OF INTEGER
+  v52 : ARRAY[64] OF INTEGER
+  v53 : ARRAY[64] OF INTEGER
+  v54 : INTEGER
+  v55 : INTEGER
+  v56 : REAL
+  v57 : INTEGER
+  v58 : INTEGER
+  v59 : INTEGER
+  v60 : INTEGER
+  v61 : INTEGER
+  v62 : INTEGER
+  v63 : INTEGER
+  v64 : ARRAY[64] OF INTEGER
+  v65 : ARRAY[64] OF INTEGER
+  v66 : INTEGER
+  v67 : ARRAY[64] OF INTEGER
+  v68 : ARRAY[64] OF INTEGER
+  v69 : INTEGER
+  v70 : ARRAY[64] OF INTEGER
+  v71 : INTEGER
+  v72 : ARRAY[64] OF INTEGER
+  v73 : INTEGER
+  v74 : INTEGER
+  v75 : INTEGER
+  v76 : INTEGER
+  v77 : REAL
+  v78 : INTEGER
+  v79 : ARRAY[64] OF REAL
+  v80 : ARRAY[64] OF REAL
+  v81 : POSITION
+  v82 : INTEGER
+  v83 : INTEGER
+  v84 : INTEGER
+  v85 : INTEGER
+  v86 : INTEGER
+  v87 : ARRAY[64] OF INTEGER
+  v0_f00 : ARRAY[64] OF INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v27_f08 : INTEGER
+  v27_f0c : INTEGER
+  v27_f10 : INTEGER
+  v27_f14 : INTEGER
+  v27_f18 : INTEGER
+  v27_f1c : INTEGER
+  v38_f00 : ARRAY[64] OF INTEGER
+  v38_f00_f08 : ARRAY[64] OF INTEGER
+  v38_f00_f0c : ARRAY[64] OF INTEGER
+  v38_f00_f10 : ARRAY[64] OF INTEGER
+  v38_f00_f14 : ARRAY[64] OF INTEGER
+  v38_f00_f18 : ARRAY[64] OF INTEGER
+  v38_f00_f1c : ARRAY[64] OF INTEGER
+  v38_f24 : ARRAY[64] OF INTEGER
+  v38_f28 : ARRAY[64] OF INTEGER
+  v40_f00 : ARRAY[64] OF INTEGER
+  v40_f00_f08 : ARRAY[64] OF INTEGER
+  v40_f00_f0c : ARRAY[64] OF INTEGER
+  v40_f00_f10 : ARRAY[64] OF INTEGER
+  v40_f00_f14 : ARRAY[64] OF INTEGER
+  v40_f00_f18 : ARRAY[64] OF INTEGER
+  v40_f00_f1c : ARRAY[64] OF INTEGER
+  v40_f24 : ARRAY[64] OF INTEGER
+  v48_f00 : ARRAY[64] OF INTEGER
+  v48_f2c : ARRAY[64] OF INTEGER
+  v48_f30 : ARRAY[64] OF INTEGER
+  v50_f00 : ARRAY[64] OF INTEGER
+  v50_f00_f08 : ARRAY[64] OF INTEGER
+  v50_f00_f0c : ARRAY[64] OF INTEGER
+  v50_f00_f10 : ARRAY[64] OF INTEGER
+  v50_f00_f14 : ARRAY[64] OF INTEGER
+  v50_f00_f18 : ARRAY[64] OF INTEGER
+  v50_f00_f1c : ARRAY[64] OF INTEGER
+  v50_f24 : ARRAY[64] OF INTEGER
+  v50_f28 : ARRAY[64] OF INTEGER
+  v50_f2c : ARRAY[64] OF INTEGER
+  v50_f30 : ARRAY[64] OF INTEGER
+  v51_f00 : ARRAY[64] OF INTEGER
+  v51_f2c : ARRAY[64] OF INTEGER
+  v51_f30 : ARRAY[64] OF INTEGER
+  v51_f34 : ARRAY[64] OF INTEGER
+  v51_f38 : ARRAY[64] OF INTEGER
+  v52_f00 : ARRAY[64] OF INTEGER
+  v52_f04 : ARRAY[64] OF INTEGER
+  v53_f00 : ARRAY[64] OF INTEGER
+  v53_f2c : ARRAY[64] OF INTEGER
+  v53_f30 : ARRAY[64] OF INTEGER
+  v53_f34 : ARRAY[64] OF INTEGER
+  v53_f38 : ARRAY[64] OF INTEGER
+  v53_f48 : ARRAY[64] OF INTEGER
+  v53_f4c : ARRAY[64] OF INTEGER
+  v66_f08 : REAL
+  v66_f0c : REAL
+  v66_f10 : REAL
+  v66_f14 : REAL
+  v66_f18 : REAL
+  v66_f1c : REAL
+  v81_f20 : INTEGER
+  v82_f08 : INTEGER
+  v82_f0c : INTEGER
+  v82_f10 : INTEGER
+  v82_f14 : INTEGER
+  v82_f18 : INTEGER
+  v82_f1c : INTEGER
+  v82_f20 : INTEGER
+  v82_f24 : REAL
+  v87_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE GET_ARG(p0, p1, p2 : INTEGER; p3 : REAL; p4 : STRING) : INTEGER
+BEGIN
+  GET_TPE_PRM(p0, v86, p2, p3, p4, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Argument_Error1', 0, 2)
+  ELSE
+  IF ((p1 <> 2)) THEN
+  IF ((v86 <> p1)) THEN
+  POST_ERR(38000, 'MM:Robot_Argument_Error2', 0, 2)
+  ENDIF
+  ELSE
+  IF ((v86 <> 2)) THEN
+  IF ((v86 = 1)) THEN
+  p3 = p2
+  ELSE
+  POST_ERR(38000, 'MM:Robot_Argument_Error3', 0, 2)
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END GET_ARG
+
+ROUTINE INIT_SKT : INTEGER
+BEGIN
+  IF (UNINIT(v1) OR UNINIT(v2) OR UNINIT(v3) OR UNINIT(v4)) THEN
+  v1 = ' '
+  v2 = ' '
+  v3 = 0
+  v4 = 0
+  ENDIF
+  v5 = 0
+  sv_i = GET_ARG(1, 3, v6, v7, v8)
+  -- stmt36 stray sv_i
+  sv_i = GET_ARG(2, 3, v6, v7, v9)
+  -- stmt37 stray sv_i
+  sv_i = GET_ARG(3, 1, v10, v7, v11)
+  -- stmt38 stray sv_i
+  sv_i = GET_ARG(4, 1, v12, v7, v11)
+  -- stmt39 stray sv_i
+  IF ((v1 <> v8) OR (v2 <> v9) OR (v3 <> v10) OR (v4 <> v12)) THEN
+  v1 = v8
+  v2 = v9
+  v3 = v10
+  v4 = v12
+  v13 = '$HOSTC_CFG[' + v8 + ']'
+  v14 = 'C' + v8 + ':'
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$COMMENT', 'MM_CLIENT', v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$PROTOCOL', 'SM', v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$SERVER_PORT', v10, v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$TIMEOUT', v12, v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$STRT_REMOTE', v9, v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$REMOTE', v9, v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$COMMENT', 'MM_CLIENT', v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$STATE', 3, v16)
+  v5 = v5 + v16
+  SET_VAR(v15, '*SYSTEM*', v13 + '.$OPER', 3, v16)
+  v5 = v5 + v16
+  IF ((v5 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  GET_VAR(v15, '*SYSTEM*', v13 + '.$STATE', v17, v16)
+  IF ((v16 <> 0) OR (v17 <> 3)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 2, 2)
+  ENDIF
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:Restart Robot', CR)
+  ENDIF
+  MSG_CONNECT(v14, v16)
+  IF ((v16 = 0) OR (v16 = 67215)) THEN
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:Init Connection Successfully', CR)
+  DELAY 500
+  MSG_DISCO(v14, v16)
+  ELSE
+  POST_ERR(38000, 'MM:Robot_Socket_Closed', 0, 2)
+  ENDIF
+  RETURN(0)
+END INIT_SKT
+
+ROUTINE OPEN_SOCKET : INTEGER
+BEGIN
+  MSG_DISCO(v14, v16)
+  SET_FILE_ATR(v26, 2, 1)
+  SET_FILE_ATR(v28, 2, 1)
+  MSG_CONNECT(v14, v16)
+  IF ((v16 <> 0) AND (v16 <> 67215)) THEN
+  POST_ERR(38000, 'MM:Robot_Socket_Closed', 0, 2)
+  ENDIF
+  RETURN(0)
+END OPEN_SOCKET
+
+ROUTINE READFLPOS : INTEGER
+BEGIN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt68 stray v87_f00[1] | v0_f1c[1]
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt69 stray v87_f00[1] | v0_f58[1]
+  sv_p = curpos(0, 0)
+  v27 = sv_p
+  RETURN(0)
+END READFLPOS
+
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_NOT_REGISTERED=1001 ', CR)
+  CASE(1002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_NO_POSES=1002 ', CR)
+  CASE(1003):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_NO_CLOUD=1003 ', CR)
+  CASE(1004):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_SET_PROPERTY_FAILED=1004 ', CR)
+  CASE(1005):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_POINT_TYPE_ERROR=1005 ', CR)
+  CASE(1006):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_POINT_ERROR=1006 ', CR)
+  CASE(1007):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_IN_CALCULATING=1007 ', CR)
+  CASE(1008):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_ALREADY_FINISHED=1008 ', CR)
+  CASE(1009):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_POSES_MOTION_PARAMS_UNEQUAL=1009 ', CR)
+  CASE(1010):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_POSES_LABELS_UNEQUAL=1010 ', CR)
+  CASE(1011):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_PROJECT_NOT_FOUND=1011 ', CR)
+  CASE(1012):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_INVALID_MODEL_CODE=1012 ', CR)
+  CASE(1013):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_MODEL_NOT_FOUND=1013 ', CR)
+  CASE(1014):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_SWITCH_MODEL_FAILED=1014 ', CR)
+  CASE(1017):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_LABEL_MAPPING_ERROR=1017 ', CR)
+  CASE(1018):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_POSE_COUNT_ERROR=1018 ', CR)
+  CASE(1019):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VISION_RUN_TIMEOUT=1019 ', CR)
+  CASE(1100):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VISION_HAS_POSES=1100 ', CR)
+  CASE(1101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VISION_IS_READY=1101 ', CR)
+  CASE(1102):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VISION_TRIGGERED_OK=1102 ', CR)
+  CASE(1103):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VISION_HAS_PLAN_RESULTS=1103 ', CR)
+  CASE(1107):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VISION_SET_MODEL_OK=1107 ', CR)
+  CASE(1108):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_SET_BOXSIZE_OK=1108 ', CR)
+  CASE(2001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_NOT_REGISTERED=2001 ', CR)
+  CASE(2002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_IS_RUNNING=2002 ', CR)
+  CASE(2003):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_NO_VISION_POSE=2003 ', CR)
+  CASE(2004):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_VISION_POSE_NOT_REACHABLE=2004 ', CR)
+  CASE(2005):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SELECT_JPS_ERROR=2005 ', CR)
+  CASE(2006):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_COLLISION_CHECKED=2006 ', CR)
+  CASE(2007):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_PLAN_FILED=2007 ', CR)
+  CASE(2008):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_RUN_ERROR=2008 ', CR)
+  CASE(2009):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_NO_TCP_POSE=2009 ', CR)
+  CASE(2011):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_NO_DO_LIST=2011 ', CR)
+  CASE(2012):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_POINT_TYPE_ERROR=2012 ', CR)
+  CASE(2013):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_POINT_ERROR=2013 ', CR)
+  CASE(2014):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_PROJECT_NOT_SET=2014 ', CR)
+  CASE(2015):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_POSE_NOT_SUPPORTED=2015 ', CR)
+  CASE(2016):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_PROPERTY_ERROR=2016 ', CR)
+  CASE(2017):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_STOP_FAILED=2017 ', CR)
+  CASE(2018):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_BRANCH_OUTPORT_ERROR=2018 ', CR)
+  CASE(2019):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_BRANCH_ERROR=2019 ', CR)
+  CASE(2022):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_NOT_RUN_YET=2022 ', CR)
+  CASE(2023):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_PROJECT_IS_BROKEN=2023 ', CR)
+  CASE(2024):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_BRANCH_NAME_ERROR=2024 ', CR)
+  CASE(2025):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_RUN_TIMEOUT=2025 ', CR)
+  CASE(2026):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_INDEX_NAME_ERROR=2026 ', CR)
+  CASE(2027):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_INDEX_ORDER_ERROR=2027 ', CR)
+  CASE(2028):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_INDEX_ERROR=2028 ', CR)
+  CASE(2100):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_FINISHED=2100 ', CR)
+  CASE(2101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_COMMAND_STOP=2101 ', CR)
+  CASE(2102):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SEND_DO_LIST_OK=2102 ', CR)
+  CASE(2103):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_RUN_OK=2103 ', CR)
+  CASE(2104):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_STOP_OK=2104 ', CR)
+  CASE(2105):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_BRANCH_OK=2105 ', CR)
+  CASE(2106):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_INDEX_OK=2106 ', CR)
+  CASE(2107):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:VIZ_SET_OUTER_POSE_OK=2107 ', CR)
+  CASE(2108):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:SET_VIZ_PROP_OK=2108 ', CR)
+  CASE(2109):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:GET_VIZ_PROP_OK=2109 ', CR)
+  CASE(3001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_INVALID_COMMAND=3001 ', CR)
+  CASE(3002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_ERROR_PACKAGE=3002 ', CR)
+  CASE(3003):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_CLIENT_DISCONNECTED=3003 ', CR)
+  CASE(3004):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_SERVER_DISCONNECTED=3004 ', CR)
+  CASE(3005):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_TIMEOUT_ERROR=3005 ', CR)
+  CASE(3006):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CENTER_OTHER_ERROR=3006 ', CR)
+  CASE(3100):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CENTER_CLIENT_CONNECTED=3100 ', CR)
+  CASE(3101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CENTER_CONNECT_TO_SERVER=3101 ', CR)
+  CASE(3102):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CENTER_WAIT_FOR_CLIENT=3102 ', CR)
+  CASE(4001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:ROBOT_INVALID_ROBOT_TYPE=4001 ', CR)
+  CASE(4002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:ROBOT_EULER_NOT_SUPPORTED=4002 ', CR)
+  CASE(4003):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:ROBOT_SERVICE_NOT_REGISTERED=4003 ', CR)
+  CASE(4004):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:ROBOT_MISSING_PARAMS_ERROR=4004 ', CR)
+  CASE(4005):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CONNECT_ROBOT_FAIL=4005 ', CR)
+  CASE(4100):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:ROBOT_SERVICE_REGISTERED=4100 ', CR)
+  CASE(4101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CONNECT_ROBOT_SUCCESS=4101 ', CR)
+  CASE(4102):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DISCONNECT_ROBOT_SUCCESS=4102 ', CR)
+  CASE(5001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_DATA_SET_SIZE_NOT_SUPPORTED=5001 ', CR)
+  CASE(5002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_SET_DATA_FAILED=5002 ', CR)
+  CASE(5101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_SET_FLOAT_OK=5101 ', CR)
+  CASE(5102):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_SET_INT_OK=5102 ', CR)
+  CASE(5103):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_GET_FLOAT_OK=5103 ', CR)
+  CASE(5104):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:DYNAMIC_GET_INT_OK=5104 ', CR)
+  CASE(7001):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CALIBRATION_PARAMS_ERROR=7001 ', CR)
+  CASE(7002):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CALIBRATION_NO_POINT=7002 ', CR)
+  CASE(7003):
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:CALIBRATION_NOT_REACH_POINT=7003 ', CR)
+  CASE(7100):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CALIBRATION_MOVE_FINISHED=7100 ', CR)
+  CASE(7101):
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MM:CALIBRATION_SEND_POINT_OK=7101 ', CR)
+  ELSE:
+  sv_s = chr(155)
+  sv_s = chr(49)
+  WRITE(sv_s, sv_s, 'MM:Unknow Status! Please Check', CR)
+  ENDSELECT
+  RETURN(0)
+END CHECK_STATUS
+
+ROUTINE POST_IPCERR(p0 : INTEGER) : INTEGER
+VAR
+  Status_Str : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 4, 10, Status_Str)
+  POST_ERR(38000, 'MM:IPC error,status code:' + Status_Str, 0, 2)
+  RETURN(0)
+END POST_IPCERR
+
+ROUTINE CHK_PR_TYPE(p0, p1, p2, p3, p4 : INTEGER) : INTEGER
+VAR
+  num_axes : INTEGER
+BEGIN
+  p2 = 0
+  POS_REG_TYPE(p0, p1, p2, num_axes, v16)
+  IF ((p3 = p4)) THEN
+  IF ((p2 <> p3)) THEN
+  POST_ERR(38000, 'MM:PReg_Type_Error', 0, 2)
+  ENDIF
+  ELSE
+  IF ((p2 <> p3) AND (p2 <> p4)) THEN
+  POST_ERR(38000, 'MM:PReg_Type_Error', 0, 2)
+  ENDIF
+  ENDIF
+  RETURN(0)
+END CHK_PR_TYPE
+
+ROUTINE START_VIS : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v18, v7, v11)
+  -- stmt94 stray sv_i
+  sv_i = GET_ARG(2, 1, v19, v7, v11)
+  -- stmt95 stray sv_i
+  sv_i = GET_ARG(3, 1, v20, v7, v11)
+  -- stmt96 stray sv_i
+  sv_i = GET_ARG(4, 1, v21, v7, v11)
+  -- stmt97 stray sv_i
+  IF ((v20 < 0) OR (v20 > 3)) THEN
+  POST_ERR(38000, 'MM:Robot_Argument_Error', 0, 2)
+  ENDIF
+  IF ((v20 = 1) OR (v20 = 3)) THEN
+  IF ((v20 = 1)) THEN
+  sv_i = READFLPOS
+  -- stmt104 stray sv_i
+  sv_j = curjpos(0, 0)
+  v22 = sv_j
+  ELSE
+  sv_i = CHK_PR_TYPE(v21, 1, v23, 9, 9)
+  -- stmt107 stray sv_i
+  sv_j = GET_JPOS_REG(v21, v16)
+  v22 = sv_j
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  ENDIF
+  cnv_jpos_rel(v22, v24, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  GET_VAR(v15, '*SYSTEM*', '$SCR_GRP[1].$NUM_ROB_AXS', v25, v16)
+  IF ((v25 = 4)) THEN
+  v24[5] = 0
+  v24[6] = 0
+  ELSE
+  IF ((v25 = 5)) THEN
+  v24[6] = 0
+  ENDIF
+  ENDIF
+  IF ((v20 = 2)) THEN
+  sv_i = READFLPOS
+  -- stmt128 stray sv_i
+  ENDIF
+  ENDIF
+  sv_i = OPEN_SOCKET
+  -- stmt133 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(101, v18, v19, v20)
+  -- stmt135 stray v26
+  SELECT v20 OF
+  CASE(0):
+  WRITE(0, 0, 0, 0, 0, 0, CR)
+  CASE(1):
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt140 stray v26 | v24[1] | 13 | -5 | v24[2] | 13 | -5 | v24[3] | 13 | -5 | v24[4] | 13 | -5 | v24[5] | 13 | -5 | v24[6] | 13 | -5
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  CASE(2):
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  CASE(3):
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  -- stmt145 stray v26 | v24[1] | 13 | -5 | v24[2] | 13 | -5 | v24[3] | 13 | -5 | v24[4] | 13 | -5 | v24[5] | 13 | -5 | v24[6] | 13 | -5
+  ENDSELECT
+  -- stmt147 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt150 stray v28 | v29 | v30
+  -- stmt151 stray v28
+  IF (UNINIT(v29) OR (v29 <> 101)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt156 stray sv_i
+  IF ((v30 <> 1102)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt158 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END START_VIS
+
+ROUTINE SET_INTREG(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  SET_INT_REG(p0, p1, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  RETURN(0)
+END SET_INTREG
+
+ROUTINE GET_VISDATA : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v18, v7, v11)
+  -- stmt169 stray sv_i
+  sv_i = GET_ARG(2, 1, v31, v7, v11)
+  -- stmt170 stray sv_i
+  sv_i = GET_ARG(3, 1, v32, v7, v11)
+  -- stmt171 stray sv_i
+  sv_i = GET_ARG(4, 1, v33, v7, v11)
+  -- stmt172 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt174 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(102, v18)
+  -- stmt176 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt177 stray v26
+  -- stmt178 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt181 stray v28 | v29 | v30 | v34 | v35 | v36
+  FOR v37 = 1 TO 3 DO
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt183 stray v28 | v38_f00_f08[v37] | v38_f00_f0c[v37] | v38_f00_f10[v37]
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt184 stray v28 | v38_f00_f14[v37] | v38_f00_f18[v37] | v38_f00_f1c[v37]
+  PAUSE
+  PAUSE
+  -- stmt185 stray v28 | v38_f24[v37] | v38_f28[v37]
+  ENDFOR
+  -- stmt187 stray v28
+  IF (UNINIT(v29) OR (v29 <> 102)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt192 stray sv_i
+  sv_i = SET_INTREG(v31, v34)
+  -- stmt193 stray sv_i
+  sv_i = SET_INTREG(v32, v35)
+  -- stmt194 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt195 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_VISDATA
+
+ROUTINE GET_VISDATA2 : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v18, v7, v11)
+  -- stmt206 stray sv_i
+  sv_i = GET_ARG(2, 1, v32, v7, v11)
+  -- stmt207 stray sv_i
+  sv_i = GET_ARG(3, 1, v33, v7, v11)
+  -- stmt208 stray sv_i
+  v34 = 0
+  v37 = 0
+  v35 = 0
+  IF ((v34 = 0)) THEN
+  v34 = 1
+  sv_i = OPEN_SOCKET
+  -- stmt215 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(110, v18)
+  -- stmt217 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt218 stray v26
+  -- stmt219 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt222 stray v28 | v29 | v30 | v34 | v39
+  IF ((v30 <> 1100)) THEN
+  -- stmt224 stray v28
+  ELSE
+  ENDIF
+  v37 = v37 + 1
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt229 stray v28 | v40_f00_f08[v37] | v40_f00_f0c[v37] | v40_f00_f10[v37]
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt230 stray v28 | v40_f00_f14[v37] | v40_f00_f18[v37] | v40_f00_f1c[v37]
+  DELAY 0
+  -- stmt231 stray v28 | v40_f24[v37]
+  FOR v41 = 1 TO 3 DO
+  DELAY 0
+  -- stmt233 stray v28 | v42[v37][v41]
+  ENDFOR
+  -- stmt235 stray v28
+  IF (UNINIT(v29) OR (v29 <> 110)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  ENDIF
+  v35 = v37
+  sv_i = CHECK_STATUS(v30)
+  -- stmt243 stray sv_i
+  sv_i = SET_INTREG(v32, v35)
+  -- stmt244 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt245 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_VISDATA2
+
+ROUTINE SET_MODEL : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v18, v7, v11)
+  -- stmt255 stray sv_i
+  sv_i = GET_ARG(2, 1, v43, v7, v11)
+  -- stmt0 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt2 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(103, v18, v43)
+  -- stmt4 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt5 stray v26
+  -- stmt6 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt9 stray v28 | v29 | v30
+  -- stmt10 stray v28
+  IF (UNINIT(v29) OR (v29 <> 103)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt15 stray sv_i
+  IF ((v30 <> 1107)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt17 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_MODEL
+
+ROUTINE START_VIZ : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v20, v7, v11)
+  -- stmt28 stray sv_i
+  sv_i = GET_ARG(2, 1, v21, v7, v11)
+  -- stmt29 stray sv_i
+  IF ((v20 < 0) OR (v20 > 2)) THEN
+  POST_ERR(38000, 'MM:Robot_Argument_Error', 0, 2)
+  ENDIF
+  IF ((v20 = 1) OR (v20 = 2)) THEN
+  IF ((v20 = 1)) THEN
+  sv_i = READFLPOS
+  -- stmt36 stray sv_i
+  sv_j = curjpos(0, 0)
+  v22 = sv_j
+  ELSE
+  sv_i = CHK_PR_TYPE(v21, 1, v23, 9, 9)
+  -- stmt39 stray sv_i
+  sv_j = GET_JPOS_REG(v21, v16)
+  v22 = sv_j
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  ENDIF
+  cnv_jpos_rel(v22, v24, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  GET_VAR(v15, '*SYSTEM*', '$SCR_GRP[1].$NUM_ROB_AXS', v25, v16)
+  IF ((v25 = 4)) THEN
+  v24[5] = 0
+  v24[6] = 0
+  ELSE
+  IF ((v25 = 5)) THEN
+  v24[6] = 0
+  ENDIF
+  ENDIF
+  ENDIF
+  sv_i = OPEN_SOCKET
+  -- stmt60 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(201, v20)
+  -- stmt62 stray v26
+  SELECT v20 OF
+  CASE(0):
+  WRITE(0, 0, 0, 0, 0, 0, CR)
+  CASE(1):
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt67 stray v26 | v24[1] | 13 | -5 | v24[2] | 13 | -5 | v24[3] | 13 | -5 | v24[4] | 13 | -5 | v24[5] | 13 | -5 | v24[6] | 13 | -5
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  CASE(2):
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  -- stmt70 stray v26 | v24[1] | 13 | -5 | v24[2] | 13 | -5 | v24[3] | 13 | -5 | v24[4] | 13 | -5 | v24[5] | 13 | -5 | v24[6] | 13 | -5
+  ENDSELECT
+  -- stmt72 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt75 stray v28 | v29 | v30
+  -- stmt76 stray v28
+  IF (UNINIT(v29) OR (v29 <> 201)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt81 stray sv_i
+  IF ((v30 <> 2103)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt83 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END START_VIZ
+
+ROUTINE GET_VIZDATA : INTEGER
+BEGIN
+  FOR v37 = 1 TO 3 DO
+  v44[v37] = 0
+  ENDFOR
+  sv_i = GET_ARG(1, 1, v45, v7, v11)
+  -- stmt98 stray sv_i
+  sv_i = GET_ARG(2, 1, v31, v7, v11)
+  -- stmt99 stray sv_i
+  sv_i = GET_ARG(3, 1, v32, v7, v11)
+  -- stmt100 stray sv_i
+  sv_i = GET_ARG(4, 1, v46, v7, v11)
+  -- stmt101 stray sv_i
+  sv_i = GET_ARG(5, 1, v33, v7, v11)
+  -- stmt102 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt104 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(205, v45)
+  -- stmt106 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt107 stray v26
+  -- stmt108 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt111 stray v28 | v29 | v30 | v34 | v35 | v47
+  IF ((v45 = 2)) THEN
+  FOR v37 = 1 TO 3 DO
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt114 stray v28 | v38_f00_f08[v37] | v38_f00_f0c[v37] | v38_f00_f10[v37]
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt115 stray v28 | v38_f00_f14[v37] | v38_f00_f18[v37] | v38_f00_f1c[v37]
+  PAUSE
+  PAUSE
+  -- stmt116 stray v28 | v38_f24[v37] | v38_f28[v37]
+  ENDFOR
+  IF ((v45 = 1)) THEN
+  FOR v37 = 1 TO 3 DO
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt121 stray v28 | v44[1] | v44[2] | v44[3] | v44[4] | v44[5] | v44[6]
+  PAUSE
+  PAUSE
+  -- stmt122 stray v28 | v48_f2c[v37] | v48_f30[v37]
+  cnv_rel_jpos(v44, sv_j, v16)
+  -- 弃参原式: (v48_f00[v37]) | (v48_f00[v37])
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  ENDFOR
+  POST_ERR(38000, 'MM:Robot_Argument_Error', 0, 2)
+  ENDIF
+  ENDIF
+  -- stmt132 stray v28
+  IF (UNINIT(v29) OR (v29 <> 205)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt137 stray sv_i
+  sv_i = SET_INTREG(v31, v34)
+  -- stmt138 stray sv_i
+  sv_i = SET_INTREG(v32, v35)
+  -- stmt139 stray sv_i
+  sv_i = SET_INTREG(v46, v47)
+  -- stmt140 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt141 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_VIZDATA
+
+ROUTINE GET_VIZDATA2 : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v45, v7, v11)
+  -- stmt152 stray sv_i
+  sv_i = GET_ARG(2, 1, v32, v7, v11)
+  -- stmt153 stray sv_i
+  sv_i = GET_ARG(3, 1, v46, v7, v11)
+  -- stmt154 stray sv_i
+  sv_i = GET_ARG(4, 1, v33, v7, v11)
+  -- stmt155 stray sv_i
+  v34 = 0
+  v37 = 0
+  v47 = 0
+  v35 = 0
+  IF ((v34 = 0)) THEN
+  v34 = 1
+  sv_i = OPEN_SOCKET
+  -- stmt163 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(210, v45)
+  -- stmt165 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt166 stray v26
+  -- stmt167 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt170 stray v28 | v29 | v30 | v34 | v49
+  IF ((v30 <> 2100)) THEN
+  -- stmt172 stray v28
+  ELSE
+  ENDIF
+  v37 = v37 + 1
+  IF ((v45 = 2) OR (v45 = 4)) THEN
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt178 stray v28 | v50_f00_f08[v37] | v50_f00_f0c[v37] | v50_f00_f10[v37]
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt179 stray v28 | v50_f00_f14[v37] | v50_f00_f18[v37] | v50_f00_f1c[v37]
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt180 stray v28 | v50_f24[v37] | v50_f28[v37] | v50_f2c[v37]
+  IF ((v49 = 1)) THEN
+  v50_f30[v37] = 1
+  ELSE
+  v50_f30[v37] = 0
+  ENDIF
+  IF ((v45 = 1) OR (v45 = 3)) THEN
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt188 stray v28 | v44[1] | v44[2] | v44[3] | v44[4] | v44[5] | v44[6]
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt189 stray v28 | v51_f2c[v37] | v51_f30[v37] | v51_f34[v37]
+  v44[7] = 0
+  v44[8] = 0
+  ENDIF
+  v1 = ''
+  cnv_rel_jpos(v44, sv_j, v16)
+  -- 弃参原式: (v51_f00[v37]) | (v51_f00[v37])
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  IF ((v49 = 1)) THEN
+  v51_f38[v37] = 1
+  ELSE
+  v51_f38[v37] = 0
+  ENDIF
+  POST_ERR(38000, 'MM:Robot_Argument_Error', 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v49 = 1)) THEN
+  v47 = v37
+  IF ((v45 = 1) OR (v45 = 2)) THEN
+  PAUSE
+  -- stmt209 stray v28 | v52_f00[v37]
+  FOR v41 = 1 TO 3 DO
+  DELAY 0
+  -- stmt211 stray v28 | v52_f04[v37][v41]
+  ENDFOR
+  ELSE
+  IF ((v45 = 3) OR (v45 = 4)) THEN
+  FOR v41 = 1 TO 3 DO
+  PAUSE
+  -- stmt216 stray v28 | v53_f00[v37][v41]
+  ENDFOR
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt218 stray v28 | v53_f2c[v37] | v53_f30[v37] | v53_f34[v37]
+  FOR v41 = 1 TO 3 DO
+  DELAY 0
+  -- stmt221 stray v28 | v53_f38[v37][v41]
+  ENDFOR
+  PAUSE
+  -- stmt223 stray v28 | v53_f48[v37]
+  FOR v41 = 1 TO 3 DO
+  DELAY 0
+  -- stmt225 stray v28 | v53_f4c[v37][v41]
+  ENDFOR
+  PAUSE
+  -- stmt227 stray v28 | v52_f00[v37]
+  FOR v41 = 1 TO 3 DO
+  DELAY 0
+  -- stmt229 stray v28 | v52_f04[v37][v41]
+  ENDFOR
+  ENDIF
+  ENDIF
+  ENDIF
+  -- stmt234 stray v28
+  IF (UNINIT(v29) OR (v29 <> 210)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt242 stray sv_i
+  v35 = v37
+  sv_i = SET_INTREG(v46, v47)
+  -- stmt244 stray sv_i
+  sv_i = SET_INTREG(v32, v35)
+  -- stmt245 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt246 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_VIZDATA2
+
+ROUTINE SET_REALREG(p0 : INTEGER; p1 : REAL) : INTEGER
+BEGIN
+  SET_REAL_REG(p0, p1, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  RETURN(0)
+END SET_REALREG
+
+ROUTINE GET_VIZPROP : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v54, v7, v11)
+  -- stmt1 stray sv_i
+  sv_i = GET_ARG(2, 1, v33, v7, v11)
+  -- stmt2 stray sv_i
+  sv_i = GET_ARG(3, 1, v55, v7, v11)
+  -- stmt3 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt5 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(207, v54)
+  -- stmt7 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt8 stray v26
+  -- stmt9 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  DELAY 0
+  -- stmt12 stray v28 | v29 | v30 | v56
+  -- stmt13 stray v28
+  IF (UNINIT(v29) OR (v29 <> 207)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt18 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt19 stray sv_i
+  sv_i = SET_REALREG(v55, v56)
+  -- stmt20 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_VIZPROP
+
+ROUTINE SET_VIZPROP : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v54, v7, v11)
+  -- stmt31 stray sv_i
+  sv_i = GET_ARG(2, 1, v33, v7, v11)
+  -- stmt32 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt34 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(208, v54)
+  -- stmt36 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt37 stray v26
+  -- stmt38 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt41 stray v28 | v29 | v30
+  -- stmt42 stray v28
+  IF (UNINIT(v29) OR (v29 <> 208)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt47 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt48 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_VIZPROP
+
+ROUTINE GET_JPS : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v57, v7, v11)
+  -- stmt57 stray sv_i
+  sv_i = GET_ARG(2, 1, v21, v7, v11)
+  -- stmt58 stray sv_i
+  sv_i = GET_ARG(3, 1, v58, v7, v11)
+  -- stmt59 stray sv_i
+  sv_i = GET_ARG(4, 1, v59, v7, v11)
+  -- stmt60 stray sv_i
+  cnv_jpos_rel(sv_j, v44, v16)
+  -- 弃参原式: (v48_f00[v57]) | (v48_f00[v57])
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error1', 0, 2)
+  ENDIF
+  IF ((v44[1] = 0) AND (v44[2] = 0) AND (v44[3] = 0) AND (v44[4] = 0) AND (v44[5] = 0) AND (v44[6] = 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error2', 0, 2)
+  ENDIF
+  SET_JPOS_REG(v21, sv_j, v16)
+  -- 弃参原式: (v48_f00[v57]) | (v48_f00[v57])
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error3', 0, 2)
+  ENDIF
+  sv_i = SET_INTREG(v58, (v48_f2c[v57]))
+  -- stmt75 stray sv_i
+  sv_i = SET_INTREG(v59, (v48_f30[v57]))
+  -- stmt76 stray sv_i
+  FOR v37 = 1 TO 3 DO
+  v44[v37] = 0
+  ENDFOR
+  cnv_rel_jpos(v44, sv_j, v16)
+  -- 弃参原式: (v48_f00[v57]) | (v48_f00[v57])
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error4', 0, 2)
+  ENDIF
+  v48_f2c[v57] = 0
+  v48_f30[v57] = 0
+  RETURN(0)
+END GET_JPS
+
+ROUTINE SET_BRANCH : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v60, v7, v11)
+  -- stmt95 stray sv_i
+  sv_i = GET_ARG(2, 1, v61, v7, v11)
+  -- stmt96 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt98 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(203, v60, v61)
+  -- stmt100 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt101 stray v26
+  -- stmt102 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt105 stray v28 | v29 | v30
+  -- stmt106 stray v28
+  IF (UNINIT(v29) OR (v29 <> 203)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt111 stray sv_i
+  IF ((v30 <> 2105)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt113 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_BRANCH
+
+ROUTINE SET_INDEX : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v62, v7, v11)
+  -- stmt123 stray sv_i
+  sv_i = GET_ARG(2, 1, v63, v7, v11)
+  -- stmt124 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt126 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(204, v62, v63)
+  -- stmt128 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt129 stray v26
+  -- stmt130 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt133 stray v28 | v29 | v30
+  -- stmt134 stray v28
+  IF (UNINIT(v29) OR (v29 <> 204)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt139 stray sv_i
+  IF ((v30 <> 2106)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt141 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_INDEX
+
+ROUTINE GET_DOLIST : INTEGER
+BEGIN
+  sv_i = OPEN_SOCKET
+  -- stmt151 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(206)
+  -- stmt153 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt154 stray v26
+  -- stmt155 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt158 stray v28 | v29 | v30
+  FOR v37 = 1 TO 3 DO
+  PAUSE
+  -- stmt160 stray v28 | v64[v37]
+  ENDFOR
+  -- stmt162 stray v28
+  IF (UNINIT(v29) OR (v29 <> 206)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt167 stray sv_i
+  IF ((v30 <> 2102)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt169 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_DOLIST
+
+ROUTINE SET_DOLIST : INTEGER
+BEGIN
+  FOR v37 = 1 TO 3 DO
+  IF ((v64[v37] > 0)) THEN
+  SET_PORT_VAL(2, (v64[v37]), 1, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error', 0, 2)
+  ENDIF
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END SET_DOLIST
+
+ROUTINE SET_BOX_SIZE : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v18, v7, v11)
+  -- stmt193 stray sv_i
+  sv_i = GET_ARG(2, 2, v6, (v65[1]), v11)
+  -- stmt194 stray sv_i
+  sv_i = GET_ARG(3, 2, v6, (v65[2]), v11)
+  -- stmt195 stray sv_i
+  sv_i = GET_ARG(4, 2, v6, (v65[3]), v11)
+  -- stmt196 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt198 stray sv_i
+  OPEN FILE v26('RW', v14)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(501, v18)
+  -- stmt200 stray v26 | v65[1] | 13 | -5 | v65[2] | 13 | -5 | v65[3] | 13 | -5
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt201 stray v26
+  -- stmt202 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt205 stray v28 | v29 | v30
+  -- stmt206 stray v28
+  IF (UNINIT(v29) OR (v29 <> 501)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt211 stray sv_i
+  IF ((v30 <> 1108)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt213 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_BOX_SIZE
+
+ROUTINE SET_POS : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 2, v6, v66_f08, v11)
+  -- stmt223 stray sv_i
+  sv_i = GET_ARG(2, 2, v6, v66_f0c, v11)
+  -- stmt224 stray sv_i
+  sv_i = GET_ARG(3, 2, v6, v66_f10, v11)
+  -- stmt225 stray sv_i
+  sv_i = GET_ARG(4, 2, v6, v66_f14, v11)
+  -- stmt226 stray sv_i
+  sv_i = GET_ARG(5, 2, v6, v66_f18, v11)
+  -- stmt227 stray sv_i
+  sv_i = GET_ARG(6, 2, v6, v66_f1c, v11)
+  -- stmt228 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt230 stray sv_i
+  OPEN FILE v26('RW', v14)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(502)
+  -- stmt232 stray v26 | v66_f08 | 13 | -5 | v66_f0c | 13 | -5 | v66_f10 | 13 | -5 | v66_f14 | 13 | -5 | v66_f18 | 13 | -5 | v66_f1c | 13 | -5
+  WRITE(0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt233 stray v26
+  -- stmt234 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt237 stray v28 | v29 | v30
+  -- stmt238 stray v28
+  IF (UNINIT(v29) OR (v29 <> 502)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt243 stray sv_i
+  IF ((v30 <> 2107)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt245 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_POS
+
+ROUTINE SET_FLOAT : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 2, v6, (v67[1]), v11)
+  -- stmt255 stray sv_i
+  sv_i = GET_ARG(2, 2, v6, (v67[2]), v11)
+  -- stmt0 stray sv_i
+  sv_i = GET_ARG(3, 2, v6, (v67[3]), v11)
+  -- stmt1 stray sv_i
+  sv_i = GET_ARG(4, 2, v6, (v67[4]), v11)
+  -- stmt2 stray sv_i
+  sv_i = GET_ARG(5, 2, v6, (v67[5]), v11)
+  -- stmt3 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt5 stray sv_i
+  OPEN FILE v26('RW', v14)
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(503)
+  -- stmt7 stray v26 | v67[1] | 13 | -5 | v67[2] | 13 | -5 | v67[3] | 13 | -5 | v67[4] | 13 | -5 | v67[5] | 13 | -5
+  WRITE(0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt8 stray v26
+  -- stmt9 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt12 stray v28 | v29 | v30
+  -- stmt13 stray v28
+  IF (UNINIT(v29) OR (v29 <> 503)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt18 stray sv_i
+  IF ((v30 <> 5101)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt20 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_FLOAT
+
+ROUTINE SET_INT : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, (v68[1]), v7, v11)
+  -- stmt30 stray sv_i
+  sv_i = GET_ARG(2, 1, (v68[2]), v7, v11)
+  -- stmt31 stray sv_i
+  sv_i = GET_ARG(3, 1, (v68[3]), v7, v11)
+  -- stmt32 stray sv_i
+  sv_i = GET_ARG(4, 1, (v68[4]), v7, v11)
+  -- stmt33 stray sv_i
+  sv_i = GET_ARG(5, 1, (v68[5]), v7, v11)
+  -- stmt34 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt36 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(504, v68[1], v68[2], v68[3], v68[4], v68[5])
+  -- stmt38 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt39 stray v26
+  -- stmt40 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt43 stray v28 | v29 | v30
+  -- stmt44 stray v28
+  IF (UNINIT(v29) OR (v29 <> 504)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt49 stray sv_i
+  IF ((v30 <> 5102)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt51 stray sv_i
+  ENDIF
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END SET_INT
+
+ROUTINE GET_FLOAT : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v69, v7, v11)
+  -- stmt61 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt63 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(505)
+  -- stmt65 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt66 stray v26
+  -- stmt67 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt70 stray v28 | v29 | v30 | v70[1] | v70[2] | v70[3] | v70[4] | v70[5]
+  -- stmt71 stray v28
+  IF (UNINIT(v29) OR (v29 <> 505)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt76 stray sv_i
+  IF ((v30 <> 5103)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt78 stray sv_i
+  ENDIF
+  FOR v37 = 0 TO 3 DO
+  sv_i = SET_REALREG(v71 + v37, (v70[v37 + 1]))
+  -- stmt81 stray sv_i
+  ENDFOR
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_FLOAT
+
+ROUTINE GET_INT : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v69, v7, v11)
+  -- stmt91 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt93 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(506)
+  -- stmt95 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt96 stray v26
+  -- stmt97 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt100 stray v28 | v29 | v30 | v72[1] | v72[2] | v72[3] | v72[4] | v72[5]
+  -- stmt101 stray v28
+  IF (UNINIT(v29) OR (v29 <> 506)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt106 stray sv_i
+  IF ((v30 <> 5104)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt108 stray sv_i
+  ENDIF
+  FOR v37 = 0 TO 3 DO
+  sv_i = SET_INTREG(v69 + v37, (v72[v37 + 1]))
+  -- stmt111 stray sv_i
+  ENDFOR
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_INT
+
+ROUTINE GET_STATUS : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v33, v7, v11)
+  -- stmt121 stray sv_i
+  sv_i = OPEN_SOCKET
+  -- stmt123 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(901)
+  -- stmt125 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt126 stray v26
+  -- stmt127 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt130 stray v28 | v29 | v30
+  -- stmt131 stray v28
+  IF (UNINIT(v29) OR (v29 <> 901)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt136 stray sv_i
+  sv_i = SET_INTREG(v33, v30)
+  -- stmt137 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END GET_STATUS
+
+ROUTINE STOP_VIZ : INTEGER
+BEGIN
+  sv_i = OPEN_SOCKET
+  -- stmt146 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(202)
+  -- stmt148 stray v26
+  WRITE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CR)
+  -- stmt149 stray v26
+  -- stmt150 stray v26
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  -- stmt153 stray v28 | v29 | v30
+  -- stmt154 stray v28
+  IF (UNINIT(v29) OR (v29 <> 202)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt159 stray sv_i
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END STOP_VIZ
+
+ROUTINE CALIBRATION : INTEGER
+BEGIN
+  sv_i = GET_ARG(1, 1, v73, v7, v11)
+  -- stmt169 stray sv_i
+  sv_i = GET_ARG(2, 1, v74, v7, v11)
+  -- stmt170 stray sv_i
+  sv_i = GET_ARG(3, 1, v75, v7, v11)
+  -- stmt171 stray sv_i
+  sv_i = GET_ARG(4, 1, v76, v7, v11)
+  -- stmt172 stray sv_i
+  sv_i = GET_ARG(5, 2, v6, v77, v11)
+  -- stmt173 stray sv_i
+  sv_i = GET_ARG(6, 1, v78, v7, v11)
+  -- stmt174 stray sv_i
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MMIND Calibration Start! ', CR)
+  FOR v37 = 1 TO 3 DO
+  v79[v37] = 0
+  v80[v37] = 0
+  ENDFOR
+  sv_j = curjpos(0, 0)
+  v22 = sv_j
+  cnv_jpos_rel(v22, v79, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error1', 0, 2)
+  ENDIF
+  sv_i = READFLPOS
+  -- stmt186 stray sv_i
+  sv_p = GET_POS_REG(v78, v16)
+  v81 = sv_p
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error2', 0, 2)
+  ENDIF
+  v82_f20 = v81_f20
+  sv_i = OPEN_SOCKET
+  -- stmt194 stray sv_i
+  OPEN FILE v26('RW', v14)
+  WRITE(701, 0)
+  -- stmt196 stray v26
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt197 stray v26 | v27_f08 | 13 | -5 | v27_f0c | 13 | -5 | v27_f10 | 13 | -5 | v27_f14 | 13 | -5 | v27_f18 | 13 | -5 | v27_f1c | 13 | -5
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  -- stmt198 stray v26 | v79[1] | 13 | -5 | v79[2] | 13 | -5 | v79[3] | 13 | -5 | v79[4] | 13 | -5 | v79[5] | 13 | -5 | v79[6] | 13 | -5
+  -- stmt199 stray v26
+  SET_FILE_ATR(v28, 2, 1)
+  OPEN FILE v28('RW', v14)
+  PAUSE
+  PAUSE
+  PAUSE
+  -- stmt204 stray v28 | v29 | v30 | v83
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt205 stray v28 | v82_f08 | v82_f0c | v82_f10 | v82_f14 | v82_f18 | v82_f1c
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt206 stray v28 | v80[1] | v80[2] | v80[3] | v80[4] | v80[5] | v80[6]
+  FOR v37 = 1 TO 3 DO
+  PAUSE
+  -- stmt208 stray v28 | v84
+  ENDFOR
+  -- stmt210 stray v28
+  IF (UNINIT(v29) OR (v29 <> 701)) THEN
+  POST_ERR(38000, 'MM:Robot_CMD_Error', 0, 2)
+  ENDIF
+  sv_i = CHECK_STATUS(v30)
+  -- stmt214 stray sv_i
+  IF ((v30 <> 7101)) THEN
+  sv_i = POST_IPCERR(v30)
+  -- stmt216 stray sv_i
+  ENDIF
+  IF ((v76 = 7)) THEN
+  v80[7] = v77
+  v82_f24 = v77
+  ENDIF
+  cnv_rel_jpos(v80, sv_j, v16)
+  -- 弃参原式: v85 | v85
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error3', 0, 2)
+  ENDIF
+  IF ((v73 = 1)) THEN
+  v0_f00[1] = 7
+  -- stmt229 stray v82
+  ELSE
+  IF ((v73 = 2)) THEN
+  IF ((v74 = 1)) THEN
+  v0_f00[1] = 6
+  -- stmt234 stray v82
+  ELSE
+  IF ((v74 = 2)) THEN
+  v0_f00[1] = 6
+  -- stmt238 stray v85
+  ELSE
+  POST_ERR(38000, 'MM:Robot_Argument_Error1', 0, 2)
+  ENDIF
+  ENDIF
+  POST_ERR(38000, 'MM:Robot_Argument_Error2', 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v83 = 1)) THEN
+  sv_s = chr(155)
+  sv_s = chr(50)
+  WRITE(sv_s, sv_s, 'MMIND Calibration Finished! ', CR)
+  ELSE
+  ENDIF
+  DELAY v75 * 1000
+  sv_j = curjpos(0, 0)
+  v22 = sv_j
+  cnv_jpos_rel(v22, v79, v16)
+  IF ((v16 <> 0)) THEN
+  POST_ERR(38000, 'MM:Robot_Internal_Error4', 0, 2)
+  ENDIF
+  sv_i = READFLPOS
+  -- stmt3 stray sv_i
+  SET_FILE_ATR(v26, 2, 1)
+  OPEN FILE v26('RW', v14)
+  WRITE(701, 1)
+  -- stmt6 stray v26
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  -- stmt7 stray v26 | v27_f08 | 13 | -5 | v27_f0c | 13 | -5 | v27_f10 | 13 | -5 | v27_f14 | 13 | -5 | v27_f18 | 13 | -5 | v27_f1c | 13 | -5
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  DELAY 0
+  WRITE(CR)
+  -- stmt8 stray v26 | v79[1] | 13 | -5 | v79[2] | 13 | -5 | v79[3] | 13 | -5 | v79[4] | 13 | -5 | v79[5] | 13 | -5 | v79[6] | 13 | -5
+  -- stmt9 stray v26
+  MSG_DISCO(v14, v16)
+  RETURN(0)
+END CALIBRATION
+
+BEGIN
+END MM_MODULE

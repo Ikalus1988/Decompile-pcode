@@ -1,0 +1,18 @@
+PROGRAM  MM_STOP_VIZ
+%CMOSVARS
+%ALPHABETIZE
+%COMMENT = 'MM_STOP_VIZ'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%INCLUDE KLEVCCDF
+--------------------------------------------------------------------------------
+-- Remote Routine Prototypes
+--------------------------------------------------------------------------------
+ROUTINE Stop_Viz FROM  MM_MODULE
+--------------------------------------------------------------------------------
+-- Main Program
+--------------------------------------------------------------------------------
+BEGIN
+    Stop_Viz
+END MM_STOP_VIZ

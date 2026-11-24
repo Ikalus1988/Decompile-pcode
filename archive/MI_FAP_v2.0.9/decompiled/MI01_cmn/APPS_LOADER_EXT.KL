@@ -1,0 +1,162 @@
+-- APPS_LOADER_EXT.KL (decompiled v3)
+PROGRAM APPS_LOADER_EXT
+%COMMENT = 'APP 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE IO_INIT : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+BEGIN
+  FOR r0_lc2 = 1 TO 3 DO
+  SET_PORT_ASG(21, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  ENDFOR
+  FOR r0_lc2 = 1 TO 3 DO
+  SET_PORT_ASG(20, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  ENDFOR
+  FOR r0_lc2 = 1 TO 3 DO
+  SET_PORT_ASG(1, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  SET_PORT_ASG(2, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  ENDFOR
+  FOR r0_lc2 = 1 TO 3 DO
+  SET_PORT_ASG(18, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  SET_PORT_ASG(19, r0_lc2, 0, 0, 0, 0, 0, r0_lc1)
+  ENDFOR
+  RETURN(0)
+END IO_INIT
+
+ROUTINE SET_REG : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  SET_PREG_CMT(1, 'Home Position', r1_lc1)
+  SET_PREG_CMT(2, 'pounce', r1_lc1)
+  SET_PREG_CMT(11, 'Gun Opening', r1_lc1)
+  SET_PREG_CMT(61, 'Cal Offset Data', r1_lc1)
+  SET_PREG_CMT(62, 'Send Posit Data', r1_lc1)
+  SET_PREG_CMT(63, 'Reference Frame', r1_lc1)
+  SET_PREG_CMT(64, 'Offset Frame', r1_lc1)
+  SET_PREG_CMT(131, 'Hem Offset Data', r1_lc1)
+  SET_REG_CMT(1, 'Cycle time', r1_lc1)
+  SET_REG_CMT(2, 'Total BG Program', r1_lc1)
+  SET_REG_CMT(3, 'New Speed', r1_lc1)
+  SET_REG_CMT(4, 'Total Tool Num', r1_lc1)
+  SET_REG_CMT(5, 'Current Tool Num', r1_lc1)
+  SET_REG_CMT(6, 'Request Tool Num', r1_lc1)
+  SET_REG_CMT(7, 'Prog Num TCPCtrl', r1_lc1)
+  SET_REG_CMT(8, 'Working Tool', r1_lc1)
+  SET_REG_CMT(9, 'Master Tool', r1_lc1)
+  SET_REG_CMT(10, 'Not Use', r1_lc1)
+  SET_REG_CMT(11, 'Max Gun Opening', r1_lc1)
+  SET_REG_CMT(12, 'Gun Open Distan', r1_lc1)
+  SET_REG_CMT(13, 'Pressure Count', r1_lc1)
+  SET_REG_CMT(21, 'Glue Equip Num', r1_lc1)
+  SET_REG_CMT(22, 'Purge Time', r1_lc1)
+  SET_REG_CMT(23, 'Pruge Count', r1_lc1)
+  SET_REG_CMT(24, 'Fill Time', r1_lc1)
+  SET_REG_CMT(25, 'Fill Count', r1_lc1)
+  SET_REG_CMT(26, 'Heating Time', r1_lc1)
+  SET_REG_CMT(27, 'Heating Count', r1_lc1)
+  SET_REG_CMT(28, 'Dispense Result', r1_lc1)
+  SET_REG_CMT(31, 'TD Fault Memory', r1_lc1)
+  SET_REG_CMT(32, 'Gun1 ORG TipWear', r1_lc1)
+  SET_REG_CMT(33, 'Gun1 Cur TipWear', r1_lc1)
+  SET_REG_CMT(34, 'Gun2 ORG TipWear', r1_lc1)
+  SET_REG_CMT(35, 'Gun2 Cur TipWear', r1_lc1)
+  SET_REG_CMT(36, 'Tip Dress Wear', r1_lc1)
+  SET_REG_CMT(37, 'TD Count', r1_lc1)
+  SET_REG_CMT(38, 'Rst Water Count', r1_lc1)
+  SET_REG_CMT(42, 'StudTime Dryrun', r1_lc1)
+  SET_REG_CMT(43, 'RivetTime Dryrun', r1_lc1)
+  SET_REG_CMT(45, 'Gun Max Stroke', r1_lc1)
+  SET_REG_CMT(46, 'Fill Time', r1_lc1)
+  SET_REG_CMT(47, 'Fill Count', r1_lc1)
+  SET_REG_CMT(52, 'SPRTime Dryrun', r1_lc1)
+  SET_REG_CMT(53, 'RivetTime Dryrun', r1_lc1)
+  SET_REG_CMT(55, 'Gun Max Stroke', r1_lc1)
+  SET_REG_CMT(56, 'Fill Time', r1_lc1)
+  SET_REG_CMT(57, 'Fill Count', r1_lc1)
+  SET_REG_CMT(61, 'Current Pos Data', r1_lc1)
+  SET_REG_CMT(62, 'Processing Data1', r1_lc1)
+  SET_REG_CMT(63, 'Processing Data2', r1_lc1)
+  SET_REG_CMT(64, 'Real to Byte 1', r1_lc1)
+  SET_REG_CMT(65, 'Real to Byte 2', r1_lc1)
+  SET_REG_CMT(66, 'Real to Byte 3', r1_lc1)
+  SET_REG_CMT(67, 'Real to Byte 4', r1_lc1)
+  SET_REG_CMT(68, 'Real to Byte 5', r1_lc1)
+  SET_REG_CMT(69, 'Real to Byte 6', r1_lc1)
+  SET_REG_CMT(70, 'Real to Byte 7', r1_lc1)
+  SET_REG_CMT(71, 'X Integer', r1_lc1)
+  SET_REG_CMT(72, 'X Decimal', r1_lc1)
+  SET_REG_CMT(73, 'Y Integer', r1_lc1)
+  SET_REG_CMT(74, 'Y Decimal', r1_lc1)
+  SET_REG_CMT(75, 'Z Integer', r1_lc1)
+  SET_REG_CMT(76, 'Z Decimal', r1_lc1)
+  SET_REG_CMT(77, 'W Integer', r1_lc1)
+  SET_REG_CMT(78, 'W Decimal', r1_lc1)
+  SET_REG_CMT(79, 'P Integer', r1_lc1)
+  SET_REG_CMT(80, 'P Decimal', r1_lc1)
+  SET_REG_CMT(81, 'R Integer', r1_lc1)
+  SET_REG_CMT(82, 'R Decimal', r1_lc1)
+  SET_REG_CMT(83, 'Position-X', r1_lc1)
+  SET_REG_CMT(84, 'Position-Y', r1_lc1)
+  SET_REG_CMT(85, 'Position-Z', r1_lc1)
+  SET_REG_CMT(86, 'Position-W', r1_lc1)
+  SET_REG_CMT(87, 'Position-P', r1_lc1)
+  SET_REG_CMT(88, 'Position-R', r1_lc1)
+  SET_REG_CMT(89, 'Part of Integer', r1_lc1)
+  SET_REG_CMT(90, 'Part of Decimal', r1_lc1)
+  SET_REG_CMT(150, 'CurrentSpotCount', r1_lc1)
+  SET_REG_CMT(151, 'Gun1 Last Count', r1_lc1)
+  SET_REG_CMT(152, 'Gun2 Last Count', r1_lc1)
+  SET_REG_CMT(153, 'Gun3 Last Count', r1_lc1)
+  SET_REG_CMT(154, 'Gun1 Spot Count', r1_lc1)
+  SET_REG_CMT(155, 'Gun2 Spot Count', r1_lc1)
+  SET_REG_CMT(156, 'Gun3 Spot Count', r1_lc1)
+  SET_REG_CMT(157, 'Gun1ProcessCount', r1_lc1)
+  SET_REG_CMT(158, 'Gun2ProcessCount', r1_lc1)
+  SET_REG_CMT(159, 'Gun3ProcessCount', r1_lc1)
+  SET_REG_CMT(160, 'Total Tool Num', r1_lc1)
+  SET_REG_CMT(161, 'Current Tool Num', r1_lc1)
+  SET_REG_CMT(162, 'Request Tool Num', r1_lc1)
+  SET_REG_CMT(163, 'Prog Num TCPCtrl', r1_lc1)
+  SET_REG_CMT(164, 'Working Tool', r1_lc1)
+  SET_REG_CMT(165, 'Master Tool', r1_lc1)
+  SET_REG_CMT(172, 'Current Tool Num', r1_lc1)
+  SET_REG_CMT(173, 'Robot Pos X', r1_lc1)
+  SET_REG_CMT(174, 'Robot Pos Y', r1_lc1)
+  SET_REG_CMT(175, 'Robot Pos Z', r1_lc1)
+  SET_REG_CMT(176, 'TCP Data W', r1_lc1)
+  SET_REG_CMT(177, 'TCP Data P', r1_lc1)
+  SET_REG_CMT(178, 'TCP Data R', r1_lc1)
+  SET_REG_CMT(179, 'Tool Number', r1_lc1)
+  SET_REG_CMT(180, 'Offset Data X', r1_lc1)
+  SET_REG_CMT(181, 'Offset Data Y', r1_lc1)
+  SET_REG_CMT(182, 'Offset Data Z', r1_lc1)
+  SET_REG_CMT(183, 'Offset Data W', r1_lc1)
+  SET_REG_CMT(184, 'Offset Data P', r1_lc1)
+  SET_REG_CMT(185, 'Offset Data R', r1_lc1)
+  SET_REG_CMT(190, 'Pump Count', r1_lc1)
+  SET_REG_CMT(200, 'ORG WaitTimeData', r1_lc1)
+  SET_REG_CMT(201, 'Transfer Data', r1_lc1)
+  SET_REG_CMT(202, 'Prompt Answer ', r1_lc1)
+  sv_i = SET_REG
+  -- stmt200 stray sv_i
+  RETURN(0)
+END SET_REG
+
+BEGIN
+END APPS_LOADER_EXT
+-- module-residue 4096

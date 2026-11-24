@@ -1,0 +1,3315 @@
+<!doctype html><meta charset=utf-8><title>RVH 焊枪管理</title>
+<style>
+body{font:14px/1.55 ui-monospace,Consolas,monospace;margin:24px auto;max-width:1100px;
+ background:#fafafa;color:#222}
+h1{font-size:20px} h2{font-size:16px;border-bottom:1px solid #ccc;padding-bottom:4px}
+.note{background:#fffbe6;border-left:4px solid #e0b000;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;margin:8px 0} td,th{border:1px solid #ccc;padding:3px 10px;font-size:12px}
+pre{background:#fff;border:1px solid #ddd;padding:10px;overflow:auto;font-size:12px;line-height:1.45}
+.k{color:#7a3;font-weight:600}.s{color:#c39}.c{color:#888}.n{color:#36c}
+details{margin:10px 0} summary{cursor:pointer;font-weight:600}
+</style>
+<h1>MI_FAP v2.0.9 · RVH 焊枪管理</h1>
+<div class=note><b>应用定位</b>：焊枪/枪库管理（RVH）：选枪（Gun No. 1~3）、回枪位（Wait gun home）、手动使能（Deadman）保护。</div>
+<p>TP 程序 2 个：R01_SPR_XX.LS, R01_SPR_XX.TP</p>
+<h2>模块与例程</h2>
+<table><tr><th>模块</th><th>例程</th><th>SELECT</th><th>例程名</th><th>IO</th></tr><tr><td>MI13_RVH.KL</td><td>91</td><td>2</td><td>PAUSESTEP, MANUAL_REQOPERATOR, MANUAL_CHECKRC, MANUAL_STATUSREPEAT, MI13_CHECKFORERROR, MI13_IO_INIT, CHECKGUNHOME, CHECKGUNNOTHOME</td><td>io_02</td></tr><tr><td>MI13_RVH_DCP.KL</td><td>1</td><td>2</td><td>ERROR_MSG</td><td></td></tr><tr><td>MI13_RVH_GUI.KL</td><td>67</td><td>3</td><td>CLR_FSCR, KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE</td><td></td></tr><tr><td>MI13_RVH_MAN.KL</td><td>42</td><td>0</td><td>PAUSESTEP, MANUAL_REQOPERATOR, MANUAL_CHECKRC, MANUAL_STATUSREPEAT, MI13_CHECKFORERROR, MI13_IO_INIT, CHECKGUNHOME, CHECKGUNNOTHOME</td><td>io_01, io_02, io_0e</td></tr><tr><td>MI13_RVH_MON.KL</td><td>89</td><td>0</td><td>PAUSESTEP, MANUAL_REQOPERATOR, MANUAL_CHECKRC, MANUAL_STATUSREPEAT, MI13_CHECKFORERROR, MI13_IO_INIT, CHECKGUNHOME, CHECKGUNNOTHOME</td><td>io_01, io_12</td></tr><tr><td>MI13_RVH_ROUT.KL</td><td>89</td><td>6</td><td>KILLBLANKS, STRTOINT, INTTOSTR, REALTOSTR, CONFTOSTR, RETPOSINSTR, UPPERCASE, STARTSWITH</td><td>io_01, io_02, io_0b, io_0e, io_12, io_13</td></tr><tr><td>MI13_RVH_VAR.KL</td><td>0</td><td>0</td><td></td><td></td></tr></table>
+<h2>调用与消息</h2>
+<table><tr><th>模块</th><th>外部调用/消息</th></tr><tr><td>MI13_RVH.KL</td><td>UNINIT</td></tr><tr><td>MI13_RVH.KL 消息</td><td>MI13 2.0.9 | *SYSTEM* | $MOR.$CMND_EXIST | *SYSTEM* | $MOR.$CMND_EXIST | *SYSTEM* | $MOR.$CMND_EXIST | MI13_RVH_MON</td></tr><tr><td>MI13_RVH_DCP.KL</td><td>SIC</td></tr><tr><td>MI13_RVH_DCP.KL 消息</td><td>MI13 2.0.9 | Timeout rivet program | Timeout tolerance curve | Timeout start rivet process | Timeout end rivet process | Timeout measurement data | Rivet in receiver after rivet process | Timeout spindle home pos.</td></tr><tr><td>MI13_RVH_GUI.KL</td><td>ADD_DICT, DISCTRL_FORM, FORCE_SPMENU, GET_DEV_INFO, SET_LANG, UNINIT</td></tr><tr><td>MI13_RVH_GUI.KL 消息</td><td>MI13 2.0.9 | *SYSTEM* | $VIRTUALEDIT | *SYSTEM* | $LANGUAGE | )) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG( | , r1_lc10)
+  -- stmt116 stray  | 
+  ELSE
+  -- stmt118 stray </td></tr><tr><td>MI13_RVH_MAN.KL</td><td>DB_INP_INT</td></tr><tr><td>MI13_RVH_MAN.KL 消息</td><td>MI13 2.0.9 | *SYSTEM* | $VIRTUALEDIT | Request for a valid Gun No. | Please enter the Gun No. (1 ~ 3) | Request for a valid Gun No. | Please enter the Gun No. (1 ~ 3) | Request for a valid Gun No.</td></tr><tr><td>MI13_RVH_MON.KL</td><td>DB_INP_INT, UNINIT</td></tr><tr><td>MI13_RVH_MON.KL 消息</td><td>MI13 2.0.9 | Warning: Magazine(s) will be empty  | Warning: Magazine(s) empty  | Request for a valid Gun No. | Please enter the Gun No. (1 ~ 3)</td></tr><tr><td>MI13_RVH_ROUT.KL</td><td>DB_PROMPT, UNINIT</td></tr><tr><td>MI13_RVH_ROUT.KL 消息</td><td>MI13 2.0.9 | *SYSTEM* | $SSR.$SINGLESTEP | Request for worker confirmation | Press \&quot;OK\&quot; if the rivet from last process has been removed | Press \\&quot;OK\\&quot; if the rivet from last process has been removed | Request for worker confirmation | RC is ON, restart failed, check rivet again</td></tr><tr><td>MI13_RVH_VAR.KL 消息</td><td>MI13 2.0.9</td></tr></table>
+<h2>源码（反编译 .KL）</h2>
+<details><summary>MI13_RVH.KL（91 例程）</summary><pre><span class=c>-- MI13_RVH.KL (decompiled v3)
+PROGRAM MI13_RVH
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_02 : ARRAY[512] OF INTEGER
+  I_DRYRUNTIME : INTEGER
+  GUN_COUNT : INTEGER
+  I_TOLERANCEPOS : INTEGER
+  TIMEOUT_RIVET : INTEGER
+  TIMEOUT_PROCESS : INTEGER
+  TIMEOUT_LOADEPF : INTEGER
+  I_COUNTER : INTEGER
+  I_MAGCOUNTER : INTEGER
+  I_PREWARNCOUNTER : INTEGER
+  M13_PREWARNING : INTEGER
+  I_MAX_OPEN_POS : ARRAY[64] OF INTEGER
+  GUNCFG_LST : ARRAY[64] OF INTEGER
+  AR_M13_RC_DI : ARRAY[64] OF INTEGER
+  AR_M13_RC_DO : ARRAY[64] OF INTEGER
+  AR_M13_RC_GI : ARRAY[64] OF INTEGER
+  AR_M13_RC_GO : ARRAY[64] OF INTEGER
+  INTPARAMVALUE : INTEGER
+  I_APPL_TYPE : INTEGER
+  I_GUNNO : INTEGER
+  I_OPENPOSIN : INTEGER
+  I_RIVETNR : INTEGER
+  I_NEXTRIVETNR : INTEGER
+  I_MOVESTATE : INTEGER
+  I_ACTIVATE : INTEGER
+  I_STATE : INTEGER
+  I_GUNPOS : ARRAY[3] OF INTEGER
+  M13_APPLMODE : INTEGER
+  B_ISDOCKED : ARRAY[3] OF BOOLEAN
+  I_TIMER : INTEGER
+  B_NOPROCESS : BOOLEAN
+  B_FAIL_START_PROC : BOOLEAN
+  B_SKIPPROC_NOSTART : BOOLEAN
+  I_MON : INTEGER
+  I_BNSTYPE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DI : INTEGER
+  I_MI01_DO : INTEGER
+  I_MI01_GO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE PAUSESTEP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_REQOPERATOR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_CHECKRC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_STATUSREPEAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKFORERROR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_IO_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNNOTHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKMAXGUNNUMBER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_ERRORNO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_RIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_NEXTRIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_MAX_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_CUR_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_TARGET_POS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POS_CALC(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_GUN_CODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETTIMER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CTRLPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKINPOS(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE MI13_CHECK_APP_MODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STARTPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STATUSPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_COUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_DECOUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_INIT(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_RIVET(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POSITIONING(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PREDOCKING(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_LOADEPF(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PRESERVICE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE INITAPPVARS : INTEGER
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  IF (UNINIT(I_DRYRUNTIME)) THEN
+  I_DRYRUNTIME = 1000
+  ENDIF
+  IF (UNINIT(GUN_COUNT)) THEN
+  GUN_COUNT = 1
+  ENDIF
+  IF (UNINIT(I_TOLERANCEPOS)) THEN
+  I_TOLERANCEPOS = 1
+  ENDIF
+  IF (UNINIT(TIMEOUT_RIVET)) THEN
+  TIMEOUT_RIVET = 500
+  ENDIF
+  IF (UNINIT(TIMEOUT_PROCESS)) THEN
+  TIMEOUT_PROCESS = 5000
+  ENDIF
+  IF (UNINIT(TIMEOUT_LOADEPF)) THEN
+  TIMEOUT_LOADEPF = 6000
+  ENDIF
+  IF (UNINIT(I_COUNTER)) THEN
+  I_COUNTER = 0
+  ENDIF
+  IF (UNINIT(I_MAGCOUNTER)) THEN
+  I_MAGCOUNTER = 999
+  ENDIF
+  IF (UNINIT(I_PREWARNCOUNTER)) THEN
+  I_PREWARNCOUNTER = 255
+  ENDIF
+  IF (UNINIT(M13_PREWARNING)) THEN
+  M13_PREWARNING = 0
+  ENDIF
+  FOR r0_lc1 = 1 TO 3 DO
+  IF (UNINIT(I_MAX_OPEN_POS[r0_lc1])) THEN
+  I_MAX_OPEN_POS[r0_lc1] = 255
+  ENDIF
+  IF (UNINIT(GUNCFG_LST[r0_lc1])) THEN
+  GUNCFG_LST[r0_lc1] = 1
+  ENDIF
+  ENDFOR
+  IF (UNINIT(AR_M13_RC_DI[1])) THEN
+  AR_M13_RC_DI[1] = 1136
+  ENDIF
+  IF (UNINIT(AR_M13_RC_DO[1])) THEN
+  AR_M13_RC_DO[1] = 1136
+  ENDIF
+  IF (UNINIT(AR_M13_RC_DI[2])) THEN
+  AR_M13_RC_DI[2] = 1448
+  ENDIF
+  IF (UNINIT(AR_M13_RC_DO[2])) THEN
+  AR_M13_RC_DO[2] = 1448
+  ENDIF
+  IF (UNINIT(AR_M13_RC_GI[1])) THEN
+  AR_M13_RC_GI[1] = 50
+  ENDIF
+  IF (UNINIT(AR_M13_RC_GO[1])) THEN
+  AR_M13_RC_GO[1] = 50
+  ENDIF
+  IF (UNINIT(AR_M13_RC_GI[2])) THEN
+  AR_M13_RC_GI[2] = 55
+  ENDIF
+  IF (UNINIT(AR_M13_RC_GO[2])) THEN
+  AR_M13_RC_GO[2] = 55
+  ENDIF
+  RETURN(0)
+END INITAPPVARS
+
+ROUTINE DOAPP : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+  r1_lc3 : INTEGER
+BEGIN
+  sv_i = GETTPEPARAM(1, 1)
+  -- stmt118 stray sv_i
+  I_APPL_TYPE = INTPARAMVALUE
+  SELECT I_APPL_TYPE OF
+  CASE(1):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt125 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = GETTPEPARAM(3, 1)
+  -- stmt127 stray sv_i
+  I_OPENPOSIN = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt133 stray sv_i
+  sv_i = MI13_INIT(I_GUNNO, I_OPENPOSIN)
+  CASE(2):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt138 stray sv_i
+  I_RIVETNR = INTPARAMVALUE
+  sv_i = GETTPEPARAM(3, 1)
+  -- stmt140 stray sv_i
+  I_NEXTRIVETNR = INTPARAMVALUE
+  sv_i = GETTPEPARAM(4, 1)
+  -- stmt142 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = GETTPEPARAM(5, 1)
+  -- stmt144 stray sv_i
+  I_OPENPOSIN = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt150 stray sv_i
+  sv_i = MI13_RIVET(I_GUNNO, I_RIVETNR, I_NEXTRIVETNR, I_OPENPOSIN)
+  CASE(3):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt157 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = GETTPEPARAM(3, 1)
+  -- stmt159 stray sv_i
+  I_OPENPOSIN = INTPARAMVALUE
+  sv_i = GETTPEPARAM(4, 1)
+  -- stmt161 stray sv_i
+  I_MOVESTATE = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt167 stray sv_i
+  IF ((I_MOVESTATE = 0)) THEN
+  ENDIF
+  REPEAT
+  DELAY 50
+  GET_VAR(r1_lc1, &#x27;*SYSTEM*&#x27;, &#x27;$MOR.$CMND_EXIST&#x27;, r1_lc3, r1_lc2)
+  UNTIL(sv_b OR (r1_lc3 = 0))
+  IF (NOT (sv_b)) THEN
+  sv_i = PAUSESTEP(0)
+  -- stmt176 stray sv_i
+  sv_i = MI13_SETPOS(I_GUNNO, I_OPENPOSIN)
+  -- stmt177 stray sv_i
+  -- stmt178 stray 9 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO]]
+  DELAY 100
+  -- stmt180 residue 2000
+  ENDIF
+  REPEAT
+  DELAY 50
+  UNTIL(sv_b OR (io_02[9 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO]]] = 0))
+  sv_i = MI13_CTRLPOS(I_GUNNO, I_OPENPOSIN)
+  -- stmt188 stray sv_i
+  sv_i = CHECKGUNHOME(I_GUNNO)
+  -- stmt191 stray sv_i
+  sv_i = MI13_POSITIONING(I_GUNNO, I_OPENPOSIN, I_MOVESTATE)
+  -- stmt193 stray sv_i
+  CASE(4):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt198 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = GETTPEPARAM(3, 1)
+  -- stmt200 stray sv_i
+  I_ACTIVATE = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt206 stray sv_i
+  sv_i = MI13_CHECKFORERROR(I_GUNNO)
+  -- stmt207 stray sv_i
+  sv_i = MI13_PREDOCKING(I_GUNNO, I_ACTIVATE)
+  CASE(5):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt211 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt217 stray sv_i
+  sv_i = MI13_LOADEPF(I_GUNNO)
+  CASE(6):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt222 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = GETTPEPARAM(3, 1)
+  -- stmt224 stray sv_i
+  I_STATE = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt230 stray sv_i
+  GET_VAR(r1_lc1, &#x27;*SYSTEM*&#x27;, &#x27;$MOR.$CMND_EXIST&#x27;, r1_lc3, r1_lc2)
+  IF ((r1_lc3 &lt;&gt; 0)) THEN
+  GET_VAR(r1_lc1, &#x27;*SYSTEM*&#x27;, &#x27;$MOR.$CMND_EXIST&#x27;, r1_lc3, r1_lc2)
+  DELAY 20
+  ELSE
+  sv_i = MI13_CHECKFORERROR(I_GUNNO)
+  -- stmt240 stray sv_i
+  ENDIF
+  CASE(0):
+  sv_i = MI13_COUPLE(I_GUNNO)
+  CASE(1):
+  sv_i = MI13_DECOUPLE(I_GUNNO)
+  ELSE:
+  ENDSELECT
+  SELECT sv_i OF
+  CASE(7):
+  sv_i = GETTPEPARAM(2, 1)
+  -- stmt255 stray sv_i
+  I_GUNNO = INTPARAMVALUE
+  sv_i = MI13_CHECKMAXGUNNUMBER(I_GUNNO)
+  -- stmt5 stray sv_i
+  sv_i = MI13_PRESERVICE(I_GUNNO)
+  ELSE:
+  ENDSELECT
+  sv_i = INITAPPVARS
+  -- stmt19 stray sv_i
+  sv_i = INITVARS(0)
+  -- stmt20 stray sv_i
+  sv_i = ROBOTINPROC(1)
+  -- stmt21 stray sv_i
+  sv_i = BSN_ENABLE(0)
+  -- stmt23 stray sv_i
+  sv_i = RUN_MONITOR(&#x27;MI13_RVH_MON&#x27;)
+  -- stmt24 stray sv_i
+  sv_i = DOAPP
+  -- stmt26 stray sv_i
+  sv_i = ROBOTINPROC(2)
+  -- stmt27 stray sv_i
+  RETURN(0)
+END DOAPP
+
+BEGIN
+END MI13_RVH
+</span></pre></details><details><summary>MI13_RVH_DCP.KL（1 例程）</summary><pre><span class=c>-- MI13_RVH_DCP.KL (decompiled v3)
+PROGRAM MI13_RVH_DCP
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	ALARMDCP = STRUCTURE
+	DCPFAULTNUM: INTEGER
+	DCPLINE1: STRING[128]
+	DCPLINE2: STRING[128]
+	DCPLINE3: STRING[128]
+	DCPLINE4: STRING[128]
+	DCPLINE5: STRING[128]
+	ENDSTRUCTURE
+VAR
+  ALMDCP : ALARMDCP
+  ALMDCP_f04 : STRING[64]
+  pp00 : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING
+BEGIN
+  SELECT sv_i OF
+  CASE(2):
+  ALMDCP_f04 = &#x27;Timeout rivet program&#x27;
+  -- stmt58 stray ALMDCP_f04
+  CASE(3):
+  ALMDCP_f04 = &#x27;Timeout tolerance curve&#x27;
+  -- stmt59 stray ALMDCP_f04
+  CASE(4):
+  ALMDCP_f04 = &#x27;Timeout start rivet process&#x27;
+  -- stmt60 stray ALMDCP_f04
+  CASE(5):
+  ALMDCP_f04 = &#x27;Timeout end rivet process&#x27;
+  -- stmt61 stray ALMDCP_f04
+  CASE(6):
+  ALMDCP_f04 = &#x27;Timeout measurement data&#x27;
+  -- stmt62 stray ALMDCP_f04
+  CASE(7):
+  ALMDCP_f04 = &#x27;Rivet in receiver after rivet process&#x27;
+  -- stmt63 stray ALMDCP_f04
+  CASE(8):
+  ALMDCP_f04 = &#x27;Timeout spindle home pos.&#x27;
+  -- stmt64 stray ALMDCP_f04
+  CASE(9):
+  ALMDCP_f04 = &#x27;Timeout not ready for fixing linear slide&#x27;
+  -- stmt65 stray ALMDCP_f04
+  CASE(10):
+  ALMDCP_f04 = &#x27;Timeout fixing linear slide&#x27;
+  -- stmt66 stray ALMDCP_f04
+  CASE(11):
+  ALMDCP_f04 = &#x27;No program selection&#x27;
+  -- stmt67 stray ALMDCP_f04
+  CASE(12):
+  ALMDCP_f04 = &#x27;Program not active&#x27;
+  -- stmt68 stray ALMDCP_f04
+  CASE(13):
+  ALMDCP_f04 = &#x27;Start riveting on manual system&#x27;
+  -- stmt69 stray ALMDCP_f04
+  CASE(14):
+  ALMDCP_f04 = &#x27;RAM module erased&#x27;
+  -- stmt70 stray ALMDCP_f04
+  CASE(15):
+  ALMDCP_f04 = &#x27;Maint. counter spindle erased&#x27;
+  -- stmt71 stray ALMDCP_f04
+  CASE(16):
+  ALMDCP_f04 = &#x27;Statistic data erased&#x27;
+  -- stmt72 stray ALMDCP_f04
+  CASE(17):
+  ALMDCP_f04 = &#x27;Fault memory erased&#x27;
+  -- stmt73 stray ALMDCP_f04
+  CASE(18):
+  ALMDCP_f04 = &#x27;ROP memory erased&#x27;
+  -- stmt74 stray ALMDCP_f04
+  CASE(19):
+  ALMDCP_f04 = &#x27;Maint. counter feed tubes erased&#x27;
+  -- stmt75 stray ALMDCP_f04
+  CASE(20):
+  ALMDCP_f04 = &#x27;Maint. counter general purpose erased&#x27;
+  -- stmt76 stray ALMDCP_f04
+  CASE(21):
+  ALMDCP_f04 = &#x27;Keyreader user data erased&#x27;
+  -- stmt77 stray ALMDCP_f04
+  CASE(22):
+  ALMDCP_f04 = &#x27;List of reasons for changes erased&#x27;
+  -- stmt78 stray ALMDCP_f04
+  CASE(23):
+  ALMDCP_f04 = &#x27;Insufficient memory capacity (RAM module)&#x27;
+  -- stmt79 stray ALMDCP_f04
+  CASE(24):
+  ALMDCP_f04 = &#x27;RAM module memory faultily&#x27;
+  -- stmt80 stray ALMDCP_f04
+  CASE(25):
+  ALMDCP_f04 = &#x27;RAM module faultily or missing&#x27;
+  CASE(26):
+  ALMDCP_f04 = &#x27;Test operation conditions not met&#x27;
+  CASE(27):
+  ALMDCP_f04 = &#x27;Fiber optic interface disturbed&#x27;
+  CASE(28):
+  ALMDCP_f04 = &#x27;Start rivet not reset&#x27;
+  CASE(29):
+  ALMDCP_f04 = &#x27;Start rivet during test process&#x27;
+  CASE(30):
+  ALMDCP_f04 = &#x27;Feeder not in automatic operation mode&#x27;
+  CASE(31):
+  ALMDCP_f04 = &#x27;Wrong rivet in receiver&#x27;
+  CASE(32):
+  ALMDCP_f04 = &#x27;Master: Comm. fault with slave feeder&#x27;
+  CASE(33):
+  ALMDCP_f04 = &#x27;Slave1: Comm. fault with slave&#x27;
+  CASE(34):
+  ALMDCP_f04 = &#x27;Slave2: Comm. fault with slave&#x27;
+  CASE(35):
+  ALMDCP_f04 = &#x27;Slave3: Comm. fault with slave&#x27;
+  CASE(36):
+  ALMDCP_f04 = &#x27;Master: Rivet not separated, inlet rail not filled&#x27;
+  CASE(37):
+  ALMDCP_f04 = &#x27;Slave1: Rivet not separated, inlet rail not filled&#x27;
+  CASE(38):
+  ALMDCP_f04 = &#x27;Slave2: Rivet not separated, inlet rail not filled&#x27;
+  CASE(39):
+  ALMDCP_f04 = &#x27;Slave3: Rivet not separated, inlet rail not filled&#x27;
+  CASE(40):
+  ALMDCP_f04 = &#x27;Master: Rivet not separated&#x27;
+  CASE(41):
+  ALMDCP_f04 = &#x27;Slave1: Rivet not separated&#x27;
+  CASE(42):
+  ALMDCP_f04 = &#x27;Slave2: Rivet not separated&#x27;
+  CASE(43):
+  ALMDCP_f04 = &#x27;Slave3: Rivet not separated&#x27;
+  CASE(44):
+  ALMDCP_f04 = &#x27;Master: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(45):
+  ALMDCP_f04 = &#x27;Slave1: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(46):
+  ALMDCP_f04 = &#x27;Slave2: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(47):
+  ALMDCP_f04 = &#x27;Slave3: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(48):
+  ALMDCP_f04 = &#x27;Feeding process master: Timeout feeding in receiver&#x27;
+  CASE(49):
+  ALMDCP_f04 = &#x27;Feeding process slave1: Timeout feeding in receiver&#x27;
+  CASE(50):
+  ALMDCP_f04 = &#x27;Feeding process slave2: Timeout feeding in receiver&#x27;
+  CASE(51):
+  ALMDCP_f04 = &#x27;Feeding process slave3: Timeout feeding in receiver&#x27;
+  CASE(52):
+  ALMDCP_f04 = &#x27;Customer interface: common fault for error codes larger 255&#x27;
+  CASE(53):
+  ALMDCP_f04 = &#x27;Fiber optic data connection feeder&#x27;
+  CASE(54):
+  ALMDCP_f04 = &#x27;Timeout fixing linear slide&#x27;
+  CASE(55):
+  ALMDCP_f04 = &#x27;Timeout floating linear slide&#x27;
+  CASE(56):
+  ALMDCP_f04 = &#x27;Spindle: Maint. user counter 1 necessary&#x27;
+  CASE(57):
+  ALMDCP_f04 = &#x27;Spindle: Maint. spindle is necessary&#x27;
+  CASE(58):
+  ALMDCP_f04 = &#x27;Spindle: Maint. die is necessary&#x27;
+  CASE(59):
+  ALMDCP_f04 = &#x27;Spindle: Maint. punch is necessary&#x27;
+  CASE(60):
+  ALMDCP_f04 = &#x27;Feeder Master: Maint. feed tube is necessary&#x27;
+  CASE(61):
+  ALMDCP_f04 = &#x27;Timeout disconnecting spindle (Docking)&#x27;
+  CASE(62):
+  ALMDCP_f04 = &#x27;Timeout connecting spindle (Docking)&#x27;
+  CASE(63):
+  ALMDCP_f04 = &#x27;Timeout spindle parameter (docking)&#x27;
+  CASE(64):
+  ALMDCP_f04 = &#x27;Spindle (docking) number invalid&#x27;
+  CASE(65):
+  ALMDCP_f04 = &#x27;SIC: Rivet parameters invalid&#x27;
+  CASE(66):
+  ALMDCP_f04 = &#x27;SIC: Tolerance curve not loaded&#x27;
+  CASE(67):
+  ALMDCP_f04 = &#x27;Timeout start signal &quot;Spindle drive to pos.&#x27;
+  CASE(68):
+  ALMDCP_f04 = &#x27;Timeout spindle drive to pos.&#x27;
+  CASE(69):
+  ALMDCP_f04 = &#x27;Timeout request &quot;Spindle pos.&#x27;
+  CASE(70):
+  ALMDCP_f04 = &#x27;Fiber optic data connection SIC (servo drive)&#x27;
+  CASE(71):
+  ALMDCP_f04 = &#x27;SIC: Spindle type changed&#x27;
+  CASE(72):
+  ALMDCP_f04 = &#x27;Timeout spindle basic pos. run-up&#x27;
+  CASE(73):
+  ALMDCP_f04 = &#x27;Timeout spindle drive to basic pos.&#x27;
+  CASE(74):
+  ALMDCP_f04 = &#x27;Rivet process: Timeout linear slide floating&#x27;
+  CASE(75):
+  ALMDCP_f04 = &#x27;Rivet process: Protection circuit or e-stop triggered during riveting&#x27;
+  CASE(76):
+  ALMDCP_f04 = &#x27;Preseperation: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(77):
+  ALMDCP_f04 = &#x27;Preseperation: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(78):
+  ALMDCP_f04 = &#x27;Preseperation: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(79):
+  ALMDCP_f04 = &#x27;Preseperation: Sensor &quot;rivet in receiver&quot; did not recognize a rivet&#x27;
+  CASE(80):
+  ALMDCP_f04 = &#x27;Spindle: Maint. user counter 2 necessary&#x27;
+  CASE(81):
+  ALMDCP_f04 = &#x27;Spindle: Maint. user counter 3 necessary&#x27;
+  CASE(83):
+  ALMDCP_f04 = &#x27;Rivet process: Spindle does not achieve the basic pos.&#x27;
+  CASE(84):
+  ALMDCP_f04 = &#x27;Rivet process: Fixing linear slide not allowed&#x27;
+  CASE(85):
+  ALMDCP_f04 = &#x27;Master: Rivet in tube not fed&#x27;
+  CASE(86):
+  ALMDCP_f04 = &#x27;Slave1: Rivet in tube not fed&#x27;
+  CASE(87):
+  ALMDCP_f04 = &#x27;Slave2: Rivet in tube not fed&#x27;
+  CASE(88):
+  ALMDCP_f04 = &#x27;Slave3: Rivet in tube not fed&#x27;
+  CASE(89):
+  ALMDCP_f04 = &#x27;Master: Rivet to divider&#x27;
+  CASE(90):
+  ALMDCP_f04 = &#x27;Slave1: Rivet to divider&#x27;
+  CASE(91):
+  ALMDCP_f04 = &#x27;Slave2: Rivet to divider&#x27;
+  CASE(92):
+  ALMDCP_f04 = &#x27;Slave3: Rivet to divider&#x27;
+  CASE(93):
+  ALMDCP_f04 = &#x27;Master: Drum motor lacks in supply voltage&#x27;
+  CASE(94):
+  ALMDCP_f04 = &#x27;Slave1: Drum motor lacks supply voltage&#x27;
+  CASE(95):
+  ALMDCP_f04 = &#x27;Slave2: Drum motor lacks in supply voltage&#x27;
+  CASE(96):
+  ALMDCP_f04 = &#x27;Slave3: Drum motor lacks in supply voltage&#x27;
+  CASE(97):
+  ALMDCP_f04 = &#x27;Master: Divider not connected anymore&#x27;
+  CASE(98):
+  ALMDCP_f04 = &#x27;Slave1: Divider not connected anymore&#x27;
+  CASE(99):
+  ALMDCP_f04 = &#x27;Slave2: Divider not connected anymore&#x27;
+  CASE(100):
+  ALMDCP_f04 = &#x27;Slave3: Divider not connected anymore&#x27;
+  CASE(101):
+  ALMDCP_f04 = &#x27;Master: Pre-separation not connected anymore&#x27;
+  CASE(102):
+  ALMDCP_f04 = &#x27;Slave1: Pre-separation not connected anymore&#x27;
+  CASE(103):
+  ALMDCP_f04 = &#x27;Slave2: Pre-separation not connected anymore&#x27;
+  CASE(104):
+  ALMDCP_f04 = &#x27;Slave3: Pre-separation not connected anymore&#x27;
+  CASE(105):
+  ALMDCP_f04 = &#x27;Master: Linear slide control not connected anymore&#x27;
+  CASE(106):
+  ALMDCP_f04 = &#x27;Slave1: Linear slide control not connected anymore&#x27;
+  CASE(107):
+  ALMDCP_f04 = &#x27;Slave2: Linear slide control not connected anymore&#x27;
+  CASE(108):
+  ALMDCP_f04 = &#x27;Slave3: Linear slide control not connected anymore&#x27;
+  CASE(109):
+  ALMDCP_f04 = &#x27;Master: 2-hand interface not connected anymore&#x27;
+  CASE(110):
+  ALMDCP_f04 = &#x27;Slave1: 2-hand interface not connected anymore&#x27;
+  CASE(111):
+  ALMDCP_f04 = &#x27;Slave2: 2-hand interface not connected anymore&#x27;
+  CASE(112):
+  ALMDCP_f04 = &#x27;Slave3: 2-hand interface not connected anymore&#x27;
+  CASE(113):
+  ALMDCP_f04 = &#x27;Master: An existing passive feeder is not connected anymore&#x27;
+  CASE(114):
+  ALMDCP_f04 = &#x27;Slave1: An existing passive is not connected anymore&#x27;
+  CASE(115):
+  ALMDCP_f04 = &#x27;Slave2: An existing passive feeder is not connected anymore&#x27;
+  CASE(116):
+  ALMDCP_f04 = &#x27;Slave3: An existing passive feeder is not connected anymore&#x27;
+  CASE(117):
+  ALMDCP_f04 = &#x27;Master: Divider pos. incorrect for this feeder&#x27;
+  CASE(118):
+  ALMDCP_f04 = &#x27;Slave1: Divider pos. incorrect for this feeder&#x27;
+  CASE(119):
+  ALMDCP_f04 = &#x27;Slave2: Divider pos. incorrect for this feeder&#x27;
+  CASE(120):
+  ALMDCP_f04 = &#x27;Slave3: Divider pos. incorrect for this feeder&#x27;
+  CASE(121):
+  ALMDCP_f04 = &#x27;Master: Chamber pos. of pre-separation faultily for this feeder&#x27;
+  CASE(122):
+  ALMDCP_f04 = &#x27;Slave1: Chamber pos. of pre-separation faultily for this feeder&#x27;
+  CASE(123):
+  ALMDCP_f04 = &#x27;Slave2: Chamber pos. of pre-separation faultily for this feeder&#x27;
+  CASE(124):
+  ALMDCP_f04 = &#x27;Slave3: Chamber pos. of pre-separation faultily for this feeder&#x27;
+  CASE(125):
+  ALMDCP_f04 = &#x27;Master: Rivet not recognized in pre-separation&#x27;
+  CASE(126):
+  ALMDCP_f04 = &#x27;Slave1: Rivet not recognized in pre-separation&#x27;
+  CASE(127):
+  ALMDCP_f04 = &#x27;Slave2: Rivet not recognized in pre-separation&#x27;
+  CASE(128):
+  ALMDCP_f04 = &#x27;Slave3: Rivet not recognized in pre-separation&#x27;
+  CASE(129):
+  ALMDCP_f04 = &#x27;Feeding proc. master: Unknown rivet in receiver&#x27;
+  CASE(130):
+  ALMDCP_f04 = &#x27;Feeding proc. slave1: Unknown rivet in receiver&#x27;
+  CASE(131):
+  ALMDCP_f04 = &#x27;Feeding proc. slave2: Unknown rivet in receiver&#x27;
+  CASE(132):
+  ALMDCP_f04 = &#x27;Feeding proc. slave3: Unknown rivet in receiver&#x27;
+  CASE(133):
+  ALMDCP_f04 = &#x27;Feeding proc. master: Unknown rivet in EPS&#x27;
+  CASE(134):
+  ALMDCP_f04 = &#x27;Feeding proc. slave1: Unknown rivet in EPS&#x27;
+  CASE(135):
+  ALMDCP_f04 = &#x27;Feeding proc. slave2: Unknown rivet in EPS&#x27;
+  CASE(136):
+  ALMDCP_f04 = &#x27;Feeding proc. slave3 Unknown rivet in EPS&#x27;
+  CASE(137):
+  ALMDCP_f04 = &#x27;Controller fault F01: Heat sink temperature&#x27;
+  CASE(138):
+  ALMDCP_f04 = &#x27;Controller fault F02: Overvoltage&#x27;
+  CASE(139):
+  ALMDCP_f04 = &#x27;Controller fault F03: Following error&#x27;
+  CASE(140):
+  ALMDCP_f04 = &#x27;Controller fault F04: Feedback fault&#x27;
+  CASE(141):
+  ALMDCP_f04 = &#x27;Controller fault F05: Undervoltage&#x27;
+  CASE(142):
+  ALMDCP_f04 = &#x27;Controller fault F06: Motor temperature&#x27;
+  CASE(143):
+  ALMDCP_f04 = &#x27;Controller fault F07: Internal voltages&#x27;
+  CASE(144):
+  ALMDCP_f04 = &#x27;Controller fault F07: Internal voltages&#x27;
+  CASE(145):
+  ALMDCP_f04 = &#x27;Controller fault F09: EEPROM&#x27;
+  CASE(146):
+  ALMDCP_f04 = &#x27;Controller fault F10: Flash EPROM&#x27;
+  CASE(147):
+  ALMDCP_f04 = &#x27;Controller fault F10: Flash EPROM&#x27;
+  CASE(148):
+  ALMDCP_f04 = &#x27;Controller fault F12: Motor phase&#x27;
+  CASE(149):
+  ALMDCP_f04 = &#x27;Controller fault F13: Ambient temperature&#x27;
+  CASE(150):
+  ALMDCP_f04 = &#x27;Controller fault F14: Output stage&#x27;
+  CASE(151):
+  ALMDCP_f04 = &#x27;Controller fault F15: l2t max. exceeded&#x27;
+  CASE(152):
+  ALMDCP_f04 = &#x27;Controller fault F16: Mains BTB&#x27;
+  CASE(153):
+  ALMDCP_f04 = &#x27;Controller fault F17: AD converter&#x27;
+  CASE(154):
+  ALMDCP_f04 = &#x27;Controller fault F18: Load circuit&#x27;
+  CASE(155):
+  ALMDCP_f04 = &#x27;Controller fault F19: Missing mains phases&#x27;
+  CASE(156):
+  ALMDCP_f04 = &#x27;Controller fault F20: Slot error&#x27;
+  CASE(157):
+  ALMDCP_f04 = &#x27;Controller fault F21: Handling error&#x27;
+  CASE(158):
+  ALMDCP_f04 = &#x27;Controller fault F22: Ground connection&#x27;
+  CASE(159):
+  ALMDCP_f04 = &#x27;Controller fault F23: CANBUS OFF&#x27;
+  CASE(160):
+  ALMDCP_f04 = &#x27;Controller fault F24: Warning instead of fault&#x27;
+  CASE(161):
+  ALMDCP_f04 = &#x27;Controller fault F25: Commutation fault&#x27;
+  CASE(162):
+  ALMDCP_f04 = &#x27;Controller fault F26: Hardware limit switch&#x27;
+  CASE(163):
+  ALMDCP_f04 = &#x27;Controller fault F27: Fault AS option&#x27;
+  CASE(164):
+  ALMDCP_f04 = &#x27;Controller fault F28: External trajectory&#x27;
+  CASE(165):
+  ALMDCP_f04 = &#x27;Controller fault F29: Slot card fault&#x27;
+  CASE(166):
+  ALMDCP_f04 = &#x27;Controller fault F30: Timeout emergency stop&#x27;
+  CASE(167):
+  ALMDCP_f04 = &#x27;Controller fault F31: Fault MACRO&#x27;
+  CASE(168):
+  ALMDCP_f04 = &#x27;Controller fault F32: System fault&#x27;
+  CASE(169):
+  ALMDCP_f04 = &#x27;Controller: Fault in SDO communication&#x27;
+  CASE(170):
+  ALMDCP_f04 = &#x27;Controller: Common fault&#x27;
+  CASE(171):
+  ALMDCP_f04 = &#x27;Controller: Reset during operation&#x27;
+  CASE(172):
+  ALMDCP_f04 = &#x27;Controller: Fault during basic pos. run&#x27;
+  CASE(173):
+  ALMDCP_f04 = &#x27;SIC: Faulty mains&#x27;
+  CASE(174):
+  ALMDCP_f04 = &#x27;SIC: Invalid spindle pos.&#x27;
+  CASE(175):
+  ALMDCP_f04 = &#x27;SIC: Stored Force compensation value is too big&#x27;
+  CASE(176):
+  ALMDCP_f04 = &#x27;SIC: Error while basic pos. drive. Guide bush tight&#x27;
+  CASE(179):
+  ALMDCP_f04 = &#x27;SIC: Timeout SDO Communication&#x27;
+  CASE(180):
+  ALMDCP_f04 = &#x27;SIC: SDO channel has wrong start value&#x27;
+  CASE(181):
+  ALMDCP_f04 = &#x27;SIC: SDO channel is already occupied&#x27;
+  CASE(182):
+  ALMDCP_f04 = &#x27;SIC: Unknown spindle configuration&#x27;
+  CASE(183):
+  ALMDCP_f04 = &#x27;SIC: Wrong motor rotating direction&#x27;
+  CASE(184):
+  ALMDCP_f04 = &#x27;SIC: Protective circuit interruption during spindle movement&#x27;
+  CASE(185):
+  ALMDCP_f04 = &#x27;SIC: DDC communication faultily&#x27;
+  CASE(186):
+  ALMDCP_f04 = &#x27;SIC: SDO communication faultily&#x27;
+  CASE(187):
+  ALMDCP_f04 = &#x27;SIC: Fault during rivet process&#x27;
+  CASE(188):
+  ALMDCP_f04 = &#x27;SIC: Unallowed process command&#x27;
+  CASE(189):
+  ALMDCP_f04 = &#x27;SIC: Emergency stop prior to plate thickness measurement&#x27;
+  CASE(190):
+  ALMDCP_f04 = &#x27;SIC: Emergency stop prior to rivet length measurement&#x27;
+  CASE(191):
+  ALMDCP_f04 = &#x27;SIC: Emergency stop during rivet setting&#x27;
+  CASE(192):
+  ALMDCP_f04 = &#x27;SIC: Emergency stop during backward driving&#x27;
+  CASE(193):
+  ALMDCP_f04 = &#x27;SIC: Protective circuit prior to plate thickness measurement&#x27;
+  CASE(194):
+  ALMDCP_f04 = &#x27;SIC: Protective circuit prior to rivet length measurement&#x27;
+  CASE(195):
+  ALMDCP_f04 = &#x27;SIC: Protective circuit during rivet setting&#x27;
+  CASE(196):
+  ALMDCP_f04 = &#x27;SIC: Protective circuit during backward driving&#x27;
+  CASE(197):
+  ALMDCP_f04 = &#x27;SIC: Max. limit of C-Frame compensation exceeded&#x27;
+  CASE(198):
+  ALMDCP_f04 = &#x27;SIC: Fault during electrical connecting of the SR600&#x27;
+  CASE(199):
+  ALMDCP_f04 = &#x27;SIC: Fault during referencing of controller&#x27;
+  CASE(200):
+  ALMDCP_f04 = &#x27;SIC: Max. limit of rivet setting depth regulation exceeded&#x27;
+  CASE(201):
+  ALMDCP_f04 = &#x27;DDC: Unknown or no spindle configuration data&#x27;
+  CASE(202):
+  ALMDCP_f04 = &#x27;DDC: 24V supply voltage too low&#x27;
+  CASE(203):
+  ALMDCP_f04 = &#x27;DDC: Measured plate thickness too low&#x27;
+  CASE(204):
+  ALMDCP_f04 = &#x27;DDC: Measured rivet length too low&#x27;
+  CASE(205):
+  ALMDCP_f04 = &#x27;DDC: Calibration of max. force failed&#x27;
+  CASE(206):
+  ALMDCP_f04 = &#x27;DDC: Max. force exceeded&#x27;
+  CASE(207):
+  ALMDCP_f04 = &#x27;DDC: Measured setting path too low&#x27;
+  CASE(208):
+  ALMDCP_f04 = &#x27;DDC: Communication to SPI expansion card faultily&#x27;
+  CASE(209):
+  ALMDCP_f04 = &#x27;DDC: Rivet curve falls below tolerance curve&#x27;
+  CASE(210):
+  ALMDCP_f04 = &#x27;DDC: Rivet curve rises above tolerance curve&#x27;
+  CASE(211):
+  ALMDCP_f04 = &#x27;DDC: Protective end switch &quot;Rear end pos.&quot; triggered&#x27;
+  CASE(212):
+  ALMDCP_f04 = &#x27;DDC: Measured setting path too large&#x27;
+  CASE(213):
+  ALMDCP_f04 = &#x27;DDC: Rivet curve is longer than tolerance curve&#x27;
+  CASE(214):
+  ALMDCP_f04 = &#x27;DDC: Offset adjustment failed&#x27;
+  CASE(215):
+  ALMDCP_f04 = &#x27;DDC: Index Encoder 2 not detected&#x27;
+  CASE(216):
+  ALMDCP_f04 = &#x27;DDC: Proximity switch &quot;Rivet in receiver&quot; is constantly high&#x27;
+  CASE(217):
+  ALMDCP_f04 = &#x27;DDC: Measured rivet length too long&#x27;
+  CASE(218):
+  ALMDCP_f04 = &#x27;DDC: Measured plate thickness too high&#x27;
+  CASE(219):
+  ALMDCP_f04 = &#x27;DDC: Force measuring signal too low&#x27;
+  CASE(220):
+  ALMDCP_f04 = &#x27;DDC: could not calculate energy level for JIC&#x27;
+  CASE(221):
+  ALMDCP_f04 = &#x27;DDC: Broken cable encoder 1&#x27;
+  CASE(222):
+  ALMDCP_f04 = &#x27;DDC: Broken cable encoder 2&#x27;
+  CASE(223):
+  ALMDCP_f04 = &#x27;DDC: Function aborted&#x27;
+  CASE(224):
+  ALMDCP_f04 = &#x27;DDC: Short circuit of an outlet on the SPI expansion card&#x27;
+  CASE(225):
+  ALMDCP_f04 = &#x27;DDC: Measured punch contact point to large (only clinch system)&#x27;
+  CASE(226):
+  ALMDCP_f04 = &#x27;DDC: Measured remaining bottom thickness too low (only clinch system)&#x27;
+  CASE(227):
+  ALMDCP_f04 = &#x27;DDC: Measured remaining bottom thickness too high (only clinch system)&#x27;
+  CASE(228):
+  ALMDCP_f04 = &#x27;DDC: No rivet in receiver&#x27;
+  CASE(229):
+  ALMDCP_f04 = &#x27;DDC: reference curve not received&#x27;
+  CASE(230):
+  ALMDCP_f04 = &#x27;DDC: Internal calculating error for c-frame or pre clamping spring constant&#x27;
+  CASE(231):
+  ALMDCP_f04 = &#x27;Force Correction: Error calculating delay between DDC and DF30CAN&#x27;
+  CASE(232):
+  ALMDCP_f04 = &#x27;Force Correction: Runtime error DDC&#x27;
+  CASE(233):
+  ALMDCP_f04 = &#x27;Feeding proc. master: Timeout feeding to EPS&#x27;
+  CASE(234):
+  ALMDCP_f04 = &#x27;Feeding proc. slave1: Timeout feeding to EPS&#x27;
+  CASE(235):
+  ALMDCP_f04 = &#x27;Feeding proc. slave2: Timeout feeding to EPS&#x27;
+  CASE(236):
+  ALMDCP_f04 = &#x27;Feeding proc. slave3: Timeout feeding to EPS&#x27;
+  CASE(237):
+  ALMDCP_f04 = &#x27;Feeder Slave 1: Maint. feed tube is necessary&#x27;
+  CASE(238):
+  ALMDCP_f04 = &#x27;Feeder Slave 2: Maint. feed tube is necessary&#x27;
+  CASE(239):
+  ALMDCP_f04 = &#x27;Feeder Slave 3: Maint. feed tube is necessary&#x27;
+  CASE(242):
+  ALMDCP_f04 = &#x27;Wrong customer interface software&#x27;
+  CASE(243):
+  ALMDCP_f04 = &#x27;Wrong feeder software&#x27;
+  CASE(244):
+  ALMDCP_f04 = &#x27;Master: Protective circuit interrupted&#x27;
+  CASE(245):
+  ALMDCP_f04 = &#x27;Slave1: Protective circuit interrupted&#x27;
+  CASE(246):
+  ALMDCP_f04 = &#x27;Slave2: Protective circuit interrupted&#x27;
+  CASE(247):
+  ALMDCP_f04 = &#x27;Slave3: Protective circuit interrupted&#x27;
+  CASE(248):
+  ALMDCP_f04 = &#x27;Feeding start for incorrect unit configuration&#x27;
+  CASE(249):
+  ALMDCP_f04 = &#x27;Feeding proc. master: Timeout magazine feeding cycle&#x27;
+  CASE(250):
+  ALMDCP_f04 = &#x27;Feeding proc. slave1: Timeout magazine feeding cycle&#x27;
+  CASE(251):
+  ALMDCP_f04 = &#x27;Feeding proc. slave2: Timeout magazine feeding cycle&#x27;
+  CASE(252):
+  ALMDCP_f04 = &#x27;Feeding proc. slave3: Timeout magazine feeding cycle&#x27;
+  CASE(253):
+  ALMDCP_f04 = &#x27;Feeding not possible in standby mode&#x27;
+  CASE(254):
+  ALMDCP_f04 = &#x27;Maint. counter scrap exhauster achieved&#x27;
+  CASE(255):
+  ALMDCP_f04 = &#x27;Spindle parameter: Incorrect spindle type assignment&#x27;
+  CASE(350):
+  ALMDCP_f04 = &#x27;Process: Master - start feeding for a non-existent feeder&#x27;
+  CASE(351):
+  ALMDCP_f04 = &#x27;Process: Slave1 - start feeding for a non-existent feeder&#x27;
+  CASE(352):
+  ALMDCP_f04 = &#x27;Process: Slave2 - start feeding for a non-existent feeder&#x27;
+  CASE(353):
+  ALMDCP_f04 = &#x27;Process: Slave3 - start feeding for a non-existent feeder&#x27;
+  CASE(354):
+  ALMDCP_f04 = &#x27;Master: Proximity switch &quot;Rivet in tube&quot; is constantly high&#x27;
+  CASE(355):
+  ALMDCP_f04 = &#x27;Slave1: Proximity switch &quot;Rivet in tube&quot; is constantly high&#x27;
+  CASE(356):
+  ALMDCP_f04 = &#x27;Slave2: Proximity switch &quot;Rivet in tube&quot; is constantly high&#x27;
+  CASE(357):
+  ALMDCP_f04 = &#x27;Slave3: Proximity switch &quot;Rivet in tube&quot; is constantly high&#x27;
+  CASE(358):
+  ALMDCP_f04 = &#x27;Master: Proximity switch &quot;Rivet after divider&quot; is constantly high&#x27;
+  CASE(359):
+  ALMDCP_f04 = &#x27;Slave1: Proximity switch &quot;Rivet after divider&quot; is constantly high&#x27;
+  CASE(360):
+  ALMDCP_f04 = &#x27;Slave2: Proximity switch &quot;Rivet after divider&quot; is constantly high&#x27;
+  CASE(361):
+  ALMDCP_f04 = &#x27;Slave3: Proximity switch &quot;Rivet after divider&quot; is constantly high&#x27;
+  CASE(362):
+  ALMDCP_f04 = &#x27;Master: Proximity switch &quot;Rivet in pre-separation&quot; is constantly high&#x27;
+  CASE(363):
+  ALMDCP_f04 = &#x27;Slave1: Proximity switch &quot;Rivet in pre-separation&quot; is constantly high&#x27;
+  CASE(364):
+  ALMDCP_f04 = &#x27;Slave2: Proximity switch &quot;Rivet in pre-separation&quot; is constantly high&#x27;
+  CASE(365):
+  ALMDCP_f04 = &#x27;Slave3: Proximity switch &quot;Rivet in pre-separation&quot; is constantly high&#x27;
+  CASE(370):
+  ALMDCP_f04 = &#x27;Master: Mag. slide 1 has not reached mag pos.&#x27;
+  CASE(371):
+  ALMDCP_f04 = &#x27;Slave1: Mag. slide 1 has not reached mag pos.&#x27;
+  CASE(372):
+  ALMDCP_f04 = &#x27;Slave2: Mag. slide 1 has not reached mag pos.&#x27;
+  CASE(373):
+  ALMDCP_f04 = &#x27;Slave3: Mag. slide 1 has not reached mag pos.&#x27;
+  CASE(374):
+  ALMDCP_f04 = &#x27;Master: Mag. slide 1 has not reached receiver pos.&#x27;
+  CASE(375):
+  ALMDCP_f04 = &#x27;Slave1: Mag. slide 1 has not reached receiver pos.&#x27;
+  CASE(376):
+  ALMDCP_f04 = &#x27;Slave2: Mag. slide 1 has not reached receiver pos.&#x27;
+  CASE(377):
+  ALMDCP_f04 = &#x27;Slave3: Mag. slide 1 has not reached receiver pos.&#x27;
+  CASE(378):
+  ALMDCP_f04 = &#x27;Master: Fault test unit&#x27;
+  CASE(379):
+  ALMDCP_f04 = &#x27;Slave1: Fault test unit&#x27;
+  CASE(380):
+  ALMDCP_f04 = &#x27;Slave2: Fault test unit&#x27;
+  CASE(381):
+  ALMDCP_f04 = &#x27;Slave3: Fault test unit&#x27;
+  CASE(382):
+  ALMDCP_f04 = &#x27;Master: Rivet jam in oscillating conveyor&#x27;
+  CASE(383):
+  ALMDCP_f04 = &#x27;Slave1: Rivet jam in oscillating conveyor&#x27;
+  CASE(384):
+  ALMDCP_f04 = &#x27;Slave2: Rivet jam in oscillating conveyor&#x27;
+  CASE(385):
+  ALMDCP_f04 = &#x27;Slave3: Rivet jam in oscillating conveyor&#x27;
+  CASE(386):
+  ALMDCP_f04 = &#x27;Master: Rivet package separation does not reach pos. &quot;Rivet&quot;&#x27;
+  CASE(387):
+  ALMDCP_f04 = &#x27;Slave1: Rivet package separation does not reach pos. &quot;Rivet&quot;&#x27;
+  CASE(388):
+  ALMDCP_f04 = &#x27;Slave2: Rivet package separation does not reach pos. &quot;Rivet&quot;&#x27;
+  CASE(389):
+  ALMDCP_f04 = &#x27;Slave3: Rivet package separation does not reach pos. &quot;Rivet&quot;&#x27;
+  CASE(390):
+  ALMDCP_f04 = &#x27;Master: Rivet package separation does not reach pos. &quot;Air&quot;&#x27;
+  CASE(391):
+  ALMDCP_f04 = &#x27;Slave1: Rivet package separation does not reach pos. &quot;Air&quot;&#x27;
+  CASE(392):
+  ALMDCP_f04 = &#x27;Slave2: Rivet package separation does not reach pos. &quot;Air&quot;&#x27;
+  CASE(393):
+  ALMDCP_f04 = &#x27;Slave3: Rivet package separation does not reach pos. &quot;Air&quot;&#x27;
+  CASE(394):
+  ALMDCP_f04 = &#x27;Master: Rivets do not fall through rivet package separation&#x27;
+  CASE(395):
+  ALMDCP_f04 = &#x27;Slave1: Rivets do not fall through rivet package separation&#x27;
+  CASE(396):
+  ALMDCP_f04 = &#x27;Slave2: Rivets do not fall through rivet package separation&#x27;
+  CASE(397):
+  ALMDCP_f04 = &#x27;Slave3: Rivets do not fall through rivet package separation&#x27;
+  CASE(398):
+  ALMDCP_f04 = &#x27;Master: Rivet package is not fed&#x27;
+  CASE(399):
+  ALMDCP_f04 = &#x27;Slave1: Rivet package is not fed&#x27;
+  CASE(400):
+  ALMDCP_f04 = &#x27;Slave2: Rivet package is not fed&#x27;
+  CASE(401):
+  ALMDCP_f04 = &#x27;Slave3: Rivet package is not fed&#x27;
+  CASE(402):
+  ALMDCP_f04 = &#x27;Process: Master - incorrect feeder assignment&#x27;
+  CASE(403):
+  ALMDCP_f04 = &#x27;Process: Slave1 - incorrect feeder assignment&#x27;
+  CASE(404):
+  ALMDCP_f04 = &#x27;Process: Slave2 - incorrect feeder assignment&#x27;
+  CASE(405):
+  ALMDCP_f04 = &#x27;Process: Slave3 - incorrect feeder assignment&#x27;
+  CASE(406):
+  ALMDCP_f04 = &#x27;Process: Incorrect spindle type assignment&#x27;
+  CASE(407):
+  ALMDCP_f04 = &#x27;Spindle parameter: Incorrect proc. type assignment&#x27;
+  CASE(408):
+  ALMDCP_f04 = &#x27;Process: Master does not have spindle 1 assignment&#x27;
+  CASE(409):
+  ALMDCP_f04 = &#x27;Process: Slave1 does not have spindle 1 assignment&#x27;
+  CASE(410):
+  ALMDCP_f04 = &#x27;Process: Slave2 does not have spindle 1 assignment&#x27;
+  CASE(411):
+  ALMDCP_f04 = &#x27;Process: Slave3 does not have spindle 1 assignment&#x27;
+  CASE(412):
+  ALMDCP_f04 = &#x27;Process: Master does not have spindle 2 assignment&#x27;
+  CASE(413):
+  ALMDCP_f04 = &#x27;Process: Slave1 does not have spindle 2 assignment&#x27;
+  CASE(414):
+  ALMDCP_f04 = &#x27;Process: Slave2 does not have spindle 2 assignment&#x27;
+  CASE(415):
+  ALMDCP_f04 = &#x27;Process: Slave3 does not have spindle 2 assignment&#x27;
+  CASE(416):
+  ALMDCP_f04 = &#x27;Process: Master does not have spindle 3 assignment&#x27;
+  CASE(417):
+  ALMDCP_f04 = &#x27;Process: Slave1 does not have spindle 3 assignment&#x27;
+  CASE(418):
+  ALMDCP_f04 = &#x27;Process: Slave2 does not have spindle 3 assignment&#x27;
+  CASE(419):
+  ALMDCP_f04 = &#x27;Process: Slave3 does not have spindle 3 assignment&#x27;
+  CASE(420):
+  ALMDCP_f04 = &#x27;Process: Master does not have spindle 4 assignment&#x27;
+  CASE(421):
+  ALMDCP_f04 = &#x27;Process: Slave1 does not have spindle 4 assignment&#x27;
+  CASE(422):
+  ALMDCP_f04 = &#x27;Process: Slave2 does not have spindle 4 assignment&#x27;
+  CASE(423):
+  ALMDCP_f04 = &#x27;Process: Slave3 does not have spindle 4 assignment&#x27;
+  CASE(424):
+  ALMDCP_f04 = &#x27;Master: Atomizing device not connected anymore&#x27;
+  CASE(425):
+  ALMDCP_f04 = &#x27;Slave1: Atomizing device not connected anymore&#x27;
+  CASE(426):
+  ALMDCP_f04 = &#x27;Slave2: Atomizing device not connected anymore&#x27;
+  CASE(427):
+  ALMDCP_f04 = &#x27;Slave3: Atomizing device not connected anymore&#x27;
+  CASE(428):
+  ALMDCP_f04 = &#x27;Master: Magazine not connected anymore&#x27;
+  CASE(429):
+  ALMDCP_f04 = &#x27;Slave1: Magazine not connected anymore&#x27;
+  CASE(430):
+  ALMDCP_f04 = &#x27;Slave2: Magazine not connected anymore&#x27;
+  CASE(431):
+  ALMDCP_f04 = &#x27;Slave3: Magazine not connected anymore&#x27;
+  CASE(432):
+  ALMDCP_f04 = &#x27;Master: Rivet in receiver not recognized&#x27;
+  CASE(433):
+  ALMDCP_f04 = &#x27;Slave1: Rivet in receiver not recognized&#x27;
+  CASE(434):
+  ALMDCP_f04 = &#x27;Slave2: Rivet in receiver not recognized&#x27;
+  CASE(435):
+  ALMDCP_f04 = &#x27;Slave3: Rivet in receiver not recognized&#x27;
+  CASE(436):
+  ALMDCP_f04 = &#x27;Master: Filling station not connected anymore&#x27;
+  CASE(437):
+  ALMDCP_f04 = &#x27;Slave1: Filling station not connected anymore&#x27;
+  CASE(438):
+  ALMDCP_f04 = &#x27;Slave2: Filling station not connected anymore&#x27;
+  CASE(439):
+  ALMDCP_f04 = &#x27;Slave3: Filling station not connected anymore&#x27;
+  CASE(440):
+  ALMDCP_f04 = &#x27;Master: Sensor &quot;C-Frame in scrap emptying station&quot; is constantly high&#x27;
+  CASE(441):
+  ALMDCP_f04 = &#x27;Slave1: Sensor &quot;C-Frame in scrap emptying station&quot; is constantly high&#x27;
+  CASE(442):
+  ALMDCP_f04 = &#x27;Slave2: Sensor &quot;C-Frame in scrap emptying station&quot; is constantly high&#x27;
+  CASE(443):
+  ALMDCP_f04 = &#x27;Slave3: Sensor &quot;C-Frame in scrap emptying station&quot; is constantly high&#x27;
+  CASE(444):
+  ALMDCP_f04 = &#x27;Master: Rivet not separated, Bunker not filled&#x27;
+  CASE(445):
+  ALMDCP_f04 = &#x27;Slave1: Rivet not separated, Bunker not filled&#x27;
+  CASE(446):
+  ALMDCP_f04 = &#x27;Slave2: Rivet not separated, Bunker not filled&#x27;
+  CASE(447):
+  ALMDCP_f04 = &#x27;Slave3: Rivet not separated, Bunker not filled&#x27;
+  CASE(448):
+  ALMDCP_f04 = &#x27;Master: Protection circuit interrupt&#x27;
+  CASE(449):
+  ALMDCP_f04 = &#x27;Feeder  slave1: Protection circuit interrupt&#x27;
+  CASE(450):
+  ALMDCP_f04 = &#x27;Feeder  slave2: Protection circuit interrupt&#x27;
+  CASE(451):
+  ALMDCP_f04 = &#x27;Feeder  slave3: Protection circuit interrupt&#x27;
+  CASE(452):
+  ALMDCP_f04 = &#x27;Master: cetering pins not in alignment pos.&#x27;
+  CASE(453):
+  ALMDCP_f04 = &#x27;Slave1: cetering pins not in alignment pos.&#x27;
+  CASE(454):
+  ALMDCP_f04 = &#x27;Slave2: cetering pins not in alignment pos.&#x27;
+  CASE(455):
+  ALMDCP_f04 = &#x27;Slave3: cetering pins not in alignment pos.&#x27;
+  CASE(456):
+  ALMDCP_f04 = &#x27;Master: cetering pins not in home pos.&#x27;
+  CASE(457):
+  ALMDCP_f04 = &#x27;Slave1: cetering pins not in home pos.&#x27;
+  CASE(458):
+  ALMDCP_f04 = &#x27;Slave2: cetering pins not in home pos.&#x27;
+  CASE(459):
+  ALMDCP_f04 = &#x27;Slave3: cetering pins not in home pos.&#x27;
+  CASE(460):
+  ALMDCP_f04 = &#x27;Master: magazine lock not sealed&#x27;
+  CASE(461):
+  ALMDCP_f04 = &#x27;Slave1: magazine lock not sealed&#x27;
+  CASE(462):
+  ALMDCP_f04 = &#x27;Slave2: magazine lock not sealed&#x27;
+  CASE(463):
+  ALMDCP_f04 = &#x27;Slave3: magazine lock not sealed&#x27;
+  CASE(464):
+  ALMDCP_f04 = &#x27;Master: magazine lock not opened&#x27;
+  CASE(465):
+  ALMDCP_f04 = &#x27;Slave1: magazine lock not opened&#x27;
+  CASE(466):
+  ALMDCP_f04 = &#x27;Slave2: magazine lock not opened&#x27;
+  CASE(467):
+  ALMDCP_f04 = &#x27;Slave3: magazine lock not opened&#x27;
+  CASE(600):
+  ALMDCP_f04 = &#x27;Master: Filling station does not reach basic pos.&#x27;
+  CASE(601):
+  ALMDCP_f04 = &#x27;Slave1: Filling station does not reach basic pos.&#x27;
+  CASE(602):
+  ALMDCP_f04 = &#x27;Slave2: Filling station does not reach basic pos.&#x27;
+  CASE(603):
+  ALMDCP_f04 = &#x27;Slave3: Filling station does not reach basic pos.&#x27;
+  CASE(604):
+  ALMDCP_f04 = &#x27;Master: Timeout slavefeeder&#x27;
+  CASE(605):
+  ALMDCP_f04 = &#x27;Slave1: Timeout slavefeeder&#x27;
+  CASE(606):
+  ALMDCP_f04 = &#x27;Slave2: Timeout slavefeeder&#x27;
+  CASE(607):
+  ALMDCP_f04 = &#x27;Slave3: Timeout slavefeeder&#x27;
+  CASE(608):
+  ALMDCP_f04 = &#x27;Master: Invalid configuration&#x27;
+  CASE(609):
+  ALMDCP_f04 = &#x27;Slave1: Invalid configuration&#x27;
+  CASE(610):
+  ALMDCP_f04 = &#x27;Slave2: Invalid configuration&#x27;
+  CASE(611):
+  ALMDCP_f04 = &#x27;Slave3: Invalid configuration&#x27;
+  CASE(612):
+  ALMDCP_f04 = &#x27;Process: Timeout feeder not ready for process&#x27;
+  CASE(613):
+  ALMDCP_f04 = &#x27;Process: Timeout SIC (controller) not ready for process&#x27;
+  CASE(614):
+  ALMDCP_f04 = &#x27;Process: SIC (controller) process not finished yet&#x27;
+  CASE(615):
+  ALMDCP_f04 = &#x27;Process: Adjustment drive necessary&#x27;
+  CASE(616):
+  ALMDCP_f04 = &#x27;Start riveting during protective circuit or emergency stop&#x27;
+  CASE(617):
+  ALMDCP_f04 = &#x27;SIC: Programmed value Speed riveting too small&#x27;
+  CASE(618):
+  ALMDCP_f04 = &#x27;SIC: Programmed value Speed driving too small&#x27;
+  CASE(619):
+  ALMDCP_f04 = &#x27;Timeout overhead floating linear slide&#x27;
+  CASE(620):
+  ALMDCP_f04 = &#x27;Hardware configuration of the controller has changed&#x27;
+  CASE(621):
+  ALMDCP_f04 = &#x27;Hardware configuration of the spindle has changed&#x27;
+  CASE(622):
+  ALMDCP_f04 = &#x27;Hardware configuration of the feeders have changed&#x27;
+  CASE(623):
+  ALMDCP_f04 = &#x27;SIC: Programmed value Spindle home POSITION too big&#x27;
+  CASE(624):
+  ALMDCP_f04 = &#x27;SIC: Reference curve has invalid values&#x27;
+  CASE(625):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode activated for spindel 1&#x27;
+  CASE(626):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode activated for spindel 2&#x27;
+  CASE(627):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode activated for spindel 3&#x27;
+  CASE(628):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode activated for spindel 4&#x27;
+  CASE(629):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode deactivated for spindel 1&#x27;
+  CASE(630):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode deactivated for spindel 2&#x27;
+  CASE(631):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode deactivated for spindel 3&#x27;
+  CASE(632):
+  ALMDCP_f04 = &#x27;ZCPU: Stealth-Mode deactivated for spindel 4&#x27;
+  CASE(633):
+  ALMDCP_f04 = &#x27;Spindle1: Maint. mag-tube 1 is necessary&#x27;
+  CASE(634):
+  ALMDCP_f04 = &#x27;Spindle2: Maint. mag-tube 1 is necessary&#x27;
+  CASE(635):
+  ALMDCP_f04 = &#x27;Spindle3: Maint. mag-tube 1 is necessary&#x27;
+  CASE(636):
+  ALMDCP_f04 = &#x27;Spindle4: Maint. mag-tube 1 is necessary&#x27;
+  CASE(637):
+  ALMDCP_f04 = &#x27;Spindle1: Maint. mag-tube 2 is necessary&#x27;
+  CASE(638):
+  ALMDCP_f04 = &#x27;Spindle2: Maint. mag-tube 2 is necessary&#x27;
+  CASE(639):
+  ALMDCP_f04 = &#x27;Spindle3: Maint. mag-tube 2 is necessary&#x27;
+  CASE(640):
+  ALMDCP_f04 = &#x27;Spindle4: Maint. mag-tube 2 is necessary&#x27;
+  CASE(641):
+  ALMDCP_f04 = &#x27;Spindle1: Maint. mag-tube behind separation is necessary&#x27;
+  CASE(642):
+  ALMDCP_f04 = &#x27;Spindle2: Maint. mag-tube behind separation is necessary&#x27;
+  CASE(643):
+  ALMDCP_f04 = &#x27;Spindle3: Maint. mag-tube behind separation is necessary&#x27;
+  CASE(644):
+  ALMDCP_f04 = &#x27;Spindle4: Maint. mag-tube behind separation is necessary&#x27;
+  CASE(645):
+  ALMDCP_f04 = &#x27;Prozess: JIC Criteria 1 is out of tolerance threshold&#x27;
+  CASE(646):
+  ALMDCP_f04 = &#x27;DDC: magazine lock not opened&#x27;
+  CASE(647):
+  ALMDCP_f04 = &#x27;DDC: magazine lock not sealed&#x27;
+  CASE(648):
+  ALMDCP_f04 = &#x27;DDC: Magazine slide 1 has not reached mag pos.&#x27;
+  CASE(649):
+  ALMDCP_f04 = &#x27;DDC: Magazine slide 1 has not reached receiver pos.&#x27;
+  CASE(650):
+  ALMDCP_f04 = &#x27;DDC: Magazine slide 2 has not reached mag pos.&#x27;
+  CASE(651):
+  ALMDCP_f04 = &#x27;DDC: Magazine slide 2 has not reached receiver pos.&#x27;
+  CASE(652):
+  ALMDCP_f04 = &#x27;DDC: Rivet in receiver not recognized&#x27;
+  CASE(654):
+  ALMDCP_f04 = &#x27;Force Correction: Communication to DF30CAN is faulty&#x27;
+  CASE(655):
+  ALMDCP_f04 = &#x27;DDC: Corrected max. force exceeded (FC)&#x27;
+  CASE(662):
+  ALMDCP_f04 = &#x27;Prozess: JIC Criteria 2 is out of tolerance threshold&#x27;
+  CASE(663):
+  ALMDCP_f04 = &#x27;Feeder: Die changer not connected anymore&#x27;
+  CASE(664):
+  ALMDCP_f04 = &#x27;Feeder: Communication fault with die changer&#x27;
+  CASE(665):
+  ALMDCP_f04 = &#x27;Die changer: Station not closed&#x27;
+  CASE(666):
+  ALMDCP_f04 = &#x27;Die changer: Station not opened&#x27;
+  CASE(667):
+  ALMDCP_f04 = &#x27;Die changer: selected die pos. is occupied&#x27;
+  CASE(668):
+  ALMDCP_f04 = &#x27;Die changer: selected die pos. is vacant&#x27;
+  CASE(669):
+  ALMDCP_f04 = &#x27;Die changer: selected die pos. is out of range&#x27;
+  CASE(670):
+  ALMDCP_f04 = &#x27;Die changer: deposited die not in pos.&#x27;
+  CASE(671):
+  ALMDCP_f04 = &#x27;Die changer: die not picked up&#x27;
+  CASE(672):
+  ALMDCP_f04 = &#x27;Die changer: coded plug is missing&#x27;
+  CASE(679):
+  ALMDCP_f04 = &#x27;Die changer process: Cycle Timeout&#x27;
+  CASE(680):
+  ALMDCP_f04 = &#x27;Die changer process: No valid die-number detected&#x27;
+  CASE(681):
+  ALMDCP_f04 = &#x27;Process: Incorrect die-assignment&#x27;
+  CASE(682):
+  ALMDCP_f04 = &#x27;Force correction: data do not match&#x27;
+  CASE(683):
+  ALMDCP_f04 = &#x27;Force Correction: SIC command not supported by the DDC&#x27;
+  CASE(684):
+  ALMDCP_f04 = &#x27;Force Correction: Time out DDC&#x27;
+  CASE(685):
+  ALMDCP_f04 = &#x27;Force Correction: Runtime error SIC&#x27;
+  CASE(686):
+  ALMDCP_f04 = &#x27;SIC: Timeout SIC/CI fieldbus 7.Achse&#x27;
+  CASE(688):
+  ALMDCP_f04 = &#x27;SIC: 7.Achse unable to follow - spindle active&#x27;
+  CASE(689):
+  ALMDCP_f04 = &#x27;SIC: Spindle function is unavailable - follow active&#x27;
+  CASE(690):
+  ALMDCP_f04 = &#x27;SIC: 7.Achse unable to follow - shaft not right&#x27;
+  CASE(695):
+  ALMDCP_f04 = &#x27;SIC: Adjustment drive necessary&#x27;
+  CASE(699):
+  ALMDCP_f04 = &#x27;ZCPU: RAM initializes interrupt&#x27;
+  CASE(764):
+  ALMDCP_f04 = &#x27;The created rivet ID recognizes ambiguities&#x27;
+  CASE(765):
+  ALMDCP_f04 = &#x27;Spindle: Waste collection bin full&#x27;
+  ELSE:
+  ALMDCP_f04 = &#x27;Undefined TUCKER DCP Fault Message&#x27;
+  -- stmt246 stray ALMDCP_f04
+  ENDSELECT
+  RETURN(sv_s)
+END ERROR_MSG
+
+BEGIN
+  SELECT pp00 OF
+  CASE(1):
+  ALMDCP_f04 = &#x27;Timeout feeding cycle&#x27;
+  -- stmt57 stray ALMDCP_f04
+  ENDSELECT
+END MI13_RVH_DCP
+
+</span></pre></details><details><summary>MI13_RVH_GUI.KL（67 例程）</summary><pre><span class=c>-- MI13_RVH_GUI.KL (decompiled v3)
+PROGRAM MI13_RVH_GUI
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF STRING[64]
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : INTEGER
+  v17 : INTEGER
+  v18 : INTEGER
+  v19 : INTEGER
+  v20 : ARRAY[64] OF BOOLEAN
+  v21 : ARRAY[64] OF BOOLEAN
+  v22 : INTEGER
+  v23 : INTEGER
+  v3_f04 : ARRAY[64] OF INTEGER
+  v3_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE REALROBOT : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(0, &#x27;*SYSTEM*&#x27;, &#x27;$VIRTUALEDIT&#x27;, r0_lc1, v1)
+  IF ((v1 &lt;&gt; 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END REALROBOT
+
+ROUTINE CURRLANGUAGE : STRING
+VAR
+  r1_lc10 : INTEGER
+  r1_lc4 : STRING[64]
+  r1_lc8 : STRING[64]
+  r1_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$LANGUAGE&#x27;, r1_lc8, r1_lc10)
+  sv_i = index(r1_lc8, &#x27; &#x27;)
+  r1_lc9 = sv_i
+  sv_s = sub_str(r1_lc8, 1, r1_lc9 - 1)
+  r1_lc4 = sv_s
+  IF ((r1_lc4 &lt;&gt; &#x27;DEFAULT&#x27;)) THEN
+  -- stmt110 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG(&#x27;ENGLISH     &#x27;, r1_lc10)
+  -- stmt116 stray &#x27;ENGLISH     &#x27;
+  ELSE
+  -- stmt118 stray &#x27;DEFAULT     &#x27;
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURRLANGUAGE
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r2_lc9 : STRING[64]
+BEGIN
+  r2_lc9 = &#x27;FR:\&#x27; + p1
+  -- stmt135 residue &#x27;FR:\\&#x27;
+  IF ((sv_s = &#x27;ENGLISH     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;ENGLISH     &#x27;, 4, v1)
+  ELSE
+  IF ((sv_s = &#x27;CHINESE     &#x27;)) THEN
+  ADD_DICT(r2_lc9, p0, &#x27;CHINESE     &#x27;, 4, v1)
+  ELSE
+  ADD_DICT(r2_lc9, p0, &#x27;DEFAULT     &#x27;, 4, v1)
+  ENDIF
+  ENDIF
+  IF ((v1 &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Failed to load dict &#x27; + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE RESET_VALARRAY : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v2[r3_lc1] = &#x27;&#x27;
+  ENDFOR
+  RETURN(0)
+END RESET_VALARRAY
+
+ROUTINE USERSCREEN : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+  r4_lc4 : INTEGER
+  r4_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r4_lc1, r4_lc2, r4_lc3, r4_lc4, r4_lc5, v1)
+  v4 = v3_f04[r4_lc2]
+  v5 = v3_f08[r4_lc2]
+  SELECT r4_lc2 OF
+  CASE(1):
+  v6 = 1
+  CASE(2):
+  v6 = 2
+  CASE(3):
+  v6 = 3
+  ELSE:
+  v6 = 1
+  ENDSELECT
+  FORCE_SPMENU(v6, 190, 1)
+  RETURN(0)
+END USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = 0
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt217 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r5_lc3 = r5_lc3 + r5_lc2
+  ENDFOR
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, v7, v1)
+  RETURN(r5_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  DELAY 100
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, &#x27;&#x27;, &#x27;&#x27;, 0, 0)
+  -- stmt241 residue &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$PANEMAP[&#x27;, &#x27;]&#x27;
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  IF ((r6_lc3 &lt;&gt; v8)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, &#x27;*SYSTEM*&#x27;, &#x27;$UI_CONFIG.$ENB_WIDE[1]&#x27;, r6_lc4, v1)
+  IF ((r6_lc4 &lt;&gt; v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE INITLOALVARS : INTEGER
+BEGIN
+  IF (UNINIT(v9)) THEN
+  v9 = 1
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  v10 = 32
+  ENDIF
+  IF (UNINIT(v11)) THEN
+  v11 = 1
+  ENDIF
+  IF (UNINIT(v12)) THEN
+  v12 = 1
+  ENDIF
+  IF (UNINIT(v13)) THEN
+  v13 = 1000
+  ENDIF
+  IF (UNINIT(v14)) THEN
+  v14 = 500
+  ENDIF
+  IF (UNINIT(v15)) THEN
+  v15 = 5000
+  ENDIF
+  IF (UNINIT(v16)) THEN
+  v16 = 6000
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE SHOW_MI13STP : INTEGER
+BEGIN
+  v17 = 1
+  v18 = 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]i_BNSType&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]i_mon&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]Gun_Count&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]i_TolerancePos&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]i_dryruntime&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]Timeout_Rivet&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]Timeout_Process&#x27;
+  v18 = v18 + 1
+  v2[v18] = &#x27;[MI13_RVH_VAR]Timeout_LoadEpf&#x27;
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v19 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt52 stray sv_i
+  DISCTRL_FORM(&#x27;ARVH&#x27;, 0, v2, v20, v21, 2 + 2048, v22, v19, v1)
+  SELECT v19 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  CASE(131):
+  CASE(138):
+  CASE(132):
+  CASE(139):
+  CASE(133):
+  CASE(134):
+  CASE(232):
+  CASE(13):
+  RETURN(v17)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v17)
+  RETURN(0)
+END SHOW_MI13STP
+
+ROUTINE ST_MACHINE(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  sv_i = SHOW_MI13STP
+  RETURN(sv_i)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  sv_i = INITLOALVARS
+  -- stmt114 stray sv_i
+  sv_i = RESET_VALARRAY
+  -- stmt116 stray sv_i
+  sv_i = LOAD_TX(&#x27;ARVH&#x27;, &#x27;13arvheg&#x27;)
+  -- stmt120 stray sv_i
+  sv_i = USERSCREEN
+  -- stmt123 stray sv_i
+  v19 = 0
+  v22 = 1
+  v23 = 1
+  REPEAT
+  sv_i = ST_MACHINE(v23)
+  v23 = sv_i
+  DELAY 64
+  UNTIL((v23 = 0))
+  RETURN(0)
+END ST_MACHINE
+
+BEGIN
+END MI13_RVH_GUI
+-- module-residue &#x27;H521&#x27;, &#x27;H538&#x27;
+</span></pre></details><details><summary>MI13_RVH_MAN.KL（42 例程）</summary><pre><span class=c>-- MI13_RVH_MAN.KL (decompiled v3)
+PROGRAM MI13_RVH_MAN
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  ST_MANSMESS : STRING[64]
+  I_GUNNO_EXT : INTEGER
+  L_STATE : INTEGER
+  AR_M13_RC_DI : ARRAY[64] OF INTEGER
+  GUNCFG_LST : ARRAY[64] OF INTEGER
+  AR_M13_RC_DO : ARRAY[64] OF INTEGER
+  I_RIVETNO_EXT : INTEGER
+  TIMEOUT_PROCESS : INTEGER
+  I_TIMER : INTEGER
+  I_COUNTER : INTEGER
+  GUN_COUNT : INTEGER
+  I_GUNPOS : ARRAY[3] OF INTEGER
+  I_MAX_OPEN_POS : ARRAY[3] OF INTEGER
+  I_TOLERANCEPOS : INTEGER
+  I_MAGCOUNTER : INTEGER
+  I_PREWARNCOUNTER : INTEGER
+  M13_APPLMODE : INTEGER
+  M13_PREWARNING : BOOLEAN
+  B_ISDOCKED : ARRAY[3] OF BOOLEAN
+  TIMEOUT_RIVET : INTEGER
+  TIMEOUT_LOADEPF : INTEGER
+  B_NOPROCESS : BOOLEAN
+  B_FAIL_START_PROC : BOOLEAN
+  B_SKIPPROC_NOSTART : BOOLEAN
+  AR_M13_RC_GI : ARRAY[3] OF INTEGER
+  AR_M13_RC_GO : ARRAY[3] OF INTEGER
+  I_DRYRUNTIME : INTEGER
+  I_MON : INTEGER
+  I_BNSTYPE : INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE PAUSESTEP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_REQOPERATOR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_CHECKRC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_STATUSREPEAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKFORERROR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_IO_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNNOTHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKMAXGUNNUMBER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_ERRORNO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_RIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_NEXTRIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_MAX_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_CUR_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_TARGET_POS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POS_CALC(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_GUN_CODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETTIMER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CTRLPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKINPOS(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE MI13_CHECK_APP_MODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STARTPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STATUSPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_COUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_DECOUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_INIT(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_RIVET(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POSITIONING(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PREDOCKING(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_LOADEPF(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PRESERVICE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE RESETREDMSG : INTEGER
+BEGIN
+  ST_MANSMESS = &#x27;&#x27;
+  RETURN(0)
+END RESETREDMSG
+
+ROUTINE ISVIRTUALEDIT : BOOLEAN
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+  r1_lc3 : INTEGER
+BEGIN
+  GET_VAR(r1_lc1, &#x27;*SYSTEM*&#x27;, &#x27;$VIRTUALEDIT&#x27;, r1_lc3, r1_lc2)
+  IF ((r1_lc3 &lt;&gt; 1)) THEN
+  RETURN(FALSE)
+  ELSE
+  RETURN(TRUE)
+  ENDIF
+  RETURN(sv_b)
+END ISVIRTUALEDIT
+
+ROUTINE MANUAL_PREDOCKING : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt100 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  sv_i = MI13_PREDOCKING(I_GUNNO_EXT, 0)
+  -- stmt105 stray sv_i
+  RETURN(0)
+END MANUAL_PREDOCKING
+
+ROUTINE MANUAL_LOADEPF : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt119 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  sv_i = MI13_LOADEPF(I_GUNNO_EXT)
+  -- stmt124 stray sv_i
+  RETURN(0)
+END MANUAL_LOADEPF
+
+ROUTINE MANUAL_DECOUPLE : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt137 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]]] &lt;&gt; 0)) THEN
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] &lt;&gt; 0) OR (io_0e[247] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt148 stray sv_i
+  ST_MANSMESS = &#x27;Deadman switch required!&#x27;
+  ENDIF
+  ENDIF
+  sv_i = MI13_DECOUPLE(I_GUNNO_EXT)
+  -- stmt155 stray sv_i
+  ENDIF
+  RETURN(0)
+END MANUAL_DECOUPLE
+
+ROUTINE MANUAL_COUPLE : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt172 stray sv_i
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]]] = 0)) THEN
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] &lt;&gt; 0) OR (io_0e[247] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt183 stray sv_i
+  ST_MANSMESS = &#x27;Deadman switch required!&#x27;
+  ENDIF
+  ENDIF
+  sv_i = MI13_COUPLE(I_GUNNO_EXT)
+  -- stmt190 stray sv_i
+  ENDIF
+  RETURN(0)
+END MANUAL_COUPLE
+
+ROUTINE MANUAL_CLOSEGUN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt206 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] &lt;&gt; 0) OR (io_0e[247] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt211 stray sv_i
+  ST_MANSMESS = &#x27;Deadman switch required!&#x27;
+  ENDIF
+  ENDIF
+  io_02[7 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 0
+  WHILE (NOT ((io_0e[247] &lt;&gt; 0) OR (io_0e[248] &lt;&gt; 0)) AND (io_0e[134] &lt;&gt; 0)) DO
+  io_02[6 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 1
+  DELAY 32
+  ENDWHILE
+  io_02[6 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 0
+  RETURN(0)
+END MANUAL_CLOSEGUN
+
+ROUTINE MANUAL_OPENGUN : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt239 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] &lt;&gt; 0) OR (io_0e[247] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt244 stray sv_i
+  ST_MANSMESS = &#x27;Deadman switch required!&#x27;
+  ENDIF
+  ENDIF
+  io_02[6 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 0
+  WHILE (NOT ((io_0e[247] &lt;&gt; 0) OR (io_0e[248] &lt;&gt; 0)) AND (io_0e[133] &lt;&gt; 0)) DO
+  io_02[7 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 1
+  DELAY 32
+  ENDWHILE
+  io_02[7 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 0
+  RETURN(0)
+END MANUAL_OPENGUN
+
+ROUTINE MANUAL_RIVET : INTEGER
+BEGIN
+  sv_i = RESETREDMSG
+  -- stmt16 stray sv_i
+  IF (NOT (sv_b)) THEN
+  IF ((io_0e[248] &lt;&gt; 0) OR (io_0e[247] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt22 stray sv_i
+  ST_MANSMESS = &#x27;Deadman switch required!&#x27;
+  ENDIF
+  ENDIF
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  L_STATE = sv_i
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Point No.&#x27;, &#x27;Please enter the Point No. (1 ~ 999999)&#x27;, I_RIVETNO_EXT, 1, 999999)
+  L_STATE = sv_i
+  IF ((io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 3] &lt;&gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt35 stray sv_i
+  ST_MANSMESS = &#x27;Error on Rivet System!&#x27;
+  ELSE
+  IF ((io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 8] = 0) OR (io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 1] = 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt40 stray sv_i
+  ST_MANSMESS = &#x27;System is not ready!&#x27;
+  ELSE
+  sv_i = MI13_SET_RIVETID(I_GUNNO_EXT, I_RIVETNO_EXT)
+  L_STATE = sv_i
+  io_02[5 + AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]]] = 0
+  io_02[AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]] + 1] = 1
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt53 stray sv_i
+  -- stmt54 stray 2 + AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]]
+  io_02[AR_M13_RC_DO[GUNCFG_LST[I_GUNNO_EXT]] + 1] = 0
+  IF ((I_TIMER &gt; 0)) THEN
+  sv_i = RESETREDMSG
+  -- stmt59 stray sv_i
+  ST_MANSMESS = &#x27;Man. rivet process error!&#x27;
+  ENDIF
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]]] &lt;&gt; 0)) THEN
+  I_COUNTER = I_COUNTER + 1
+  sv_i = RESETREDMSG
+  -- stmt66 stray sv_i
+  ST_MANSMESS = &#x27;Man. rivet process finished!&#x27;
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MANUAL_RIVET
+
+BEGIN
+END MI13_RVH_MAN
+</span></pre></details><details><summary>MI13_RVH_MON.KL（89 例程）</summary><pre><span class=c>-- MI13_RVH_MON.KL (decompiled v3)
+PROGRAM MI13_RVH_MON
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  ST_MANSMESS : STRING[64]
+  I_GUNNO_EXT : INTEGER
+  I_RIVETNO_EXT : INTEGER
+  TIMEOUT_RIVET : INTEGER
+  TIMEOUT_PROCESS : INTEGER
+  TIMEOUT_LOADEPF : INTEGER
+  I_COUNTER : INTEGER
+  I_PREWARNCOUNTER : INTEGER
+  M13_PREWARNING : INTEGER
+  GUN_COUNT : INTEGER
+  AR_M13_RC_DI : ARRAY[64] OF INTEGER
+  GUNCFG_LST : ARRAY[64] OF INTEGER
+  B_ONESHOT : INTEGER
+  I_LASTFAULTNO : INTEGER
+  AR_M13_RC_GI : ARRAY[64] OF INTEGER
+  B_MAN_RVH : INTEGER
+  B_MAN_PRELOAD : INTEGER
+  B_MAN_LOADEPF : INTEGER
+  B_MAN_COUPLE : INTEGER
+  B_MAN_DECOUPLE : INTEGER
+  B_MAN_SETGUNNO : INTEGER
+  B_MAN_OPENGUN : INTEGER
+  B_MAN_CLOSEGUN : INTEGER
+  BL_DONE : INTEGER
+  B_SYSFAULT : INTEGER
+  B_SYSWARN : INTEGER
+  B_MAGEMPTY : INTEGER
+  I_CUROPENPOS : INTEGER
+  I_MAXOPENPOS : INTEGER
+  I_MON : INTEGER
+  I_GUNPOS : ARRAY[3] OF INTEGER
+  I_MAX_OPEN_POS : ARRAY[3] OF INTEGER
+  I_TOLERANCEPOS : INTEGER
+  I_MAGCOUNTER : INTEGER
+  M13_APPLMODE : INTEGER
+  B_ISDOCKED : ARRAY[3] OF BOOLEAN
+  I_TIMER : INTEGER
+  B_NOPROCESS : BOOLEAN
+  B_FAIL_START_PROC : BOOLEAN
+  B_SKIPPROC_NOSTART : BOOLEAN
+  AR_M13_RC_DO : ARRAY[3] OF INTEGER
+  AR_M13_RC_GO : ARRAY[3] OF INTEGER
+  I_DRYRUNTIME : INTEGER
+  I_BNSTYPE : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE PAUSESTEP(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_REQOPERATOR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_CHECKRC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_STATUSREPEAT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKFORERROR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_IO_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECKGUNNOTHOME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKMAXGUNNUMBER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_ERRORNO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_RIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_NEXTRIVETID(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_MAX_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_GET_CUR_POS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_TARGET_POS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POS_CALC(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SET_GUN_CODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SETTIMER(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CTRLPOS(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_CHECKINPOS(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE MI13_CHECK_APP_MODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STARTPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_STATUSPROCESS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_COUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_DECOUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_INIT(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_RIVET(p0, p1, p2, p3 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_POSITIONING(p0, p1, p2 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PREDOCKING(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_LOADEPF(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_PRESERVICE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI13_SENDBSNUM(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_RIVET(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_PREDOCKING(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_LOADEPF(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_COUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_DECOUPLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_CLOSEGUN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MANUAL_OPENGUN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ERROR_MSG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DCPFAULTREFRESH(p0 : INTEGER; p1 : STRING) : INTEGER FROM MI_LIB
+
+ROUTINE INIT_VARS : INTEGER
+BEGIN
+  ST_MANSMESS = &#x27;&#x27;
+  IF (UNINIT(I_GUNNO_EXT)) THEN
+  I_GUNNO_EXT = 1
+  ENDIF
+  IF (UNINIT(I_RIVETNO_EXT)) THEN
+  I_RIVETNO_EXT = 0
+  ENDIF
+  IF (UNINIT(TIMEOUT_RIVET)) THEN
+  TIMEOUT_RIVET = 500
+  ENDIF
+  IF (UNINIT(TIMEOUT_PROCESS)) THEN
+  TIMEOUT_PROCESS = 3000
+  ENDIF
+  IF (UNINIT(TIMEOUT_LOADEPF)) THEN
+  TIMEOUT_LOADEPF = 6000
+  ENDIF
+  IF (UNINIT(I_COUNTER)) THEN
+  I_COUNTER = 0
+  ENDIF
+  IF (UNINIT(I_PREWARNCOUNTER)) THEN
+  I_PREWARNCOUNTER = 255
+  ENDIF
+  RETURN(0)
+END INIT_VARS
+
+ROUTINE MI13_RVHWARNING : INTEGER
+VAR
+  r1_lc1 : INTEGER
+BEGIN
+  IF (UNINIT(M13_PREWARNING)) THEN
+  M13_PREWARNING = 0
+  ENDIF
+  FOR r1_lc1 = 1 TO 3 DO
+  IF (NOT (UNINIT(AR_M13_RC_DI[r1_lc1]))) THEN
+  IF ((I_COUNTER &gt;= I_PREWARNCOUNTER)) THEN
+  POST_ERR(38100, &#x27;Warning: Magazine(s) will be empty &#x27;, 0, 0)
+  M13_PREWARNING = 1
+  ENDIF
+  IF ((io_01[67 + AR_M13_RC_DI[GUNCFG_LST[r1_lc1]]] &lt;&gt; 0)) THEN
+  IF ((B_ONESHOT &lt;&gt; 0)) THEN
+  B_ONESHOT = 0
+  POST_ERR(38100, &#x27;Warning: Magazine(s) empty &#x27;, 0, 0)
+  ENDIF
+  M13_PREWARNING = 1
+  ELSE
+  B_ONESHOT = 1
+  ENDIF
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI13_RVHWARNING
+
+ROUTINE MI13_RVHFAULTDISP : INTEGER
+VAR
+  r2_lc33 : STRING[64]
+  r2_lc34 : INTEGER
+  r2_lc35 : INTEGER
+BEGIN
+  IF (UNINIT(I_LASTFAULTNO)) THEN
+  I_LASTFAULTNO = 0
+  ENDIF
+  FOR r2_lc34 = 1 TO 3 DO
+  IF (NOT (UNINIT(AR_M13_RC_GI[r2_lc34]))) THEN
+  IF ((io_12[3 + AR_M13_RC_GI[GUNCFG_LST[r2_lc34]]] &lt;&gt; 0)) THEN
+  IF ((I_LASTFAULTNO &lt;&gt; io_12[3 + AR_M13_RC_GI[GUNCFG_LST[r2_lc34]]])) THEN
+  r2_lc35 = io_12[3 + AR_M13_RC_GI[GUNCFG_LST[r2_lc34]]]
+  sv_s = ERROR_MSG(r2_lc35)
+  r2_lc33 = sv_s
+  sv_i = DCPFAULTREFRESH(r2_lc35, r2_lc33)
+  -- stmt176 stray sv_i
+  I_LASTFAULTNO = io_12[3 + AR_M13_RC_GI[GUNCFG_LST[r2_lc34]]]
+  ENDIF
+  ELSE
+  I_LASTFAULTNO = 0
+  ENDIF
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI13_RVHFAULTDISP
+
+ROUTINE MAN_RVH : INTEGER
+BEGIN
+  sv_i = MANUAL_RIVET(0)
+  -- stmt196 stray sv_i
+  B_MAN_RVH = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_RVH
+
+ROUTINE MAN_PRELOAD : INTEGER
+BEGIN
+  sv_i = MANUAL_PREDOCKING(0)
+  -- stmt210 stray sv_i
+  B_MAN_PRELOAD = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_PRELOAD
+
+ROUTINE MAN_LOADEPF : INTEGER
+BEGIN
+  sv_i = MANUAL_LOADEPF(0)
+  -- stmt224 stray sv_i
+  B_MAN_LOADEPF = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_LOADEPF
+
+ROUTINE MAN_COUPLE : INTEGER
+BEGIN
+  sv_i = MANUAL_COUPLE(0)
+  -- stmt238 stray sv_i
+  B_MAN_COUPLE = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_COUPLE
+
+ROUTINE MAN_DECOUPLE : INTEGER
+BEGIN
+  sv_i = MANUAL_DECOUPLE(0)
+  -- stmt252 stray sv_i
+  B_MAN_DECOUPLE = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_DECOUPLE
+
+ROUTINE MAN_SETGUNNO : INTEGER
+VAR
+  r8_lc1 : INTEGER
+BEGIN
+  DELAY 64
+  sv_i = DB_INP_INT(&#x27;Request for a valid Gun No.&#x27;, &#x27;Please enter the Gun No. (1 ~ 3)&#x27;, I_GUNNO_EXT, 1, 3)
+  r8_lc1 = sv_i
+  B_MAN_SETGUNNO = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_SETGUNNO
+
+ROUTINE MAN_OPENGUN : INTEGER
+BEGIN
+  sv_i = MANUAL_OPENGUN(0)
+  -- stmt27 stray sv_i
+  B_MAN_OPENGUN = 0
+  ENABLE CONDITION[1]
+  RETURN(0)
+END MAN_OPENGUN
+
+ROUTINE MAN_CLOSEGUN : INTEGER
+BEGIN
+  sv_i = MANUAL_CLOSEGUN(0)
+  -- stmt41 stray sv_i
+  B_MAN_CLOSEGUN = 0
+  ENABLE CONDITION[1]
+  sv_i = INIT_VARS
+  -- stmt52 stray sv_i
+  BL_DONE = 0
+  B_MAN_RVH = 0
+  B_MAN_PRELOAD = 0
+  B_MAN_LOADEPF = 0
+  B_MAN_COUPLE = 0
+  B_MAN_DECOUPLE = 0
+  B_MAN_SETGUNNO = 0
+  B_MAN_OPENGUN = 0
+  B_MAN_CLOSEGUN = 0
+  B_SYSFAULT = 0
+  B_SYSWARN = 0
+  B_MAGEMPTY = 0
+  B_ONESHOT = 1
+  PURGE CONDITION[1]
+  -- stmt73 stray 13 | B_MAN_RVH | 1 | B_MAN_PRELOAD | 1 | B_MAN_LOADEPF | 1 | B_MAN_COUPLE | 1 | B_MAN_DECOUPLE | 1 | B_MAN_SETGUNNO | 1 | B_MAN_OPENGUN | 1 | B_MAN_CLOSEGUN | 1
+  ENABLE CONDITION[1]
+  IF ((BL_DONE = 0)) THEN
+  sv_i = MI13_RVHWARNING
+  -- stmt89 stray sv_i
+  IF (NOT (UNINIT(AR_M13_RC_DI[I_GUNNO_EXT]))) THEN
+  B_SYSFAULT = io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 3]
+  B_SYSWARN = io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 7]
+  B_MAGEMPTY = io_01[AR_M13_RC_DI[GUNCFG_LST[I_GUNNO_EXT]] + 67]
+  ENDIF
+  sv_i = MI13_GET_CUR_POS(I_GUNNO_EXT)
+  I_CUROPENPOS = sv_i
+  sv_i = MI13_GET_MAX_POS(I_GUNNO_EXT)
+  I_MAXOPENPOS = sv_i
+  sv_i = MI13_RVHFAULTDISP
+  -- stmt104 stray sv_i
+  sv_i = MI13_SENDBSNUM(0)
+  -- stmt106 stray sv_i
+  IF (UNINIT(I_MON)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &lt; 32)) THEN
+  I_MON = 32
+  ENDIF
+  IF ((I_MON &gt; 256)) THEN
+  I_MON = 256
+  ENDIF
+  DELAY I_MON
+  ELSE
+  -- stmt115 stray 13
+  ENDIF
+  RETURN(0)
+END MAN_CLOSEGUN
+
+BEGIN
+END MI13_RVH_MON
+</span></pre></details><details><summary>MI13_RVH_ROUT.KL（89 例程）</summary><pre><span class=c>-- MI13_RVH_ROUT.KL (decompiled v3)
+PROGRAM MI13_RVH_ROUT
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	LST_ERROR_T = STRUCTURE
+	APP_NAME: STRING[12]
+	ERR_NO: INTEGER
+	ERR_TITLE: STRING[32]
+	ERR_MSG: STRING[40]
+	ENDSTRUCTURE
+VAR
+  io_01 : ARRAY[512] OF INTEGER
+  io_02 : ARRAY[512] OF INTEGER
+  io_0b : ARRAY[512] OF INTEGER
+  io_0e : ARRAY[512] OF INTEGER
+  io_12 : ARRAY[512] OF INTEGER
+  io_13 : ARRAY[512] OF INTEGER
+  ENTRY : INTEGER
+  L_STATE : INTEGER
+  AR_M13_RC_DI : ARRAY[64] OF INTEGER
+  GUNCFG_LST : ARRAY[64] OF INTEGER
+  AR_M13_RC_DO : ARRAY[64] OF INTEGER
+  L_REPEATCOUNTER : INTEGER
+  B_SKIPPROC_NOSTART : INTEGER
+  B_FAIL_START_PROC : INTEGER
+  TIMEOUT_RIVET : INTEGER
+  I_TIMER : INTEGER
+  LST_ERROR : ARRAY[64] OF LST_ERROR_T
+  TIMEOUT_PROCESS : INTEGER
+  I_MI01_DI : INTEGER
+  GUN_COUNT : INTEGER
+  AR_M13_RC_GI : ARRAY[64] OF INTEGER
+  AR_M13_RC_GO : ARRAY[64] OF INTEGER
+  I_GUNPOS : ARRAY[64] OF INTEGER
+  I_TOLERANCEPOS : INTEGER
+  M13_APPLMODE : INTEGER
+  I_COUNTER : INTEGER
+  B_ISDOCKED : ARRAY[64] OF INTEGER
+  B_NOPROCESS : INTEGER
+  TIMEOUT_LOADEPF : INTEGER
+  I_MI01_GO : INTEGER
+  I_PREWARNCOUNTER : INTEGER
+  M13_PREWARNING : INTEGER
+  I_MAX_OPEN_POS : ARRAY[3] OF INTEGER
+  I_MAGCOUNTER : INTEGER
+  I_DRYRUNTIME : INTEGER
+  I_MON : INTEGER
+  I_BNSTYPE : INTEGER
+  INTPARAMVALUE : INTEGER
+  REALPARAMVALUE : REAL
+  STRPARAMVALUE : STRING[128]
+  I_MI01_DO : INTEGER
+  I_MI01_GI : INTEGER
+  B_MON_01 : BOOLEAN
+  I_MON_01 : INTEGER
+  B_PRESSCHK : BOOLEAN
+  I_DI_PRESS : INTEGER
+  I_MI01_FS_DI : INTEGER
+  I_MI01_FS_DO : INTEGER
+  I_PRESS_TIMEOUT : INTEGER
+  I_GO_ERROR_NUM : INTEGER
+  I_PRIEM_PUMP_PULSE : INTEGER
+  I_PRIEM_PUMP_DO : INTEGER
+  I_RIP_TYPE : INTEGER
+  B_FANUC_RAIL : BOOLEAN
+  I_DECICODE_TIMEOUT : INTEGER
+  ST_ROBOT_NAME : STRING[20]
+  ST_ROBOT_IP : STRING[20]
+  AR_B_DEV_USE : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT : ARRAY[2] OF INTEGER
+  I_DI_START : INTEGER
+  I_DO_IN_PROCESS : INTEGER
+  I_DO_SUCCESS : INTEGER
+  I_DO_ERROR : INTEGER
+  I_MACRO_NUM : INTEGER
+  B_PRIO_USE : BOOLEAN
+  AR_B_PRIO : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE : BOOLEAN
+  I_LOGBOOK_DEV : INTEGER
+  LST_ERROR_f00 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f10 : ARRAY[64] OF INTEGER
+  LST_ERROR_f14 : ARRAY[64] OF STRING[64]
+  LST_ERROR_f38 : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE PAUSESTEP : INTEGER
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(ENTRY, &#x27;*SYSTEM*&#x27;, &#x27;$SSR.$SINGLESTEP&#x27;, r0_lc1, L_STATE)
+  IF ((r0_lc1 = 1)) THEN
+  sv_i = CTRLACTPROGTPE(&#x27;PAUSE&#x27;)
+  sv_i = CHECK_STATUS(sv_i)
+  -- stmt87 stray sv_i
+  ENDIF
+  RETURN(0)
+END PAUSESTEP
+
+ROUTINE MANUAL_REQOPERATOR : INTEGER
+BEGIN
+  L_STATE = 0
+  DELAY 64
+  REPEAT
+  sv_i = DB_PROMPT(0, &#x27;Request for worker confirmation&#x27;, &#x27;Press \&quot;OK\&quot; if the rivet from last process has been removed&#x27;, 7)
+  L_STATE = sv_i
+  -- stmt108 residue &#x27;Press \\&quot;OK\\&quot; if the rivet from last process has been removed&#x27;
+  DELAY 64
+  UNTIL((L_STATE = 1))
+  RETURN(0)
+END MANUAL_REQOPERATOR
+
+ROUTINE MANUAL_CHECKRC(p0 : INTEGER) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+BEGIN
+  r2_lc1 = 0
+  r2_lc2 = 0
+  DELAY 64
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  ENDIF
+  REPEAT
+  sv_i = DB_PROMPT(0, &#x27;Request for worker confirmation&#x27;, &#x27;RC is ON, restart failed, check rivet again&#x27;, 7)
+  L_STATE = sv_i
+  DELAY 64
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  r2_lc1 = 0
+  ELSE
+  r2_lc1 = 1
+  ENDIF
+  r2_lc2 = r2_lc2 + 1
+  IF ((r2_lc2 &gt; 3)) THEN
+  r2_lc1 = 1
+  ENDIF
+  UNTIL((r2_lc1 &lt;&gt; 0))
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Check RC before restart&#x27;, 0, 1)
+  ENDIF
+  RETURN(0)
+END MANUAL_CHECKRC
+
+ROUTINE MANUAL_STATUSREPEAT(p0 : INTEGER) : INTEGER
+BEGIN
+  L_STATE = 0
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Last process NOK&#x27;, &#x27;YES: Acknowledge and repeat.\nNO: Process was OK.&#x27;, 3)
+  L_STATE = sv_i
+  -- stmt176 residue &#x27;YES: Acknowledge and repeat.\\nNO: Process was OK.&#x27;
+  DELAY 64
+  UNTIL((L_STATE &lt;&gt; 0))
+  SELECT L_STATE OF
+  CASE(3):
+  sv_i = MANUAL_REQOPERATOR
+  -- stmt187 stray sv_i
+  sv_i = MANUAL_CHECKRC(p0)
+  -- stmt188 stray sv_i
+  -- stmt189 residue 1000
+  L_REPEATCOUNTER = L_REPEATCOUNTER + 1
+  B_SKIPPROC_NOSTART = 0
+  B_FAIL_START_PROC = 1
+  CASE(4):
+  sv_i = MANUAL_REQOPERATOR
+  -- stmt200 stray sv_i
+  -- stmt201 residue 1000
+  B_SKIPPROC_NOSTART = 1
+  B_FAIL_START_PROC = 0
+  ELSE:
+  sv_i = MANUAL_REQOPERATOR
+  -- stmt217 stray sv_i
+  B_SKIPPROC_NOSTART = 0
+  B_FAIL_START_PROC = 0
+  ENDSELECT
+  RETURN(0)
+END MANUAL_STATUSREPEAT
+
+ROUTINE MI13_GET_ERRORNO(p0 : INTEGER) : INTEGER
+BEGIN
+  RETURN(io_12[3 + AR_M13_RC_GI[GUNCFG_LST[p0]]])
+  RETURN(0)
+END MI13_GET_ERRORNO
+
+ROUTINE MI13_SETTIMER(p0 : INTEGER) : INTEGER
+BEGIN
+  I_TIMER = p0 * (0 - 1)
+  RETURN(0)
+END MI13_SETTIMER
+
+ROUTINE MI13_CHECKFORERROR(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI13_SETTIMER(TIMEOUT_RIVET)
+  -- stmt235 stray sv_i
+  -- stmt236 stray 3 + AR_M13_RC_DI[GUNCFG_LST[p0]]
+  IF ((I_TIMER &gt; 0)) THEN
+  IF ((io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  IF ((sv_i &lt;&gt; 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet Controller error&#x27;
+  LST_ERROR_f38[256] = &#x27;An error is occured at rivet gun&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 3 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, 0, 2)
+  L_STATE = sv_i
+  ELSE
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Riveting system error&#x27;
+  LST_ERROR_f38[256] = &#x27;Error on the riveting system&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 3 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, 0, 2)
+  L_STATE = sv_i
+  ENDIF
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet Controller error&#x27;
+  LST_ERROR_f38[256] = &#x27;An error is occured at rivet gun&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 3 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, 0, 2)
+  L_STATE = sv_i
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI13_CHECKFORERROR
+
+ROUTINE MI13_SET_RIVETID(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  io_13[3 + AR_M13_RC_GO[GUNCFG_LST[p0]]] = p1
+  RETURN(p1)
+  RETURN(0)
+END MI13_SET_RIVETID
+
+ROUTINE MI13_IO_INIT(p0 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI13_CHECKFORERROR(p0)
+  -- stmt20 stray sv_i
+  io_02[1 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[3 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[6 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[7 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[65 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[66 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[69 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[70 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[71 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[72 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  -- stmt39 residue 1000
+  sv_i = MI13_SET_RIVETID(p0, 0)
+  L_STATE = sv_i
+  RETURN(0)
+END MI13_IO_INIT
+
+ROUTINE CHECKGUNHOME(p0 : INTEGER) : INTEGER
+VAR
+  r6_lc14 : STRING[64]
+  r6_lc15 : INTEGER
+BEGIN
+  r6_lc15 = 0
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt58 stray sv_i
+  REPEAT
+  DELAY 32
+  IF ((I_TIMER &gt; 0) AND (r6_lc15 = 0)) THEN
+  sv_s = INTTOSTR(6 + AR_M13_RC_DI[GUNCFG_LST[p0]])
+  sv_s = INTTOSTR(5 + AR_M13_RC_DI[GUNCFG_LST[p0]])
+  r6_lc14 = &#x27;Wait DI[&#x27; + sv_s + &#x27;]Or DI[&#x27; + sv_s + &#x27;]=ON&#x27;
+  POST_ERR(38100, &#x27;Wait gun home&#x27;, 0, 0)
+  POST_ERR(38100, r6_lc14, 0, 1)
+  r6_lc15 = 1
+  ENDIF
+  IF ((io_0e[153] &lt;&gt; 0) OR (io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0b[1] &lt;&gt; 0)) THEN
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt72 stray sv_i
+  r6_lc15 = 0
+  ENDIF
+  UNTIL((io_01[6 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0) OR (io_01[5 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0))
+  RETURN(0)
+END CHECKGUNHOME
+
+ROUTINE CHECKGUNNOTHOME(p0 : INTEGER) : INTEGER
+VAR
+  r7_lc14 : STRING[64]
+  r7_lc15 : INTEGER
+BEGIN
+  r7_lc15 = 0
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt93 stray sv_i
+  REPEAT
+  DELAY 32
+  IF ((I_TIMER &gt; 0) AND (r7_lc15 = 0)) THEN
+  sv_s = INTTOSTR(6 + AR_M13_RC_DI[GUNCFG_LST[p0]])
+  sv_s = INTTOSTR(5 + AR_M13_RC_DI[GUNCFG_LST[p0]])
+  r7_lc14 = &#x27;Wait DI[&#x27; + sv_s + &#x27;]Or DI[&#x27; + sv_s + &#x27;]=OFF&#x27;
+  POST_ERR(38100, &#x27;Wait gun home&#x27;, 0, 0)
+  POST_ERR(38100, r7_lc14, 0, 1)
+  r7_lc15 = 1
+  ENDIF
+  IF ((io_0e[153] &lt;&gt; 0) OR (io_01[I_MI01_DI + 5] &lt;&gt; 0) OR (io_0b[1] &lt;&gt; 0)) THEN
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt107 stray sv_i
+  r7_lc15 = 0
+  ENDIF
+  UNTIL((io_01[6 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0) AND (io_01[5 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0))
+  RETURN(0)
+END CHECKGUNNOTHOME
+
+ROUTINE MI13_CHECKMAXGUNNUMBER(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((p0 &gt; GUN_COUNT)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Gun number missmatch&#x27;
+  LST_ERROR_f38[256] = &#x27;The Gun No. is larger than its maximum&#x27;
+  sv_i = MSG_WRITE(256, 2)
+  -- stmt131 stray sv_i
+  ABORT
+  ELSE
+  ENDIF
+  RETURN(0)
+END MI13_CHECKMAXGUNNUMBER
+
+ROUTINE MI13_SET_NEXTRIVETID(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  io_13[4 + AR_M13_RC_GO[GUNCFG_LST[p0]]] = p1
+  RETURN(p1)
+  RETURN(0)
+END MI13_SET_NEXTRIVETID
+
+ROUTINE MI13_GET_MAX_POS(p0 : INTEGER) : INTEGER
+BEGIN
+  RETURN(io_12[2 + AR_M13_RC_GI[GUNCFG_LST[p0]]])
+  RETURN(0)
+END MI13_GET_MAX_POS
+
+ROUTINE MI13_GET_CUR_POS(p0 : INTEGER) : INTEGER
+BEGIN
+  RETURN(io_12[1 + AR_M13_RC_GI[GUNCFG_LST[p0]]])
+  RETURN(0)
+END MI13_GET_CUR_POS
+
+ROUTINE MI13_SET_TARGET_POS(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  io_13[2 + AR_M13_RC_GO[GUNCFG_LST[p0]]] = p1
+  I_GUNPOS[p0] = p1
+  RETURN(p1)
+  RETURN(0)
+END MI13_SET_TARGET_POS
+
+ROUTINE MI13_POS_CALC(p0, p1 : INTEGER) : INTEGER
+VAR
+  r15_lc1 : INTEGER
+  r15_lc2 : INTEGER
+BEGIN
+  sv_i = MI13_GET_MAX_POS((GUNCFG_LST[p0]))
+  r15_lc1 = sv_i
+  IF ((p1 &lt;= r15_lc1)) THEN
+  r15_lc2 = p1
+  ELSE
+  r15_lc2 = 0
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Gun open dimensions wrong&#x27;
+  LST_ERROR_f38[256] = &#x27;Param. greater than the max opening Pos&#x27;
+  sv_i = MSG_WRITE(256, 3)
+  -- stmt253 stray sv_i
+  ABORT
+  ELSE
+  ENDIF
+  ENDIF
+  RETURN(r15_lc2)
+  RETURN(0)
+END MI13_POS_CALC
+
+ROUTINE MI13_SET_GUN_CODE(p0 : INTEGER) : INTEGER
+VAR
+  r17_lc1 : INTEGER
+BEGIN
+  IF ((p0 &lt;&gt; 0)) THEN
+  io_13[1 + AR_M13_RC_GO[GUNCFG_LST[p0]]] = p0
+  ELSE
+  FOR r17_lc1 = 1 TO 3 DO
+  IF (NOT (UNINIT(AR_M13_RC_GO[r17_lc1]))) THEN
+  IF (sv_b) THEN
+  io_13[1 + AR_M13_RC_GO[r17_lc1]] = 0
+  ENDIF
+  ENDIF
+  ENDFOR
+  ENDIF
+  RETURN(p0)
+  RETURN(0)
+END MI13_SET_GUN_CODE
+
+ROUTINE MI13_SETPOS(p0, p1 : INTEGER) : INTEGER
+VAR
+  r16_lc1 : INTEGER
+BEGIN
+  IF ((p1 &gt; sv_i)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Max. Gunposition wrong&#x27;
+  LST_ERROR_f38[256] = &#x27;Check setting for max. Gunposition&#x27;
+  sv_i = MSG_WRITE(256, 0)
+  -- stmt26 stray sv_i
+  POST_ERR(38100, &#x27;Max. Gunposition wrong&#x27;, 0, 2)
+  ELSE
+  sv_i = MI13_SET_GUN_CODE(p0)
+  L_STATE = sv_i
+  sv_i = MI13_POS_CALC(p0, p1)
+  r16_lc1 = sv_i
+  sv_i = MI13_SET_TARGET_POS(p0, r16_lc1)
+  L_STATE = sv_i
+  ENDIF
+  RETURN(0)
+END MI13_SETPOS
+
+ROUTINE MI13_CTRLPOS(p0, p1 : INTEGER) : INTEGER
+VAR
+  r19_lc1 : INTEGER
+  r19_lc2 : INTEGER
+BEGIN
+  sv_i = MI13_POS_CALC(p0, p1)
+  r19_lc2 = sv_i
+  sv_i = MI13_GET_MAX_POS(p0)
+  r19_lc1 = sv_i
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt102 stray sv_i
+  REPEAT
+  DELAY 20
+  UNTIL((0 &lt; I_TOLERANCEPOS) OR (I_TIMER &gt; 0))
+  IF ((I_TIMER &gt; 0)) THEN
+  IF ((io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  IF ((sv_i &lt;&gt; 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet Controller error&#x27;
+  LST_ERROR_f38[256] = &#x27;An error is occured at rivet gun&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 3 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, 0, 2)
+  L_STATE = sv_i
+  ELSE
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet gun not in Pos&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting until gun in target position&#x27;
+  sv_i = WAIT_SIGNAL(256, 3, 1 + AR_M13_RC_GI[GUNCFG_LST[p0]], r19_lc2, 0, 2)
+  L_STATE = sv_i
+  ENDIF
+  ENDIF
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet gun not in Pos&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting until gun in target position&#x27;
+  sv_i = WAIT_SIGNAL(256, 3, 1 + AR_M13_RC_GI[GUNCFG_LST[p0]], r19_lc2, 0, 2)
+  L_STATE = sv_i
+  ENDIF
+  RETURN(0)
+END MI13_CTRLPOS
+
+ROUTINE MI13_CHECKINPOS(p0, p1 : INTEGER) : BOOLEAN
+VAR
+  r20_lc1 : INTEGER
+BEGIN
+  sv_i = MI13_POS_CALC(p0, p1)
+  r20_lc1 = sv_i
+  sv_i = MI13_GET_CUR_POS(p0)
+  IF (0 &lt; I_TOLERANCEPOS) THEN
+    RETURN(TRUE)
+  ELSE
+    RETURN(FALSE)
+  ENDIF
+  -- stmt152 stray sv_i - r20_lc1
+  RETURN(sv_b)
+END MI13_CHECKINPOS
+
+ROUTINE MI13_CHECK_APP_MODE(p0 : INTEGER) : INTEGER
+VAR
+  r21_lc1 : INTEGER
+BEGIN
+  IF ((sv_i = 3)) THEN
+  IF ((io_01[35] &lt;&gt; 0)) THEN
+  M13_APPLMODE = 2
+  ELSE
+  M13_APPLMODE = 1
+  ENDIF
+  IF ((io_01[35] &lt;&gt; 0)) THEN
+  ENDIF
+  REPEAT
+  DELAY 32
+  sv_i = DB_PROMPT(2, &#x27;Application Mode acknowledge&#x27;, &#x27;YES -&gt; Acknowledge Tryout Mode.\nNO  -&gt; Ignore Tryout Mode.     &#x27;, 4)
+  r21_lc1 = sv_i
+  -- stmt180 residue &#x27;YES -&gt; Acknowledge Tryout Mode.\\nNO  -&gt; Ignore Tryout Mode.     &#x27;
+  UNTIL((r21_lc1 = 3) OR (r21_lc1 = 4))
+  SELECT r21_lc1 OF
+  CASE(3):
+  M13_APPLMODE = 2
+  CASE(4):
+  M13_APPLMODE = 1
+  ELSE:
+  ENDSELECT
+  ENDIF
+  M13_APPLMODE = 1
+  RETURN(M13_APPLMODE)
+  RETURN(0)
+END MI13_CHECK_APP_MODE
+
+ROUTINE MI13_STARTPROCESS(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((B_FAIL_START_PROC &lt;&gt; 0)) THEN
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt211 stray sv_i
+  -- stmt212 stray 2 + AR_M13_RC_DI[GUNCFG_LST[p0]]
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  B_FAIL_START_PROC = 0
+  I_COUNTER = I_COUNTER + 1
+  ENDIF
+  IF ((I_TIMER &gt; 0)) THEN
+  IF ((B_FAIL_START_PROC = 0)) THEN
+  B_FAIL_START_PROC = 1
+  ENDIF
+  ENDIF
+  ELSE
+  IF ((io_01[AR_M13_RC_DI[GUNCFG_LST[p0]] + 1] &lt;&gt; 0) AND (io_01[AR_M13_RC_DI[GUNCFG_LST[p0]] + 8] &lt;&gt; 0)) THEN
+  io_02[AR_M13_RC_DO[GUNCFG_LST[p0]] + 1] = 1
+  sv_i = CHECKGUNNOTHOME(p0)
+  -- stmt236 stray sv_i
+  sv_i = MI13_SETTIMER(TIMEOUT_PROCESS)
+  -- stmt238 stray sv_i
+  -- stmt239 stray 2 + AR_M13_RC_DI[GUNCFG_LST[p0]]
+  IF ((io_01[2 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  I_COUNTER = I_COUNTER + 1
+  ENDIF
+  IF ((I_TIMER &gt; 0)) THEN
+  IF ((B_FAIL_START_PROC = 0)) THEN
+  B_FAIL_START_PROC = 1
+  ENDIF
+  ENDIF
+  ENDIF
+  ENDIF
+  RETURN(0)
+END MI13_STARTPROCESS
+
+ROUTINE MI13_STATUSPROCESS(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((B_FAIL_START_PROC &lt;&gt; 0)) THEN
+  sv_i = MANUAL_STATUSREPEAT(p0)
+  -- stmt16 stray sv_i
+  ELSE
+  B_SKIPPROC_NOSTART = 0
+  ENDIF
+  RETURN(0)
+END MI13_STATUSPROCESS
+
+ROUTINE MI13_COUPLE(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0)) THEN
+  sv_i = MI13_SET_GUN_CODE(p0)
+  L_STATE = sv_i
+  io_02[20 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[21 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  DELAY 50
+  -- stmt41 residue 2000
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Docking not completed&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting until tool connect is high&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 21 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  B_ISDOCKED[p0] = 1
+  ELSE
+  POST_ERR(38100, &#x27;Gun has already been connected&#x27;, 0, 0)
+  ENDIF
+  RETURN(0)
+END MI13_COUPLE
+
+ROUTINE MI13_DECOUPLE(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((io_01[21 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0) AND (io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0)) THEN
+  io_02[20 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[21 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  DELAY 50
+  -- stmt110 residue 1000
+  IF ((io_01[20 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Docking not completed&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting until tool disconnect is high&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 20 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  sv_i = MI13_SET_GUN_CODE(0)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Gun still connected&#x27;
+  LST_ERROR_f38[256] = &#x27;Gun connected still present&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 21 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  B_ISDOCKED[p0] = 0
+  ELSE
+  POST_ERR(38100, &#x27;Gun has already been connected&#x27;, 0, 0)
+  ENDIF
+  RETURN(0)
+END MI13_DECOUPLE
+
+ROUTINE MI13_INIT(p0, p1 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI13_IO_INIT(p0)
+  -- stmt152 stray sv_i
+  sv_i = MI13_SET_GUN_CODE(p0)
+  L_STATE = sv_i
+  sv_i = MI13_CHECKFORERROR(p0)
+  -- stmt158 stray sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet finish active&#x27;
+  LST_ERROR_f38[256] = &#x27;Syetem: (riveting ended) still present&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 2 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Controller not ready&#x27;
+  LST_ERROR_f38[256] = &#x27;Wait for rivet controller is ready&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 8 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Ready to start error&#x27;
+  LST_ERROR_f38[256] = &#x27;Wait for ready to start from controller&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 1 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  sv_i = MI13_SETPOS(p0, p1)
+  -- stmt181 stray sv_i
+  io_02[9 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 1
+  sv_i = MI13_CTRLPOS(p0, p1)
+  -- stmt185 stray sv_i
+  io_02[9 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  sv_i = MI13_SETTIMER(5000)
+  -- stmt191 stray sv_i
+  -- stmt192 stray 6 + AR_M13_RC_DI[GUNCFG_LST[p0]]
+  IF ((I_TIMER &gt; 0)) THEN
+  L_STATE = 0
+  ENDIF
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Last process NOK&#x27;, &#x27;YES: move To Basic.\nNO: skip.&#x27;, 3)
+  L_STATE = sv_i
+  -- stmt198 residue &#x27;YES: move To Basic.\\nNO: skip.&#x27;
+  DELAY 64
+  UNTIL((L_STATE &lt;&gt; 0))
+  SELECT L_STATE OF
+  CASE(3):
+  -- stmt209 residue 3000
+  sv_i = MI13_SETTIMER(3000)
+  -- stmt210 stray sv_i
+  -- stmt211 stray 5 + AR_M13_RC_DI[GUNCFG_LST[p0]]
+  IF ((I_TIMER &gt; 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Wait gun home&#x27;
+  LST_ERROR_f38[256] = &#x27;Wait gun home&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 5 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, 500, 2)
+  L_STATE = sv_i
+  ENDIF
+  CASE(4):
+  ELSE:
+  ENDSELECT
+  RETURN(0)
+END MI13_INIT
+
+ROUTINE MI13_RIVET(p0, p1, p2, p3 : INTEGER) : INTEGER
+VAR
+  r27_lc1 : INTEGER
+BEGIN
+  L_REPEATCOUNTER = 0
+  sv_i = MI13_IO_INIT(p0)
+  -- stmt246 stray sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Rivet finish active&#x27;
+  LST_ERROR_f38[256] = &#x27;Syetem: (riveting ended) still present&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 2 + AR_M13_RC_DI[GUNCFG_LST[p0]], 0, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  sv_i = MI13_CHECKFORERROR(p0)
+  -- stmt0 stray sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Controller not ready&#x27;
+  LST_ERROR_f38[256] = &#x27;Wait for rivet controller is ready&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 8 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Ready to start error&#x27;
+  LST_ERROR_f38[256] = &#x27;Wait for ready to start from controller&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 1 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  sv_i = CHECKGUNHOME(p0)
+  -- stmt27 stray sv_i
+  sv_i = MI13_SET_RIVETID(p0, p1)
+  L_STATE = sv_i
+  sv_i = MI13_SET_NEXTRIVETID(p0, p2)
+  L_STATE = sv_i
+  DELAY 200
+  io_02[1 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[9 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  sv_i = MI13_POS_CALC(p0, p3)
+  r27_lc1 = sv_i
+  sv_i = MI13_SET_TARGET_POS(p0, r27_lc1)
+  L_STATE = sv_i
+  io_02[5 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  B_FAIL_START_PROC = 0
+  B_SKIPPROC_NOSTART = 0
+  sv_i = MI13_CHECK_APP_MODE(p0)
+  SELECT sv_i OF
+  CASE(1):
+  B_NOPROCESS = 0
+  CASE(2):
+  B_NOPROCESS = 1
+  CASE(3):
+  ABORT
+  ELSE:
+  ENDSELECT
+  IF ((B_NOPROCESS &lt;&gt; 0)) THEN
+  io_02[5 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 1
+  sv_i = MI13_SETPOS(p0, p3)
+  -- stmt85 stray sv_i
+  sv_i = MI13_CTRLPOS(p0, p3)
+  -- stmt88 stray sv_i
+  io_02[9 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  sv_i = MI13_SET_RIVETID(p0, 0)
+  L_STATE = sv_i
+  ENDIF
+  REPEAT
+  sv_i = MI13_STARTPROCESS(p0)
+  -- stmt102 stray sv_i
+  sv_i = MI13_STATUSPROCESS(p0)
+  -- stmt106 stray sv_i
+  DELAY 16
+  UNTIL((B_FAIL_START_PROC = 0))
+  IF ((B_SKIPPROC_NOSTART &lt;&gt; 0)) THEN
+  IF ((io_01[AR_M13_RC_DI[GUNCFG_LST[p0]] + 2] = 0)) THEN
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Riveting end not present&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting for process finished&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 2 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_PROCESS, 2)
+  L_STATE = sv_i
+  ENDIF
+  I_COUNTER = I_COUNTER + 1
+  ENDIF
+  IF ((B_FAIL_START_PROC = 0) OR (B_SKIPPROC_NOSTART &lt;&gt; 0)) THEN
+  io_02[1 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  io_02[5 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  sv_i = MI13_SET_RIVETID(p0, 0)
+  L_STATE = sv_i
+  sv_i = CHECKGUNHOME(p0)
+  -- stmt156 stray sv_i
+  ENDIF
+  RETURN(0)
+END MI13_RIVET
+
+ROUTINE MI13_POSITIONING(p0, p1, p2 : INTEGER) : INTEGER
+BEGIN
+  sv_i = MI13_CHECKFORERROR(p0)
+  -- stmt181 stray sv_i
+  io_02[9 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  IF ((p2 &lt;&gt; 0)) THEN
+  sv_i = MI13_SETPOS(p0, p1)
+  -- stmt187 stray sv_i
+  DELAY 50
+  ENDIF
+  sv_i = CHECKGUNHOME(p0)
+  -- stmt193 stray sv_i
+  RETURN(0)
+END MI13_POSITIONING
+
+ROUTINE MI13_PREDOCKING(p0, p1 : INTEGER) : INTEGER
+VAR
+  r29_lc1 : INTEGER
+BEGIN
+  SELECT p1 OF
+  CASE(0):
+  r29_lc1 = 1
+  CASE(1):
+  r29_lc1 = 0
+  ELSE:
+  ENDSELECT
+  io_02[65 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = r29_lc1
+  RETURN(0)
+END MI13_PREDOCKING
+
+ROUTINE MI13_LOADEPF(p0 : INTEGER) : INTEGER
+VAR
+  r30_lc1 : INTEGER
+BEGIN
+  sv_i = MI13_CHECKFORERROR(p0)
+  -- stmt234 stray sv_i
+  r30_lc1 = 0
+  LST_ERROR_f00[256] = &#x27;SPR&#x27;
+  LST_ERROR_f10[256] = 0
+  LST_ERROR_f14[256] = &#x27;Magazine not ready&#x27;
+  LST_ERROR_f38[256] = &#x27;Waiting for magazine ready to dock&#x27;
+  sv_i = WAIT_SIGNAL(256, 1, 65 + AR_M13_RC_DI[GUNCFG_LST[p0]], 1, TIMEOUT_RIVET, 2)
+  L_STATE = sv_i
+  io_02[66 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  IF ((io_01[67 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  io_02[66 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 1
+  sv_i = MI13_SETTIMER(TIMEOUT_LOADEPF)
+  -- stmt251 stray sv_i
+  ENDIF
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[66 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 1) OR (io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 1) OR (I_TIMER &gt; 0))
+  IF ((io_01[66 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  io_02[66 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  ENDIF
+  IF ((io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0) OR (I_TIMER &gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 208
+  ENDIF
+  sv_i = MI13_SETTIMER(TIMEOUT_LOADEPF)
+  -- stmt10 stray sv_i
+  REPEAT
+  DELAY 8
+  UNTIL((io_01[66 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 1) OR (io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] = 1) OR (I_TIMER &gt; 0))
+  IF ((io_01[3 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0) OR (I_TIMER &gt; 0)) THEN
+  io_13[I_MI01_GO + 6] = 208
+  L_STATE = 0
+  ENDIF
+  REPEAT
+  sv_i = DB_PROMPT(2, &#x27;Load EPF Error&#x27;, &#x27;YES: Acknowledge and repeat.\nNO: Process was OK.&#x27;, 3)
+  L_STATE = sv_i
+  -- stmt20 residue &#x27;YES: Acknowledge and repeat.\\nNO: Process was OK.&#x27;
+  DELAY 64
+  UNTIL((L_STATE &lt;&gt; 0))
+  SELECT L_STATE OF
+  CASE(3):
+  r30_lc1 = 0
+  CASE(4):
+  r30_lc1 = 1
+  ELSE:
+  ENDSELECT
+  IF ((io_01[66 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  r30_lc1 = 1
+  ENDIF
+  DELAY 32
+  IF ((r30_lc1 = 1)) THEN
+  io_13[I_MI01_GO + 6] = 0
+  ENDIF
+  io_02[66 + AR_M13_RC_DO[GUNCFG_LST[p0]]] = 0
+  I_COUNTER = 0
+  RETURN(0)
+END MI13_LOADEPF
+
+ROUTINE MI13_PRESERVICE(p0 : INTEGER) : INTEGER
+BEGIN
+  IF ((I_COUNTER &gt;= I_PREWARNCOUNTER)) THEN
+  POST_ERR(38100, &#x27;Warning: Magazine(s) will be empty &#x27;, 0, 0)
+  M13_PREWARNING = 1
+  ENDIF
+  IF ((io_01[67 + AR_M13_RC_DI[GUNCFG_LST[p0]]] &lt;&gt; 0)) THEN
+  POST_ERR(38100, &#x27;Warning: Magazine(s) empty &#x27;, 0, 0)
+  M13_PREWARNING = 1
+  ENDIF
+  RETURN(0)
+END MI13_PRESERVICE
+
+ROUTINE MI13_SENDBSNUM : INTEGER
+VAR
+  r32_lc1 : INTEGER
+BEGIN
+  FOR r32_lc1 = 1 TO 3 DO
+  IF ((io_01[I_MI01_DI + 129 + r32_lc1 - 1] &lt;&gt; 0)) THEN
+  io_02[AR_M13_RC_DO[1] + 97 + r32_lc1 - 1] = 1
+  ELSE
+  io_02[AR_M13_RC_DO[1] + 97 + r32_lc1 - 1] = 0
+  ENDIF
+  ENDFOR
+  RETURN(0)
+END MI13_SENDBSNUM
+
+BEGIN
+END MI13_RVH_ROUT
+</span></pre></details><details><summary>MI13_RVH_VAR.KL（0 例程）</summary><pre><span class=c>-- MI13_RVH_VAR.KL (decompiled v3)
+PROGRAM MI13_RVH_VAR
+%COMMENT = &#x27;MI13 2.0.9&#x27;
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+BEGIN
+END MI13_RVH_VAR
+
+</span></pre></details>

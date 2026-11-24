@@ -1,0 +1,288 @@
+-- Copyright (c) XYZ Robotics Inc. - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Author: xiang liu <xiang.liu@xyzrobotics.ai>
+
+
+--------------------------------------------------------------------------------
+-- 
+-- xyz_pkt
+-- 
+-- brief: xyz_pkt,
+--        package function
+--------------------------------------------------------------------------------
+PROGRAM xyz_pkt
+
+
+%COMMENT = 'package'
+%ALPHABETIZE
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOBUSYLAMP
+
+%INCLUDE include\xyz_const
+%INCLUDE include\xyz_pkt_t
+%INCLUDE include\xyz_sock_t
+%INCLUDE include\xyz_pkt_h
+%INCLUDE include\xyz_sock_h
+%INCLUDE include\xyz_log_h
+
+
+BEGIN
+END xyz_pkt
+
+
+ROUTINE pkt_ctor_msg
+VAR
+    i__ : INTEGER
+BEGIN
+    xmsgt.msg_quot_ = 0
+    xmsgt.msg_rema_ = 0
+    FOR i__ = 1 TO MAX_MGAY_LEN DO
+        xmsgt.msg_array_[i__] = ''
+    ENDFOR
+    
+END pkt_ctor_msg
+
+
+ROUTINE pkt_ctor_dat
+VAR
+    i__ : INTEGER
+BEGIN
+    xdat.data_num_ = 0
+    FOR i__ = 1 TO MAX_DTAY_LEN DO
+        xdat.data_array_[i__] = ''
+    ENDFOR
+
+END pkt_ctor_dat
+
+
+ROUTINE pkt_get_mlen
+VAR
+    mlen : INTEGER
+BEGIN
+    mlen = xmsgt.msg_quot_ * MAX_ECMG_LEN + xmsgt.msg_rema_
+    RETURN(mlen)
+END pkt_get_mlen
+
+
+ROUTINE pkt_add_msg
+VAR
+    remain    : INTEGER
+    idx_start : INTEGER
+    temp_str  : STRING[250]
+BEGIN
+    remain = STR_LEN(msg)
+    idx_start = 1
+    WHILE remain > 0 DO
+        IF (xmsgt.msg_quot_ + 1) > MAX_MGAY_LEN THEN
+            log_error('[PKT] msg array is full')
+            RETURN(1)
+        ENDIF
+        temp_str = ''
+        IF remain > (MAX_ECMG_LEN - xmsgt.msg_rema_) THEN
+            temp_str = SUB_STR(msg, idx_start, MAX_ECMG_LEN - xmsgt.msg_rema_)
+            xmsgt.msg_array_[xmsgt.msg_quot_ + 1] = xmsgt.msg_array_[xmsgt.msg_quot_ + 1] + temp_str
+            remain = remain - (MAX_ECMG_LEN - xmsgt.msg_rema_)
+            xmsgt.msg_quot_ = xmsgt.msg_quot_ + 1
+            idx_start = idx_start + (MAX_ECMG_LEN - xmsgt.msg_rema_)
+            xmsgt.msg_rema_ = 0
+        ELSE
+            temp_str = SUB_STR(msg, idx_start, remain)
+            xmsgt.msg_array_[xmsgt.msg_quot_ + 1] = xmsgt.msg_array_[xmsgt.msg_quot_ + 1] + temp_str
+            xmsgt.msg_rema_ = xmsgt.msg_rema_ + remain
+            remain = 0
+        ENDIF
+    ENDWHILE
+    RETURN(0)
+END pkt_add_msg
+
+
+ROUTINE pkt_cnv_mtd
+VAR
+    i__       : INTEGER
+    stat__    : INTEGER
+    idx_start : INTEGER
+    idx_end   : INTEGER
+    end_flag  : BOOLEAN
+    temp_str  : STRING[250]
+    temp_len  : INTEGER
+BEGIN
+
+    idx_start = 1
+    temp_str = ''
+
+    FOR i__ = 1 TO xmsgt.msg_quot_ + 1 DO
+        temp_str = temp_str + xmsgt.msg_array_[i__]
+        temp_len = STR_LEN(temp_str)
+        end_flag = FALSE
+        idx_end = 0
+
+        WHILE (NOT end_flag) DO
+            idx_end = INDEX(temp_str, DELIMITER)
+            IF idx_end = 0 THEN
+                end_flag = TRUE
+            ELSE
+                stat__ = pkt_add_dat(xdat, SUB_STR(temp_str, idx_start, idx_end - idx_start))
+                IF stat__ <> 0 THEN RETURN(stat__); ENDIF
+                temp_str = SUB_STR(temp_str, idx_end + 1, temp_len - idx_end + 1)
+                temp_len = STR_LEN(temp_str)
+                idx_end = 0
+            ENDIF
+        ENDWHILE
+    ENDFOR
+    RETURN(0)
+    
+END pkt_cnv_mtd
+
+
+ROUTINE pkt_add_dat
+BEGIN
+    IF (xdat.data_num_ + 1 > MAX_DTAY_LEN) THEN
+        log_error('[PKT] data array is full')
+        RETURN(1)
+    ENDIF
+    xdat.data_array_[xdat.data_num_ + 1] = data
+    xdat.data_num_ = xdat.data_num_ + 1
+    RETURN(0)
+END pkt_add_dat
+
+
+ROUTINE pkt_cnv_dtm
+VAR
+    i__    : INTEGER
+    stat__ : INTEGER
+BEGIN
+    FOR i__ = 1 TO xdat.data_num_ DO
+        stat__ = pkt_add_msg(xmsgt, xdat.data_array_[i__] + DELIMITER)
+        IF stat__ <> 0 THEN RETURN(stat__); ENDIF
+    ENDFOR
+    stat__ = pkt_add_msg(xmsgt, TERMINATOR)
+    IF stat__ <> 0 THEN RETURN(stat__); ENDIF
+    RETURN(0)
+END pkt_cnv_dtm
+
+
+ROUTINE pkt_recv_sm
+VAR
+    end_flag  : BOOLEAN
+    temp_str  : STRING[200]
+    stat__    : INTEGER
+    t_idx_    : INTEGER
+    buff_len_ : INTEGER
+    msg_len   : INTEGER
+BEGIN
+    end_flag = FALSE
+    IF (NOT xsock.connected_) THEN
+        log_error('[PKT] sock disconnected')
+        RETURN(1)
+    ENDIF
+
+    -- recv length
+    temp_str = ''
+    READ sock_fd_(temp_str::4)
+    stat__ = IO_STATUS(sock_fd_)
+    IF stat__ <> 0 THEN
+        log_error('[PKT] recv length failed')
+        xsock.connected_ = FALSE
+        RETURN(stat__)
+    ENDIF
+    msg_len = 0
+    CNV_STR_INT(temp_str, msg_len)
+
+    WHILE (NOT end_flag) DO
+        temp_str = ''
+        IF msg_len > 200 THEN
+            READ sock_fd_(temp_str::200)
+            msg_len = msg_len - 200
+        ELSE
+            READ sock_fd_(temp_str::msg_len)
+            msg_len = 0
+            end_flag = TRUE
+        ENDIF
+
+        stat__ = IO_STATUS(sock_fd_)
+        IF stat__ <> 0 THEN
+            log_error('[PKT] recv msg from ipc failed')
+            xsock.connected_ = FALSE
+            RETURN(stat__)
+        ENDIF
+
+        stat__ = pkt_add_msg(xmsgt, temp_str)
+        IF stat__ <> 0 THEN RETURN(stat__); ENDIF
+    ENDWHILE
+    RETURN(0)
+END pkt_recv_sm
+
+
+ROUTINE pkt_send_all
+VAR
+    i__    : INTEGER
+    stat__ : INTEGER
+BEGIN
+    IF (NOT xsock.connected_) THEN
+        log_error('[PKT] sock disconnected')
+        RETURN(1)
+    ENDIF
+    FOR i__ = 1 TO xmsgt.msg_quot_ DO
+        stat__ = sock_send(sock_fd_, xmsgt.msg_array_[i__])
+        IF stat__ <> 0 THEN
+            xsock.connected_ = FALSE
+            RETURN(stat__)
+        ENDIF
+    ENDFOR
+    stat__ = sock_send(sock_fd_, xmsgt.msg_array_[xmsgt.msg_quot_ + 1])
+    IF stat__ <> 0 THEN
+        xsock.connected_ = FALSE
+        RETURN(stat__)
+    ENDIF
+    RETURN(0)
+END pkt_send_all
+
+
+ROUTINE pkt_recv_ut
+CONST 
+	max_data_len = 127
+	max_num_list = 20
+VAR
+    end_flag : BOOLEAN
+    buff     : STRING[max_data_len]
+    buff_len : INTEGER
+    stat__   : INTEGER
+    list_num : INTEGER
+BEGIN
+    end_flag = FALSE
+    IF (NOT xsock.connected_) THEN
+        log_error('[BKGD] sock disconnected')
+        RETURN(1)
+    ENDIF
+    WHILE (NOT end_flag) DO
+        list_num = 0
+        BYTES_AHEAD(sock_fd_, buff_len, stat__)
+        IF stat__ <> 0 THEN
+            log_error('[BKGD] recv msg from ipc failed')
+            xsock.connected_ = FALSE
+            RETURN(1)
+        ENDIF
+        IF buff_len > 0 THEN
+			IF buff_len > max_data_len THEN 
+				READ sock_fd_(buff::max_data_len)
+			ELSE 
+				READ sock_fd_(buff::buff_len)
+			ENDIF
+            stat__ = IO_STATUS(sock_fd_)
+	        IF stat__ <> 0 THEN
+	            log_error('[PKT] recv msg from ipc failed')
+	            xsock.connected_ = FALSE
+	            RETURN(stat__)
+	        ENDIF
+			list_num = list_num + 1
+			stat__ = pkt_add_msg(xmsgt, buff)
+	        IF stat__ <> 0 THEN RETURN(stat__); ENDIF
+	        IF SUB_STR(BUFF, STR_LEN(BUFF), 1) = TERMINATOR THEN 
+	        	end_flag = TRUE; 
+        	ENDIF
+		ENDIF
+    ENDWHILE
+    RETURN(0)
+END pkt_recv_ut

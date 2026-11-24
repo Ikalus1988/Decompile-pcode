@@ -1,0 +1,1393 @@
+-- APPS_LOADER.KL (decompiled v3)
+PROGRAM APPS_LOADER
+%COMMENT = 'APP 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	APPS_LST_T = STRUCTURE
+	APP_ENBL: INTEGER
+	APP_NAME: STRING[64]
+	INSTALLED: INTEGER
+	BLUE_PRINT: STRING[64]
+	ENDSTRUCTURE
+	LOAD_STRCT_T = STRUCTURE
+	SRC_LOCATION: STRING[64]
+	DES_LOCATION: STRING[64]
+	NAME: STRING[64]
+	FILE_TYPE: STRING[4]
+	ENDSTRUCTURE
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF INTEGER
+  v3 : INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : ARRAY[64] OF INTEGER
+  v2_f04 : ARRAY[64] OF INTEGER
+  v2_f08 : ARRAY[64] OF INTEGER
+  v9_f00 : ARRAY[64] OF INTEGER
+  v9_f04 : ARRAY[64] OF STRING[64]
+  v9_f48 : ARRAY[64] OF INTEGER
+  v9_f4c : ARRAY[64] OF STRING[64]
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE IO_INIT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ABORT_PROG(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE ABORT_MONPRG(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PARSE_XML(p0, p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_AUTOBOOT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE VARS_SAVE(p0, p1 : STRING; p2, p3 : INTEGER; p4 : REAL; p5 : BOOLEAN; p6 : STRING) : INTEGER FROM MI_LIB
+ROUTINE VARS_LOAD(p0, p1 : STRING; p2, p3 : INTEGER; p4 : REAL; p5 : BOOLEAN; p6 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GUI_VARS_SAVE : INTEGER FROM MI_LIB
+ROUTINE GUI_VAR_RESTORE : INTEGER FROM MI_LIB
+ROUTINE DCS_LOAD : INTEGER FROM MI_LIB
+ROUTINE PASSWORD(p0 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE LOAD_APPS : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG : STRING FROM MI_LIB
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER FROM MI_LIB
+ROUTINE USERABORT : INTEGER FROM MI_LIB
+ROUTINE USERCANCEL : INTEGER FROM MI_LIB
+
+ROUTINE KILLBLANKS(p0 : STRING) : STRING
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : INTEGER
+  r0_lc3 : INTEGER
+BEGIN
+  sv_i = str_len(p0)
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i <> sv_i) AND (sv_i <> 9)) THEN
+  r0_lc2 = r0_lc1
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  ENDIF
+  ENDFOR
+  sv_i = str_len(p0)
+  r0_lc1 = sv_i
+  FOR r0_lc1 = 1 TO 3 DO
+  IF ((sv_i <> sv_i) AND (sv_i <> 9)) THEN
+  r0_lc3 = r0_lc1
+  r0_lc1 = 1
+  ENDIF
+  ENDFOR
+  sv_s = sub_str(p0, r0_lc2, r0_lc3 - r0_lc2 + 1)
+  -- stmt152 stray sv_s
+  RETURN(sv_s)
+END KILLBLANKS
+
+ROUTINE KILLPATH(p0 : STRING) : STRING
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  r1_lc2 = 0
+  sv_i = str_len(p0)
+  FOR r1_lc1 = 1 TO 3 DO
+  IF ((sv_s = '\')) THEN
+  r1_lc2 = r1_lc1
+  ENDIF
+  ENDFOR
+  IF ((r1_lc2 = 0)) THEN
+  -- stmt173 stray p0
+  ELSE
+  sv_i = str_len(p0)
+  sv_s = sub_str(p0, r1_lc2 + 1, sv_i - r1_lc2)
+  -- stmt175 stray sv_s
+  ENDIF
+  RETURN(sv_s)
+END KILLPATH
+
+ROUTINE KILLTYPE(p0 : STRING) : STRING
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+BEGIN
+  r2_lc2 = 0
+  sv_i = str_len(p0)
+  FOR r2_lc1 = 1 TO 3 DO
+  IF ((sv_s = '.')) THEN
+  r2_lc2 = r2_lc1
+  ENDIF
+  ENDFOR
+  IF ((r2_lc2 = 0)) THEN
+  -- stmt198 stray p0
+  ELSE
+  sv_s = sub_str(p0, 1, r2_lc2 - 1)
+  -- stmt200 stray sv_s
+  ENDIF
+  RETURN(sv_s)
+END KILLTYPE
+
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER
+VAR
+  r3_lc17 : STRING[64]
+  r3_lc34 : STRING[64]
+BEGIN
+  r3_lc17 = ''
+  sv_s = KILLPATH(p0)
+  r3_lc34 = ''
+  sv_s = chr(128)
+  WRITE(sv_s)
+  COPY_FILE(r3_lc17, r3_lc34, (1 <> 0), (0 <> 0), v1)
+  -- Æú²ÎÔ­Ê½: 1 | 0
+  IF ((v1 <> 0)) THEN
+  POST_ERR(v1, '', 0, 0)
+  POST_ERR(38100, 'Failed to copy ' + p0, 0, 0)
+  WRITE(CR, 'Failed to copy ' + p0)
+  ELSE
+  POST_ERR(38100, 'Copied File ' + p0 + ' Complete', 0, 0)
+  WRITE(CR, 'Copied File ' + p0 + ' Complete')
+  DELAY 500
+  ENDIF
+  RETURN(0)
+END DO_COPY
+
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING
+VAR
+  r4_lc17 : STRING[64]
+BEGIN
+  CNV_INT_STR(p0, 0, 0, r4_lc17)
+  sv_s = KILLBLANKS(r4_lc17)
+  -- stmt244 stray sv_s
+  RETURN(sv_s)
+END INTTOSTR
+
+ROUTINE SET_USERSCREEN : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+  r5_lc4 : INTEGER
+  r5_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r5_lc1, r5_lc2, r5_lc3, r5_lc4, r5_lc5, v1)
+  v3 = v2_f04[r5_lc2]
+  v4 = v2_f08[r5_lc2]
+  SELECT r5_lc2 OF
+  CASE(1):
+  v5 = 1
+  CASE(2):
+  v5 = 2
+  CASE(3):
+  v5 = 3
+  ELSE:
+  v5 = 1
+  ENDSELECT
+  FORCE_SPMENU(v5, 190, 1)
+  RETURN(0)
+END SET_USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt39 residue '*SYSTEM*', '$UI_CONFIG.$PANEMAP[', ']'
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  GET_VAR(1, '*SYSTEM*', '$UI_CONFIG.$ENB_WIDE[1]', v6, r6_lc4)
+  RETURN(r6_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r7_lc1 : INTEGER
+  r7_lc2 : INTEGER
+  r7_lc3 : INTEGER
+  r7_lc4 : INTEGER
+  r7_lc5 : INTEGER
+BEGIN
+  DELAY 100
+  r7_lc3 = 0
+  FOR r7_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt64 residue '*SYSTEM*', '$UI_CONFIG.$PANEMAP[', ']'
+  r7_lc3 = r7_lc3 + r7_lc2
+  ENDFOR
+  IF ((r7_lc3 <> v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, '*SYSTEM*', '$UI_CONFIG.$ENB_WIDE[1]', r7_lc4, r7_lc5)
+  IF ((r7_lc4 <> v6)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE POP_CONFIRM(p0, p1 : STRING) : INTEGER
+VAR
+  r8_lc1 : INTEGER
+BEGIN
+  r8_lc1 = 0
+  DELAY 64
+  REPEAT
+  sv_i = DB_PROMPT(0, p0, p1, 7)
+  r8_lc1 = sv_i
+  DELAY 64
+  UNTIL((r8_lc1 = 1))
+  RETURN(0)
+END POP_CONFIRM
+
+ROUTINE GOTOWAIT : INTEGER
+BEGIN
+  IF ((v8 <> 0)) THEN
+  FORCE_LINK(1, 'config=single')
+  FORCE_LINK(1, '/FR/AppsWait.stm')
+  ENDIF
+  RETURN(0)
+END GOTOWAIT
+
+ROUTINE APPLS_LST : INTEGER
+BEGIN
+  v9_f00[1] = 1
+  v9_f04[1] = 'PLC Communication'
+  v9_f4c[1] = '01_cmn_blueprint.xml'
+  v9_f00[2] = 1
+  v9_f04[2] = 'Tool Changer'
+  v9_f4c[2] = '02_tch_blueprint.xml'
+  v9_f00[3] = 1
+  v9_f04[3] = 'Material Handling'
+  v9_f4c[3] = '03_grp_blueprint.xml'
+  v9_f00[4] = 1
+  v9_f04[4] = 'Servo Spot Welding'
+  v9_f4c[4] = '04_ssw_blueprint.xml'
+  v9_f00[8] = 1
+  v9_f04[8] = 'Dispensing'
+  v9_f4c[8] = '08_dsp_blueprint.xml'
+  v9_f00[9] = 1
+  v9_f04[9] = 'Dispensing Detection'
+  v9_f4c[9] = '09_dsd_blueprint.xml'
+  v9_f00[11] = 1
+  v9_f04[11] = 'Arplas'
+  v9_f4c[11] = '11_apl_blueprint.xml'
+  v9_f00[13] = 1
+  v9_f04[13] = 'SPR (Tucker Old)'
+  v9_f4c[13] = '13_rvh_blueprint.xml'
+  v9_f00[14] = 1
+  v9_f04[14] = 'SPR (Tucker New)'
+  v9_f4c[14] = '14_spr_blueprint.xml'
+  v9_f00[15] = 1
+  v9_f04[15] = 'SPR (Gripp)'
+  v9_f4c[15] = '15_spr_blueprint.xml'
+  v9_f00[17] = 1
+  v9_f04[17] = 'Object Detection'
+  v9_f4c[17] = '17_obj_blueprint.xml'
+  v9_f00[19] = 1
+  v9_f04[19] = 'TOX Clinch'
+  v9_f4c[19] = '19_cli_blueprint.xml'
+  v9_f00[20] = 1
+  v9_f04[20] = 'Stud Welding (Old)'
+  v9_f4c[20] = '20_swh_blueprint.xml'
+  v9_f00[21] = 1
+  v9_f04[21] = 'Stud Welding (New)'
+  v9_f4c[21] = '21_swh_blueprint.xml'
+  v9_f00[22] = 1
+  v9_f04[22] = 'Flow Drill Screw'
+  v9_f4c[22] = '22_fds_blueprint.xml'
+  v9_f00[24] = 1
+  v9_f04[24] = 'Arc Welding'
+  v9_f4c[24] = '24_arc_blueprint.xml'
+  v9_f00[25] = 1
+  v9_f04[25] = 'Laser Welding'
+  v9_f4c[25] = '25_las_blueprint.xml'
+  v9_f00[26] = 1
+  v9_f04[26] = 'Friction Element Welding'
+  v9_f4c[26] = '26_few_blueprint.xml'
+  v9_f00[32] = 1
+  v9_f04[32] = 'DCS'
+  RETURN(0)
+END APPLS_LST
+
+ROUTINE MI_API_SPECIAL : INTEGER
+VAR
+  r11_lc1 : INTEGER
+BEGIN
+  SET_VAR(1, '*system*', '$CUSTOMMENU[12].$TITLE', 'MI GUI', r11_lc1)
+  SET_VAR(1, '*system*', '$CUSTOMMENU[12].$PROG_NAME', 'MI01_GUI', r11_lc1)
+  SET_VAR(1, '*system*', '$CUSTOMMENU[12].$OPTION', 0, r11_lc1)
+  RETURN(0)
+END MI_API_SPECIAL
+
+ROUTINE MI04_SPECIAL : INTEGER
+VAR
+  r12_lc1 : INTEGER
+BEGIN
+  SET_PORT_ASG(2, 2648, 34, 1, 2, 2, 1, r12_lc1)
+  SET_PORT_ASG(1, 2648, 34, 1, 1, 1, 1, r12_lc1)
+  RETURN(0)
+END MI04_SPECIAL
+
+ROUTINE MI20_SPECIAL : INTEGER
+VAR
+  r13_lc1 : INTEGER
+  r13_lc2 : INTEGER
+BEGIN
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_DI', r13_lc1, v1)
+  IF (UNINIT(r13_lc1)) THEN
+  r13_lc1 = 640
+  ENDIF
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_DO', r13_lc2, v1)
+  IF (UNINIT(r13_lc2)) THEN
+  r13_lc2 = 640
+  ENDIF
+  SET_PORT_MOD(1, r13_lc1 + 9, 1, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$THR_ENB', 1, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$DI_NO', 35, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$DO_NO', r13_lc2 + 7, v1)
+  RETURN(0)
+END MI20_SPECIAL
+
+ROUTINE MI21_SPECIAL : INTEGER
+VAR
+  r14_lc1 : INTEGER
+  r14_lc2 : INTEGER
+BEGIN
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_DI', r14_lc1, v1)
+  IF (UNINIT(r14_lc1)) THEN
+  r14_lc1 = 640
+  ENDIF
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_DO', r14_lc2, v1)
+  IF (UNINIT(r14_lc2)) THEN
+  r14_lc2 = 640
+  ENDIF
+  SET_PORT_MOD(1, r14_lc1 + 9, 1, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$THR_ENB', 1, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$DI_NO', 35, v1)
+  SET_VAR(1, '*system*', '$THRSDITABLE[1].$DO_NO', r14_lc2 + 2, v1)
+  RETURN(0)
+END MI21_SPECIAL
+
+ROUTINE SET_IO_CFG : INTEGER
+VAR
+  r15_lc132 : ARRAY[64] OF INTEGER
+  r15_lc133 : INTEGER
+  r15_lc135 : INTEGER
+  r15_lc136 : INTEGER
+  r15_lc137 : INTEGER
+  r15_lc138 : INTEGER
+  r15_lc139 : INTEGER
+  r15_lc140 : INTEGER
+  r15_lc141 : INTEGER
+  r15_lc142 : INTEGER
+  r15_lc143 : INTEGER
+  r15_lc33 : ARRAY[64] OF INTEGER
+  r15_lc66 : ARRAY[64] OF INTEGER
+  r15_lc99 : ARRAY[64] OF INTEGER
+BEGIN
+  sv_i = IO_INIT(0)
+  -- stmt68 stray sv_i
+  SET_PORT_ASG(21, 1, 100, 1, 2, 1, 8, r15_lc133)
+  SET_PORT_ASG(21, 9, 100, 1, 2, 17, 2, r15_lc133)
+  SET_PORT_ASG(21, 11, 100, 1, 2, 9, 8, r15_lc133)
+  SET_PORT_ASG(21, 19, 100, 1, 2, 19, 1, r15_lc133)
+  SET_PORT_ASG(21, 20, 0, 0, 2, 0, 0, r15_lc133)
+  SET_PORT_ASG(20, 1, 100, 1, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(20, 9, 100, 1, 1, 9, 8, r15_lc133)
+  SET_PORT_ASG(20, 17, 100, 1, 1, 19, 2, r15_lc133)
+  r15_lc142 = 0
+  r15_lc143 = 0
+  r15_lc135 = 1
+  IF ((v9_f48[1] <> 0)) THEN
+  GET_VAR(1, 'MI01_CMN_VAR', 'i_MI01_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 0
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 100, 1, 1, 1, 512, r15_lc133)
+  GET_VAR(1, 'MI01_CMN_VAR', 'i_MI01_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 0
+  ENDIF
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 100, 1, 2, 1, 512, r15_lc133)
+  GET_VAR(1, 'MI01_CMN_VAR', 'i_MI01_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 0
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 100, 1, 1, 9, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 100, 1, 1, 25, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 3, 100, 1, 1, 45, 3, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 4, 100, 1, 1, 65, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 5, 100, 1, 1, 73, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 8, 100, 1, 1, 281, 8, r15_lc133)
+  GET_VAR(1, 'MI01_CMN_VAR', 'i_MI01_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 0
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 100, 1, 2, 9, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 100, 1, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 100, 1, 2, 45, 3, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 100, 1, 2, 65, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 5, 100, 1, 2, 73, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 6, 100, 1, 2, 177, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 7, 100, 1, 2, 201, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 8, 100, 1, 2, 281, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 9, 100, 1, 2, 218, 7, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 13, 100, 1, 2, 361, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 14, 100, 1, 2, 377, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 15, 100, 1, 2, 385, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  sv_i = DB_INP_INT('Confirmation required', 'MI01: Please choose RIP Type\n1: only air\n2: Festo\n3: Pliem\n4: SMC', r15_lc136, 1, 4)
+  r15_lc133 = sv_i
+  -- stmt119 residue 'MI01: Please choose RIP Type\\n1: only air\\n2: Festo\\n3: Pliem\\n4: SMC'
+  SELECT r15_lc136 OF
+  CASE(1):
+  SET_PORT_ASG(1, 2649, 99, 21, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, 2649, 99, 21, 2, 1, 16, r15_lc133)
+  CASE(2):
+  SET_PORT_ASG(1, 2929, 99, 41, 1, 1, 72, r15_lc133)
+  SET_PORT_ASG(2, 2929, 99, 41, 2, 1, 72, r15_lc133)
+  CASE(3):
+  SET_PORT_ASG(1, 2929, 99, 41, 1, 1, 6, r15_lc133)
+  SET_PORT_ASG(1, 2935, 99, 41, 1, 49, 1, r15_lc133)
+  SET_PORT_ASG(1, 2936, 99, 41, 1, 8, 65, r15_lc133)
+  SET_PORT_ASG(2, 2929, 99, 41, 2, 1, 72, r15_lc133)
+  CASE(4):
+  SET_PORT_ASG(1, 2649, 99, 21, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, 2649, 99, 21, 2, 1, 16, r15_lc133)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  IF ((v9_f48[2] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI02: Please choose TCH\n1: Walther\n2: Staubli', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt146 residue 'MI02: Please choose TCH\\n1: Walther\\n2: Staubli'
+  IF ((r15_lc136 = 1)) THEN
+  GET_VAR(1, 'MI02_TCH_VAR', 'i_TCH_RS_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2696
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 23, 1, 1, 8, r15_lc133)
+  GET_VAR(1, 'MI02_TCH_VAR', 'i_TCH_RS_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2696
+  ENDIF
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 23, 2, 1, 8, r15_lc133)
+  GET_VAR(1, 'MI02_TCH_VAR', 'i_TCH_RS_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 10
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 23, 1, 3, 2, r15_lc133)
+  SET_VAR(1, 'MI02_TCH_VAR', 'b_Is_Stabli', 0, r15_lc133)
+  ELSE
+  SET_PORT_ASG(1, 2913, 99, 43, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, 2913, 99, 43, 2, 1, 16, r15_lc133)
+  SET_PORT_ASG(18, 12, 99, 43, 1, 9, 3, r15_lc133)
+  SET_VAR(1, 'MI02_TCH_VAR', 'b_Is_Stabli', 1, r15_lc133)
+  ENDIF
+  r15_lc135 = r15_lc135 + 1
+  sv_i = DB_INP_INT('Confirmation required', 'MI02: Please choose Tool Stand\n1: Murr\n2: Elco\n3: Balluff', r15_lc136, 1, 3)
+  r15_lc133 = sv_i
+  -- stmt175 residue 'MI02: Please choose Tool Stand\\n1: Murr\\n2: Elco\\n3: Balluff'
+  SET_VAR(1, 'MI02_TCH_VAR', 'i_toolstand', r15_lc136, r15_lc133)
+  GET_VAR(1, 'MI02_TCH_VAR', 'i_TCH_CN_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2896
+  ENDIF
+  GET_VAR(1, 'MI02_TCH_VAR', 'i_TCH_CN_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2896
+  ENDIF
+  SELECT r15_lc136 OF
+  CASE(1):
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 27, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 9, 99, 28, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 27, 2, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 9, 99, 28, 2, 1, 8, r15_lc133)
+  CASE(2):
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 27, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] - 15, 99, 28, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 27, 2, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] - 15, 99, 28, 2, 1, 16, r15_lc133)
+  CASE(3):
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 27, 2, 5, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 2, 99, 27, 2, 13, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 3, 99, 27, 2, 6, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 4, 99, 27, 2, 14, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 5, 99, 27, 2, 7, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 6, 99, 27, 2, 15, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 7, 99, 27, 2, 8, 1, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 8, 99, 27, 2, 16, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 27, 1, 1, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 2, 99, 27, 1, 9, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 3, 99, 27, 1, 2, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 4, 99, 27, 1, 10, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 5, 99, 27, 1, 3, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 6, 99, 27, 1, 11, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 7, 99, 27, 1, 4, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 8, 99, 27, 1, 12, 1, r15_lc133)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  r15_lc135 = r15_lc135 + 1
+  IF ((v9_f48[3] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI03: Please input maximum gripper number', r15_lc136, 1, 4)
+  r15_lc133 = sv_i
+  SET_PORT_ASG(1, 2705, 99, 25, 1, 1, 64, r15_lc133)
+  SET_PORT_ASG(2, 2705, 99, 25, 2, 1, 64, r15_lc133)
+  IF ((r15_lc136 > 1)) THEN
+  SET_PORT_ASG(1, 2769, 99, 26, 1, 1, 64, r15_lc133)
+  SET_PORT_ASG(2, 2769, 99, 26, 2, 1, 64, r15_lc133)
+  ENDIF
+  IF ((r15_lc136 > 2)) THEN
+  SET_PORT_ASG(1, 3745, 99, 65, 1, 1, 64, r15_lc133)
+  SET_PORT_ASG(2, 3745, 99, 65, 2, 1, 64, r15_lc133)
+  ENDIF
+  IF ((r15_lc136 > 3)) THEN
+  SET_PORT_ASG(1, 3809, 99, 66, 1, 1, 64, r15_lc133)
+  SET_PORT_ASG(2, 3809, 99, 66, 2, 1, 64, r15_lc133)
+  ENDIF
+  ENDIF
+  IF ((v9_f48[4] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI04: Please choose welder\n1: Harms Wende\n2: Sunke\n3: Bosch', r15_lc136, 1, 3)
+  r15_lc133 = sv_i
+  -- stmt249 residue 'MI04: Please choose welder\\n1: Harms Wende\\n2: Sunke\\n3: Bosch'
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 512
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 512
+  ENDIF
+  SELECT r15_lc136 OF
+  CASE(1):
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 5, 1, 1, 128, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 5, 2, 1, 128, r15_lc133)
+  SET_PORT_MOD(1, r15_lc33[r15_lc135] + 5, 0, r15_lc133)
+  CASE(2):
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 5, 1, 1, 128, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 5, 2, 1, 128, r15_lc133)
+  SET_PORT_MOD(1, r15_lc33[r15_lc135] + 5, 0, r15_lc133)
+  CASE(3):
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 5, 1, 1, 192, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 5, 2, 1, 192, r15_lc133)
+  SET_PORT_MOD(1, r15_lc33[r15_lc135] + 5, 1, r15_lc133)
+  ELSE:
+  ENDSELECT
+  ENDIF
+  SET_VAR(1, 'MI04_SSW_VAR', 'i_WeldTimer', r15_lc136, r15_lc133)
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 15
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 15
+  ENDIF
+  SELECT r15_lc136 OF
+  CASE(1):
+  CASE(2):
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 5, 1, 9, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 5, 1, 33, 10, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 5, 2, 17, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 5, 2, 33, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 5, 2, 41, 8, r15_lc133)
+  r15_lc142 = 0
+  CASE(3):
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 5, 1, 65, 16, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 5, 1, 129, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 5, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 5, 2, 81, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 5, 2, 41, 8, r15_lc133)
+  r15_lc142 = 1
+  ELSE:
+  ENDSELECT
+  r15_lc135 = r15_lc135 + 1
+  sv_i = DB_INP_INT('Confirmation required', 'MI04: Please choose tip dresser BK module\n1: No assign\n2: Elco\n3: Balluff', r15_lc136, 1, 3)
+  r15_lc133 = sv_i
+  -- stmt46 residue 'MI04: Please choose tip dresser BK module\\n1: No assign\\n2: Elco\\n3: Balluff'
+  SELECT r15_lc136 OF
+  CASE(1):
+  CASE(2):
+  SET_PORT_ASG(1, 2897, 99, 27, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(1, 2881, 99, 28, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, 2897, 99, 27, 2, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, 2881, 99, 28, 2, 1, 16, r15_lc133)
+  CASE(3):
+  SET_PORT_ASG(2, 2897, 99, 27, 2, 5, 1, r15_lc133)
+  SET_PORT_ASG(2, 2898, 99, 27, 2, 13, 1, r15_lc133)
+  SET_PORT_ASG(2, 2899, 99, 27, 2, 6, 1, r15_lc133)
+  SET_PORT_ASG(2, 2900, 99, 27, 2, 14, 1, r15_lc133)
+  SET_PORT_ASG(2, 2901, 99, 27, 2, 7, 1, r15_lc133)
+  SET_PORT_ASG(2, 2902, 99, 27, 2, 15, 1, r15_lc133)
+  SET_PORT_ASG(2, 2903, 99, 27, 2, 8, 1, r15_lc133)
+  SET_PORT_ASG(2, 2904, 99, 27, 2, 16, 1, r15_lc133)
+  SET_PORT_ASG(1, 2897, 99, 27, 1, 1, 1, r15_lc133)
+  SET_PORT_ASG(1, 2898, 99, 27, 1, 9, 1, r15_lc133)
+  SET_PORT_ASG(1, 2899, 99, 27, 1, 2, 1, r15_lc133)
+  SET_PORT_ASG(1, 2900, 99, 27, 1, 10, 1, r15_lc133)
+  SET_PORT_ASG(1, 2901, 99, 27, 1, 3, 1, r15_lc133)
+  SET_PORT_ASG(1, 2902, 99, 27, 1, 11, 1, r15_lc133)
+  SET_PORT_ASG(1, 2903, 99, 27, 1, 4, 1, r15_lc133)
+  SET_PORT_ASG(1, 2904, 99, 27, 1, 12, 1, r15_lc133)
+  ELSE:
+  ENDSELECT
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_TD_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2648
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_TD_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2648
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 21, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 21, 2, 1, 16, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 33, 99, 24, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 33, 99, 24, 2, 1, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_SW_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2664
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'i_MI04_SW_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2664
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 22, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 22, 2, 1, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_RO_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3664
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_RO_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3664
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 45, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 9, 99, 45, 2, 1, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_RO_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3696
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_RO_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3696
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 47, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 9, 99, 47, 2, 1, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_PD_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3680
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_PD_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3680
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 46, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 9, 99, 46, 2, 1, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_PD_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3712
+  ENDIF
+  GET_VAR(1, 'MI04_SSW_VAR', 'ar_i_MI04_FRES_PD_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3712
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 48, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 9, 99, 48, 2, 1, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  sv_i = MI04_SPECIAL
+  -- stmt138 stray sv_i
+  IF ((v9_f48[8] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI08: Please input maximum sealing gun', r15_lc136, 1, 3)
+  r15_lc133 = sv_i
+  sv_i = DB_INP_INT('Confirmation required', 'MI08: Please choose dispenser\n1: SCA\n2: DMTS', r15_lc137, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt144 residue 'MI08: Please choose dispenser\\n1: SCA\\n2: DMTS'
+  IF ((r15_lc137 = 1)) THEN
+  r15_lc141 = 128
+  r15_lc138 = 880
+  r15_lc139 = 1008
+  r15_lc140 = 2192
+  SET_VAR(1, 'MI08_DSP_VAR', 'i_Dispenser', 1, r15_lc133)
+  ENDIF
+  IF ((r15_lc137 = 2)) THEN
+  r15_lc141 = 160
+  r15_lc138 = 880
+  r15_lc139 = 1040
+  r15_lc140 = 2192
+  SET_VAR(1, 'MI08_DSP_VAR', 'i_Dispenser', 2, r15_lc133)
+  ENDIF
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = r15_lc138
+  ENDIF
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = r15_lc138
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 9, 1, 1, r15_lc141, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 9, 2, 1, r15_lc141, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GI[1]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 20
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 9, 1, 17, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 9, 1, 25, 8, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 20
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 9, 2, 17, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 9, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 9, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 9, 2, 65, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  IF ((r15_lc136 > 1)) THEN
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = r15_lc139
+  ENDIF
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = r15_lc139
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 10, 1, 1, r15_lc141, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 10, 2, 1, r15_lc141, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GI[2]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 25
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 10, 1, 17, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 10, 1, 25, 8, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GO[2]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 25
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 10, 2, 17, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 10, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 10, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 10, 2, 65, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  IF ((r15_lc136 > 2)) THEN
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_DI[3]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = r15_lc140
+  ENDIF
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_DO[3]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = r15_lc140
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 36, 1, 1, r15_lc141, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 36, 2, 1, r15_lc141, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GI[3]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 45
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 36, 1, 17, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 36, 1, 25, 8, r15_lc133)
+  GET_VAR(1, 'MI08_DSP_VAR', 'i_MI08_GO[3]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 45
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 36, 2, 17, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 36, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 36, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 36, 2, 65, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  sv_i = DB_PROMPT(2, 'Make Choice', 'Leoni TCP Exist?', 4)
+  r15_lc133 = sv_i
+  IF ((r15_lc133 = 3)) THEN
+  SET_PORT_ASG(1, 2401, 99, 29, 1, 1, 112, r15_lc133)
+  SET_PORT_ASG(2, 2401, 99, 29, 2, 1, 112, r15_lc133)
+  SET_PORT_ASG(19, 61, 99, 29, 2, 1, 16, r15_lc133)
+  SET_PORT_ASG(19, 62, 99, 29, 2, 17, 16, r15_lc133)
+  SET_PORT_ASG(19, 63, 99, 29, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, 64, 99, 29, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, 65, 99, 29, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, 66, 99, 29, 2, 81, 16, r15_lc133)
+  SET_PORT_ASG(19, 67, 99, 29, 2, 97, 16, r15_lc133)
+  SET_PORT_ASG(18, 61, 99, 29, 1, 1, 16, r15_lc133)
+  SET_PORT_ASG(18, 62, 99, 29, 1, 17, 16, r15_lc133)
+  SET_PORT_ASG(18, 63, 99, 29, 1, 33, 16, r15_lc133)
+  SET_PORT_ASG(18, 64, 99, 29, 1, 49, 16, r15_lc133)
+  SET_PORT_ASG(18, 65, 99, 29, 1, 65, 16, r15_lc133)
+  SET_PORT_ASG(18, 66, 99, 29, 1, 81, 16, r15_lc133)
+  SET_PORT_ASG(18, 67, 99, 29, 1, 97, 16, r15_lc133)
+  ENDIF
+  ENDIF
+  IF ((v9_f48[9] <> 0) AND (v9_f48[8] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI09: Please choose brand\n1: BetterWay\n2: ISV\n3: Coherix 3D\n4: Coherix 2D', r15_lc137, 1, 4)
+  r15_lc133 = sv_i
+  -- stmt251 residue 'MI09: Please choose brand\\n1: BetterWay\\n2: ISV\\n3: Coherix 3D\\n4: Coherix 2D'
+  IF ((r15_lc137 = 1)) THEN
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3000
+  ENDIF
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3000
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 31, 1, 1, 48, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 31, 2, 1, 48, r15_lc133)
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 30
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 31, 2, 9, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  IF ((r15_lc136 > 1)) THEN
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3048
+  ENDIF
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3048
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 32, 1, 1, 48, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 32, 2, 1, 48, r15_lc133)
+  GET_VAR(1, 'MI09_DSD_VAR', 'i_MI09_GO[2]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 35
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 31, 2, 9, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[4] = 0)) THEN
+  SELECT r15_lc137 OF
+  CASE(2):
+  SET_PORT_ASG(1, 3001, 99, 50, 1, 1, 128, r15_lc133)
+  SET_PORT_ASG(2, 3001, 99, 50, 2, 1, 128, r15_lc133)
+  IF ((r15_lc136 > 1)) THEN
+  SET_PORT_ASG(1, 3129, 99, 51, 1, 1, 128, r15_lc133)
+  SET_PORT_ASG(2, 3129, 99, 51, 2, 1, 128, r15_lc133)
+  ENDIF
+  IF ((r15_lc136 > 2)) THEN
+  SET_PORT_ASG(1, 3257, 99, 52, 1, 1, 128, r15_lc133)
+  SET_PORT_ASG(2, 3257, 99, 52, 2, 1, 128, r15_lc133)
+  ENDIF
+  r15_lc143 = 1
+  CASE(3):
+  SET_PORT_ASG(1, 3001, 99, 53, 1, 1, 512, r15_lc133)
+  SET_PORT_ASG(2, 3001, 99, 53, 2, 1, 512, r15_lc133)
+  SET_PORT_ASG(19, 141, 99, 53, 2, 17, 16, r15_lc133)
+  SET_PORT_ASG(19, 142, 99, 53, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, 143, 99, 53, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, 144, 99, 53, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, 145, 99, 53, 2, 81, 16, r15_lc133)
+  SET_PORT_ASG(19, 146, 99, 53, 2, 97, 16, r15_lc133)
+  SET_PORT_ASG(19, 147, 99, 53, 2, 113, 16, r15_lc133)
+  SET_PORT_ASG(19, 148, 99, 53, 2, 129, 16, r15_lc133)
+  SET_PORT_ASG(19, 149, 99, 53, 2, 145, 16, r15_lc133)
+  SET_PORT_ASG(19, 150, 99, 53, 2, 161, 16, r15_lc133)
+  SET_PORT_ASG(19, 151, 99, 53, 2, 177, 16, r15_lc133)
+  SET_PORT_ASG(19, 152, 99, 53, 2, 193, 16, r15_lc133)
+  SET_PORT_ASG(19, 153, 99, 53, 2, 209, 16, r15_lc133)
+  SET_PORT_ASG(19, 154, 99, 53, 2, 225, 16, r15_lc133)
+  SET_PORT_ASG(19, 155, 99, 53, 2, 241, 16, r15_lc133)
+  SET_PORT_ASG(19, 156, 99, 53, 2, 257, 16, r15_lc133)
+  SET_PORT_ASG(19, 157, 99, 53, 2, 273, 16, r15_lc133)
+  SET_PORT_ASG(19, 158, 99, 53, 2, 289, 16, r15_lc133)
+  SET_PORT_ASG(19, 159, 99, 53, 2, 305, 16, r15_lc133)
+  SET_PORT_ASG(19, 160, 99, 53, 2, 321, 16, r15_lc133)
+  IF ((r15_lc136 > 1)) THEN
+  SET_PORT_ASG(1, 3513, 99, 54, 1, 1, 512, r15_lc133)
+  SET_PORT_ASG(2, 3513, 99, 54, 2, 1, 512, r15_lc133)
+  SET_PORT_ASG(19, 161, 99, 54, 2, 17, 16, r15_lc133)
+  SET_PORT_ASG(19, 162, 99, 54, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, 163, 99, 54, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, 164, 99, 54, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, 165, 99, 54, 2, 81, 16, r15_lc133)
+  SET_PORT_ASG(19, 166, 99, 54, 2, 97, 16, r15_lc133)
+  SET_PORT_ASG(19, 167, 99, 54, 2, 113, 16, r15_lc133)
+  SET_PORT_ASG(19, 168, 99, 54, 2, 129, 16, r15_lc133)
+  SET_PORT_ASG(19, 169, 99, 54, 2, 145, 16, r15_lc133)
+  SET_PORT_ASG(19, 170, 99, 54, 2, 161, 16, r15_lc133)
+  SET_PORT_ASG(19, 171, 99, 54, 2, 177, 16, r15_lc133)
+  SET_PORT_ASG(19, 172, 99, 54, 2, 193, 16, r15_lc133)
+  SET_PORT_ASG(19, 173, 99, 54, 2, 209, 16, r15_lc133)
+  SET_PORT_ASG(19, 174, 99, 54, 2, 225, 16, r15_lc133)
+  SET_PORT_ASG(19, 175, 99, 54, 2, 241, 16, r15_lc133)
+  SET_PORT_ASG(19, 176, 99, 54, 2, 257, 16, r15_lc133)
+  SET_PORT_ASG(19, 177, 99, 54, 2, 273, 16, r15_lc133)
+  SET_PORT_ASG(19, 178, 99, 54, 2, 289, 16, r15_lc133)
+  SET_PORT_ASG(19, 179, 99, 54, 2, 305, 16, r15_lc133)
+  SET_PORT_ASG(19, 180, 99, 54, 2, 321, 16, r15_lc133)
+  ENDIF
+  r15_lc143 = 1
+  CASE(4):
+  SET_PORT_ASG(1, 3001, 99, 56, 1, 1, 416, r15_lc133)
+  SET_PORT_ASG(2, 3001, 99, 56, 2, 1, 416, r15_lc133)
+  SET_PORT_ASG(19, 141, 99, 56, 2, 17, 16, r15_lc133)
+  IF ((r15_lc136 > 1)) THEN
+  SET_PORT_ASG(1, 3417, 99, 57, 1, 1, 416, r15_lc133)
+  SET_PORT_ASG(2, 3417, 99, 57, 2, 1, 416, r15_lc133)
+  SET_PORT_ASG(19, 161, 99, 57, 2, 17, 16, r15_lc133)
+  ENDIF
+  r15_lc143 = 1
+  ELSE:
+  ENDSELECT
+  ENDIF
+  ENDIF
+  IF ((v9_f48[11] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI11: Please choose process\n1: Arplas\n2: Dimple', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt125 residue 'MI11: Please choose process\\n1: Arplas\\n2: Dimple'
+  IF ((r15_lc136 = 1)) THEN
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1688
+  ENDIF
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1688
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 17, 1, 1, 176, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 17, 2, 1, 176, r15_lc133)
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 110
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 17, 1, 65, 16, r15_lc133)
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 110
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 17, 2, 81, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 17, 2, 97, 11, r15_lc133)
+  ELSE
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_DP_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1680
+  ENDIF
+  GET_VAR(1, 'MI11_APL_VAR', 'i_MI11_DP_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1680
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 16, 1, 1, 8, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 16, 2, 1, 8, r15_lc133)
+  ENDIF
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  IF ((v9_f48[13] <> 0) AND (v9_f48[14] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI13-14: Please choose only one SPR \n1: Tucker Old \n2: Tucker New ', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt157 residue 'MI13-14: Please choose only one SPR \\n1: Tucker Old \\n2: Tucker New '
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[13] = 1
+  v9_f48[14] = 0
+  ELSE
+  v9_f48[13] = 0
+  v9_f48[14] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[13] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI13: Please input maximum SPR gun\nTucker Old', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt168 residue 'MI13: Please input maximum SPR gun\\nTucker Old'
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1136
+  ENDIF
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1136
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 11, 1, 1, 176, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 11, 2, 1, 176, r15_lc133)
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_GI[1]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 50
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 11, 1, 25, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 11, 1, 33, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 3, 99, 11, 1, 41, 16, r15_lc133)
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 50
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 11, 2, 17, 3, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 11, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 11, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 11, 2, 49, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  IF ((r15_lc136 > 1)) THEN
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1448
+  ENDIF
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1448
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 12, 1, 1, 176, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 12, 2, 1, 176, r15_lc133)
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_GI[2]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 55
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 12, 1, 25, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 12, 1, 33, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 3, 99, 12, 1, 41, 16, r15_lc133)
+  GET_VAR(1, 'MI13_RVH_VAR', 'ar_M13_RC_GO[2]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 55
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 12, 2, 17, 3, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 12, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 12, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 12, 2, 49, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[14] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI14: Please input maximum SPR gun\nTucker New', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt219 residue 'MI14: Please input maximum SPR gun\\nTucker New'
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1136
+  ENDIF
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1136
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 11, 1, 1, 240, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 11, 2, 1, 240, r15_lc133)
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_GI[1]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 50
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 11, 1, 65, 16, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 3, 99, 11, 1, 81, 16, r15_lc133)
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 50
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 11, 2, 25, 4, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 11, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 11, 2, 97, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 11, 2, 113, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 5, 99, 11, 2, 129, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 6, 99, 11, 2, 145, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  IF ((r15_lc136 > 1)) THEN
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1448
+  ENDIF
+  GET_VAR(1, 'MI14_SPR_VAR', 'ar_i_MI14_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1448
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 12, 1, 1, 240, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 12, 2, 1, 240, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[15] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI15: Please input maximum SPR gun\nGripp', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt3 residue 'MI15: Please input maximum SPR gun\\nGripp'
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2320
+  ENDIF
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2320
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 14, 1, 1, 160, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 14, 2, 1, 160, r15_lc133)
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_GI[1]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 130
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 14, 1, 73, 8, r15_lc133)
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 130
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 14, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 14, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 14, 2, 30, 3, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  IF ((r15_lc136 > 1)) THEN
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_DI[2]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2480
+  ENDIF
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_DO[2]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2480
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 15, 1, 1, 160, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 15, 2, 1, 160, r15_lc133)
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_DI[2]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 135
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 15, 1, 73, 8, r15_lc133)
+  GET_VAR(1, 'MI15_SPR_VAR', 'ar_i_MI15_GO[2]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 135
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 15, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 15, 2, 65, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 15, 2, 30, 3, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[17] <> 0) AND (r15_lc143 = 0)) THEN
+  GET_VAR(1, 'MI17_OBJ_VAR', 'i_MI17_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 3096
+  ENDIF
+  GET_VAR(1, 'MI17_OBJ_VAR', 'i_MI17_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 3096
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 33, 1, 1, 264, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 33, 2, 1, 264, r15_lc133)
+  GET_VAR(1, 'MI17_OBJ_VAR', 'i_MI17_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 60
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 33, 1, 9, 8, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 33, 1, 17, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  IF ((v9_f48[19] <> 0) AND (v9_f48[25] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI19/25: Please choose only one \n1: Tox Clinch \n2: Laser', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt64 residue 'MI19/25: Please choose only one \\n1: Tox Clinch \\n2: Laser'
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[19] = 1
+  v9_f48[25] = 0
+  ELSE
+  v9_f48[19] = 0
+  v9_f48[25] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[19] <> 0)) THEN
+  GET_VAR(1, 'MI19_CLI_VAR', 'i_MI19_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 2104
+  ENDIF
+  GET_VAR(1, 'MI19_CLI_VAR', 'i_MI19_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 2104
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 19, 1, 1, 24, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 19, 2, 1, 24, r15_lc133)
+  GET_VAR(1, 'MI19_CLI_VAR', 'i_MI19_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 180
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 19, 2, 17, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  IF ((v9_f48[20] <> 0) AND (v9_f48[21] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI20-21: Please choose only one Stud \n1: Old \n2: New ', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt90 residue 'MI20-21: Please choose only one Stud \\n1: Old \\n2: New '
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[20] = 1
+  v9_f48[21] = 0
+  ELSE
+  v9_f48[20] = 0
+  v9_f48[21] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[20] <> 0)) THEN
+  IF ((r15_lc142 = 0)) THEN
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 640
+  ENDIF
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 640
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 7, 1, 1, 14, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 15, 34, 1, 1, 43, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 16, 99, 7, 1, 6, 225, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 7, 2, 1, 240, r15_lc133)
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 40
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 7, 1, 129, 16, r15_lc133)
+  GET_VAR(1, 'MI20_SWH_VAR', 'i_MI20_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 40
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 7, 2, 97, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 7, 2, 113, 12, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[21] <> 0)) THEN
+  IF ((r15_lc142 = 0)) THEN
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_DI', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 640
+  ENDIF
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_DO', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 640
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 7, 1, 1, 14, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 15, 34, 1, 1, 43, 1, r15_lc133)
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 16, 99, 7, 1, 6, 225, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 7, 2, 1, 240, r15_lc133)
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_GI', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 40
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 7, 1, 49, 16, r15_lc133)
+  GET_VAR(1, 'MI21_SWH_VAR', 'i_MI21_GO', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 40
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 7, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 7, 2, 65, 16, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[22] <> 0)) THEN
+  GET_VAR(1, 'MI22_FDS_VAR', 'ar_M22_CN_DI[1]', r15_lc33[r15_lc135], v1)
+  IF (UNINIT(r15_lc33[r15_lc135])) THEN
+  r15_lc33[r15_lc135] = 1312
+  ENDIF
+  GET_VAR(1, 'MI22_FDS_VAR', 'ar_M22_CN_DO[1]', r15_lc66[r15_lc135], v1)
+  IF (UNINIT(r15_lc66[r15_lc135])) THEN
+  r15_lc66[r15_lc135] = 1312
+  ENDIF
+  SET_PORT_ASG(1, r15_lc33[r15_lc135] + 1, 99, 13, 1, 1, 136, r15_lc133)
+  SET_PORT_ASG(2, r15_lc66[r15_lc135] + 1, 99, 13, 2, 1, 136, r15_lc133)
+  GET_VAR(1, 'MI22_FDS_VAR', 'ar_M22_CN_GI[1]', r15_lc99[r15_lc135], v1)
+  IF (UNINIT(r15_lc99[r15_lc135])) THEN
+  r15_lc99[r15_lc135] = 100
+  ENDIF
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 1, 99, 13, 1, 13, 4, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 2, 99, 13, 1, 30, 3, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 3, 99, 13, 1, 33, 16, r15_lc133)
+  SET_PORT_ASG(18, r15_lc99[r15_lc135] + 4, 99, 13, 1, 49, 2, r15_lc133)
+  GET_VAR(1, 'MI22_FDS_VAR', 'ar_M22_CN_GO[1]', r15_lc132[r15_lc135], v1)
+  IF (UNINIT(r15_lc132[r15_lc135])) THEN
+  r15_lc132[r15_lc135] = 100
+  ENDIF
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 1, 99, 13, 2, 13, 4, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 2, 99, 13, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 3, 99, 13, 2, 33, 16, r15_lc133)
+  SET_PORT_ASG(19, r15_lc132[r15_lc135] + 4, 99, 13, 2, 49, 8, r15_lc133)
+  r15_lc135 = r15_lc135 + 1
+  ENDIF
+  IF ((v9_f48[24] <> 0) AND (v9_f48[25] <> 0) AND (v9_f48[26] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI24/25/26: Please choose only one \n1: ARC \n2: Laser \n3: FEW', r15_lc136, 1, 3)
+  r15_lc133 = sv_i
+  -- stmt179 residue 'MI24/25/26: Please choose only one \\n1: ARC \\n2: Laser \\n3: FEW'
+  SELECT r15_lc136 OF
+  CASE(1):
+  v9_f48[24] = 1
+  v9_f48[25] = 0
+  v9_f48[26] = 0
+  CASE(2):
+  v9_f48[24] = 0
+  v9_f48[25] = 1
+  v9_f48[26] = 0
+  CASE(3):
+  v9_f48[24] = 0
+  v9_f48[25] = 0
+  v9_f48[26] = 1
+  ELSE:
+  ENDSELECT
+  ENDIF
+  IF ((v9_f48[24] <> 0) AND (v9_f48[25] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI24/25: Please choose only one \n1: ARC \n2: Laser', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt198 residue 'MI24/25: Please choose only one \\n1: ARC \\n2: Laser'
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[24] = 1
+  v9_f48[25] = 0
+  ELSE
+  v9_f48[24] = 0
+  v9_f48[25] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[24] <> 0) AND (v9_f48[26] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI24/26: Please choose only one \n1: ARC \n2: FEW', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt209 residue 'MI24/26: Please choose only one \\n1: ARC \\n2: FEW'
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[24] = 1
+  v9_f48[26] = 0
+  ELSE
+  v9_f48[24] = 0
+  v9_f48[26] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[25] <> 0) AND (v9_f48[26] <> 0)) THEN
+  sv_i = DB_INP_INT('Confirmation required', 'MI25/26: Please choose only one \n1: Laser \n2: FEW', r15_lc136, 1, 2)
+  r15_lc133 = sv_i
+  -- stmt220 residue 'MI25/26: Please choose only one \\n1: Laser \\n2: FEW'
+  IF ((r15_lc136 = 1)) THEN
+  v9_f48[25] = 1
+  v9_f48[26] = 0
+  ELSE
+  v9_f48[25] = 0
+  v9_f48[26] = 1
+  ENDIF
+  ENDIF
+  IF ((v9_f48[24] <> 0)) THEN
+  SET_PORT_ASG(1, 1865, 99, 18, 1, 1, 240, r15_lc133)
+  SET_PORT_ASG(2, 1865, 99, 18, 2, 1, 240, r15_lc133)
+  ENDIF
+  IF ((v9_f48[25] <> 0)) THEN
+  SET_PORT_ASG(1, 1100, 99, 1, 1, 1, 256, r15_lc133)
+  SET_PORT_ASG(2, 1100, 99, 1, 2, 1, 256, r15_lc133)
+  SET_PORT_ASG(19, 191, 99, 1, 2, 17, 8, r15_lc133)
+  SET_PORT_ASG(19, 192, 99, 1, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, 193, 99, 1, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(18, 191, 99, 1, 1, 17, 8, r15_lc133)
+  SET_PORT_ASG(18, 192, 99, 1, 1, 25, 8, r15_lc133)
+  SET_PORT_ASG(1, 1400, 99, 3, 1, 1, 256, r15_lc133)
+  SET_PORT_ASG(2, 1400, 99, 3, 2, 1, 256, r15_lc133)
+  SET_PORT_ASG(19, 196, 99, 3, 2, 17, 8, r15_lc133)
+  SET_PORT_ASG(19, 197, 99, 3, 2, 25, 8, r15_lc133)
+  SET_PORT_ASG(19, 198, 99, 3, 2, 49, 16, r15_lc133)
+  SET_PORT_ASG(18, 196, 99, 3, 1, 17, 8, r15_lc133)
+  ENDIF
+  RETURN(0)
+END SET_IO_CFG
+
+BEGIN
+END APPS_LOADER
+-- module-residue ' ', ' ', '\\'

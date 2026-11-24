@@ -1,0 +1,189 @@
+PROGRAM DCP_ISRA
+
+--Sends Quiss DCP Fault text to PLC using String Registers
+%COMMENT = 'Version 1.0'
+%NOLOCKGROUP
+%NOABORT=ERROR+COMMAND
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%NOBUSYLAMP
+
+%INCLUDE kliotyps
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 TYPE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_type
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 VARIABLE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_variables	
+--Variable declerations
+VAR
+STATUS:INTEGER
+paramTyp, paramNo, paramInt, intDCPFault, intProgNum, intAreaInREQ, intAreaOutRL, intToolREQ, intJobDone, intColREQ, intColREL, entry, intToolID,ReqThickness,ActThickness :INTEGER
+paramReal, realDummy, realActThk, realReqThk:REAL
+paramString:STRING[10]
+RobotName:STRING[6]
+DCPFaultNum,DCPFaultNum1: STRING[5]
+strProgNum, strAreaNum, strAreaInREQ, strAreaOutRL, strToolREQ, strJobDone, strColREQ, strColREL:STRING[3]
+ToolID: STRING[2]
+DCPPLCText: STRING[82]
+ActThkStr,strReqThk, strAddDCPTxt:STRING[20]
+--Delcare a Variable of Type DCPDetail which is based on the Structure Declare Above (UDT)
+strTPFunc:ARRAY[5] OF STRING[8]
+blKeyPressed:BOOLEAN
+--------------------------------------------------------------------------------------------------------------------------------------------
+--                 ROUTINE DECLARATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------
+%INCLUDE DCP_Routines
+
+--Begin Prog
+BEGIN
+
+
+FORCE_SPMENU ( TP_PANEL, SPI_TPUSER, 1) -- Force the Teach Pendant user screen to be seen
+
+ --Get tp paramater which contains DCP Fault Number
+ GET_TPE_PRM(1,paramTyp,intDCPFault,paramReal,paramString,STATUS)
+ 
+ --If data is in wrong format or does not exist, show error!
+ IF ((paramTyp <> 1) OR (STATUS <> 0)) THEN
+ 	WRITE('Invalid Call to DCPFault Program on Robot!',CR, 'Check argument 1 is an integer!')
+	DCPText.DCPLine1 = 'Invalid Call to DCPFault Program on Robot'
+ ENDIF
+ 
+ --check if paramInt is initialised, of not set DCPFault to 0, if OK get DCP Fault number
+ IF ( UNINIT(intDCPFault)) THEN
+	intDCPFault = 0
+ ENDIF
+
+--Get Robot Name
+GET_VAR(entry, '*SYSTEM*','$ROBOT_NAME',RobotName,STATUS)
+IF UNINIT(RobotName) THEN
+	RobotName = 'Unit'
+ENDIF
+--Get Tool ID
+GET_REG(81,FALSE,intToolID, realDummy,STATUS)
+--convert intToolID into a string and put into ToolID
+CNV_INT_STR(intToolID,2,10,ToolID)
+
+	--Initilise DCP Text
+	DCPText.DCPFaultNum = 0
+	DCPText.DCPLine1 = ''
+	DCPText.DCPLine2 = ''
+	DCPText.DCPLine3 = ''
+	DCPText.DCPLine4 = ''
+	DCPText.DCPLine5 = ''
+	FKEY_SEL = 0
+	--Initialise FKEYS
+	FKEYS[1]  = ''
+	FKEYS[2]  = ''
+	FKEYS[3]  = ''
+	FKEYS[4]  = ''
+	FKEYS[5]  = ''
+	FKEYS[6]  = ''
+	FKEYS[7]  = ''
+	FKEYS[8]  = ''
+	FKEYS[9]  = ''
+	FKEYS[10] = ''
+	FKEY_SEL = 0
+	
+DCPText.DCPFaultNum = intDCPFault
+ 
+SELECT DCPText.DCPFaultNum OF
+	
+	CASE(8301):
+	DCPText.DCPLine1 = 'ISRA Type ID Out of Range (1-32)'
+	DCPText.DCPFaultNum = 08301
+	
+	CASE(8302):
+	DCPText.DCPLine1 = 'ISRA No Comms or Data'
+	DCPText.DCPFaultNum = 08302
+	
+	CASE(8303):
+	DCPText.DCPLine1 = 'ISRA Recognition Error'
+	DCPText.DCPFaultNum = 08303
+	
+	CASE(8304):
+	DCPText.DCPLine1 = 'ISRA No Robot Comms'
+	DCPText.DCPFaultNum = 08304
+	
+	CASE(8305):
+	DCPText.DCPLine1 = 'ISRA Wrong Type Selected'
+	DCPText.DCPFaultNum = 08305
+	
+	CASE(8306):
+	DCPText.DCPLine1 = 'ISRA Tollerance or Calculation Error'
+	DCPText.DCPFaultNum = 08306
+	
+	CASE(8307):
+	DCPText.DCPLine1 = 'ISRA Multiple Errors'
+	DCPText.DCPFaultNum = 08307
+	
+	CASE(8308):
+	DCPText.DCPLine1 = 'ISRA Run-Mode Mis-match'
+	DCPText.DCPFaultNum = 08308
+	
+	CASE(8309):
+	DCPText.DCPLine1 = 'ISRA Ready Not On'
+	DCPText.DCPFaultNum = 08309
+	
+	CASE(8310):
+	DCPText.DCPLine1 = 'ISRA Load Prepare Not On'
+	DCPText.DCPFaultNum = 08310
+	
+	CASE(8311):
+	DCPText.DCPLine1 = 'ISRA Start Ok Not On'
+	DCPText.DCPFaultNum = 08311
+
+	CASE(8312):
+	DCPText.DCPLine1 = 'ISRA Start Ok Not Off'
+	DCPText.DCPFaultNum = 08312
+	
+	CASE(8313):
+	DCPText.DCPLine1 = 'ISRA Measurement In Progress Not Off'
+	DCPText.DCPFaultNum = 08313
+
+	CASE(8314):
+	DCPText.DCPLine1 = 'Zero Offset Supplied by ISRA System'
+	DCPText.DCPLine2 = 'Press Acknowledge to re-take Vision'
+	DCPText.DCPFaultNum = 08314
+	
+	else:
+	DCPText.DCPLine1 = 'Undefined DCP Fault Message'
+
+ENDSELECT
+--Add Robot Name and Tool ID to String Register Text for PLC
+DCPPLCText = RobotName + ',Tool-' +ToolID + ',' +  DCPText.DCPLine1 + DCPText.DCPLine2
+--Write DCP Fault Number to GO[4]
+SET_PORT_VAL(io_gpout,4,intDCPFault,STATUS)
+CNV_INT_STR(DCPText.DCPFaultNum,5,10,DCPFaultNum1)
+DCPFaultNum1 = SUB_STR(DCPFaultNum1,2,4)
+DCPFaultNum = '0' + DCPFaultNum1
+--Write DCP Fault Number to SR[9]
+SET_STR_REG(9,DCPFaultNum,STATUS)
+--Write DCP Fault Text to SR[10]
+SET_STR_REG(10,DCPPLCText,STATUS)
+
+--Write DCP Fault to user screen
+DCPText.DCPLine3 = 'Check ISRA PC For Errors'
+--Set Boolean to Indicate SPR DCP Fault
+  blPLC = FALSE
+  blSPR	= FALSE
+  blSpot  = FALSE
+  blDispense  = FALSE
+  blMH = FALSE
+  blStud = FALSE
+  blNut = FALSE
+  blIsra = TRUE
+  blQuiss = FALSE
+  
+  	IF FKEY_SEL = 0 THEN
+		FKEYS[1] = 'ACK'
+	ENDIF
+  --Turn On DCP Fault output 
+DOUT[5] = ON
+
+--Call Routine from DCP_FORM to display the DCP Alarm in the Form
+DCPDISP(DCPText)
+	
+END DCP_ISRA

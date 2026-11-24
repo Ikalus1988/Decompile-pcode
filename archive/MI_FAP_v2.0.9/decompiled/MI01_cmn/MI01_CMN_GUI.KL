@@ -1,0 +1,822 @@
+-- MI01_CMN_GUI.KL (decompiled v3)
+PROGRAM MI01_CMN_GUI
+%COMMENT = 'MI01 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+VAR
+  v1 : INTEGER
+  v2 : ARRAY[64] OF STRING[64]
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  v5 : INTEGER
+  v6 : INTEGER
+  v7 : INTEGER
+  v8 : INTEGER
+  v9 : INTEGER
+  v10 : INTEGER
+  v11 : INTEGER
+  v12 : INTEGER
+  v13 : INTEGER
+  v14 : INTEGER
+  v15 : INTEGER
+  v16 : STRING[64]
+  v17 : STRING[64]
+  v18 : ARRAY[64] OF INTEGER
+  v19 : ARRAY[64] OF INTEGER
+  v20 : ARRAY[64] OF STRING[64]
+  v21 : ARRAY[64] OF INTEGER
+  v22 : INTEGER
+  v23 : INTEGER
+  v24 : INTEGER
+  v25 : INTEGER
+  v26 : INTEGER
+  v27 : INTEGER
+  v28 : ARRAY[64] OF INTEGER
+  v29 : INTEGER
+  v30 : INTEGER
+  v31 : FILE
+  v32 : INTEGER
+  v33 : INTEGER
+  v34 : INTEGER
+  v35 : ARRAY[64] OF BOOLEAN
+  v36 : ARRAY[64] OF BOOLEAN
+  v37 : INTEGER
+  v38 : INTEGER
+  v3_f04 : ARRAY[64] OF INTEGER
+  v3_f08 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+ROUTINE CLR_FSCR(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM MI_LIB
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM MI_LIB
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM MI_LIB
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM MI_LIB
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM MI_LIB
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM MI_LIB
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM MI_LIB
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM MI_LIB
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM MI_LIB
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM MI_LIB
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM MI_LIB
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM MI_LIB
+
+ROUTINE REALROBOT : BOOLEAN
+VAR
+  r0_lc1 : INTEGER
+BEGIN
+  GET_VAR(0, '*SYSTEM*', '$VIRTUALEDIT', r0_lc1, v1)
+  IF ((v1 <> 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END REALROBOT
+
+ROUTINE CURRLANGUAGE : STRING
+VAR
+  r1_lc10 : INTEGER
+  r1_lc4 : STRING[64]
+  r1_lc8 : STRING[64]
+  r1_lc9 : INTEGER
+BEGIN
+  GET_VAR(1, '*SYSTEM*', '$LANGUAGE', r1_lc8, r1_lc10)
+  sv_i = index(r1_lc8, ' ')
+  r1_lc9 = sv_i
+  sv_s = sub_str(r1_lc8, 1, r1_lc9 - 1)
+  r1_lc4 = sv_s
+  IF ((r1_lc4 <> 'DEFAULT')) THEN
+  -- stmt112 stray r1_lc8
+  ELSE
+  IF (sv_b AND sv_b) THEN
+  SET_LANG('ENGLISH     ', r1_lc10)
+  -- stmt118 stray 'ENGLISH     '
+  ELSE
+  -- stmt120 stray 'DEFAULT     '
+  ENDIF
+  ENDIF
+  RETURN(sv_s)
+END CURRLANGUAGE
+
+ROUTINE LOAD_TX(p0, p1 : STRING) : INTEGER
+VAR
+  r2_lc9 : STRING[64]
+BEGIN
+  r2_lc9 = 'FR:\' + p1
+  -- stmt137 residue 'FR:\\'
+  IF ((sv_s = 'ENGLISH     ')) THEN
+  ADD_DICT(r2_lc9, p0, 'ENGLISH     ', 4, v1)
+  ELSE
+  IF ((sv_s = 'CHINESE     ')) THEN
+  ADD_DICT(r2_lc9, p0, 'CHINESE     ', 4, v1)
+  ELSE
+  ADD_DICT(r2_lc9, p0, 'DEFAULT     ', 4, v1)
+  ENDIF
+  ENDIF
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38100, 'Failed to load dict ' + p0, 0, 2)
+  ELSE
+  ENDIF
+  RETURN(0)
+END LOAD_TX
+
+ROUTINE RESET_VALARRAY : INTEGER
+VAR
+  r3_lc1 : INTEGER
+BEGIN
+  FOR r3_lc1 = 1 TO 3 DO
+  v2[r3_lc1] = ''
+  ENDFOR
+  RETURN(0)
+END RESET_VALARRAY
+
+ROUTINE USERSCREEN : INTEGER
+VAR
+  r4_lc1 : INTEGER
+  r4_lc2 : INTEGER
+  r4_lc3 : INTEGER
+  r4_lc4 : INTEGER
+  r4_lc5 : INTEGER
+BEGIN
+  GET_DEV_INFO(r4_lc1, r4_lc2, r4_lc3, r4_lc4, r4_lc5, v1)
+  v4 = v3_f04[r4_lc2]
+  v5 = v3_f08[r4_lc2]
+  SELECT r4_lc2 OF
+  CASE(1):
+  v6 = 1
+  CASE(2):
+  v6 = 2
+  CASE(3):
+  v6 = 3
+  ELSE:
+  v6 = 1
+  ENDSELECT
+  FORCE_SPMENU(v6, 190, 1)
+  RETURN(0)
+END USERSCREEN
+
+ROUTINE GET_PANEMAP : INTEGER
+VAR
+  r5_lc1 : INTEGER
+  r5_lc2 : INTEGER
+  r5_lc3 : INTEGER
+BEGIN
+  r5_lc3 = 0
+  FOR r5_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt219 residue '*SYSTEM*', '$UI_CONFIG.$PANEMAP[', ']'
+  r5_lc3 = r5_lc3 + r5_lc2
+  ENDFOR
+  GET_VAR(1, '*SYSTEM*', '$UI_CONFIG.$ENB_WIDE[1]', v7, v1)
+  RETURN(r5_lc3)
+  RETURN(0)
+END GET_PANEMAP
+
+ROUTINE PANEMAP_CHG : BOOLEAN
+VAR
+  r6_lc1 : INTEGER
+  r6_lc2 : INTEGER
+  r6_lc3 : INTEGER
+  r6_lc4 : INTEGER
+BEGIN
+  DELAY 100
+  r6_lc3 = 0
+  FOR r6_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(1)
+  GET_VAR(0, '', '', 0, 0)
+  -- stmt243 residue '*SYSTEM*', '$UI_CONFIG.$PANEMAP[', ']'
+  r6_lc3 = r6_lc3 + r6_lc2
+  ENDFOR
+  IF ((r6_lc3 <> v8)) THEN
+  RETURN(TRUE)
+  ENDIF
+  GET_VAR(1, '*SYSTEM*', '$UI_CONFIG.$ENB_WIDE[1]', r6_lc4, v1)
+  IF ((r6_lc4 <> v7)) THEN
+  RETURN(TRUE)
+  ENDIF
+  RETURN(FALSE)
+  RETURN(sv_b)
+END PANEMAP_CHG
+
+ROUTINE INITLOALVARS : INTEGER
+VAR
+  r7_lc1 : INTEGER
+BEGIN
+  IF (UNINIT(v9)) THEN
+  v9 = 16
+  ENDIF
+  IF (UNINIT(v10)) THEN
+  v10 = 500
+  ENDIF
+  IF (UNINIT(v11)) THEN
+  v11 = 10000
+  ENDIF
+  IF (UNINIT(v12)) THEN
+  v12 = 5
+  ENDIF
+  IF (UNINIT(v13)) THEN
+  v13 = 2938
+  ENDIF
+  IF (UNINIT(v14)) THEN
+  v14 = 1
+  ENDIF
+  IF (UNINIT(v15)) THEN
+  v15 = 0
+  ENDIF
+  IF (UNINIT(v16)) THEN
+  v16 = 'ABC'
+  ENDIF
+  IF (UNINIT(v17)) THEN
+  v17 = '192.168.1.1'
+  ENDIF
+  IF (UNINIT(v18[1])) THEN
+  v18[1] = 1
+  ENDIF
+  IF (UNINIT(v18[2])) THEN
+  v18[2] = 0
+  ENDIF
+  IF (UNINIT(v19[1])) THEN
+  v19[1] = 1
+  ENDIF
+  IF (UNINIT(v19[2])) THEN
+  v19[2] = 2
+  ENDIF
+  IF (UNINIT(v20[1])) THEN
+  v20[1] = '192.168.1.2'
+  ENDIF
+  IF (UNINIT(v20[2])) THEN
+  v20[2] = '10.000.00.000'
+  ENDIF
+  IF (UNINIT(v21[1])) THEN
+  v21[1] = 21
+  ENDIF
+  IF (UNINIT(v21[2])) THEN
+  v21[2] = 41
+  ENDIF
+  IF (UNINIT(v22)) THEN
+  v22 = 21
+  ENDIF
+  IF (UNINIT(v23)) THEN
+  v23 = 21
+  ENDIF
+  IF (UNINIT(v24)) THEN
+  v24 = 22
+  ENDIF
+  IF (UNINIT(v25)) THEN
+  v25 = 23
+  ENDIF
+  IF (UNINIT(v26)) THEN
+  v26 = 100
+  ENDIF
+  IF (UNINIT(v27)) THEN
+  v27 = 1
+  ENDIF
+  FOR r7_lc1 = 1 TO 3 DO
+  IF (UNINIT(v28[r7_lc1])) THEN
+  v28[r7_lc1] = 1
+  ENDIF
+  ENDFOR
+  IF (UNINIT(v29)) THEN
+  v29 = 1
+  ENDIF
+  IF (UNINIT(v30)) THEN
+  v30 = 1
+  ENDIF
+  RETURN(0)
+END INITLOALVARS
+
+ROUTINE SET_MARCO : INTEGER
+BEGIN
+  sv_s = INTTOSTR(0)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt55 stray '' + sv_s + '].$MACRO_NAME'
+  -- stmt55 residue '*SYSTEM*', '$MACROTABLE[', 'AUTOBACKUP'
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38000, 'SET MARCO NAME FAILED', 0, 1)
+  ENDIF
+  sv_s = INTTOSTR(0)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt62 stray '' + sv_s + '].$PROG_NAME'
+  -- stmt62 residue '*SYSTEM*', '$MACROTABLE[', 'MI01_AUTOBK'
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38000, 'SET prog NAME FAILED', 0, 1)
+  ENDIF
+  sv_s = INTTOSTR(0)
+  SET_VAR(6, '', '', 0, 0)
+  -- stmt67 stray '' + sv_s + '].$ASSIGN_TYPE'
+  -- stmt67 residue '*SYSTEM*', '$MACROTABLE['
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38000, 'SET I/O TYPE FAILED', 0, 1)
+  ENDIF
+  sv_s = INTTOSTR(0)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt72 residue '*SYSTEM*', '$MACROTABLE[', '].$ASSIGN_ID'
+  IF ((v1 <> 0)) THEN
+  POST_ERR(38000, 'SET I/O NUMBER FAILED', 0, 1)
+  ENDIF
+  RETURN(0)
+END SET_MARCO
+
+ROUTINE CHECK_IO_ASG(p0, p1 : INTEGER) : BOOLEAN
+VAR
+  r9_lc1 : INTEGER
+  r9_lc2 : INTEGER
+  r9_lc3 : INTEGER
+  r9_lc4 : INTEGER
+  r9_lc5 : INTEGER
+BEGIN
+  GET_PORT_ASG(p0, p1, r9_lc1, r9_lc2, r9_lc3, r9_lc4, r9_lc5, v1)
+  IF ((v1 = 0)) THEN
+  RETURN(TRUE)
+  ELSE
+  RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END CHECK_IO_ASG
+
+ROUTINE CHECK_SETUP : INTEGER
+VAR
+  r10_lc1 : INTEGER
+BEGIN
+  IF ((v18[1] <> 0)) THEN
+  IF ((v19[1] < 1) OR (v19[1] > 8)) THEN
+  POST_ERR(38100, 'device port error', 0, 2)
+  ENDIF
+  ENDIF
+  IF ((v18[2] <> 0)) THEN
+  IF ((v19[2] < 1) OR (v19[2] > 8)) THEN
+  POST_ERR(38100, 'device port error', 0, 2)
+  ENDIF
+  ENDIF
+  r10_lc1 = 0
+  IF ((v22 <> 0)) THEN
+  IF (NOT (sv_b)) THEN
+  r10_lc1 = 1
+  ENDIF
+  ELSE
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt130 stray v31
+  WRITE_DICT(v31, 'ACMN', 27, v1)
+  DELAY 2000
+  -- stmt133 stray v31
+  ENDIF
+  IF ((v23 <> 0)) THEN
+  IF (NOT (sv_b)) THEN
+  r10_lc1 = 1
+  ENDIF
+  ELSE
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt143 stray v31
+  WRITE_DICT(v31, 'ACMN', 31, v1)
+  DELAY 2000
+  -- stmt146 stray v31
+  ENDIF
+  IF ((v24 <> 0)) THEN
+  IF (NOT (sv_b)) THEN
+  r10_lc1 = 1
+  ENDIF
+  ELSE
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt156 stray v31
+  WRITE_DICT(v31, 'ACMN', 28, v1)
+  DELAY 2000
+  -- stmt159 stray v31
+  ENDIF
+  IF ((v25 <> 0)) THEN
+  IF (NOT (sv_b)) THEN
+  r10_lc1 = 1
+  ENDIF
+  ELSE
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt169 stray v31
+  WRITE_DICT(v31, 'ACMN', 29, v1)
+  DELAY 2000
+  -- stmt172 stray v31
+  ENDIF
+  IF ((r10_lc1 <> 0)) THEN
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt178 stray v31
+  WRITE_DICT(v31, 'ACMN', 32, v1)
+  DELAY 2000
+  -- stmt181 stray v31
+  ELSE
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt184 stray v31
+  WRITE_DICT(v31, 'ACMN', 30, v1)
+  DELAY 2000
+  -- stmt187 stray v31
+  sv_i = SET_MARCO
+  -- stmt189 stray sv_i
+  ENDIF
+  RETURN(0)
+END CHECK_SETUP
+
+ROUTINE SHOW_MI01STP : INTEGER
+BEGIN
+  v32 = 1
+  v33 = 1
+  v2[v33] = '[MI01_CMN_VAR]i_mon_01'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_decicode_timeout'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_press_timeout'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_Priem_Pump_do'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_Priem_Pump_Pulse'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_RIP_Type'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]b_fanuc_rail'
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v34 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt231 stray sv_i
+  DISCTRL_FORM('ACMN', 0, v2, v35, v36, 2 + 2048, v37, v34, v1)
+  SELECT v34 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  CASE(1):
+  CASE(2):
+  SET_VAR(0, '*SYSTEM*', '$SPOTEQIO[1].$DI_WFOK_I[1]', 2929, v1)
+  CASE(3):
+  SET_VAR(0, '*SYSTEM*', '$SPOTEQIO[1].$DI_WFOK_I[1]', 2650, v1)
+  CASE(4):
+  SET_VAR(0, '*SYSTEM*', '$SPOTEQIO[1].$DI_WFOK_I[1]', 0, v1)
+  ELSE:
+  ENDSELECT
+  IF ((v15 <> 0)) THEN
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$THR_ENB', 1, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$DI_NO', 64, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$DO_NO', 2656, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$THR_ENB', 1, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$DI_NO', 64, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$DO_NO', 2903, v1)
+  ELSE
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$THR_ENB', 1, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$DI_NO', 64, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[12].$DO_NO', 2651, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$THR_ENB', 1, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$DI_NO', 64, v1)
+  SET_VAR(0, '*SYSTEM*', '$THRSDITABLE[13].$DO_NO', 2653, v1)
+  ENDIF
+  OPEN FILE v31('RW', 'WD:prmp/tpkb')
+  sv_s = chr(128)
+  WRITE(sv_s)
+  -- stmt24 stray v31
+  WRITE_DICT(v31, 'ACMN', 4, v1)
+  DELAY 2000
+  SELECT sv_i OF
+  CASE(133):
+  RETURN(3)
+  CASE(134):
+  RETURN(4)
+  CASE(232):
+  CASE(13):
+  RETURN(v32)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v32)
+  RETURN(0)
+END SHOW_MI01STP
+
+ROUTINE SHOW_MIBACKUP : INTEGER
+BEGIN
+  v32 = 2
+  v33 = 1
+  v2[v33] = '[MI01_CMN_VAR]st_robot_name'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]st_robot_IP'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_b_dev_use[1]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_b_dev_use[1]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_i_device[1]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_st_server_IP[1]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_i_devport[1]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_b_dev_use[2]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_b_dev_use[2]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_i_device[2]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_st_server_IP[2]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]ar_i_devport[2]'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_di_start'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_do_in_process'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_do_success'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_do_error'
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  GET_VAR(0, '*SYSTEM*', '$HOSTENT[18].$H_ADDR', v17, v1)
+  v34 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt99 stray sv_i
+  DISCTRL_FORM('ACMN', 1, v2, v35, v36, 2 + 2048, v37, v34, v1)
+  SELECT v34 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  IF ((v18[1] <> 0)) THEN
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt121 stray '' + sv_s + '].$PROTOCOL'
+  -- stmt121 residue '*system*', '$HOSTC_CFG[', 'FTP'
+  sv_s = INTTOSTR(1)
+  SET_VAR(2, '', '', 0, 0)
+  -- stmt122 stray '' + sv_s + '].$OPER'
+  -- stmt122 residue '*system*', '$HOSTC_CFG['
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt123 residue '*system*', '$HOSTC_CFG[', '].$STRT_REMOTE'
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt124 stray '' + sv_s + '].$USERNAME'
+  -- stmt124 residue '*system*', '$HOSTC_CFG[', 'admin'
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt125 stray '' + sv_s + '].$STRT_PATH'
+  -- stmt125 residue '*system*', '$HOSTC_CFG[', 'BACKUP\\'
+  sv_s = INTTOSTR(1)
+  SET_VAR(2, '', '', 0, 0)
+  -- stmt126 stray '' + sv_s + '].$STATE'
+  -- stmt126 residue '*system*', '$HOSTC_CFG['
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt127 residue '*system*', '$HOSTC_CFG[', '].$SERVER_PORT'
+  ENDIF
+  IF ((v18[2] <> 0)) THEN
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt131 stray '' + sv_s + '].$PROTOCOL'
+  -- stmt131 residue '*system*', '$HOSTC_CFG[', 'FTP'
+  sv_s = INTTOSTR(1)
+  SET_VAR(2, '', '', 0, 0)
+  -- stmt132 stray '' + sv_s + '].$OPER'
+  -- stmt132 residue '*system*', '$HOSTC_CFG['
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt133 residue '*system*', '$HOSTC_CFG[', '].$STRT_REMOTE'
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt134 stray '' + sv_s + '].$USERNAME'
+  -- stmt134 residue '*system*', '$HOSTC_CFG[', 'b2bsrobot'
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt135 stray '' + sv_s + '].$STRT_PATH'
+  -- stmt135 residue '*system*', '$HOSTC_CFG[', 'BACKUP\\'
+  sv_s = INTTOSTR(1)
+  SET_VAR(2, '', '', 0, 0)
+  -- stmt136 stray '' + sv_s + '].$STATE'
+  -- stmt136 residue '*system*', '$HOSTC_CFG['
+  sv_s = INTTOSTR(1)
+  SET_VAR(0, '', '', 0, 0)
+  -- stmt137 residue '*system*', '$HOSTC_CFG[', '].$SERVER_PORT'
+  ENDIF
+  sv_i = CHECK_SETUP
+  CASE(133):
+  RETURN(3)
+  CASE(134):
+  RETURN(4)
+  CASE(232):
+  CASE(13):
+  RETURN(v32)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v32)
+  RETURN(0)
+END SHOW_MIBACKUP
+
+ROUTINE SHOW_MIPNIO : INTEGER
+VAR
+  r13_lc1 : INTEGER
+BEGIN
+  v32 = 3
+  v33 = 1
+  v2[v33] = '[MI01_CMN_VAR]b_prio_use'
+  v33 = v33 + 1
+  FOR r13_lc1 = 1 TO 3 DO
+  sv_s = INTTOSTR(r13_lc1)
+  v2[v33] = '[MI01_CMN_VAR]ar_b_prio[' + sv_s + ']'
+  v33 = v33 + 1
+  ENDFOR
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v34 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt185 stray sv_i
+  DISCTRL_FORM('ACMN', 2, v2, v35, v36, 2 + 2048, v37, v34, v1)
+  SELECT v34 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  RETURN(4)
+  CASE(133):
+  CASE(140):
+  CASE(134):
+  CASE(141):
+  CASE(232):
+  CASE(13):
+  RETURN(v32)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v32)
+  RETURN(0)
+END SHOW_MIPNIO
+
+ROUTINE SHOW_MIAUTOLOG : INTEGER
+BEGIN
+  v32 = 4
+  v33 = 1
+  v2[v33] = '[MI01_CMN_VAR]b_logbook_use'
+  v33 = v33 + 1
+  v2[v33] = '[MI01_CMN_VAR]i_logbook_dev'
+  v33 = v33 + 1
+  sv_i = GET_PANEMAP
+  v8 = sv_i
+  v34 = 1
+  sv_i = CLR_FSCR(0)
+  -- stmt246 stray sv_i
+  DISCTRL_FORM('ACMN', 3, v2, v35, v36, 2 + 2048, v37, v34, v1)
+  SELECT v34 OF
+  CASE(128):
+  FORCE_SPMENU(v6, v4, v5)
+  CASE(0):
+  IF (NOT (sv_b)) THEN
+  RETURN(0)
+  ENDIF
+  CASE(129):
+  CASE(137):
+  RETURN(1)
+  CASE(131):
+  CASE(138):
+  RETURN(2)
+  CASE(132):
+  CASE(139):
+  RETURN(3)
+  CASE(133):
+  CASE(140):
+  CASE(134):
+  CASE(141):
+  CASE(232):
+  CASE(13):
+  RETURN(v32)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  RETURN(v32)
+  RETURN(0)
+END SHOW_MIAUTOLOG
+
+ROUTINE ST_MACHINE(p0 : INTEGER) : INTEGER
+BEGIN
+  SELECT p0 OF
+  CASE(1):
+  sv_i = SHOW_MI01STP
+  RETURN(sv_i)
+  CASE(2):
+  sv_i = SHOW_MIBACKUP
+  RETURN(sv_i)
+  CASE(3):
+  sv_i = SHOW_MIPNIO
+  RETURN(sv_i)
+  CASE(4):
+  sv_i = SHOW_MIAUTOLOG
+  RETURN(sv_i)
+  ELSE:
+  RETURN(0)
+  ENDSELECT
+  sv_i = INITLOALVARS
+  -- stmt57 stray sv_i
+  sv_i = RESET_VALARRAY
+  -- stmt59 stray sv_i
+  sv_i = LOAD_TX('ACMN', '01acmneg')
+  -- stmt63 stray sv_i
+  sv_i = USERSCREEN
+  -- stmt66 stray sv_i
+  v34 = 0
+  v37 = 1
+  v38 = 1
+  REPEAT
+  sv_i = ST_MACHINE(v38)
+  v38 = sv_i
+  DELAY 64
+  UNTIL((v38 = 0))
+  RETURN(0)
+END ST_MACHINE
+
+BEGIN
+END MI01_CMN_GUI
+-- module-residue 'H521', 'H538'

@@ -1,0 +1,552 @@
+-- LIB_ZJ1000.KL (decompiled v3)
+PROGRAM LIB_ZJ1000
+%COMMENT = 'lib zj20221112'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+TYPE
+	T_POS = STRUCTURE
+	X: INTEGER
+	Y: INTEGER
+	Z: INTEGER
+	W: INTEGER
+	P: INTEGER
+	R: INTEGER
+	ENDSTRUCTURE
+	SOCK_CFG_T = STRUCTURE
+	CONNECTED: INTEGER
+	HOST: STRING[127]
+	PORTTAG: STRING[3]
+	SERVERPORT: INTEGER
+	NBYTE: INTEGER
+	ATRTIMEOUT: INTEGER
+	ATRBINARY: INTEGER
+	ATRINTACT: INTEGER
+	ATRPROBABLY: INTEGER
+	ENDSTRUCTURE
+VAR
+  v1 : ARRAY[64] OF INTEGER
+  v2 : ARRAY[64] OF INTEGER
+  v3 : ARRAY[64] OF INTEGER
+  v4 : INTEGER
+  p0_f86 : STRING[64]
+  p0_f8c : INTEGER
+  p1_f86 : STRING[64]
+  p1_f94 : INTEGER
+  p1_f98 : INTEGER
+  p1_f9c : INTEGER
+  p1_fa0 : INTEGER
+  v0_f1c : ARRAY[64] OF INTEGER
+  v0_f58 : ARRAY[64] OF INTEGER
+  v1_f00 : ARRAY[64] OF INTEGER
+  sv_i : INTEGER
+  sv_s : STRING[64]
+  sv_p : POSITION
+  sv_j : JOINTPOS
+  sv_r : REAL
+  sv_b : BOOLEAN
+  sv_a : ARRAY[9] OF REAL
+
+
+ROUTINE SET_SYS_I__(p0 : STRING; p1 : INTEGER) : INTEGER
+VAR
+  r0_lc1 : INTEGER
+  r0_lc2 : STRING[64]
+BEGIN
+  SET_VAR(r0_lc1, '*SYSTEM*', p0, p1, 0)
+  IF ((r0_lc2 <> '')) THEN
+  POST_ERR(38000, 'Check [' + p0 + ']', 0, 2)
+  ENDIF
+  RETURN(0)
+END SET_SYS_I__
+
+ROUTINE SET_SYS_S__(p0, p1 : STRING) : INTEGER
+VAR
+  r1_lc1 : INTEGER
+  r1_lc2 : INTEGER
+BEGIN
+  SET_VAR(r1_lc1, '*SYSTEM*', p0, p1, r1_lc2)
+  IF ((r1_lc2 <> 0)) THEN
+  POST_ERR(38000, 'Check [' + p0 + ']', 0, 2)
+  ENDIF
+  RETURN(0)
+END SET_SYS_S__
+
+ROUTINE SET_SYS_B__(p0 : STRING; p1 : BOOLEAN) : INTEGER
+VAR
+  r2_lc1 : INTEGER
+  r2_lc2 : INTEGER
+BEGIN
+  SET_VAR(r2_lc1, '*SYSTEM*', p0, p1, r2_lc2)
+  IF ((r2_lc2 <> 0)) THEN
+  POST_ERR(38000, 'Check [' + p0 + ']', 0, 2)
+  ENDIF
+  RETURN(0)
+END SET_SYS_B__
+
+ROUTINE GET_SYS_I__(p0 : STRING) : INTEGER
+VAR
+  r3_lc1 : INTEGER
+  r3_lc2 : INTEGER
+  r3_lc3 : INTEGER
+BEGIN
+  GET_VAR(r3_lc1, '*SYSTEM*', p0, r3_lc3, r3_lc2)
+  IF ((r3_lc2 <> 0)) THEN
+  POST_ERR(38000, 'Check ' + p0, 0, 2)
+  ENDIF
+  RETURN(r3_lc3)
+  RETURN(0)
+END GET_SYS_I__
+
+ROUTINE SOCK_PING_(p0 : SOCK_CFG_T) : INTEGER
+VAR
+  r4_lc1 : INTEGER
+BEGIN
+  MSG_PING(p0.HOST, r4_lc1)
+  RETURN((0 - 0))
+  -- stmt84 stray r4_lc1
+  RETURN(0)
+END SOCK_PING_
+
+ROUTINE CSOCK_CONN_(p0 : SOCK_CFG_T) : INTEGER
+VAR
+  r5_lc1 : INTEGER
+BEGIN
+  p0.CONNECTED = 0
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_S__('SM', '')
+  -- stmt95 stray '' + sv_s + '_cfg[' + sv_s + '].$protocol' | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_S__('', '')
+  -- stmt99 stray '' + sv_s + '_cfg[' + sv_s + '].$strt_remote' | p0.HOST | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_S__('', '')
+  -- stmt103 stray '' + sv_s + '_cfg[' + sv_s + '].$remote' | p0.HOST | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_B__('', (0 <> 0))
+  -- 弃参原式: 0 | 0
+  -- stmt107 stray '' + sv_s + '_cfg[' + sv_s + '].$use_udp' | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_I__('', 0)
+  -- 弃参原式: 2
+  -- stmt111 stray '' + sv_s + '_cfg[' + sv_s + '].$oper' | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_I__('', 0)
+  -- 弃参原式: 2
+  -- stmt115 stray '' + sv_s + '_cfg[' + sv_s + '].$state' | sv_i
+  sv_s = sub_str('$host', 0, 1)
+  -- 弃参原式: p0_f86
+  sv_s = sub_str(p0_f86, 2, 1)
+  sv_i = SET_SYS_I__('', 0)
+  -- stmt118 stray '' + sv_s + '_cfg[' + sv_s + '].$server_port' | p0_f8c | sv_i
+  MOUNT_DEV(p0_f86, r5_lc1)
+  MSG_DISCO(p0_f86, r5_lc1)
+  MSG_CONNECT(p0_f86, r5_lc1)
+  IF (r5_lc1 = 0) THEN
+    p0.CONNECTED = 1
+  ELSE
+    p0.CONNECTED = 0
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt125 stray r5_lc1
+  RETURN(0)
+END CSOCK_CONN_
+
+ROUTINE SOCK_DCONN_(p0 : SOCK_CFG_T) : INTEGER
+VAR
+  r6_lc1 : INTEGER
+BEGIN
+  MSG_DISCO(p0_f86, r6_lc1)
+  IF ((r6_lc1 <> 0)) THEN
+  MSG_DISCO(p0_f86, r6_lc1)
+  ENDIF
+  p0.CONNECTED = 0
+  RETURN(0)
+END SOCK_DCONN_
+
+ROUTINE FILE_INIT_(p0 : FILE; p1 : SOCK_CFG_T) : INTEGER
+BEGIN
+  IF (UNINIT(p1_f9c)) THEN
+  p1_f9c = 1
+  ENDIF
+  IF (UNINIT(p1_f98)) THEN
+  p1_f98 = 0
+  ENDIF
+  IF (UNINIT(p1_fa0)) THEN
+  p1_fa0 = 1
+  ENDIF
+  IF (UNINIT(p1_f94)) THEN
+  p1_f94 = 0
+  ENDIF
+  IF ((p1_f9c <> 0)) THEN
+  SET_FILE_ATR(p0, 1, 1)
+  ENDIF
+  IF ((p1_f98 <> 0)) THEN
+  SET_FILE_ATR(p0, 2, 1)
+  ENDIF
+  IF ((p1_fa0 = 0)) THEN
+  SET_FILE_ATR(p0, 3, 1)
+  ENDIF
+  SET_FILE_ATR(p0, 7, 2)
+  SET_FILE_ATR(p0, 5, p1_f94)
+  RETURN(0)
+END FILE_INIT_
+
+ROUTINE FILE_OFD_(p0 : FILE; p1 : SOCK_CFG_T) : INTEGER
+VAR
+  r8_lc2 : STRING[64]
+  r8_lc3 : INTEGER
+BEGIN
+  r8_lc2 = p1_f86
+  OPEN FILE p0('RW', r8_lc2)
+  sv_i = IO_STATUS(p0)
+  r8_lc3 = sv_i
+  IF ((r8_lc3 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  IF (r8_lc3 = 0) THEN
+    p1.CONNECTED = 1
+  ELSE
+    p1.CONNECTED = 0
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt162 stray r8_lc3
+  RETURN(0)
+END FILE_OFD_
+
+ROUTINE FILE_CFD_(p0 : FILE) : INTEGER
+BEGIN
+  -- stmt167 stray p0
+  IF ((sv_i <> 0)) THEN
+  CLR_IO_STAT(p0)
+  -- stmt168 stray p0
+  ENDIF
+  RETURN(0)
+END FILE_CFD_
+
+ROUTINE TO_INT_(p0 : FILE; p1 : INTEGER) : INTEGER
+VAR
+  r10_lc1 : INTEGER
+BEGIN
+  WRITE(p1)
+  -- stmt176 stray p0
+  sv_i = IO_STATUS(p0)
+  r10_lc1 = sv_i
+  IF ((r10_lc1 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt179 stray r10_lc1
+  RETURN(0)
+END TO_INT_
+
+ROUTINE TO_BYTE_(p0 : FILE; p1 : INTEGER) : INTEGER
+VAR
+  r11_lc1 : INTEGER
+BEGIN
+  sv_s = chr(p1)
+  WRITE(sv_s)
+  -- stmt187 stray p0
+  sv_i = IO_STATUS(p0)
+  r11_lc1 = sv_i
+  IF ((r11_lc1 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt190 stray r11_lc1
+  RETURN(0)
+END TO_BYTE_
+
+ROUTINE TO_REAL_(p0 : FILE; p1 : REAL) : INTEGER
+VAR
+  r12_lc1 : INTEGER
+BEGIN
+  DELAY 0
+  -- stmt198 stray p0 | p1 | 13 | -5
+  sv_i = IO_STATUS(p0)
+  r12_lc1 = sv_i
+  IF ((r12_lc1 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt201 stray r12_lc1
+  RETURN(0)
+END TO_REAL_
+
+ROUTINE TO_BUFFER_(p0 : FILE) : INTEGER
+VAR
+  r13_lc1 : INTEGER
+BEGIN
+  WRITE(CR)
+  -- stmt209 stray p0
+  sv_i = IO_STATUS(p0)
+  r13_lc1 = sv_i
+  IF ((r13_lc1 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt212 stray r13_lc1
+  RETURN(0)
+END TO_BUFFER_
+
+ROUTINE FROM_INT_(p0 : FILE; p1 : INTEGER) : INTEGER
+VAR
+  r14_lc1 : INTEGER
+BEGIN
+  PAUSE
+  -- stmt220 stray p0 | p1
+  sv_i = IO_STATUS(p0)
+  r14_lc1 = sv_i
+  IF ((r14_lc1 <> 0)) THEN
+  CLR_IO_STAT(p0)
+  ENDIF
+  RETURN((0 - 0))
+  -- stmt223 stray r14_lc1
+  RETURN(0)
+END FROM_INT_
+
+ROUTINE INT_TO_STR_(p0 : INTEGER) : STRING
+VAR
+  r20_lc33 : STRING[64]
+BEGIN
+  CNV_INT_STR(0, 0, 10, r20_lc33)
+  -- 弃参原式: p0
+  sv_i = str_len(r20_lc33)
+  sv_s = sub_str(r20_lc33, 2, sv_i - 1)
+  -- stmt35 stray sv_s
+  RETURN(sv_s)
+END INT_TO_STR_
+
+ROUTINE GET_IPARM_(p0 : INTEGER) : INTEGER
+VAR
+  r15_lc33 : STRING[64]
+  r15_lc34 : INTEGER
+  r15_lc35 : INTEGER
+  r15_lc36 : INTEGER
+  r15_lc37 : REAL
+BEGIN
+  GET_TPE_PRM(0, r15_lc35, r15_lc36, r15_lc37, r15_lc33, r15_lc34)
+  -- 弃参原式: p0
+  IF ((r15_lc35 <> 1) OR (r15_lc34 <> 0)) THEN
+  sv_s = INT_TO_STR_(38000)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 2
+  -- stmt235 stray '' + sv_s
+  -- stmt235 residue 'Check Parm '
+  ENDIF
+  RETURN(r15_lc36)
+  RETURN(0)
+END GET_IPARM_
+
+ROUTINE GET_RPARM_(p0 : INTEGER) : REAL
+VAR
+  r16_lc33 : STRING[64]
+  r16_lc34 : INTEGER
+  r16_lc35 : INTEGER
+  r16_lc36 : INTEGER
+  r16_lc37 : REAL
+BEGIN
+  GET_TPE_PRM(0, r16_lc35, r16_lc36, r16_lc37, r16_lc33, r16_lc34)
+  -- 弃参原式: p0
+  IF ((r16_lc34 <> 0)) THEN
+  sv_s = INT_TO_STR_(38000)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 2
+  -- stmt248 stray '' + sv_s
+  -- stmt248 residue 'Check Parm '
+  ENDIF
+  IF ((r16_lc35 = 1)) THEN
+  r16_lc37 = r16_lc36
+  ENDIF
+  RETURN(r16_lc37)
+  RETURN(sv_r)
+END GET_RPARM_
+
+ROUTINE GET_SPARM_(p0 : INTEGER) : STRING
+VAR
+  r17_lc33 : STRING[64]
+  r17_lc34 : INTEGER
+  r17_lc35 : INTEGER
+  r17_lc36 : INTEGER
+  r17_lc37 : REAL
+BEGIN
+  GET_TPE_PRM(0, r17_lc35, r17_lc36, r17_lc37, r17_lc33, r17_lc34)
+  -- 弃参原式: p0
+  IF ((r17_lc35 <> 3) OR (r17_lc34 <> 0)) THEN
+  sv_s = INT_TO_STR_(38000)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 2
+  -- stmt6 stray '' + sv_s
+  -- stmt6 residue 'Check Parm '
+  ENDIF
+  -- stmt7 stray r17_lc33
+  RETURN(sv_s)
+END GET_SPARM_
+
+ROUTINE GET_IREG_(p0 : INTEGER) : INTEGER
+VAR
+  r18_lc1 : INTEGER
+  r18_lc2 : INTEGER
+  r18_lc3 : INTEGER
+  r18_lc4 : REAL
+BEGIN
+  GET_REG(0, (r18_lc2 <> 0), r18_lc3, r18_lc4, r18_lc1)
+  -- 弃参原式: p0 | r18_lc2
+  IF ((r18_lc1 <> 0) OR (r18_lc2 <> 0)) THEN
+  sv_s = INT_TO_STR_(38000)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 2
+  -- stmt18 stray '' + sv_s + ']'
+  -- stmt18 residue 'Check R['
+  ENDIF
+  RETURN(r18_lc3)
+  RETURN(0)
+END GET_IREG_
+
+ROUTINE SET_IREG_(p0, p1 : INTEGER) : INTEGER
+VAR
+  r19_lc1 : INTEGER
+BEGIN
+  SET_INT_REG(0, p1, r19_lc1)
+  -- 弃参原式: p0
+  IF ((r19_lc1 <> 0)) THEN
+  sv_s = INT_TO_STR_(38000)
+  POST_ERR(0, '', 0, 0)
+  -- 弃参原式: 2
+  -- stmt27 stray '' + sv_s + ']'
+  -- stmt27 residue 'Check R['
+  ENDIF
+  RETURN(0)
+END SET_IREG_
+
+ROUTINE THRD_CREATE_(p0 : STRING; p1 : INTEGER; p2 : BOOLEAN) : INTEGER
+VAR
+  r21_lc10 : INTEGER
+  r21_lc7 : STRING[64]
+  r21_lc8 : INTEGER
+  r21_lc9 : INTEGER
+BEGIN
+  RUN_TASK(p0, p1, (p2 <> 0), (0 <> 0), 0, r21_lc8)
+  -- 弃参原式: p2 | 0
+  IF ((r21_lc8 <> 0)) THEN
+  RETURN((0 - 0))
+  -- stmt46 stray r21_lc8
+  ENDIF
+  GET_TSK_INFO(p0, r21_lc9, 107, r21_lc10, r21_lc7, r21_lc8)
+  IF ((r21_lc8 <> 0)) THEN
+  RETURN((0 - 0))
+  -- stmt48 stray r21_lc8
+  ENDIF
+  RETURN(r21_lc9)
+  RETURN(0)
+END THRD_CREATE_
+
+ROUTINE THRD_END_(p0 : STRING) : INTEGER
+VAR
+  r22_lc5 : STRING[64]
+  r22_lc6 : INTEGER
+BEGIN
+  r22_lc5 = p0
+  IF ((r22_lc5 = '*')) THEN
+  r22_lc5 = '*ALL*'
+  ENDIF
+  ABORT_TASK(r22_lc5, (0 <> 0), (1 <> 0), r22_lc6)
+  -- 弃参原式: 0 | 1
+  IF ((r22_lc6 <> 0)) THEN
+  ABORT_TASK(r22_lc5, (0 <> 0), (1 <> 0), r22_lc6)
+  -- 弃参原式: 0 | 1
+  ENDIF
+  RETURN(0)
+END THRD_END_
+
+ROUTINE CUR_POS_(p0, p1 : INTEGER) : POSITION
+BEGIN
+  IF ((p0 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt66 stray v1_f00[1] | v0_f1c[1]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt66 stray v2[1][p0] | v0_f1c[1]
+  ENDIF
+  IF ((p1 = 0)) THEN
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt67 stray v1_f00[1] | v0_f58[1]
+  ELSE
+  PURGE CONDITION[1]
+  PURGE CONDITION[1]
+  -- stmt67 stray v3[1][p1] | v0_f58[1]
+  ENDIF
+  sv_p = curpos(0, 0)
+  RETURN(sv_p)
+  RETURN(sv_p)
+END CUR_POS_
+
+ROUTINE CUR_JPOS_ : JOINTPOS
+BEGIN
+  sv_j = curjpos(0, 0)
+  RETURN(sv_j)
+  RETURN(sv_j)
+END CUR_JPOS_
+
+ROUTINE DECOM_AXIS_(p0 : JOINTPOS) : INTEGER
+VAR
+  r25_lc10 : INTEGER
+  r25_lc11 : INTEGER
+BEGIN
+  cnv_jpos_rel(sv_j, sv_a, r25_lc10)
+  -- 弃参原式: p0 | p0 | p0 | p0
+  IF ((r25_lc11 <> 0)) THEN
+  POST_ERR(r25_lc11, '', 0, 2)
+  ENDIF
+  -- stmt85 stray r25_lc10
+  RETURN(0)
+END DECOM_AXIS_
+
+ROUTINE IO_IS_CFG_(p0, p1 : INTEGER) : BOOLEAN
+VAR
+  r26_lc1 : INTEGER
+  r26_lc2 : INTEGER
+BEGIN
+  GET_PORT_VAL(0, p1, r26_lc1, r26_lc2)
+  -- 弃参原式: p0
+  IF (r26_lc2 = 0) THEN
+    RETURN(TRUE)
+  ELSE
+    RETURN(FALSE)
+  ENDIF
+  RETURN(sv_b)
+END IO_IS_CFG_
+
+ROUTINE INSTALL_AH_ : INTEGER
+BEGIN
+  PURGE CONDITION[1]
+  -- stmt101 stray 1 | 512 | v4
+  RETURN(0)
+END INSTALL_AH_
+
+ROUTINE AB_HNDLR_ : INTEGER
+BEGIN
+  sv_i = THRD_END_('Zj1000_main')
+  -- stmt113 stray sv_i
+  WRITE('aaa', CR)
+  RETURN(0)
+END AB_HNDLR_
+
+BEGIN
+END LIB_ZJ1000
