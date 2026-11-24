@@ -1,0 +1,378 @@
+PROGRAM MI26_FEW_ROUT
+%COMMENT = 'MI26 2.0.9'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%NOABORT = ERROR + COMMAND
+--------------------------------------------------------------------------------
+-- 生产级重建（2026-11-24）：基于 ss010r04_FEW测试 机载 mi26_few_rout.pc 字节码逐 token
+-- 复原 + 用户提供 retry/dock/init 段真源码材料。与机载字节码的语句流对拍 = 零差异。
+-- 相对机载旧构建仅两处有意变更（源码/TP 一致口径）：
+--   ① MI26_FEWDOCK CASE(FEWDOCKON)：DO_POSITIONING_ALLOWED TRUE→FALSE（DO[3883]=OFF）
+--   ② MI26_INIT：DO_ROBOT_AUTOMATIC 先 FALSE、DELAY 500、再 TRUE（对齐 TP/真源码）
+-- 名字表按原版全量声明（含未用项）以保持槽位/导入序一致。
+--------------------------------------------------------------------------------
+TYPE
+  LST_ERROR_T = STRUCTURE
+    APP_NAME  : STRING[12]
+    ERR_NO    : INTEGER
+    ERR_TITLE : STRING[32]
+    ERR_MSG   : STRING[40]
+  ENDSTRUCTURE
+
+CONST
+  -- 真源码符号名（retry/dock/init 源码材料 × 字节码偏移落锤）
+  GI_ACTUAL_POSITION    = 1     -- GIN[GI 基址+1] 实际位置
+  GI_ALARM              = 2     -- GIN[+2] 报警状态
+  GO_PLIERS_CODE        = 1     -- GOUT[GO 基址+1] 枪号/夹钳码
+  GO_OPEN_POSITION      = 2     -- GOUT[+2] 开口位置指令（材料未出真名，按语义命名）
+  GO_FEW_PROGRAM_NUMBER = 3     -- GOUT[+3] FEW 焊程序号
+  DI_DONE               = 13    -- DIN[+13] 焊接完成
+  DO_START_PROCESS      = 13    -- DOUT[+13] 焊启动
+  DO_ROBOT_AUTOMATIC    = 9     -- DOUT[+9] 机器人自动
+  DO_ERROR_RESET        = 1     -- DOUT[+1] 错误复位（PULSE 用）
+  DO_POSITIONING_ALLOWED = 11   -- DOUT[+11] 允许定位（=TP 的 DO[3883]）
+  DO_SET_POSITION_VALID = 12    -- DOUT[+12]
+  DO_START_POSITIONING  = 14    -- DOUT[+14]
+  DO_START_FEEDING      = 23    -- DOUT[+23] 充钉
+  DO_DOCKING_DEMANDED   = 21    -- DOUT[+21] 装卸枪请求
+  DO_ENERGY_SAVING_MODE = 2     -- DOUT[+2]
+  DO_DRIVE_RELEASE_OFF  = 3     -- DOUT[+3] 驱动释放
+  DO_WITHOUT_PROCESS    = 4     -- DOUT[+4]
+  DO_REFERENCE          = 10    -- DOUT[+10] 参考点动
+  DI_PLIERS_DOCKED      = 21    -- DIN[+21] 枪已挂接
+  DI_HOMED              = 10    -- DIN[+10] 已回参考
+  DI_DRIVER_RELEASE_OFF = 3     -- DIN[+3] 驱动释放完成
+  FEWDOCKON             = 1     -- 装枪
+  FEWDOCKOFF            = 2     -- 卸枪
+  DI_TYPE               = 1     -- WAIT_SIGNAL 参数2：信号类型 DI
+  WAIT_ERROR_SIM        = 2     -- WAIT_SIGNAL 参数6：超时动作
+  DB_PS_RTRYCN          = 6     -- DB_PROMPT 提示类型（Retry/Cancel）
+  DB_RC_RETRY           = 7     -- DB_PROMPT 返回：重试
+  DB_RC_CANCEL          = 2     -- DB_PROMPT 返回：取消
+  -- 原版常量（未用，保持名字表完整）
+  ERR_ABORT = 2
+  ERR_PAUSE = 1
+  ERR_WARN  = 0
+
+VAR
+  -- 以下顺序 = 机载原版名字表顺序（含未用项，保证槽位一致）
+  INTPARAMVALUE        : INTEGER
+  REALPARAMVALUE       : REAL
+  STRPARAMVALUE        : STRING[128]
+  I_MI01_DI            IN CMOS FROM MI01_CMN_VAR : INTEGER
+  I_MI01_DO            IN CMOS FROM MI01_CMN_VAR : INTEGER
+  I_MI01_GO            IN CMOS FROM MI01_CMN_VAR : INTEGER
+  I_MI01_GI            IN CMOS FROM MI01_CMN_VAR : INTEGER
+  B_MON_01             : BOOLEAN
+  I_MON_01             : INTEGER
+  B_PRESSCHK           : BOOLEAN
+  I_DI_PRESS           : INTEGER
+  I_MI01_FS_DI         : INTEGER
+  I_MI01_FS_DO         : INTEGER
+  I_PRESS_TIMEOUT      : INTEGER
+  I_GO_ERROR_NUM       : INTEGER
+  I_PRIEM_PUMP_PULSE   : INTEGER
+  I_PRIEM_PUMP_DO      : INTEGER
+  I_RIP_TYPE           : INTEGER
+  B_FANUC_RAIL         : BOOLEAN
+  I_DECICODE_TIMEOUT   : INTEGER
+  ST_ROBOT_NAME        : STRING[20]
+  ST_ROBOT_IP          : STRING[20]
+  AR_B_DEV_USE         : ARRAY[2] OF BOOLEAN
+  AR_I_DEVICE          : ARRAY[2] OF INTEGER
+  AR_ST_SERVER_IP      : ARRAY[2] OF STRING[20]
+  AR_I_DEVPORT         : ARRAY[2] OF INTEGER
+  I_DI_START           : INTEGER
+  I_DO_IN_PROCESS      : INTEGER
+  I_DO_SUCCESS         : INTEGER
+  I_DO_ERROR           : INTEGER
+  I_MACRO_NUM          : INTEGER
+  B_PRIO_USE           : BOOLEAN
+  AR_B_PRIO            : ARRAY[20] OF BOOLEAN
+  B_LOGBOOK_USE        : BOOLEAN
+  I_LOGBOOK_DEV        : INTEGER
+  AR_I_MI26_DI         IN CMOS FROM MI26_FEW_VAR : ARRAY[64] OF INTEGER
+  AR_I_MI26_DO         IN CMOS FROM MI26_FEW_VAR : ARRAY[64] OF INTEGER
+  AR_I_MI26_GI         IN CMOS FROM MI26_FEW_VAR : ARRAY[64] OF INTEGER
+  AR_I_MI26_GO         IN CMOS FROM MI26_FEW_VAR : ARRAY[64] OF INTEGER
+  I_STATUS             IN CMOS : INTEGER
+  I_PROCESSTIM         IN CMOS : INTEGER
+  LST_ERROR            : ARRAY[64] OF LST_ERROR_T
+
+-- 原版名字表全量导入声明（含未用项，保证 CALLIMP/CALLLOC 槽位一致）
+ROUTINE KILLBLANKS(p0 : STRING) : STRING FROM LIB_ROUT
+ROUTINE STRTOINT(p0 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE INTTOSTR(p0 : INTEGER) : STRING FROM LIB_ROUT
+ROUTINE REALTOSTR(p0 : REAL) : STRING FROM LIB_ROUT
+ROUTINE CONFTOSTR(p0 : POSITION) : STRING FROM LIB_ROUT
+ROUTINE RETPOSINSTR(p0, p1 : STRING) : STRING FROM LIB_ROUT
+ROUTINE UPPERCASE(p0 : STRING) : STRING FROM LIB_ROUT
+ROUTINE STARTSWITH(p0, p1 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE ENDSWITH(p0, p1 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE CONTAINS(p0, p1 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE OPENFILE(p0 : STRING; p1, p2 : INTEGER) : BOOLEAN FROM LIB_ROUT
+ROUTINE CLOSEFILE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE READFILELINE(p0 : INTEGER) : STRING FROM LIB_ROUT
+ROUTINE HOLDMOTION(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE UNHOLDMOTION(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE CHECK_STATUS(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE GETMODE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE PROMPTMESSAGE(p0 : STRING; p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE SETTPUSERSCREEN(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE WRITEUSERSCREEN(p0 : STRING; p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE TPEPROGEXIST(p0 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE CTRLACTPROGTPE(p0 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE FILEEXISTS(p0, p1 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE GETCURLINE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE GETCURPROG(p0 : INTEGER) : STRING FROM LIB_ROUT
+ROUTINE SET_CMT(p0, p1 : INTEGER; p2 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE CHECKHOMEPOS(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE CURR_LANG(p0 : INTEGER) : STRING FROM LIB_ROUT
+ROUTINE DO_COPY(p0, p1, p2 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE GET_YN(p0 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE CONV_P_LTYP(p0 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE CHECKARGTYPE(p0, p1 : INTEGER) : BOOLEAN FROM LIB_ROUT
+ROUTINE GETTPEPARAM(p0, p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE FEATURE(p0 : STRING) : BOOLEAN FROM LIB_ROUT
+ROUTINE MSG_WRITE(p0, p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE WAIT_SIGNAL(p0, p1, p2, p3, p4, p5 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE GETTPEPRMINT(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE GETTPEPRMREAL(p0 : INTEGER) : REAL FROM LIB_ROUT
+ROUTINE GETTPEPRMSTR(p0 : INTEGER) : STRING FROM LIB_ROUT
+ROUTINE RUN_MONITOR(p0 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE MI01_RESETTIME(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE MI01_GIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE DIMSGOUT(p0, p1, p2, p3 : INTEGER; p4 : STRING) : INTEGER FROM LIB_ROUT
+ROUTINE GETPORTASG(p0, p1 : INTEGER) : BOOLEAN FROM LIB_ROUT
+ROUTINE INITVARS(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE INITPLCIO(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE REQCOLZONE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE RELCOLZONE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE SEGMENTECHO(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE DECCODESET(p0, p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE FIXTURESET(p0, p1 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE MI01_PRESSOK(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE ROBOTINPROC(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE MI01_RIP_CHECK(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE BSN_ENABLE(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+ROUTINE PROGNUMBERCHECK(p0 : INTEGER) : INTEGER FROM LIB_ROUT
+
+--------------------------------------------------------------------------------
+ROUTINE MI26_INIT(i_gunnum : INTEGER)
+BEGIN
+  GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+  GOUT[AR_I_MI26_GO[i_gunnum] + GO_FEW_PROGRAM_NUMBER] = 0
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = FALSE    -- ② 改：先 OFF（对齐 TP/真源码）
+  DELAY(500)                                                    -- ② 改：0.5s
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = TRUE     -- ② 改：再 ON
+  PULSE DOUT[AR_I_MI26_DO[i_gunnum] + DO_ERROR_RESET] FOR 1000 NOWAIT
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_SET_POSITION_VALID] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_POSITIONING] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_FEEDING] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_DOCKING_DEMANDED] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ENERGY_SAVING_MODE] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_DRIVE_RELEASE_OFF] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_WITHOUT_PROCESS] = FALSE
+  RETURN
+END MI26_INIT
+
+--------------------------------------------------------------------------------
+ROUTINE MI26_POSITIONING(i_gunnum, i_openpos : INTEGER)
+VAR
+  i_Response : INTEGER
+  err_num    : INTEGER
+BEGIN
+  IF (GIN[AR_I_MI26_GI[i_gunnum] + GI_ACTUAL_POSITION] = i_openpos) THEN
+    POST_ERR(38100, 'Already reach position', 0, 0)
+  ENDIF
+  GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = TRUE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = TRUE
+  DELAY 500
+  IF NOT DIN[AR_I_MI26_DI[i_gunnum] + 1] THEN
+    err_num = 1
+    LST_ERROR[err_num].APP_NAME = 'FEW'
+    LST_ERROR[err_num].ERR_NO = 0
+    LST_ERROR[err_num].ERR_TITLE = 'Not Ready'
+    LST_ERROR[err_num].ERR_MSG = 'System Not Ready'
+    i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + 1, 1, 3000, WAIT_ERROR_SIM)
+  ENDIF
+  IF NOT DIN[AR_I_MI26_DI[i_gunnum] + 5] THEN
+    err_num = 1
+    LST_ERROR[err_num].APP_NAME = 'FEW'
+    LST_ERROR[err_num].ERR_NO = 0
+    LST_ERROR[err_num].ERR_TITLE = 'Not Ready to Start'
+    LST_ERROR[err_num].ERR_MSG = 'System Not Ready to Start'
+    i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + 5, 1, 3000, WAIT_ERROR_SIM)
+  ENDIF
+  IF NOT DIN[AR_I_MI26_DI[i_gunnum] + 9] THEN
+    err_num = 1
+    LST_ERROR[err_num].APP_NAME = 'FEW'
+    LST_ERROR[err_num].ERR_NO = 0
+    LST_ERROR[err_num].ERR_TITLE = 'Not Automatic'
+    LST_ERROR[err_num].ERR_MSG = 'Controller Not in Automatic'
+    i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + 9, 1, 3000, WAIT_ERROR_SIM)
+  ENDIF
+  DELAY 200
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_SET_POSITION_VALID] = TRUE
+  GOUT[AR_I_MI26_GO[i_gunnum] + GO_OPEN_POSITION] = i_openpos
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_POSITIONING] = TRUE
+  IF NOT DIN[AR_I_MI26_DI[i_gunnum] + 12] THEN
+    err_num = 1
+    LST_ERROR[err_num].APP_NAME = 'FEW'
+    LST_ERROR[err_num].ERR_NO = 0
+    LST_ERROR[err_num].ERR_TITLE = 'Not Valid'
+    LST_ERROR[err_num].ERR_MSG = 'Target Position Not Valid'
+    i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + 12, 1, 3000, WAIT_ERROR_SIM)
+  ENDIF
+  REPEAT
+    DELAY 16
+  UNTIL (ABS(i_openpos - GIN[AR_I_MI26_GI[i_gunnum] + GI_ACTUAL_POSITION]) <= 5)
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = TRUE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_DRIVE_RELEASE_OFF] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_SET_POSITION_VALID] = FALSE
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_POSITIONING] = FALSE
+  RETURN
+END MI26_POSITIONING
+
+--------------------------------------------------------------------------------
+ROUTINE MI26_FEWFEED(i_gunnum : INTEGER)
+BEGIN
+  IF (DIN[I_MI01_DI + 35]) THEN
+    RETURN                                  -- 原字节码 RET（反编译丢失）
+  ENDIF
+  IF (DIN[AR_I_MI26_DI[i_gunnum] + DO_START_FEEDING]) THEN
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_FEEDING] = TRUE
+    WAIT FOR NOT DIN[AR_I_MI26_DI[i_gunnum] + DO_START_FEEDING]   -- 原 0x03 等待指令
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_FEEDING] = FALSE
+  ENDIF
+  RETURN
+END MI26_FEWFEED
+
+--------------------------------------------------------------------------------
+ROUTINE MI26_FEWWELD(i_gunnum, i_openpos, i_prognum : INTEGER)
+VAR
+  i_Response : INTEGER
+  err_num    : INTEGER
+  b_finish   : INTEGER
+BEGIN
+  IF (DIN[I_MI01_DI + 35]) THEN
+    GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+    GOUT[AR_I_MI26_GO[i_gunnum] + GO_FEW_PROGRAM_NUMBER] = 0
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_PROCESS] = FALSE
+    REPEAT
+      DELAY 16
+    UNTIL (GIN[AR_I_MI26_GI[i_gunnum] + GI_ACTUAL_POSITION] >= i_openpos)
+    RETURN                                  -- 原字节码 RET（反编译丢失）
+  ENDIF
+  b_finish = 0
+  REPEAT
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = TRUE
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = TRUE
+    IF NOT DIN[AR_I_MI26_DI[i_gunnum] + 5] THEN
+      err_num = 1
+      LST_ERROR[err_num].APP_NAME = 'FEW'
+      LST_ERROR[err_num].ERR_NO = 0
+      LST_ERROR[err_num].ERR_TITLE = 'Not Ready to Start'
+      LST_ERROR[err_num].ERR_MSG = 'System Not Ready to Start'
+      i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + 5, 1, 3000, WAIT_ERROR_SIM)
+    ENDIF
+    GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+    GOUT[AR_I_MI26_GO[i_gunnum] + GO_FEW_PROGRAM_NUMBER] = i_prognum
+    GOUT[AR_I_MI26_GO[i_gunnum] + GO_OPEN_POSITION] = i_openpos
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_PROCESS] = TRUE
+    DELAY 500
+    I_PROCESSTIM = 0
+    CONNECT TIMER TO I_PROCESSTIM              -- 原 CONNTMR 形态
+    REPEAT
+      DELAY 8
+    UNTIL (DIN[AR_I_MI26_DI[i_gunnum] + DI_DONE] = ON) OR (I_PROCESSTIM > 8000)
+    DISCONNECT TIMER I_PROCESSTIM              -- 原 DISCTMR 形态
+    IF (DIN[AR_I_MI26_DI[i_gunnum] + DI_DONE]) THEN
+      b_finish = 1
+    ENDIF
+    IF (I_PROCESSTIM > 8000) THEN
+      REPEAT
+        DELAY 1000
+        I_STATUS = DB_PROMPT(DB_PS_RTRYCN, 'Need to choose', 'Retry: Start Again \nCancel: Skip This Process', DB_RC_RETRY)
+      UNTIL (I_STATUS = DB_RC_RETRY) OR (I_STATUS = DB_RC_CANCEL)
+      SELECT I_STATUS OF
+      CASE(DB_RC_RETRY):
+        POST_ERR(38100, 'FEW timeout', 0, 0)
+        REPEAT
+          DELAY 16
+        UNTIL (GIN[AR_I_MI26_GI[i_gunnum] + GI_ALARM] = 0)
+        REPEAT
+          DELAY 16
+        UNTIL (DIN[AR_I_MI26_DI[i_gunnum] + DI_DONE] = ON)
+        MI26_FEWFEED(i_gunnum)                  -- 裸调用（过程，丢弃返回）
+        GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+        GOUT[AR_I_MI26_GO[i_gunnum] + GO_FEW_PROGRAM_NUMBER] = 0
+        DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_PROCESS] = FALSE
+        REPEAT
+          DELAY 16
+        UNTIL (GIN[AR_I_MI26_GI[i_gunnum] + GI_ACTUAL_POSITION] >= i_openpos)
+      CASE(DB_RC_CANCEL):
+        b_finish = 1
+      ELSE:
+      ENDSELECT
+    ENDIF
+    DELAY 8
+  UNTIL (b_finish = 1)
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_START_PROCESS] = FALSE
+  RETURN
+END MI26_FEWWELD
+
+--------------------------------------------------------------------------------
+ROUTINE MI26_FEWDOCK(i_gunnum, i_dockmode : INTEGER)
+VAR
+  i_Response : INTEGER
+  err_num    : INTEGER
+BEGIN
+  DOUT[AR_I_MI26_DO[i_gunnum] + DO_ROBOT_AUTOMATIC] = TRUE
+  GOUT[AR_I_MI26_GO[i_gunnum] + GO_PLIERS_CODE] = i_gunnum
+  SELECT (i_dockmode) OF
+  CASE(FEWDOCKON):
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = FALSE   -- ① 改（DO[3883]=OFF，对齐 TP）
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_DRIVE_RELEASE_OFF] = FALSE
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_DOCKING_DEMANDED] = TRUE
+    IF NOT DIN[AR_I_MI26_DI[i_gunnum] + DI_PLIERS_DOCKED] THEN
+      err_num = 1
+      LST_ERROR[err_num].APP_NAME = 'FEW'
+      LST_ERROR[err_num].ERR_NO = 0
+      LST_ERROR[err_num].ERR_TITLE = 'Not Docked'
+      LST_ERROR[err_num].ERR_MSG = 'Pliers Not Docked'
+      i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + DI_PLIERS_DOCKED, 1, 3000, WAIT_ERROR_SIM)
+    ENDIF
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_REFERENCE] = TRUE
+    IF NOT DIN[AR_I_MI26_DI[i_gunnum] + DI_HOMED] THEN
+      err_num = 1
+      LST_ERROR[err_num].APP_NAME = 'FEW'
+      LST_ERROR[err_num].ERR_NO = 0
+      LST_ERROR[err_num].ERR_TITLE = 'Not Homed'
+      LST_ERROR[err_num].ERR_MSG = 'Pliers Not Homed'
+      i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + DI_HOMED, 1, 3000, WAIT_ERROR_SIM)
+    ENDIF
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_REFERENCE] = FALSE
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_DOCKING_DEMANDED] = FALSE
+  CASE(FEWDOCKOFF):
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_POSITIONING_ALLOWED] = FALSE   -- TP 口径 = OFF（真源码此处为 ON，已按"以 TP 为准"取 OFF）
+    DOUT[AR_I_MI26_DO[i_gunnum] + DO_DRIVE_RELEASE_OFF] = TRUE
+    IF NOT DIN[AR_I_MI26_DI[i_gunnum] + DI_DRIVER_RELEASE_OFF] THEN
+      err_num = 1
+      LST_ERROR[err_num].APP_NAME = 'FEW'
+      LST_ERROR[err_num].ERR_NO = 0
+      LST_ERROR[err_num].ERR_TITLE = 'Release Not OFF'
+      LST_ERROR[err_num].ERR_MSG = 'Driver Release is NOT OFF'
+      i_Response = WAIT_SIGNAL(err_num, DI_TYPE, AR_I_MI26_DI[i_gunnum] + DI_DRIVER_RELEASE_OFF, 1, 3000, WAIT_ERROR_SIM)
+    ENDIF
+  ELSE:
+  ENDSELECT
+  RETURN
+END MI26_FEWDOCK
+
+BEGIN
+END MI26_FEW_ROUT

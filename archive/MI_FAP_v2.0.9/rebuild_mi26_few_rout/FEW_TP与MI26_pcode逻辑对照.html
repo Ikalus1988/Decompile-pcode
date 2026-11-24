@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEW 应用 TP 版 vs MI26 pcode 版 逻辑对照</title>
+<style>
+  :root{--bg:#f7f8fa;--card:#fff;--ink:#1c2733;--muted:#5b6b7b;--line:#d9e0e8;--accent:#0b5fff;
+        --ok:#0a7d43;--warn:#a35a00;--bad:#b3261e;--code-bg:#0f1722;--code-ink:#d7e3f4;}
+  *{box-sizing:border-box}
+  body{margin:0;padding:0 16px 80px;background:var(--bg);color:var(--ink);
+       font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;line-height:1.75;}
+  .wrap{max-width:1020px;margin:0 auto}
+  header{padding:36px 0 8px}
+  h1{font-size:25px;line-height:1.35;margin:0 0 8px}
+  h2{font-size:20px;margin:40px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 8px}
+  table{border-collapse:collapse;width:100%;margin:14px 0;background:var(--card);font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#eef2f7}
+  code{background:#eef2f7;padding:1px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:13px 15px;border-radius:8px;overflow-x:auto;
+      font-family:Consolas,monospace;font-size:12.5px;line-height:1.55}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin:13px 0}
+  .tldr{border-left:5px solid var(--accent)}
+  .ev{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:20px;margin-right:5px;white-space:nowrap}
+  .ev-v{background:#e2f4e8;color:var(--ok)}.ev-h{background:#fdf0dc;color:var(--warn)}.ev-p{background:#e8ecf1;color:var(--muted)}
+  .bad{color:var(--bad);font-weight:600}.ok{color:var(--ok);font-weight:600}.muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  ul,ol{margin:8px 0 8px 22px;padding:0}
+  li{margin:4px 0}
+  blockquote{margin:12px 0;padding:10px 16px;border-left:4px solid var(--accent);background:#eef3ff;border-radius:0 8px 8px 0;font-size:13.5px}
+  footer{margin-top:52px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  .r0{background:#fdecea}.r1{background:#fdf3e2}.r2{background:#eef7ee}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>FEW 应用（摩擦元件焊）TP 版 ↔ MI26 pcode 版 逻辑对照<br>
+  <span class="muted" style="font-size:17px">ss010r04_FEW测试 · loaded 版本 · 手册五指令（Init/GunOpen/FewWeld/Feed/Dock）验证</span></h1>
+  <div class="sub muted">
+    材料：ss010r04_FEW测试.zip（loaded/）｜方法：TP→LS 反汇编（tpLs，18621 对 LS+TP 实测底座）× pcode 反编译（pc2kl3）×
+    <b>字节码 token 级复核</b> × .vr 配置解码 × 手册 v2.0.9 §23.2 ｜ 2026-11-23
+  </div>
+</header>
+
+<h2>0. 结论速览</h2>
+<div class="card tldr">
+  <p><b>总判定：核心工艺逻辑（IO 动作序列）五条指令全部对齐，<span class="ok">具备互换基础</span>；但互换不是「换名字」——
+  有 <span class="bad">2 个 P0 级改造点</span>必须先关闭，否则换版本会出生产事故。</b></p>
+  <table>
+    <tr><th></th><th>判定</th><th>说明</th></tr>
+    <tr class="r0"><td>🔴 P0-1</td><td class="bad">FEW_WELD 实参序相反</td>
+      <td>TP：<code>FEW_WELD(ProgNo, OpenPos)</code>；MI26 手册/实现：<code>MI26_FEW(3, GunNo, OpenPos, ProgNo)</code>。
+      直接换调用名不改参数 = ProgNo/位置互换 → <b>焊错程序号或开口值</b>。</td></tr>
+    <tr class="r0"><td>🔴 P0-2</td><td class="bad">DockON 的 DO[3883] 极性分歧（唯一真实信号分歧）</td>
+      <td>TP <code>FEW_DOCK_ON</code>：DO[3883]=OFF；pcode MI26_FEWDOCK CASE(1)：DO+11=ON（字节码 <code>INT 1</code> 实证，且 CASE 不复位）。
+      TP 侧经现场验证，pcode 侧未经本机验证——<b>须设备/PLC 侧确认正确工况</b>后再定改哪边。</td></tr>
+    <tr class="r1"><td>🟡 P1</td><td>PNIO attach 66 只在 TP 版</td>
+      <td>TP DOCK_ON 头部 / DOCK_OFF 尾部有 <code>PNIO attach 66</code>；pcode 无对应动作（疑由 MI01 框架/PLC 侧负责）。
+      互换前确认 PROFINET 设备 66 的挂载在 MI26 路径下不丢。</td></tr>
+    <tr class="r1"><td>🟡 P1</td><td>错误处理哲学不同</td>
+      <td>TP：WAIT 死等 + 手工恢复路径（LBL[88] PAUSE 重跳 / LBL[99] UALM）；pcode：3s/8s 超时 + DB_PROMPT 重试/跳过 + 超时自动 FEW_REQ_FEEDER。
+      互换后产线异常处置流程（操作/工艺）跟着变。</td></tr>
+    <tr class="r2"><td>🟢 P2</td><td>时序宽度与动作毛刺</td>
+      <td>DO[3873] 脉宽 0.5s(TP) vs 1.0s(pcode)；焊启前延时 2.0s vs 0.5s；Init 时 TP 对 DO[3881] 先 OFF0.5s 再 ON、pcode 直接 ON。
+      同终态，大概率无害，实测确认。</td></tr>
+    <tr class="r2"><td>✅</td><td class="ok">DI[35] 跳过语义 / IO 映射 / 主序列</td>
+      <td>全部一致（DI[35] 由字节码 RET 实证；IO 基址 .vr 实配与 TP 硬编码逐点相等）。</td></tr>
+  </table>
+  <p class="small">互换改造公式：调用点改名 + <b>FEW_WELD 参数换序</b> + Dock 参数 1/2（DockON/DockOFF）+ GunNo 显式传 1 + 确认 PNIO 兜底 + 关闭 DO[3883] 分歧。</p>
+</div>
+
+<h2>1. 材料与方法</h2>
+<table>
+  <tr><th>侧</th><th>文件</th><th>处理</th></tr>
+  <tr><td rowspan="2">TP 版</td>
+      <td><code>few_init_gun.tp / few_gun_open.tp / few_weld.tp / few_req_feeder.tp / few_dock_on.tp / few_dock_off.tp</code></td>
+      <td>tpLs 反汇编 → LS 指令体（6 件共 117 条指令）</td></tr>
+  <tr><td><code>testfew.tp / r04_msl_vp_few_01_gun1_rhjr01.tp / ss010r04_msl_few_01_gun1_rhjr01.tp</code></td>
+      <td>调用侧序列核对</td></tr>
+  <tr><td rowspan="2">pcode 版</td>
+      <td><code>mi26_few.pc / mi26_few_rout.pc / mi26_few_var.pc</code>（MI26 2.0.9）</td>
+      <td>pc2kl3 反编译 + <b>scan 逐 token 字节码复核</b>（争议点全部落到实字节）</td></tr>
+  <tr><td><code>mi26_few.vr / mi26_few_var.vr / mi26_few_rout.vr</code></td>
+      <td>LZSS 解包读 CMOS 实配值（IO 基址）</td></tr>
+  <tr><td>参照</td><td>MI_FAP v2.0.9 手册 §23.2（用户提供）＋ MI24/25/26 逐应用深拆</td><td>指令语义/参数契约</td></tr>
+</table>
+<p class="small"><b>为什么必须做字节码复核</b>：pc2kl3 对本模块有 4 处已知渲染缺口（见附录 A）——若只看反编译文本，
+会把 <code>UNTIL((0&lt;=5))</code> 误读成死循环、把两个「空 IF」误读成语义分歧。<b>本报告全部结论以字节码为准</b>。</p>
+
+<h2>2. IO 映射对照（完全一致 <span class="ev ev-v">已验证</span>）</h2>
+<p>TP 版硬编码枪 1 的信号块；MI26 版通过 <code>AR_I_MI26_*[GunNo]</code> 可配基址。<b>本机 .vr 实配与 TP 硬编码逐点相等</b>：</p>
+<table>
+  <tr><th>通道</th><th>TP 硬编码（枪1）</th><th>MI26 实配（mi26_few_var.vr）</th><th>偏移语义（两版共用）</th></tr>
+  <tr><td>GO / GI 基址</td><td>133</td><td><b>133</b>（枪2/3=UNINIT）</td>
+      <td>+1=GunNo 回显/命令字，+2=开口位置指令，+3=焊程序号 ProgNo；GI+1=实际位置，GI+2=状态</td></tr>
+  <tr><td>DO / DI 基址</td><td>3872</td><td><b>3872</b>（枪2/3=UNINIT）</td>
+      <td>+9=使能(3881)，+11=定位模式(3883)，+12=3884，+13=焊启(3885)，+14=3886，+10=Home(3882)，
+      +3=Release(3875)，+21=Dock(3893)，+23=充钉(3895)，+2=3874，+4=3876；DI+1=就绪(3873)，+5=允许启动(3877)，
+      +9=自动(3881)，+12=目标有效(3884)，+13=焊完(3885)，+10=Homed(3882)，+3=Release(3875)，+21=Docked(3893)，+23=充钉请求(3895)</td></tr>
+  <tr><td>全局绕过</td><td>DI[35]</td><td><code>io_01[I_MI01_DI+35]</code> 同一信号</td><td>ON=跳过工艺动作（两版一致，见 §3.3/§3.4）</td></tr>
+</table>
+<p class="small">MI26 的多枪能力（GunNo 1-3）是超集；本测试机只有枪 1 配置。互换即插即用的前提：枪号显式传 1。</p>
+
+<h2>3. 逐指令对照（验证目标：手册五指令）</h2>
+
+<h3>3.1 Init —— <span class="ok">一致</span>（时序小异 <span class="ev ev-p">P2</span>）</h3>
+<table>
+  <tr><th>#</th><th>TP FEW_INIT_GUN（22 行）</th><th>pcode MI26_INIT（L45-60）</th><th>判定</th></tr>
+  <tr><td>1</td><td>GO[134]=1</td><td>GO+1 = GunNo</td><td>✅（枪1 等值）</td></tr>
+  <tr><td>2</td><td>GO[136]=0</td><td>GO+3 = 0</td><td>✅</td></tr>
+  <tr><td>3</td><td>DO[3881]=OFF → WAIT 0.5s → ON</td><td>DO+9 = 1（直接置位）</td><td>🟡 TP 带 0.5s 毛刺，终态同</td></tr>
+  <tr><td>4</td><td>DO[3873] = PULSE?（反汇编操作数未渲染×2）</td><td><b>PULSE DO+1 1000</b>（字节码实证）</td><td>🟡 脉宽 0.5s vs 1.0s</td></tr>
+  <tr><td>5</td><td>DO[3883/3884/3886]=OFF</td><td>DO+11/12/14 = 0</td><td>✅</td></tr>
+  <tr><td>6</td><td>DO[3895/3893]=OFF</td><td>DO+23/21 = 0</td><td>✅</td></tr>
+  <tr><td>7</td><td>DO[3873/3874/3875/3876]=OFF</td><td>DO+2/3/4 = 0（DO+1 由 PULSE 自复位）</td><td>✅ 终态一致</td></tr>
+</table>
+
+<h3>3.2 GunOpen —— <span class="ok">一致</span>（容错差异 <span class="ev ev-h">P1</span>）</h3>
+<table>
+  <tr><th>#</th><th>TP FEW_GUN_OPEN（41 行）</th><th>pcode MI26_POSITIONING（L74-139）</th><th>判定</th></tr>
+  <tr><td>1</td><td>IF GI[134]=AR[1] → 跳 LBL[1000]（已在位则跳过）</td><td>IF GI+1 = OpenPos → POST_ERR(38100,'Already reach position',0,0)（信息级提示）</td><td>✅ 语义同</td></tr>
+  <tr><td>2</td><td>GO[134]=1；DO[3881]=ON；DO[3883]=ON；WAIT 0.5s</td><td>GO+1=GunNo；DO+9=1；DO+11=1；DELAY 500</td><td>✅</td></tr>
+  <tr><td>3</td><td>WAIT DI[3873] AND DI[3877] AND DI[3881]（死等）</td><td>DI+1/DI+5/DI+9 各 3s 超时等待（'Not Ready'/'Not Ready to Start'/'Not Automatic' 弹窗）</td><td>🟡 容错策略不同</td></tr>
+  <tr><td>4</td><td>WAIT 0.2s</td><td>DELAY 200</td><td>✅</td></tr>
+  <tr><td>5</td><td>DO[3884]=ON；GO[135]=AR[1]（开口）；DO[3886]=ON</td><td>DO+12=1；GO+2=OpenPos；DO+14=1</td><td>✅ 顺序同</td></tr>
+  <tr><td>6</td><td>WAIT DI[3884]=ON（死等）</td><td>DI+12 3s 超时（'Target Position Not Valid'）</td><td>🟡</td></tr>
+  <tr><td>7</td><td><b>WAIT (|GO[135]−GI[134]| ≤ 5)</b>（±5 双边）</td><td><b>UNTIL ABS(OpenPos−GI+1) ≤ 5</b>（字节码 <code>SUB ABS(0x50) INT 5 LE</code> 实证）</td><td class="ok">✅ 数学等价</td></tr>
+  <tr><td>8</td><td>收尾：DO[3881]=ON、[3883/3875/3884/3886]=OFF；LBL[88]手工恢复/ LBL[99]UALM</td><td>收尾：DO+9=1、DO+11/3/12/14=0（同）；RETURN</td><td>✅ 收尾逐信号相同</td></tr>
+</table>
+
+<h3>3.3 FewWeld —— <span class="ok">主序列一致</span>，<span class="bad">实参序相反（P0）</span></h3>
+<table>
+  <tr><th>#</th><th>TP FEW_WELD（29 行）</th><th>pcode MI26_FEWWELD（L178-254）</th><th>判定</th></tr>
+  <tr><td>0</td><td><b>CALL FEW_WELD(ProgNo, OpenPos)</b>——AR[1]→GO[136]，AR[2]→GO[135]</td>
+      <td><b>MI26_FEW(3, GunNo, OpenPos, ProgNo)</b>——p1→GO+2，p2→GO+3（手册序）</td>
+      <td class="bad">🔴 实参序相反</td></tr>
+  <tr><td>1</td><td>IF DI[35]=ON → JMP LBL[9]（跳过焊接）</td>
+      <td>IF DI[35]≠0 THEN GO+1=GunNo; GO+3=0; DO+13=0; 等 GI+1≥OpenPos; <b>RETURN</b>
+      （字节码偏移 2222 处 RET 实证——反编译曾渲染成空 IF）</td>
+      <td class="ok">✅ 跳过语义一致</td></tr>
+  <tr><td>2</td><td>WAIT DI[3877]→DO[3881]=ON→DO[3883]=ON</td><td>DO+9=1→DO+11=1→等 DI+5（3s 超时 'Not Ready to Start'）</td><td>🟡 微顺序不同</td></tr>
+  <tr><td>3</td><td>GO[134]=1；GO[136]=ProgNo；GO[135]=OpenPos</td><td>GO+1=GunNo；GO+3=ProgNo；GO+2=OpenPos</td><td class="ok">✅ 顺序同</td></tr>
+  <tr><td>4</td><td>DO[3885]=ON；WAIT 2.0s</td><td>DO+13=1；DELAY 500</td><td>🟢 延时 2s vs 0.5s</td></tr>
+  <tr><td>5</td><td>$WAITTMOUT=500；WAIT DI[3885]=ON（超时即故障）；DO[3885]=OFF</td>
+      <td>8s 超时环等 DI+13；超时 → DB_PROMPT「Retry/Cancel」；Retry=等 GI+2=0→等 DI+13→<b>自动 FEW_REQ_FEEDER</b>→复位→重焊环；
+      成功/Cancel 后 DO+13=0</td>
+      <td>🟡 超时处置哲学不同（P1）</td></tr>
+  <tr><td>6</td><td>LBL[99] UALM / LBL[9] 尾：GO[136]=0、DO[3885]=OFF、WAIT GI[134]≥AR[2]</td>
+      <td>（对应动作已并入 DI[35] 跳过块）</td><td>✅ 语义归位一致</td></tr>
+</table>
+
+<h3>3.4 Feed —— <span class="ok">一致</span></h3>
+<table>
+  <tr><th>TP FEW_REQ_FEEDER（7 行）</th><th>pcode MI26_FEWFEED（L153-163）</th><th>判定</th></tr>
+  <tr><td>IF DI[35]=ON → 跳过全部</td>
+      <td>IF DI[35]≠0 THEN <b>RETURN</b>（字节码偏移 1904 RET 实证）</td><td class="ok">✅</td></tr>
+  <tr><td>IF DI[3895]=ON THEN DO[3895]=ON → WAIT DI[3895]=OFF → DO[3895]=OFF</td>
+      <td>IF DI+23≠0 THEN DO+23=1 → <b>WAIT DI+23=OFF</b>（字节码实证，反编译丢成 stray）→ DO+23=0</td>
+      <td class="ok">✅ 逐信号一致</td></tr>
+</table>
+
+<h3>3.5 Dock —— 主序列一致，<span class="bad">DO[3883] 极性分歧（P0-2）</span></h3>
+<table>
+  <tr><th>#</th><th>TP FEW_DOCK_ON / OFF（12/6 行）</th><th>pcode MI26_FEWDOCK CASE(1)/(2)（L26-70）</th><th>判定</th></tr>
+  <tr><td>0</td><td>两程序头部/尾部各有一次 <code>PNIO attach 66</code></td><td>无（MI01 框架职责？）</td><td>🟡 P1</td></tr>
+  <tr><td>1</td><td>共用：DO[3881]=ON；GO[134]=1</td><td>共用：DO+9=1；GO+1=GunNo</td><td class="ok">✅</td></tr>
+  <tr><td>2</td><td>DOCK_ON：<b>DO[3883]=OFF</b>；DO[3875]=OFF；DO[3893]=ON；等 DI[3893]；DO[3882]=ON；等 DI[3882]；DO[3882]=OFF；DO[3893]=OFF</td>
+      <td>CASE(1)=DockON：<b>DO+11=ON</b>（字节码 <code>INT 1</code> 实证）；DO+3=0；DO+21=1；3s 等 DI+21（'Pliers Not Docked'）；
+      DO+10=1；3s 等 DI+10（'Pliers Not Homed'）；DO+10=0；DO+21=0（DO+11 不复位）</td>
+      <td class="bad">🔴 DO[3883]：OFF vs ON</td></tr>
+  <tr><td>3</td><td>DOCK_OFF：DO[3883]=OFF；DO[3875]=ON；等 DI[3875]；PNIO attach</td>
+      <td>CASE(2)=DockOFF：DO+11=0；DO+3=1；3s 等 DI+3（'Driver Release is NOT OFF'）</td>
+      <td class="ok">✅（此路一致）</td></tr>
+</table>
+<p class="small">DO[3883] 语义 = 「定位模式」（GunOpen 期间两版都置 ON）。DockON 路径 TP 关它、pcode 置它且 CASE(1) 不复位
+（CASE(2) 才清）——对 FEW 设备夹持/安全联锁的影响须由设备/PLC 侧定论。<b>TP 行为是经现场验证的基准</b>。</p>
+
+<h2>4. 调用约定差异（互换改造清单）</h2>
+<table>
+  <tr><th>项</th><th>TP 版</th><th>MI26 版</th></tr>
+  <tr><td>入口</td><td>6 个独立程序（FEW_INIT_GUN/FEW_GUN_OPEN/FEW_WELD/FEW_REQ_FEEDER/FEW_DOCK_ON/FEW_DOCK_OFF）</td>
+      <td>单入口 <code>MI26_FEW</code>（命令码分派：1=Init 2=GunOpen 3=FewWeld 4=Feed 5=Dock）</td></tr>
+  <tr><td>调用形</td><td><code>CALL FEW_WELD(20,990)</code></td><td><code>CALL MI26_FEW(3,1,990,20,'')</code></td></tr>
+  <tr><td>GunNo</td><td>无（硬编码枪 1）</td><td>参数 2（1-3；本机枪 2/3 未配）</td></tr>
+  <tr><td><b>FEW_WELD 参数序</b></td><td><b>(ProgNo, OpenPos)</b></td><td><b>(OpenPos, ProgNo)</b> ← 换算时必须交换</td></tr>
+  <tr><td>Dock</td><td>两个程序</td><td>参数 3 = 1(DockON) / 2(DockOFF)</td></tr>
+  <tr><td>注释参数</td><td>无</td><td>第 5 参 ≤32 字符——<b>双方都不读取</b>（手册即"自由输入纯记录"）✓</td></tr>
+  <tr><td>默认值</td><td>无默认（调用必传）</td><td>实现层无缺省默认（GETTPEPRMINT 直读）——手册「默认 500/1」是文档口径，两版一致靠调用侧保证</td></tr>
+</table>
+
+<h3>现场调用现状（loaded）</h3>
+<p class="small">三支程序全部走 TP 版，无 MI26_FEW 调用：序列均为 Init → GunOpen(990) → FEW_WELD(ProgNo,990)×N
+（r04_msl_vp_few：ProgNo=20 ×3；ss010r04_msl_few：4/5/6 各 1；testfew：11）。当前 .vr 只配枪 1。</p>
+
+<h2>5. 手册符合性核对（验证目标逐条）</h2>
+<table>
+  <tr><th>手册 §23.2</th><th>MI26 pcode</th><th>TP 版</th></tr>
+  <tr><td>23.2.1 Init：信号初始化，GunNo 1-3 默认 1，注释 ≤32</td>
+      <td>✅ MI26_INIT=信号初始化；GunNo 参数化；注释不读</td><td>✅ 同语义（GunNo 硬编码 1，无注释参数）</td></tr>
+  <tr><td>23.2.2 GunOpen：OpenPos 0-65535 默认 500</td>
+      <td>✅ MI26_POSITIONING；范围不钳制（与手册默认口径同两版）</td><td>✅ 同</td></tr>
+  <tr><td>23.2.3 FewWeld：OpenPos + ProgNo 0-65535 默认 1</td>
+      <td>✅ MI26_FEWWELD(OpenPos, ProgNo) 与手册参数序一致</td><td>⚠ 参数序相反（实现等价、调用契约不同）</td></tr>
+  <tr><td>23.2.4 Feed：充钉</td><td>✅ MI26_FEWFEED</td><td>✅ FEW_REQ_FEEDER</td></tr>
+  <tr><td>23.2.5 Dock：DockON 连接枪 / DockOFF 断开枪</td><td>✅ CASE(1)/CASE(2)（DO[3883] 分歧见 §3.5）</td><td>✅ 两程序</td></tr>
+</table>
+<p class="small">五指令 ↔ 五例程 1:1（Init=MI26_INIT / GunOpen=MI26_POSITIONING / FewWeld=MI26_FEWWELD / Feed=MI26_FEWFEED / Dock=MI26_FEWDOCK），
+与既有 MI24/25/26 深拆结论一致。</p>
+
+<h2>6. 互换验收清单（建议顺序）</h2>
+<ol>
+  <li><b>关闭 P0-2</b>：设备/PLC 确认 DockON 工况 DO[3883] 应为 ON 还是 OFF——若 OFF 为正确，改 MI26_FEWDOCK CASE(1)（库侧一行）或接受 TP 行为为基准；</li>
+  <li><b>调用点改造</b>：按 §4 公式改写（FEW_WELD 换序是重中之重），建议先改 testfew 类测试程序试跑；</li>
+  <li>确认 PNIO attach 66 在 MI26 路径下的兜底（MI01 初始化/PLC 侧）；</li>
+  <li>按五指令各做一次空跑/实跑对照（同工况双版本各跑一遍，比对 DI/GO 时序截图或 PLC trace）；</li>
+  <li>确认异常流程切换（pcode 的 DB_PROMPT 重试环需要操作工会响应 Retry/Cancel）；</li>
+  <li>回归：连续生产观察焊点质量与 ProgNo 命中（重点 FEW_WELD 参数序改造正确性）。</li>
+</ol>
+
+<h2>附录 A：反编译缺口记录（本次踩到的 4 处，pc2kl3 输入）</h2>
+<table>
+  <tr><th>#</th><th>缺口</th><th>表现</th><th>字节码真相</th><th>对比危害</th></tr>
+  <tr><td>1</td><td><b>IF 体尾 RET 丢失</b>（新缺口模式）</td><td>FEWFEED/FEWWELD 的 DI[35] 块渲染成「空 IF 体」</td>
+      <td>两处 IF 体内实为 <code>RETURN(0)</code>（偏移 1904 / 2222）</td>
+      <td class="bad">险些误判为「跳过语义分歧」——反例价值最大的一条</td></tr>
+  <tr><td>2</td><td>ABS 算子（0x50）渲染 UNK</td><td><code>UNTIL((0&lt;=5))</code> 假死循环</td><td><code>ABS(OpenPos−GI+1) ≤ 5</code>，与 TP ±5 等价</td><td>误判等待条件丢失</td></tr>
+  <tr><td>3</td><td>PULSE 指令降级</td><td>INIT 渲染成赋值 + <code>-- residue 1000</code></td><td><code>PULSE DO+1 1000</code></td><td>丢失脉宽语义</td></tr>
+  <tr><td>4</td><td>WAIT 型语句丢失</td><td>FEWFEED 中 stray 残影</td><td><code>WAIT DI+23=OFF</code></td><td>握手完整性存疑</td></tr>
+</table>
+<p class="small">结论口径：涉及 MI26_FEW_ROUT 的语义对比，反编译文本只能当索引，<b>争议点一律落字节码</b>（scan 逐 token）。</p>
+
+<h2>附录 B：证据索引</h2>
+<div class="small">
+  TP→LS：tpLs.js（ai-robot-backup-checker）｜ pcode：pc2kl3 v3 + PC2KL_DEBUG 语句流 + scan token 流（few_tokens.txt）｜
+  配置：mi26_few_var.vr 解包 = DI/DO 3872、GI/GO 133、枪2/3 UNINIT ｜
+  调用侧：r04_msl_vp_few_01_gun1_rhjr01 / ss010r04_msl_few_01_gun1_rhjr01 / testfew ｜
+  手册：MI_FAP v2.0.9 §23.2（用户提供摘录）＋ MI24/25/26 逐应用深拆
+</div>
+
+<footer>
+  Claude Code · FEW TP×pcode 逻辑对照 · 2026-11-23 · 结论口径：字节码优先，「已验证」= token 级实证，「P2/待实测」= 已定位未上机
+</footer>
+
+</div>
+</body>
+</html>

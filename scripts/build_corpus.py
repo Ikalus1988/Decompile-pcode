@@ -30,6 +30,7 @@ SRC_DIRS = [  # 真源码目录（%INCLUDE 不展开，配对按文件名）
     (r'D:\Downloads\10_KAREL反编译\_extract_karel_src\karel\src', 'shipban'),
     (r'D:\Downloads\10_KAREL反编译\_src_pairs_spr_fds_20261105', 'sprfds_src'),
     (r'D:\Downloads\10_KAREL反编译\_extract_F_20261109\KL', 'qoros'),
+    (r'D:\Downloads\01_机器人备份\ss010r04_FEW测试_patch\src', 'ss010r04_few'),
 ]
 
 
